@@ -303,7 +303,7 @@ export type QuizMutationVars =
  * Variables for violation mutations.
  */
 export type ViolationMutationVars =
-    | { operation: 'add'; data: import('./database').ViolationInsert }
+    | { operation: 'add'; data: import('./database').ViolationInsert; allowDuplicate?: boolean }
     | { operation: 'edit'; data: import('./database').ViolationUpdate; id: string };
 
 /**

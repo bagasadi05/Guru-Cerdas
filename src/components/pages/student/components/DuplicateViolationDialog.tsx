@@ -24,13 +24,13 @@ export const DuplicateViolationDialog: React.FC<DuplicateViolationDialogProps> =
   existingViolation,
 }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Pelanggaran Sudah Tercatat" maxWidth="max-w-md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Pelanggaran Sudah Tercatat Hari Ini" maxWidth="max-w-md">
       <div className="space-y-4 pt-2">
         <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
           <AlertTriangleIcon className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <div className="space-y-2 text-sm">
-            <p className="font-medium text-amber-800 dark:text-amber-200">
-              Pelanggaran ini sudah dicatat sebelumnya
+            <p className="font-semibold text-amber-800 dark:text-amber-200">
+              Pelanggaran ini sudah pernah dicatat pada hari ini
             </p>
             <div className="space-y-1.5 text-amber-700 dark:text-amber-300">
               <div className="flex items-center gap-2">

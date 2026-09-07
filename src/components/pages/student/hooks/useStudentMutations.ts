@@ -238,46 +238,48 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
             const authUser = await getAuthUser();
             const userId = authUser.id;
             if (vars.operation === 'add') {
-                let existingQuery = supabase
-                    .from('violations')
-                    .select('id, student_id, user_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, deleted_at')
-                    .eq('student_id', vars.data.student_id)
-                    .eq('user_id', userId)
-                    .eq('date', vars.data.date)
-                    .eq('description', vars.data.description)
-                    .eq('points', vars.data.points)
-                    .gte('created_at', getDuplicateGuardWindowIso())
-                    .is('deleted_at', null)
-                    .order('created_at', { ascending: false })
-                    .limit(1);
-
-                existingQuery = vars.data.semester_id
-                    ? existingQuery.eq('semester_id', vars.data.semester_id)
-                    : existingQuery.is('semester_id', null);
-                existingQuery = vars.data.type
-                    ? existingQuery.eq('type', vars.data.type)
-                    : existingQuery.is('type', null);
-
-                const { data: existingRows, error: existingError } = await existingQuery;
-                if (existingError) throw existingError;
-
-                const existingRow = existingRows?.[0];
-                if (existingRow) {
-                    const { error } = await supabase
+                if (!vars.allowDuplicate) {
+                    let existingQuery = supabase
                         .from('violations')
-                        .update(vars.data)
-                        .eq('id', existingRow.id);
-                    if (error) throw error;
-                    await writeAuditLog({
-                        userId,
-                        userEmail: authUser.email,
-                        tableName: 'violations',
-                        recordId: existingRow.id,
-                        action: 'UPDATE',
-                        oldData: existingRow as unknown as Record<string, unknown>,
-                        newData: vars.data as Record<string, unknown>,
-                    });
-                    return;
+                        .select('id, student_id, user_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, deleted_at')
+                        .eq('student_id', vars.data.student_id)
+                        .eq('user_id', userId)
+                        .eq('date', vars.data.date)
+                        .eq('description', vars.data.description)
+                        .eq('points', vars.data.points)
+                        .gte('created_at', getDuplicateGuardWindowIso())
+                        .is('deleted_at', null)
+                        .order('created_at', { ascending: false })
+                        .limit(1);
+
+                    existingQuery = vars.data.semester_id
+                        ? existingQuery.eq('semester_id', vars.data.semester_id)
+                        : existingQuery.is('semester_id', null);
+                    existingQuery = vars.data.type
+                        ? existingQuery.eq('type', vars.data.type)
+                        : existingQuery.is('type', null);
+
+                    const { data: existingRows, error: existingError } = await existingQuery;
+                    if (existingError) throw existingError;
+
+                    const existingRow = existingRows?.[0];
+                    if (existingRow) {
+                        const { error } = await supabase
+                            .from('violations')
+                            .update(vars.data)
+                            .eq('id', existingRow.id);
+                        if (error) throw error;
+                        await writeAuditLog({
+                            userId,
+                            userEmail: authUser.email,
+                            tableName: 'violations',
+                            recordId: existingRow.id,
+                            action: 'UPDATE',
+                            oldData: existingRow as unknown as Record<string, unknown>,
+                            newData: vars.data as Record<string, unknown>,
+                        });
+                        return;
+                    }
                 }
 
                 const { error } = await supabase.from('violations').insert(vars.data);

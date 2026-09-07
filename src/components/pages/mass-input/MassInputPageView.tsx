@@ -81,7 +81,7 @@ export interface MassInputPageViewProps {
     setSelectedStudentIds: React.Dispatch<React.SetStateAction<Set<string>>>;
     isExporting: boolean;
     exportProgress: string;
-    handleSubmit: () => void;
+    handleSubmit: (overrideBypassGuard?: boolean) => void;
     isSubmitDisabled: boolean;
     submitButtonTooltip: string;
     isSubmitting: boolean;
@@ -395,35 +395,54 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                 <Modal
                     isOpen={showViolationDuplicateDialog}
                     onClose={() => setShowViolationDuplicateDialog(false)}
-                    title="Pelanggaran Sudah Tercatat"
+                    title="Pelanggaran Sudah Tercatat Hari Ini"
                     maxWidth="max-w-lg"
                 >
                     <div className="space-y-4 pt-2">
                         <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                            <p className="text-sm text-amber-800 dark:text-amber-200 mb-3">
-                                Guru lain sudah mencatat pelanggaran yang sama untuk {violationDuplicateList.length} siswa berikut:
+                            <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-3">
+                                Pelanggaran ini sudah pernah dicatat pada hari ini untuk {violationDuplicateList.length} siswa berikut:
                             </p>
                             <div className="max-h-48 overflow-y-auto space-y-2">
                                 {violationDuplicateList.map((dup) => (
-                                    <div key={dup.student_id} className="flex items-center gap-2 p-2 rounded-lg bg-white/60 dark:bg-black/20 text-xs">
-                                        <span className="font-medium text-slate-800 dark:text-slate-200">{dup.student_name}</span>
-                                        <span className="text-slate-400">—</span>
-                                        <span className="text-amber-600 dark:text-amber-400">
-                                            dicatat oleh {dup.recorded_by_name || 'Guru lain'}
+                                    <div key={dup.student_id} className="flex items-center justify-between p-2.5 rounded-lg bg-white/70 dark:bg-black/20 text-xs border border-amber-200/50 dark:border-amber-800/40">
+                                        <span className="font-semibold text-slate-800 dark:text-slate-200">{dup.student_name}</span>
+                                        <span className="text-amber-700 dark:text-amber-300 font-medium">
+                                            dicatat oleh: <strong>{dup.recorded_by_name || 'Guru lain'}</strong>
                                         </span>
                                     </div>
                                 ))}
                             </div>
                         </div>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
-                            Siswa yang tercantum di atas akan tetap disimpan pelanggarannya? Klik <strong>Lanjutkan</strong> untuk tetap menyimpan semua siswa, atau <strong>Batal</strong> untuk kembali.
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                            Apakah Anda ingin tetap mencatat pelanggaran ini? Anda dapat memilih untuk tetap menyimpan semua siswa (termasuk yang sudah dicatat) atau hanya menyimpan siswa yang belum tercatat hari ini.
                         </p>
-                        <div className="flex justify-end gap-2 pt-2">
+                        <div className="flex flex-wrap justify-end gap-2 pt-2">
                             <Button type="button" variant="ghost" onClick={() => setShowViolationDuplicateDialog(false)}>
                                 Batal
                             </Button>
-                            <Button type="button" onClick={() => { setShowViolationDuplicateDialog(false); handleSubmit(); }} className="bg-red-600 hover:bg-red-700 text-white">
-                                Lanjutkan & Simpan Semua
+                            {selectedStudentIds.size > violationDuplicateList.length && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                        setShowViolationDuplicateDialog(false);
+                                        handleSubmit(false);
+                                    }}
+                                >
+                                    Lewati yang Duplikat ({violationDuplicateList.length})
+                                </Button>
+                            )}
+                            <Button
+                                type="button"
+                                onClick={() => {
+                                    setShowViolationDuplicateDialog(false);
+                                    setBypassDuplicateGuard(true);
+                                    handleSubmit(true);
+                                }}
+                                className="bg-red-600 hover:bg-red-700 text-white"
+                            >
+                                Tetap Simpan Semua
                             </Button>
                         </div>
                     </div>

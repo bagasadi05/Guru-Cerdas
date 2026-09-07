@@ -616,19 +616,37 @@ const BintangDashboardPage: React.FC = () => {
         }
 
         // Soft duplicate warning (harian) — scoped ke siswa-siswa yang dipilih
-        const duplicateStudentNames = targetIds
+        let duplicateStudentNames = targetIds
             .filter(sid => violations.some(v => v.student_id === sid && v.date === data.date && v.description === data.description))
             .map(sid => students.find(s => s.id === sid)?.name || 'Siswa');
 
+        // Query database Supabase jika state lokal violations belum mencakup catatan terbaru
+        if (duplicateStudentNames.length === 0) {
+            const { data: dbVios } = await supabase
+                .from('violations')
+                .select('student_id')
+                .in('student_id', targetIds)
+                .eq('date', data.date)
+                .eq('description', data.description)
+                .is('deleted_at', null);
+
+            if (dbVios && dbVios.length > 0) {
+                const dbIds = new Set(dbVios.map((r: any) => r.student_id));
+                duplicateStudentNames = targetIds
+                    .filter(sid => dbIds.has(sid))
+                    .map(sid => students.find(s => s.id === sid)?.name || 'Siswa');
+            }
+        }
+
         if (duplicateStudentNames.length > 0) {
             const msg = duplicateStudentNames.length === 1
-                ? `${duplicateStudentNames[0]} sudah memiliki catatan pelanggaran "${data.description}" pada tanggal ini.\n\nApakah Anda yakin ini adalah kejadian yang berbeda?`
-                : `${duplicateStudentNames.length} siswa (${duplicateStudentNames.slice(0, 3).join(', ')}${duplicateStudentNames.length > 3 ? '...' : ''}) sudah memiliki catatan pelanggaran "${data.description}" pada tanggal ini.\n\nApakah Anda yakin ini adalah kejadian yang berbeda?`;
+                ? `${duplicateStudentNames[0]} sudah memiliki catatan pelanggaran "${data.description}" pada hari ini (${data.date}).\n\nApakah Anda yakin ingin tetap mencatat pelanggaran ini?`
+                : `${duplicateStudentNames.length} siswa (${duplicateStudentNames.slice(0, 3).join(', ')}${duplicateStudentNames.length > 3 ? '...' : ''}) sudah memiliki catatan pelanggaran "${data.description}" pada hari ini (${data.date}).\n\nApakah Anda yakin ingin tetap mencatat pelanggaran ini?`;
 
             const ok = await confirmDuplicateViolation({
-                title: 'Pelanggaran Duplikat?',
+                title: 'Pelanggaran Sudah Tercatat Hari Ini',
                 message: msg,
-                confirmText: 'Ya, Ini Kejadian Berbeda',
+                confirmText: 'Tetap Tambahkan',
                 variant: 'warning',
                 onConfirm: async () => {},
             });

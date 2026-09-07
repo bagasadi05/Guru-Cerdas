@@ -112,7 +112,6 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
             .in('student_id', studentIds)
             .eq('date', violationDate)
             .eq('description', selectedViolation.description)
-            .gte('created_at', getDuplicateGuardWindowIso())
             .is('deleted_at', null);
 
         query = activeSemester?.id
@@ -125,26 +124,21 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
             return;
         }
 
-        // Filter out self-duplicates (already handled silently by the mutation)
-        const otherTeacherDuplicates = existingRows.filter((r: any) => r.user_id !== user.id);
-        if (otherTeacherDuplicates.length === 0) {
-            onProceed();
-            return;
+        // Get recorder names for all user_ids (both current user and other teachers)
+        const allUserIds = Array.from(new Set(existingRows.map((r: any) => r.user_id).filter(Boolean)));
+        let nameMap: Record<string, string> = {};
+        if (allUserIds.length > 0) {
+            const { data: roleRows } = await supabase
+                .from('user_roles')
+                .select('user_id, full_name')
+                .in('user_id', allUserIds);
+            (roleRows || []).forEach((r: any) => { if (r.user_id) nameMap[r.user_id] = r.full_name || ''; });
         }
 
-        // Get recorder names
-        const otherUserIds = Array.from(new Set(otherTeacherDuplicates.map((r: any) => r.user_id)));
-        const { data: roleRows } = await supabase
-            .from('user_roles')
-            .select('user_id, full_name')
-            .in('user_id', otherUserIds);
-        const nameMap: Record<string, string> = {};
-        (roleRows || []).forEach((r: any) => { if (r.user_id) nameMap[r.user_id] = r.full_name || ''; });
-
-        const duplicates = otherTeacherDuplicates.map((r: any) => ({
+        const duplicates = existingRows.map((r: any) => ({
             student_id: r.student_id,
             student_name: studentsData?.find(s => s.id === r.student_id)?.name || 'Unknown',
-            recorded_by_name: nameMap[r.user_id] || null,
+            recorded_by_name: r.user_id === user.id ? 'Anda' : (nameMap[r.user_id] || 'Guru lain'),
             description: selectedViolation.description,
             date: violationDate,
             points: selectedViolation.points,
@@ -155,8 +149,9 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
     };
 
     const { mutate: submitData, isPending: isSubmitting } = useMutation({
-        mutationFn: async () => {
+        mutationFn: async (overrideBypassGuard?: boolean) => {
             if (!mode || !user) throw new Error('Mode atau pengguna tidak diatur');
+            const shouldBypassGuard = overrideBypassGuard ?? bypassDuplicateGuard;
             switch (mode) {
                 case 'quiz': {
                     if (!quizInfo.name || !quizInfo.subject || selectedStudentIds.size === 0)
@@ -248,14 +243,13 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                     const studentIds = Array.from(selectedStudentIds);
                     let duplicateStudentIds = new Set<string>();
                     
-                    if (!bypassDuplicateGuard) {
+                    if (!shouldBypassGuard) {
                         let existingViolationQuery = supabase
                             .from('violations')
                             .select('id, student_id, user_id')
                             .in('student_id', studentIds)
                             .eq('date', violationDate)
                             .eq('description', selectedViolation.description)
-                            .gte('created_at', getDuplicateGuardWindowIso())
                             .is('deleted_at', null);
 
                         existingViolationQuery = activeSemester?.id
@@ -265,9 +259,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                         const { data: existingRows, error: existingViolationError } = await existingViolationQuery;
                         if (existingViolationError) throw existingViolationError;
 
-                        // Silent-skip hanya duplikat dari guru yang sama
-                        const selfDuplicates = (existingRows || []).filter((r: any) => r.user_id === user.id);
-                        duplicateStudentIds = new Set(selfDuplicates.map((r: any) => r.student_id));
+                        duplicateStudentIds = new Set((existingRows || []).map((r: any) => r.student_id));
                     }
                     const records: Database['public']['Tables']['violations']['Insert'][] = studentIds
                         .filter((student_id) => !duplicateStudentIds.has(student_id))
@@ -289,14 +281,14 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                         });
 
                     if (records.length === 0) {
-                        return 'Tidak ada pelanggaran baru yang disimpan. Sistem mendeteksi input yang sama sudah tersimpan beberapa menit terakhir.';
+                        return 'Tidak ada pelanggaran baru yang disimpan. Seluruh siswa yang dipilih sudah memiliki catatan pelanggaran yang sama hari ini.';
                     }
 
                     const { data, error } = await supabase.from('violations').insert(records).select();
                     if (error) throw error;
                     await recordAction(user.id, 'create', 'violations', data.map(d => d.id));
                     return duplicateStudentIds.size > 0
-                        ? `Pelanggaran untuk ${records.length} siswa berhasil dicatat. ${duplicateStudentIds.size} data duplikat terbaru dilewati.`
+                        ? `Pelanggaran untuk ${records.length} siswa berhasil dicatat. ${duplicateStudentIds.size} siswa yang sudah tercatat sebelumnya dilewati.`
                         : `Pelanggaran untuk ${records.length} siswa berhasil dicatat.`;
                 }
                 default:
@@ -664,10 +656,10 @@ Format JSON yang diharapkan:
         setConfirmDeleteModal({ isOpen: true, count: selectedStudentIds.size });
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = (overrideBypassGuard?: boolean) => {
         if (mode === 'bulk_report') handlePrintBulkReports();
         else if (mode === 'academic_print') handlePrintGrades();
-        else submitData();
+        else submitData(overrideBypassGuard);
     };
 
     return {

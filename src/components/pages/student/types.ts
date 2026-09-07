@@ -163,5 +163,5 @@ export type StudentMutationVars = Database['public']['Tables']['students']['Upda
 export type ReportMutationVars = { operation: 'add', data: Database['public']['Tables']['reports']['Insert'] } | { operation: 'edit', data: Database['public']['Tables']['reports']['Update'], id: string };
 export type AcademicMutationVars = { operation: 'add', data: Database['public']['Tables']['academic_records']['Insert'] } | { operation: 'edit', data: Database['public']['Tables']['academic_records']['Update'], id: string };
 export type QuizMutationVars = { operation: 'add', data: Database['public']['Tables']['quiz_points']['Insert'] } | { operation: 'edit', data: Database['public']['Tables']['quiz_points']['Update'], id: string };
-export type ViolationMutationVars = { operation: 'add', data: Database['public']['Tables']['violations']['Insert'] } | { operation: 'edit', data: Database['public']['Tables']['violations']['Update'], id: string };
+export type ViolationMutationVars = { operation: 'add', data: Database['public']['Tables']['violations']['Insert'], allowDuplicate?: boolean } | { operation: 'edit', data: Database['public']['Tables']['violations']['Update'], id: string };
 export type CommunicationMutationVars = { operation: 'edit', data: { message: string }, id: string };

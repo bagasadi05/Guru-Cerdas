@@ -473,7 +473,10 @@ export const useStudentDetailPage = () => {
         }
     };
 
-    const executeViolationSubmit = async (data: ViolationFormValues & { evidence_file?: File }) => {
+    const executeViolationSubmit = async (
+        data: ViolationFormValues & { evidence_file?: File },
+        options?: { allowDuplicate?: boolean }
+    ) => {
         if (!user || !studentId) return;
 
         const selectedViolation = violationList.find(v => v.description === data.description);
@@ -509,7 +512,7 @@ export const useStudentDetailPage = () => {
         if (modalState.type === 'violation' && modalState.data?.id) {
             violationMutation.mutate({ operation: 'edit', data: violationPayload, id: modalState.data.id });
         } else {
-            violationMutation.mutate({ operation: 'add', data: violationPayload });
+            violationMutation.mutate({ operation: 'add', data: violationPayload, allowDuplicate: options?.allowDuplicate });
         }
     };
 
@@ -518,14 +521,45 @@ export const useStudentDetailPage = () => {
 
         // Duplicate detection — check if same violation type + date already exists
         if (modalState.type === 'violation' && !modalState.data?.id) {
-            const existingViolation = filteredViolations.find(
+            // 1. Cek dari daftar lokal terlebih dahulu
+            const localList = studentDetails?.violations || filteredViolations || [];
+            let existingViolation: any = localList.find(
                 v => v.date === data.date && v.description === data.description
             );
 
+            // 2. Query ke Supabase untuk memastikan catatan terbaru hari ini selalu tertangkap
+            if (!existingViolation) {
+                const { data: dbRows } = await supabase
+                    .from('violations')
+                    .select('id, student_id, user_id, date, description, points')
+                    .eq('student_id', studentId)
+                    .eq('date', data.date)
+                    .eq('description', data.description)
+                    .is('deleted_at', null)
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+
+                if (dbRows && dbRows.length > 0) {
+                    existingViolation = dbRows[0];
+                }
+            }
+
             if (existingViolation) {
+                let recordedByName = existingViolation.recorded_by_name || null;
+                if (existingViolation.user_id === user.id) {
+                    recordedByName = 'Anda';
+                } else if (!recordedByName && existingViolation.user_id) {
+                    const { data: roleRow } = await supabase
+                        .from('user_roles')
+                        .select('full_name')
+                        .eq('user_id', existingViolation.user_id)
+                        .maybeSingle();
+                    recordedByName = roleRow?.full_name || 'Guru lain';
+                }
+
                 setDuplicateDialog({
                     existingViolation: {
-                        recorded_by_name: existingViolation.recorded_by_name || null,
+                        recorded_by_name: recordedByName,
                         date: existingViolation.date,
                         description: existingViolation.description,
                         points: existingViolation.points,
@@ -543,7 +577,7 @@ export const useStudentDetailPage = () => {
         if (duplicateDialog) {
             const data = duplicateDialog.pendingData;
             setDuplicateDialog(null);
-            executeViolationSubmit(data);
+            executeViolationSubmit(data, { allowDuplicate: true });
         }
     };
 
