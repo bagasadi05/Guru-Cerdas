@@ -692,35 +692,6 @@ export const generateBintangReportPdf = async (
             renderCtx
         );
     }
-
-    // ── Page numbers (footer on every page) ──────────────────────────────────
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-
-        // Separator line
-        doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
-        doc.setLineWidth(0.3);
-        doc.line(margin, pageHeight - 14, pageWidth - margin, pageHeight - 14);
-
-        // Page number on the right
-        doc.text(
-            `Halaman ${i} dari ${pageCount}`,
-            pageWidth - margin,
-            pageHeight - 7,
-            { align: 'right' }
-        );
-
-        // App name on the left
-        doc.text(
-            'Portal Guru — Program BINTANG',
-            margin,
-            pageHeight - 7
-        );
-    }
 };
 
 export const downloadBintangReportAction = async ({

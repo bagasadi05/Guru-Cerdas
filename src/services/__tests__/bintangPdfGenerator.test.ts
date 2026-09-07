@@ -610,6 +610,45 @@ describe('bintangPdfGenerator', () => {
             { current: 2, total: 2 },
         ]);
     });
+
+    it('does not render bottom footer text or line (Portal Guru branding and page numbers)', async () => {
+        const doc = new jsPDF();
+        const textSpy = vi.spyOn(doc, 'text');
+        const lineSpy = vi.spyOn(doc, 'line');
+
+        const report = {
+            student: { id: 's1', name: 'Siswa Test', classes: { name: 'Kelas 3A' } },
+            aspects: {
+                ADAB: { grade: 'A', points: 0 },
+                KEDISIPLINAN: { grade: 'A', points: 0 },
+                KERAPIAN: { grade: 'A', points: 0 },
+            },
+            violations: [],
+            evaluation: {
+                adab_score: 'A',
+                kedisiplinan_score: 'A',
+                kerapian_score: 'A',
+                catatan_wali: 'Bagus',
+            },
+        };
+
+        await generateBintangReportPdf(
+            doc,
+            [report],
+            'Agustus 2026',
+            '5 September 2026',
+            { id: 'u1', name: 'Wali Kelas, S.Pd', avatarUrl: '' }
+        );
+
+        const printedTexts = textSpy.mock.calls.map(call => String(call[0]));
+        expect(printedTexts.some(t => t.includes('Portal Guru — Program BINTANG'))).toBe(false);
+        expect(printedTexts.some(t => t.startsWith('Halaman '))).toBe(false);
+
+        // Ensure no separator line at pageHeight - 14
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const drawnLines = lineSpy.mock.calls;
+        expect(drawnLines.some(call => Math.abs(Number(call[1]) - (pageHeight - 14)) < 1)).toBe(false);
+    });
 });
 
 

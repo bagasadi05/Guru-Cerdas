@@ -155,20 +155,33 @@ export const useStudentDetailPage = () => {
                     .eq('teacher_user_id', user.id)
                     .is('deleted_at', null),
                 supabase
-                    .from('classes')
-                    .select('id, name, user_id, created_at, deleted_at')
-                    .eq('user_id', user.id)
-                    .is('deleted_at', null)
+                    .rpc('get_active_classes')
+                    .then(async (rpcRes) => {
+                        if (!rpcRes.error && rpcRes.data && rpcRes.data.length > 0) {
+                            return rpcRes;
+                        }
+                        return supabase
+                            .from('classes')
+                            .select('id, name, user_id, created_at, deleted_at')
+                            .is('deleted_at', null)
+                            .eq('is_archived', false)
+                            .order('name');
+                    })
             ]);
 
             if (classInfoRes.error) throw classInfoRes.error;
             if (assignmentsRes.error) throw assignmentsRes.error;
-            if (classesRes.error) throw classesRes.error;
 
             const studentData = studentRes.data as unknown as StudentWithClass;
             const assignments = (assignmentsRes.data || []) as { class_id: string, assignment_role: string, subject_name: string | null }[];
-            const classRows = (classesRes.data || []) as unknown as Database['public']['Tables']['classes']['Row'][];
+            let classRows = (classesRes.data || []) as unknown as Database['public']['Tables']['classes']['Row'][];
             const classInfo = classInfoRes.data as Database['public']['Tables']['classes']['Row'];
+
+            // Pastikan kelas siswa saat ini selalu ada dalam daftar kelas meskipun berstatus diarsipkan
+            if (classInfo && !classRows.some(c => c.id === classInfo.id)) {
+                classRows = [classInfo, ...classRows];
+            }
+
             const studentWithClass = { ...studentData, classes: classInfo ? { id: classInfo.id, name: classInfo.name, user_id: classInfo.user_id } : null };
 
             return { student: studentWithClass, assignments, classes: classRows };
