@@ -306,5 +306,9 @@ export function isRateLimitError(error: unknown): boolean {
 export function isTransientError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
   const msg = error.message;
+  // Permanent configuration, authorization, or invalid request errors should not be retried
+  if (/not configured|tidak dikonfigurasi|tidak ditemukan|unauthorized|forbidden|origin not allowed/i.test(msg)) {
+    return false;
+  }
   return /404|429|5\d{2}|timeout|abort|network|econnreset|econnrefused|fetch|sibuk|tidak tersedia|too many|rate|not found/i.test(msg);
 }

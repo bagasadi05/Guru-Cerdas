@@ -43,7 +43,7 @@ interface ExtendedResponse extends ServerResponse {
 }
 
 function getKeys(): string[] {
-  return (process.env.GEMINI_API_KEY || '')
+  return (process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '')
     .split(',')
     .map((k) => k.trim())
     .filter((k) => k.length > 0);

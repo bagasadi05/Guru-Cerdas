@@ -163,6 +163,10 @@ export class GeminiProvider implements AiProvider {
   readonly name = 'gemini' as const;
 
   async generateContent(messages: GeminiMessage[], model: string): Promise<GeminiResponse> {
+    if (isDev() && !import.meta.env.VITE_GEMINI_PROXY_URL && !devApiKey()) {
+      throw new Error('Gemini API key tidak dikonfigurasi. Tambahkan VITE_GEMINI_API_KEY di .env.');
+    }
+
     if (usesDirectEndpoint() && getGeminiKeyCount() === 0) {
       throw new Error('Gemini API key tidak ditemukan.');
     }
@@ -282,10 +286,21 @@ export class GeminiProvider implements AiProvider {
           const retryAfterMs = parseRetryAfter(response.headers.get('retry-after'));
           throw new GeminiRateLimitError(`Rate limit exceeded: Gemini API 429`, retryAfterMs);
         }
-        if (status >= 500) {
-          throw new Error(`Gemini server error ${status}: ${text}`);
+
+        let parsedDetail = text;
+        try {
+          const jsonErr = JSON.parse(text);
+          if (jsonErr && typeof jsonErr === 'object') {
+            parsedDetail = jsonErr.error || jsonErr.message || text;
+          }
+        } catch {
+          // ignore json parse error
         }
-        throw new Error(`Gemini API ${status}: ${text}`);
+
+        if (status >= 500) {
+          throw new Error(`Gemini server error ${status}: ${parsedDetail}`);
+        }
+        throw new Error(`Gemini API ${status}: ${parsedDetail}`);
       }
 
       const data = await response.json();

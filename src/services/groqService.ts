@@ -181,10 +181,21 @@ export class GroqProvider implements AiProvider {
           const retryAfterMs = parseRetryAfter(response.headers.get('retry-after'));
           throw new GroqRateLimitError(`Groq rate limit: 429`, retryAfterMs);
         }
-        if (status >= 500) {
-          throw new Error(`Groq server error ${status}: ${text}`);
+
+        let parsedDetail = text;
+        try {
+          const jsonErr = JSON.parse(text);
+          if (jsonErr && typeof jsonErr === 'object') {
+            parsedDetail = jsonErr.error || jsonErr.message || text;
+          }
+        } catch {
+          // ignore json parse error
         }
-        throw new Error(`Groq API ${status}: ${text}`);
+
+        if (status >= 500) {
+          throw new Error(`Groq server error ${status}: ${parsedDetail}`);
+        }
+        throw new Error(`Groq API ${status}: ${parsedDetail}`);
       }
 
       const data = await response.json();

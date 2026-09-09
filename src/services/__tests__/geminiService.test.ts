@@ -113,6 +113,23 @@ describe('geminiService — proxy mode', () => {
     expect(fetchMock).toHaveBeenCalledTimes(6);
   });
 
+  it('fails immediately without retries when API key is not configured', async () => {
+    const fetchMock = stubFetch((url) => {
+      const isGroq = String(url).includes('groq');
+      return Promise.resolve({
+        ok: false,
+        status: 500,
+        text: async () => JSON.stringify({ error: isGroq ? 'GROQ_API_KEY is not configured' : 'GEMINI_API_KEY is not configured' }),
+        headers: new Headers(),
+      } as unknown as Response);
+    });
+
+    const promise = generateGeminiJson<{ ok: boolean }>('prompt not-configured-unik', undefined);
+    await expect(promise).rejects.toThrow(/Semua provider AI gagal/);
+    // Gemini: 1 call (fails without retry), Groq: 1 call (fails without retry) -> total 2 calls, not 6
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('caps concurrent requests at MAX_CONCURRENT (2)', async () => {
     let inFlight = 0;
     let maxInFlight = 0;
