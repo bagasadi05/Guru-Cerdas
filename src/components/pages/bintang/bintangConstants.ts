@@ -88,9 +88,11 @@ export function classifyViolationCluster(violations: StudentViolationSummaryItem
 
     for (const v of violations) {
         const text = (v.description || '').toLowerCase();
+        const aspect = v.bintangAspect;
         if (text.includes('terlambat') || text.includes('waktu') || text.includes('masuk sekolah') || text.includes('istirahat')) {
             timeCount++;
         } else if (
+            aspect === 'KERAPIAN' ||
             text.includes('atribut') || text.includes('bedge') || text.includes('dasi') ||
             text.includes('rompi') || text.includes('topi') || text.includes('sepatu') ||
             text.includes('kaos kaki') || text.includes('kuku') || text.includes('seragam') ||
@@ -103,10 +105,13 @@ export function classifyViolationCluster(violations: StudentViolationSummaryItem
         ) {
             kbmCount++;
         } else if (
+            aspect === 'ADAB' ||
             text.includes('berkata kotor') || text.includes('sopan') || text.includes('sampah') ||
             text.includes('mencoret') || text.includes('tidak patuh') || text.includes('makan')
         ) {
             adabCount++;
+        } else if (aspect === 'KEDISIPLINAN') {
+            timeCount++;
         }
     }
 

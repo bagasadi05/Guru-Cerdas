@@ -139,18 +139,6 @@ const BintangDashboardPage: React.FC = () => {
     // ── Student Detail Modal ─────────────────────────────────────────────────
     const [detailStudentId, setDetailStudentId] = useState<string | null>(null);
 
-    // ── Evaluation state & handlers (shared hook) ──────────────────────────
-    const evalHook = useBintangEvaluation({
-        toast,
-        confirmPublish,
-        fetchData: async () => { await fetchAllData(); },
-        selectedMonth,
-        user,
-        students,
-        evaluations,
-        selectedClass,
-        getStudentQuizPoints: (studentId: string) => studentQuizMap?.get(studentId)?.totalPoints || 0,
-    });
 
     // ── Bulk Selection & Export ──────────────────────────────────────────────
     const bulkSelection = useBulkSelection(students);
@@ -370,6 +358,20 @@ const BintangDashboardPage: React.FC = () => {
     };
 
     const getStudentName = (studentId: string) => students.find(s => s.id === studentId)?.name || 'Unknown';
+
+    // ── Evaluation state & handlers (shared hook) ──────────────────────────
+    const evalHook = useBintangEvaluation({
+        toast,
+        confirmPublish,
+        fetchData: async () => { await fetchAllData(); },
+        selectedMonth,
+        user,
+        students,
+        evaluations,
+        selectedClass,
+        getStudentQuizPoints: (studentId: string) => studentQuizMap.get(studentId)?.totalPoints || 0,
+        getStudentViolations: (studentId: string) => studentViolationsMap.get(studentId) || [],
+    });
 
     // ── Handlers ─────────────────────────────────────────────────────────────
 

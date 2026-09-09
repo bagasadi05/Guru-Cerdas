@@ -6,6 +6,7 @@ import { supabase } from './supabase';
 import { formatExportDate } from '../utils/exportUtils';
 import { formatDegreeProperly } from '../utils/greetingUtils';
 import { generateContextualHomeroomNote } from '../components/pages/bintang/bintangConstants';
+import { violationList } from './violations.data';
 
 
 
@@ -47,7 +48,7 @@ export const generateBintangReportPdf = async (
         student: { id: string; name?: string | null; classes?: { name?: string | null } | null; nis?: string | null; nisn?: string | null; class_id?: string | null; access_code?: string | null };
         evaluation: Record<string, string | number | boolean | null> | null;
         aspects: any;
-        violations?: { date: string; description: string; points: number }[];
+        violations?: { date: string; description: string; points: number; severity?: string }[];
         quizPoints?: { quiz_name?: string | null; category?: string | null; points: number }[];
     }>,
     monthName: string,
@@ -147,14 +148,29 @@ export const generateBintangReportPdf = async (
             ? catatanWaliStr.trim()
             : (cleanNote(adabNotesStr) || '-');
 
-        if (generalNotes === '-') {
+        const hasViolations = Boolean(report.violations && report.violations.length > 0);
+        const hasContradictoryZeroViolationClaim = hasViolations && (
+            generalNotes.toLowerCase().includes('tidak memiliki catatan pelanggaran') ||
+            generalNotes.toLowerCase().includes('tanpa catatan pelanggaran') ||
+            generalNotes.toLowerCase().includes('tidak ada catatan pelanggaran')
+        );
+
+        if (generalNotes === '-' || hasContradictoryZeroViolationClaim) {
             generalNotes = generateContextualHomeroomNote({
                 studentName: report.student.name || undefined,
                 adabGrade: adabScore as BintangGrade,
                 kedisGrade: kedisiplinanScore as BintangGrade,
                 kerapianGrade: kerapianScore as BintangGrade,
                 activePoints: report.quizPoints?.reduce((s, q) => s + (q.points || 0), 0) || 0,
-                violations: report.violations?.map(v => ({ description: v.description, points: v.points })) || [],
+                violations: report.violations?.map(v => {
+                    const item = violationList.find(i => i.description === v.description);
+                    return {
+                        description: v.description,
+                        points: v.points,
+                        bintangAspect: item?.bintangAspect,
+                        category: v.severity,
+                    };
+                }) || [],
                 seed: report.student.id
             });
         }

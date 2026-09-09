@@ -696,6 +696,54 @@ describe('bintangPdfGenerator', () => {
         expect(typeof (noVioCall?.[3] as any)?.maxWidth).toBe('number');
         expect((noVioCall?.[3] as any)?.maxWidth).toBe(doc.internal.pageSize.getWidth() - 38);
     });
+
+    it('overrides contradictory zero-violation note if student actually has violations', async () => {
+        const doc = new jsPDF();
+        const splitTextSpy = vi.spyOn(doc, 'splitTextToSize');
+
+        const report = {
+            student: { id: 's_contradict', name: 'ALGIFARI YUSUF', classes: { name: 'Kelas 4B' } },
+            aspects: {
+                ADAB: { grade: 'A', points: 0 },
+                KEDISIPLINAN: { grade: 'A', points: 0 },
+                KERAPIAN: { grade: 'B', points: 3 },
+            },
+            violations: [
+                {
+                    date: '2026-08-24',
+                    description: 'Tanpa bedge lokasi / Atribut sekolah (Topi, dasi, Rompi Dll.)',
+                    points: 3,
+                },
+            ],
+            evaluation: {
+                adab_score: 'A',
+                kedisiplinan_score: 'A',
+                kerapian_score: 'B',
+                catatan_wali: 'Ananda tidak memiliki catatan pelanggaran bulan ini, sebuah pencapaian disiplin dan pembiasaan baik yang sangat patut diapresiasi.',
+            },
+            quizPoints: [
+                { category: 'Partisipasi aktif', points: 1 }
+            ],
+        };
+
+        await generateBintangReportPdf(
+            doc,
+            [report],
+            'Agustus 2026',
+            '5 September 2026',
+            { id: 'u1', name: 'Ustadzah Fatimah, S.Pd.I', avatarUrl: '' }
+        );
+
+        // Verify that the note passed to splitTextToSize does NOT claim zero violations
+        const calls = splitTextSpy.mock.calls.map(c => String(c[0]));
+        const renderedNote = calls.find(c => c.includes('ALGIFARI'));
+        expect(renderedNote).toBeDefined();
+        expect(renderedNote).not.toContain('tidak memiliki catatan pelanggaran');
+        expect(renderedNote).not.toContain('tanpa catatan pelanggaran');
+        // It should contain advice about uniform/attribute (KERAPIAN)
+        expect(renderedNote).toMatch(/(seragam|atribut|rapi)/i);
+    });
 });
+
 
 
