@@ -69,13 +69,17 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
     enabled: !!userId,
   });
 
+  const assignedClassIdsKey = useMemo(() => {
+    return Array.from(new Set(userAssignments.map((a) => a.class_id).filter(Boolean))).sort().join(',');
+  }, [userAssignments]);
+
   const {
     data: classesData,
     isLoading: isLoadingClasses,
     isError: isClassesError,
     error: classesError,
   } = useQuery({
-    queryKey: ['classes', userId, userAssignments, isAdmin],
+    queryKey: ['classes', userId, assignedClassIdsKey, isAdmin],
     queryFn: async () => {
       if (!userId) return EMPTY_CLASSES;
 
@@ -153,7 +157,7 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
   const students = studentsData || EMPTY_STUDENTS;
   const activeClass = classes.find((classItem) => classItem.id === activeClassId) || null;
   const canManageActiveClass = activeClass?.user_id === userId || hasHomeroomAssignment(userAssignments, activeClassId);
-  const isLoading = isLoadingClasses || (!!activeClassId && isLoadingStudents);
+  const isLoading = isLoadingAssignments || isLoadingClasses || (!!activeClassId && isLoadingStudents);
   const isError = isClassesError || (!!activeClassId && isStudentsError);
   const queryError = classesError || (activeClassId ? studentsError : null);
 

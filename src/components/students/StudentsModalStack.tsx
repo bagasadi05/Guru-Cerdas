@@ -134,12 +134,14 @@ export const StudentsModalStack: React.FC<StudentsModalStackProps> = ({
         title="Import Data Siswa"
       />
 
-      <IDCardPrintModal
-        isOpen={isIDCardModalOpen}
-        onClose={onCloseIDCardModal}
-        students={selectedStudentsForIDCard}
-        classes={classes}
-      />
+      {isIDCardModalOpen && (
+        <IDCardPrintModal
+          isOpen={isIDCardModalOpen}
+          onClose={onCloseIDCardModal}
+          students={selectedStudentsForIDCard}
+          classes={classes}
+        />
+      )}
 
       <BulkMoveModal
         isOpen={isBulkMoveModalOpen}
