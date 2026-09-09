@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { exportToExcel, exportAttendanceToExcel, exportSemesterAttendanceToExcel } from '../../src/utils/exportUtils';
+import { exportToExcel, exportAttendanceToExcel, exportSemesterAttendanceToExcel, getSemesterMonths } from '../../src/utils/exportUtils';
 
 // Mock dynamic imports module
 const mockXLSX = {
@@ -192,5 +192,48 @@ describe('exportSemesterAttendanceToExcel', () => {
         expect(workbookInstances).toHaveLength(1);
         expect(workbookInstances[0].addWorksheet).toHaveBeenCalledWith('4B');
         expect(workbookInstances[0].xlsx.writeBuffer).toHaveBeenCalled();
+    });
+
+    it('should export semester attendance data with custom resolvedMonths', async () => {
+        const classesData = [{ name: '5A', teacherName: 'Guru Kelas', students: [{ id: 's1', name: 'Budi' }] }];
+        const attendanceData = [
+            { student_id: 's1', date: '2026-01-10', status: 'Hadir' },
+            { student_id: 's1', date: '2026-02-12', status: 'Sakit' },
+        ];
+        const months = getSemesterMonths(attendanceData, 'Genap 2025/2026', '2026-01-01', '2026-06-30');
+        expect(months).toHaveLength(6);
+        expect(months[0].key).toBe('2026-01');
+        expect(months[5].key).toBe('2026-06');
+
+        await expect(
+            exportSemesterAttendanceToExcel(classesData, attendanceData, 'Genap 2025/2026', 'semester-5A', 'MI AL IRSYAD', months)
+        ).resolves.not.toThrow();
+
+        expect(workbookInstances).toHaveLength(1);
+    });
+});
+
+describe('getSemesterMonths', () => {
+    it('generates 6 months for Ganjil semester (Jul-Dec)', () => {
+        const months = getSemesterMonths([], 'Semester Ganjil 2026/2027');
+        expect(months).toHaveLength(6);
+        expect(months[0].month).toBe(7);
+        expect(months[5].month).toBe(12);
+        expect(months[0].year).toBe(2026);
+    });
+
+    it('generates 6 months for Genap semester (Jan-Jun)', () => {
+        const months = getSemesterMonths([], 'Semester Genap 2026/2027');
+        expect(months).toHaveLength(6);
+        expect(months[0].month).toBe(1);
+        expect(months[5].month).toBe(6);
+        expect(months[0].year).toBe(2027);
+    });
+
+    it('uses exact start and end dates when provided', () => {
+        const months = getSemesterMonths([], 'Custom', '2025-07-01', '2025-12-31');
+        expect(months).toHaveLength(6);
+        expect(months[0].key).toBe('2025-07');
+        expect(months[5].key).toBe('2025-12');
     });
 });

@@ -411,7 +411,7 @@ textarea:focus-visible {
     left: 0;
     right: 0;
     height: 68px;
-    z-index: 9999 !important;
+    z-index: 30;
     -webkit-user-select: none;
     user-select: none;
     touch-action: manipulation;

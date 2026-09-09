@@ -47,8 +47,8 @@ export const StudentsClassContent: React.FC<StudentsClassContentProps> = ({
           icon={<UsersIcon />}
           title="Tidak Ada Data Siswa"
           description="Belum ada siswa di kelas ini atau tidak ada yang cocok dengan filter pencarian Anda."
-          actionLabel={isAdmin ? "Tambah Siswa Baru" : undefined}
-          onAction={isAdmin ? onAddStudent : undefined}
+          actionLabel={(isAdmin || canManageActiveClass) ? "Tambah Siswa Baru" : undefined}
+          onAction={(isAdmin || canManageActiveClass) ? onAddStudent : undefined}
         />
       ) : viewMode === 'grid' ? (
         <StudentGrid

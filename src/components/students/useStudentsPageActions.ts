@@ -26,6 +26,9 @@ const LIVE_STUDENT_COLUMNS = [
   'access_code',
   'parent_name',
   'parent_phone',
+  'nis',
+  'nisn',
+  'birth_date',
   'created_at',
   'deleted_at',
 ] as const;
@@ -236,8 +239,13 @@ export const useStudentsPageActions = ({
     if (!userId) return;
 
     const formData = new FormData(event.currentTarget);
-    const name = formData.get('name') as string;
+    const name = ((formData.get('name') as string) || '').trim();
     const classId = formData.get('class_id') as string;
+    const nis = ((formData.get('nis') as string) || '').trim() || null;
+    const nisn = ((formData.get('nisn') as string) || '').trim() || null;
+    const birthDate = ((formData.get('birth_date') as string) || '').trim() || null;
+    const parentName = ((formData.get('parent_name') as string) || '').trim() || null;
+    const parentPhone = ((formData.get('parent_phone') as string) || '').trim() || null;
     const avatarUrl = getStudentAvatar(null, genderSelection, undefined, name);
 
     if (studentModalMode === 'add') {
@@ -247,6 +255,11 @@ export const useStudentsPageActions = ({
         user_id: userId,
         gender: genderSelection,
         avatar_url: avatarUrl,
+        nis,
+        nisn,
+        birth_date: birthDate,
+        parent_name: parentName,
+        parent_phone: parentPhone,
       });
       return;
     }
@@ -270,6 +283,11 @@ export const useStudentsPageActions = ({
       class_id: classId,
       gender: genderSelection,
       avatar_url: nextAvatarUrl,
+      nis,
+      nisn,
+      birth_date: birthDate,
+      parent_name: parentName,
+      parent_phone: parentPhone,
     });
   };
 
@@ -427,7 +445,12 @@ export const useStudentsPageActions = ({
       const columnMap: Record<string, string | number | boolean | null | undefined> = {
         name: student.name,
         gender: student.gender,
+        nis: student.nis || '-',
+        nisn: student.nisn || '-',
+        birth_date: student.birth_date || '-',
         class_id: classes.find((item) => item.id === student.class_id)?.name || '-',
+        parent_name: student.parent_name || '-',
+        parent_phone: student.parent_phone || '-',
         access_code: student.access_code || 'Belum Ada',
       };
 
@@ -439,9 +462,21 @@ export const useStudentsPageActions = ({
               ? 'Kode Akses'
               : column === 'name'
                 ? 'Nama Lengkap'
-                : 'Jenis Kelamin';
+                : column === 'gender'
+                  ? 'Jenis Kelamin'
+                  : column === 'nis'
+                    ? 'NIS'
+                    : column === 'nisn'
+                      ? 'NISN'
+                      : column === 'birth_date'
+                        ? 'Tanggal Lahir'
+                        : column === 'parent_name'
+                          ? 'Nama Orang Tua'
+                          : column === 'parent_phone'
+                            ? 'No. WhatsApp Orang Tua'
+                            : column;
 
-        if (columnMap[column]) {
+        if (columnMap[column] !== undefined) {
           row[label] = columnMap[column];
         }
       });
@@ -481,14 +516,15 @@ export const useStudentsPageActions = ({
         access_code: row.data.access_code ? String(row.data.access_code) : undefined,
         parent_name: row.data.parent_name ? String(row.data.parent_name) : null,
         parent_phone: row.data.parent_phone ? String(row.data.parent_phone) : null,
+        nis: row.data.nis ? String(row.data.nis) : null,
+        nisn: row.data.nisn ? String(row.data.nisn) : null,
+        birth_date: row.data.birth_date ? String(row.data.birth_date) : null,
         address: '',
         class: classId ? classes.find((item) => item.id === classId)?.name || '' : '',
         contact: '',
-        date_of_birth: new Date().toISOString().split('T')[0],
+        date_of_birth: row.data.birth_date ? String(row.data.birth_date) : new Date().toISOString().split('T')[0],
         email: '',
         guardian_name: row.data.parent_name ? String(row.data.parent_name) : '',
-        nis: '',
-        nisn: '',
         photo_url: avatarUrl,
       };
     });

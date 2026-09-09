@@ -5,6 +5,7 @@ import { PrinterIcon } from '../Icons';
 import { IDCard } from './IDCard';
 import { StudentRow, ClassRow } from './types';
 import { useReactToPrint } from 'react-to-print';
+import { useUserSettings } from '../../hooks/useUserSettings';
 
 interface IDCardPrintModalProps {
     isOpen: boolean;
@@ -15,6 +16,7 @@ interface IDCardPrintModalProps {
 
 export const IDCardPrintModal: React.FC<IDCardPrintModalProps> = ({ isOpen, onClose, students, classes }) => {
     const printRef = useRef<HTMLDivElement>(null);
+    const { schoolName } = useUserSettings();
 
     const handlePrint = useReactToPrint({
         contentRef: printRef,
@@ -52,7 +54,7 @@ export const IDCardPrintModal: React.FC<IDCardPrintModalProps> = ({ isOpen, onCl
                             const studentClass = classes.find(c => c.id === student.class_id)?.name;
                             return (
                                 <div key={student.id} className="flex justify-center p-2 page-break-inside-avoid">
-                                    <IDCard student={student} className={studentClass} />
+                                    <IDCard student={student} className={studentClass} schoolName={schoolName} />
                                 </div>
                             );
                         })}

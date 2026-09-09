@@ -140,7 +140,7 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
 
       const { data, error } = await supabase
         .from('students')
-        .select('id, name, user_id, class_id, gender, avatar_url, access_code, parent_name, parent_phone, created_at, deleted_at')
+        .select('id, name, user_id, class_id, gender, avatar_url, access_code, parent_name, parent_phone, nis, nisn, birth_date, created_at, deleted_at')
         .eq('class_id', activeClassId)
         .is('deleted_at', null);
 
@@ -180,7 +180,10 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
       const lowerTerm = deferredSearchTerm.toLowerCase();
       filtered = filtered.filter((student) =>
         student.name.toLowerCase().includes(lowerTerm) ||
-        (student.access_code && student.access_code.toLowerCase().includes(lowerTerm)),
+        (student.access_code && student.access_code.toLowerCase().includes(lowerTerm)) ||
+        (student.nis && student.nis.toLowerCase().includes(lowerTerm)) ||
+        (student.nisn && student.nisn.toLowerCase().includes(lowerTerm)) ||
+        (student.parent_name && student.parent_name.toLowerCase().includes(lowerTerm)),
       );
     }
 

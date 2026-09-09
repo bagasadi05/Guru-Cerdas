@@ -115,7 +115,12 @@ export const StudentsModalStack: React.FC<StudentsModalStackProps> = ({
         columns={[
           { key: 'name', label: 'Nama Lengkap' },
           { key: 'gender', label: 'Jenis Kelamin' },
+          { key: 'nis', label: 'NIS' },
+          { key: 'nisn', label: 'NISN' },
+          { key: 'birth_date', label: 'Tanggal Lahir' },
           { key: 'class_id', label: 'Kelas' },
+          { key: 'parent_name', label: 'Nama Orang Tua' },
+          { key: 'parent_phone', label: 'No. WhatsApp Orang Tua' },
           { key: 'access_code', label: 'Kode Akses' },
         ]}
         onExport={onExportConfirm}

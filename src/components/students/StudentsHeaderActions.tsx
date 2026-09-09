@@ -75,9 +75,12 @@ export const StudentsHeaderActions: React.FC<StudentsHeaderActionsProps> = ({ on
     return actions.filter(action => {
       // Always allow export
       if (action.id === 'export') return true;
-      // Allow manage class if teacher can manage
-      if (action.id === 'manage_class') return canManageActiveClass;
-      // Restrict all other actions (add_student, import_excel, import_teacher) to Admin
+      // Allow manage class, add student, and import excel if user is admin or can manage the active class
+      if (action.id === 'manage_class' || action.id === 'add_student' || action.id === 'import_excel') {
+        return canManageActiveClass || isAdmin;
+      }
+      // Restrict import from other teachers to Admin
+      if (action.id === 'import_teacher') return isAdmin;
       return isAdmin;
     });
   };

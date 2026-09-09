@@ -15,6 +15,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
     onAction,
     sortConfig,
     onSort,
+    canManageActiveClass = false,
     isAdmin = false
 }) => {
     const toast = useToast();
@@ -118,7 +119,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                         <Link to={`/siswa/${student.id}`} className="p-2 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
                                             <EyeIcon className="w-4 h-4" />
                                         </Link>
-                                        {isAdmin && (
+                                        {(isAdmin || canManageActiveClass) && (
                                             <>
                                                 <button type="button"
                                                     onClick={() => onAction(student, 'edit')}

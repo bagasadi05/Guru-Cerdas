@@ -10,7 +10,7 @@ import { supabase } from '../../services/supabase';
 import { useToast } from '../../hooks/useToast';
 import { AttendanceStatus, StudentRow, ClassRow, AttendanceRow } from '../../types';
 import { getAutoTable, getJsPDF } from '../../utils/dynamicImports';
-import { exportAttendanceToExcel, exportSemesterAttendanceToExcel } from '../../utils/exportUtils';
+import { exportAttendanceToExcel, exportSemesterAttendanceToExcel, getSemesterMonths } from '../../utils/exportUtils';
 import { addPdfHeader, ensureLogosLoaded } from '../../utils/pdfHeaderUtils';
 
 interface ExportData {
@@ -348,12 +348,13 @@ export const useAttendanceExport = (
           doc.setFontSize(9);
           doc.setTextColor(0, 0, 0);
           doc.text(`Madiun, ${printDateStr}`, rightColX, finalY + 6, { align: 'center' });
-          doc.text(`Wali Kelas ${cleanClassName}`, rightColX, finalY + 10.5, { align: 'center' });
+          doc.text('Mengetahui,', rightColX, finalY + 10.5, { align: 'center' });
+          doc.text(`Wali Kelas ${cleanClassName}`, rightColX, finalY + 15, { align: 'center' });
 
           const teacherDisplay = classData.teacherName?.trim() ? classData.teacherName.trim() : '....................................';
 
           doc.setFont('helvetica', 'bold');
-          doc.text(`( ${teacherDisplay} )`, rightColX, finalY + 28, { align: 'center' });
+          doc.text(`( ${teacherDisplay} )`, rightColX, finalY + 33, { align: 'center' });
         }
 
         const fileName = buildExportFileName(studentsByClass, 'monthly', exportMonth);
@@ -363,19 +364,30 @@ export const useAttendanceExport = (
         await ensureLogosLoaded();
         const { default: jsPDF } = await getJsPDF();
         const { default: autoTable } = await getAutoTable();
-        const doc = new jsPDF();
+        const doc = new jsPDF({ orientation: 'landscape' });
         const pageHeight = doc.internal.pageSize.getHeight();
         const pageWidth = doc.internal.pageSize.getWidth();
         let isFirstClass = true;
 
+        const semester = semesters.find(s => s.id === exportSemesterId);
+        const resolvedMonths = getSemesterMonths(
+          attendance,
+          exportTitle,
+          semester?.start_date,
+          semester?.end_date
+        );
+
+        const totalMonthCols = resolvedMonths.length * 4;
+        const totalStartCol = 2 + totalMonthCols;
+
         for (const classData of studentsByClass) {
-          if (!isFirstClass) doc.addPage();
+          if (!isFirstClass) doc.addPage('landscape');
           isFirstClass = false;
 
           const cleanClassName = classData.name.trim().replace(/^kelas\s+/i, '');
           const titleText = `REKAPITULASI KEHADIRAN SISWA - KELAS ${cleanClassName.toUpperCase()}`;
           const subText = `${exportTitle.toUpperCase()} • ${schoolName || '-'}`;
-          const headerY = addPdfHeader(doc, { schoolName, orientation: 'portrait' });
+          const headerY = addPdfHeader(doc, { schoolName, orientation: 'landscape' });
           const pageWidthHeader2 = doc.internal.pageSize.getWidth();
           doc.setFontSize(11);
           doc.setFont('helvetica', 'bold');
@@ -387,87 +399,146 @@ export const useAttendanceExport = (
           // Garis pemisah kelas
           doc.setDrawColor(15, 118, 110);
           doc.setLineWidth(0.4);
-          doc.line(14, headerY + 6.5, pageWidthHeader2 - 14, headerY + 6.5);
+          doc.line(10, headerY + 6.5, pageWidthHeader2 - 10, headerY + 6.5);
           doc.setDrawColor(0, 0, 0);
 
-          const attendanceMap = new Map<string, { h: number, s: number, i: number, a: number }>();
-          attendance.forEach((r: AttendanceRow) => {
-            const current = attendanceMap.get(r.student_id) || { h: 0, s: 0, i: 0, a: 0 };
-            if (r.status === 'Hadir') current.h++;
-            else if (r.status === 'Sakit') current.s++;
-            else if (r.status === 'Izin') current.i++;
-            else if (r.status === 'Alpha') current.a++;
-            attendanceMap.set(r.student_id, current);
-          });
+          const tableHead = [
+            [
+              { content: 'NO', rowSpan: 2, styles: { halign: 'center' as const, valign: 'middle' as const, fillColor: [51, 65, 85] } },
+              { content: 'NAMA LENGKAP', rowSpan: 2, styles: { halign: 'left' as const, valign: 'middle' as const, fillColor: [51, 65, 85] } },
+              ...resolvedMonths.map((m) => ({
+                content: m.label.toUpperCase(),
+                colSpan: 4,
+                styles: { halign: 'center' as const, valign: 'middle' as const, fillColor: [245, 158, 11] }
+              })),
+              {
+                content: 'TOTAL SEMESTER',
+                colSpan: 5,
+                styles: { halign: 'center' as const, valign: 'middle' as const, fillColor: [2, 132, 199] }
+              }
+            ],
+            [
+              ...resolvedMonths.flatMap(() => [
+                { content: 'S', styles: { halign: 'center' as const, valign: 'middle' as const, fillColor: [254, 243, 199], textColor: [180, 83, 9] } },
+                { content: 'I', styles: { halign: 'center' as const, valign: 'middle' as const, fillColor: [219, 234, 254], textColor: [29, 78, 216] } },
+                { content: 'A', styles: { halign: 'center' as const, valign: 'middle' as const, fillColor: [254, 226, 226], textColor: [185, 28, 28] } },
+                { content: 'H', styles: { halign: 'center' as const, valign: 'middle' as const, fillColor: [220, 252, 231], textColor: [21, 128, 61] } },
+              ]),
+              { content: 'S', styles: { halign: 'center' as const, valign: 'middle' as const, fillColor: [224, 242, 254], textColor: [180, 83, 9] } },
+              { content: 'I', styles: { halign: 'center' as const, valign: 'middle' as const, fillColor: [224, 242, 254], textColor: [29, 78, 216] } },
+              { content: 'A', styles: { halign: 'center' as const, valign: 'middle' as const, fillColor: [224, 242, 254], textColor: [185, 28, 28] } },
+              { content: 'H', styles: { halign: 'center' as const, valign: 'middle' as const, fillColor: [224, 242, 254], textColor: [21, 128, 61] } },
+              { content: '%', styles: { halign: 'center' as const, valign: 'middle' as const, fillColor: [224, 242, 254], textColor: [3, 105, 161] } },
+            ]
+          ];
 
-          const headers = ['NO', 'NAMA LENGKAP', 'HADIR (H)', 'SAKIT (S)', 'IZIN (I)', 'ALPHA (A)', 'PERSENTASE (%)'];
           const rows = classData.students.map((student: StudentRow, index: number) => {
-            const counts = attendanceMap.get(student.id) || { h: 0, s: 0, i: 0, a: 0 };
-            const totalDays = counts.h + counts.s + counts.i + counts.a;
-            const percent = totalDays > 0 ? `${Math.round((counts.h / totalDays) * 100)}%` : '100%';
+            const studentAttendance = attendance.filter((a: AttendanceRow) => a.student_id === student.id);
+            const rowData: string[] = [String(index + 1), student.name];
+            let totalH = 0, totalS = 0, totalI = 0, totalA = 0;
 
-            return [
-              String(index + 1),
-              student.name,
-              String(counts.h),
-              String(counts.s),
-              String(counts.i),
-              String(counts.a),
-              percent
-            ];
+            resolvedMonths.forEach((m) => {
+              const monthRecords = studentAttendance.filter((a: AttendanceRow) => a.date?.startsWith(m.key));
+              const h = monthRecords.filter((a: AttendanceRow) => a.status === 'Hadir').length;
+              const s = monthRecords.filter((a: AttendanceRow) => a.status === 'Sakit').length;
+              const i = monthRecords.filter((a: AttendanceRow) => a.status === 'Izin').length;
+              const a = monthRecords.filter((a: AttendanceRow) => a.status === 'Alpha').length;
+
+              totalH += h;
+              totalS += s;
+              totalI += i;
+              totalA += a;
+
+              rowData.push(
+                s > 0 ? String(s) : '-',
+                i > 0 ? String(i) : '-',
+                a > 0 ? String(a) : '-',
+                h > 0 ? String(h) : '-'
+              );
+            });
+
+            const totalDays = totalH + totalS + totalI + totalA;
+            const percentage = totalDays > 0 ? `${Math.round((totalH / totalDays) * 100)}%` : '100%';
+
+            rowData.push(
+              String(totalS),
+              String(totalI),
+              String(totalA),
+              String(totalH),
+              percentage
+            );
+
+            return rowData;
           });
 
           autoTable(doc, {
-            head: [headers],
+            head: tableHead as any,
             body: rows,
             startY: headerY + 8.5,
             showHead: 'everyPage',
-            margin: { top: 12, bottom: 55, left: 14, right: 14 },
-            styles: { fontSize: 8.5, cellPadding: 1.5, halign: 'center' },
+            margin: { top: 12, bottom: 55, left: 10, right: 10 },
+            styles: { fontSize: 6.5, cellPadding: 0.8, halign: 'center' },
             columnStyles: {
-              0: { cellWidth: 10, halign: 'center' },
-              1: { halign: 'left', fontStyle: 'bold' }
+              0: { cellWidth: 8, halign: 'center' },
+              1: { halign: 'left', fontStyle: 'bold', cellWidth: 44 }
             },
             alternateRowStyles: { fillColor: [248, 250, 252] },
             didParseCell: (data: any) => {
-              if (data.section === 'head') {
+              if (data.section === 'body') {
                 const colIdx = data.column.index;
-                if (colIdx <= 1) data.cell.styles.fillColor = [51, 65, 85];
-                else if (colIdx === 6) data.cell.styles.fillColor = [2, 132, 199];
-                else data.cell.styles.fillColor = [245, 158, 11];
-              } else if (data.section === 'body') {
-                const colIdx = data.column.index;
-                if (colIdx >= 2) data.cell.styles.fontStyle = 'bold';
-                if (colIdx === 2) data.cell.styles.textColor = [21, 128, 61];
-                else if (colIdx === 3) data.cell.styles.textColor = [180, 83, 9];
-                else if (colIdx === 4) data.cell.styles.textColor = [29, 78, 216];
-                else if (colIdx === 5) data.cell.styles.textColor = [185, 28, 28];
-                else if (colIdx === 6) data.cell.styles.textColor = [2, 132, 199];
+                const val = String(data.cell.raw || '');
+                if (colIdx >= 2 && colIdx < totalStartCol) {
+                  const subIdx = (colIdx - 2) % 4;
+                  if (subIdx === 0 && val !== '-') {
+                    data.cell.styles.textColor = [180, 83, 9];
+                    data.cell.styles.fillColor = [254, 243, 199];
+                    data.cell.styles.fontStyle = 'bold';
+                  } else if (subIdx === 1 && val !== '-') {
+                    data.cell.styles.textColor = [29, 78, 216];
+                    data.cell.styles.fillColor = [219, 234, 254];
+                    data.cell.styles.fontStyle = 'bold';
+                  } else if (subIdx === 2 && val !== '-') {
+                    data.cell.styles.textColor = [185, 28, 28];
+                    data.cell.styles.fillColor = [254, 226, 226];
+                    data.cell.styles.fontStyle = 'bold';
+                  } else if (subIdx === 3 && val !== '-') {
+                    data.cell.styles.textColor = [21, 128, 61];
+                  }
+                } else if (colIdx >= totalStartCol) {
+                  data.cell.styles.fontStyle = 'bold';
+                  data.cell.styles.fillColor = [240, 249, 255];
+                  if (colIdx === totalStartCol) data.cell.styles.textColor = [180, 83, 9];
+                  else if (colIdx === totalStartCol + 1) data.cell.styles.textColor = [29, 78, 216];
+                  else if (colIdx === totalStartCol + 2) data.cell.styles.textColor = [185, 28, 28];
+                  else if (colIdx === totalStartCol + 3) data.cell.styles.textColor = [21, 128, 61];
+                  else if (colIdx === totalStartCol + 4) data.cell.styles.textColor = [2, 132, 199];
+                }
               }
             },
             didDrawPage: (_data: any) => {
               doc.setFontSize(8);
               doc.setTextColor(100);
-              doc.text(`Dicetak dari ${schoolName} pada ${new Date().toLocaleDateString('id-ID')}`, 14, pageHeight - 6);
+              doc.text(`Dicetak dari ${schoolName} pada ${new Date().toLocaleDateString('id-ID')}`, 10, pageHeight - 6);
               doc.text(`Halaman ${doc.internal.pages!.length - 1}`, pageWidth - 25, pageHeight - 6);
             }
           });
 
           // Tanda Tangan Wali Kelas — langsung di bawah tabel pada halaman akhir tabel
           const finalY = (doc as any).lastAutoTable?.finalY || (headerY + 20);
-          const rightColX = pageWidth - 50;
+          const rightColX = pageWidth - 60;
           const printDateStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(9);
           doc.setTextColor(0, 0, 0);
           doc.text(`Madiun, ${printDateStr}`, rightColX, finalY + 6, { align: 'center' });
-          doc.text(`Wali Kelas ${cleanClassName}`, rightColX, finalY + 10.5, { align: 'center' });
+          doc.text('Mengetahui,', rightColX, finalY + 10.5, { align: 'center' });
+          doc.text(`Wali Kelas ${cleanClassName}`, rightColX, finalY + 15, { align: 'center' });
 
           const teacherDisplay = classData.teacherName?.trim() ? classData.teacherName.trim() : '....................................';
 
           doc.setFont('helvetica', 'bold');
-          doc.text(`( ${teacherDisplay} )`, rightColX, finalY + 28, { align: 'center' });
+          doc.text(`( ${teacherDisplay} )`, rightColX, finalY + 33, { align: 'center' });
         }
 
         const fileName = buildExportFileName(studentsByClass, 'semester', exportTitle.replace(/\s+/g, '_'));
@@ -491,12 +562,21 @@ export const useAttendanceExport = (
             schoolName || 'MI AL IRSYAD KOTA MADIUN'
           );
         } else {
+          const semester = semesters.find(s => s.id === exportSemesterId);
+          const resolvedMonths = getSemesterMonths(
+            attendance,
+            exportTitle,
+            semester?.start_date,
+            semester?.end_date
+          );
+
           await exportSemesterAttendanceToExcel(
             studentsByClass,
             attendance,
             exportTitle,
             buildExportFileName(studentsByClass, 'semester', exportTitle.replace(/\s+/g, '_')),
-            schoolName || 'MI AL IRSYAD KOTA MADIUN'
+            schoolName || 'MI AL IRSYAD KOTA MADIUN',
+            resolvedMonths
           );
         }
         toast.success('Laporan Excel berhasil diunduh!');

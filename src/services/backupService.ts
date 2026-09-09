@@ -75,7 +75,7 @@ export type ValidationResult = {
 const BACKUP_VERSION = 2;
 
 const LIVE_COLUMNS: Record<keyof BackupData['data'], readonly string[]> = {
-    students: ['id', 'name', 'user_id', 'class_id', 'gender', 'avatar_url', 'access_code', 'parent_name', 'parent_phone', 'created_at', 'deleted_at'],
+    students: ['id', 'name', 'user_id', 'class_id', 'gender', 'avatar_url', 'access_code', 'parent_name', 'parent_phone', 'nis', 'nisn', 'birth_date', 'created_at', 'deleted_at'],
     classes: ['id', 'name', 'user_id', 'created_at', 'deleted_at'],
     attendance: ['id', 'student_id', 'user_id', 'date', 'status', 'notes', 'semester_id', 'created_at', 'deleted_at'],
     academic_records: ['id', 'student_id', 'user_id', 'subject', 'score', 'assessment_name', 'notes', 'semester_id', 'version', 'created_at', 'deleted_at'],

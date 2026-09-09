@@ -344,14 +344,19 @@ export const exportAttendanceToExcel = async (
 
         ws.mergeCells(lastRow + 3, sigStartCol, lastRow + 3, totalColumns);
         const sigCell2 = ws.getCell(lastRow + 3, sigStartCol);
-        sigCell2.value = `Wali Kelas ${cleanClassName}`;
+        sigCell2.value = 'Mengetahui,';
         sigCell2.alignment = { horizontal: 'center', vertical: 'middle' };
 
-        ws.mergeCells(lastRow + 6, sigStartCol, lastRow + 6, totalColumns);
-        const sigCell3 = ws.getCell(lastRow + 6, sigStartCol);
-        sigCell3.value = `( ${teacherDisplay} )`;
-        sigCell3.font = { bold: true };
+        ws.mergeCells(lastRow + 4, sigStartCol, lastRow + 4, totalColumns);
+        const sigCell3 = ws.getCell(lastRow + 4, sigStartCol);
+        sigCell3.value = `Wali Kelas ${cleanClassName}`;
         sigCell3.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        ws.mergeCells(lastRow + 7, sigStartCol, lastRow + 7, totalColumns);
+        const sigCell4 = ws.getCell(lastRow + 7, sigStartCol);
+        sigCell4.value = `( ${teacherDisplay} )`;
+        sigCell4.font = { bold: true };
+        sigCell4.alignment = { horizontal: 'center', vertical: 'middle' };
     }
 
     const buffer = await workbook.xlsx.writeBuffer();
@@ -644,11 +649,115 @@ export const exportClassSummaryToExcel = async (
 };
 
 /**
+ * Information for a month in a semester export
+ */
+export interface SemesterMonthInfo {
+    year: number;
+    month: number;
+    key: string;        // e.g. "2026-07"
+    label: string;      // e.g. "Juli"
+    shortLabel: string; // e.g. "Jul"
+}
+
+export const getSemesterMonths = (
+    attendanceData?: ExportAttendanceRecord[],
+    semesterName?: string,
+    startDate?: string,
+    endDate?: string
+): SemesterMonthInfo[] => {
+    // 1. If startDate and endDate are given, parse month range
+    if (startDate && endDate) {
+        const startY = parseInt(startDate.slice(0, 4), 10);
+        const startM = parseInt(startDate.slice(5, 7), 10);
+        const endY = parseInt(endDate.slice(0, 4), 10);
+        const endM = parseInt(endDate.slice(5, 7), 10);
+
+        if (!isNaN(startY) && !isNaN(startM) && !isNaN(endY) && !isNaN(endM)) {
+            const list: SemesterMonthInfo[] = [];
+            let currY = startY;
+            let currM = startM;
+            while (currY < endY || (currY === endY && currM <= endM)) {
+                const d = new Date(currY, currM - 1, 1);
+                list.push({
+                    year: currY,
+                    month: currM,
+                    key: `${currY}-${String(currM).padStart(2, '0')}`,
+                    label: d.toLocaleString('id-ID', { month: 'long' }),
+                    shortLabel: d.toLocaleString('id-ID', { month: 'short' }),
+                });
+                currM++;
+                if (currM > 12) {
+                    currM = 1;
+                    currY++;
+                }
+                if (list.length >= 12) break;
+            }
+            if (list.length >= 5 && list.length <= 7) {
+                return list;
+            }
+            if (list.length > 0 && list.length <= 6) {
+                return list;
+            }
+        }
+    }
+
+    // 2. Derive 6 months based on Semester Ganjil (Jul-Des) / Genap (Jan-Jun)
+    const isGenap = /genap|semester\s*2/i.test(semesterName || '');
+    let baseYear: number | undefined;
+
+    if (startDate && /^\d{4}/.test(startDate)) {
+        baseYear = parseInt(startDate.slice(0, 4), 10);
+    }
+    if (!baseYear && semesterName) {
+        const match = semesterName.match(/(\d{4})\s*[-/]\s*(\d{4})/);
+        if (match) {
+            baseYear = isGenap ? parseInt(match[2], 10) : parseInt(match[1], 10);
+        } else {
+            const singleYearMatch = semesterName.match(/\b(20\d{2})\b/);
+            if (singleYearMatch) {
+                baseYear = parseInt(singleYearMatch[1], 10);
+            }
+        }
+    }
+    if (!baseYear && attendanceData && attendanceData.length > 0) {
+        const firstDate = attendanceData.find(a => a.date && /^\d{4}/.test(a.date))?.date;
+        if (firstDate) {
+            baseYear = parseInt(firstDate.slice(0, 4), 10);
+        }
+    }
+    if (!baseYear) {
+        baseYear = new Date().getFullYear();
+    }
+
+    const startM = isGenap ? 1 : 7;
+    const list: SemesterMonthInfo[] = [];
+    for (let i = 0; i < 6; i++) {
+        let m = startM + i;
+        let y = baseYear;
+        if (m > 12) {
+            m -= 12;
+            y += 1;
+        }
+        const d = new Date(y, m - 1, 1);
+        list.push({
+            year: y,
+            month: m,
+            key: `${y}-${String(m).padStart(2, '0')}`,
+            label: d.toLocaleString('id-ID', { month: 'long' }),
+            shortLabel: d.toLocaleString('id-ID', { month: 'short' }),
+        });
+    }
+    return list;
+};
+
+export const getSemesterMonthsFromAttendance = getSemesterMonths;
+
+/**
  * Exports class attendance summary for a full semester to a formatted Excel file
  * 
  * Features:
  * - Professional header with school name and semester info
- * - Grid columns: No, Nama Siswa, Hadir (H), Sakit (S), Izin (I), Alpha (A), % Kehadiran
+ * - Multi-level grid columns: No, Nama Lengkap, Month 1..6 (S, I, A, H), Total Semester (S, I, A, H, %)
  * - Professional signature section
  * 
  * @since 2.0.0
@@ -658,18 +767,23 @@ export const exportSemesterAttendanceToExcel = async (
     attendanceData: ExportAttendanceRecord[],
     semesterName: string,
     fileName: string,
-    schoolName: string = 'MI AL IRSYAD KOTA MADIUN'
+    schoolName: string = 'MI AL IRSYAD KOTA MADIUN',
+    semesterMonths?: SemesterMonthInfo[]
 ) => {
     const ExcelJS = await getExcelJS();
     const workbook = new ExcelJS.Workbook();
     workbook.creator = schoolName;
 
+    const resolvedMonths = (semesterMonths && semesterMonths.length > 0)
+        ? semesterMonths
+        : getSemesterMonthsFromAttendance(attendanceData, semesterName);
+
+    const totalColumns = 2 + (resolvedMonths.length * 4) + 5;
+
     for (const classData of classesData) {
         const cleanSheetName = classData.name.replace(/[\\/?*:[\\]]/g, '').slice(0, 31);
         const ws = workbook.addWorksheet(cleanSheetName || 'Rekap Semester');
 
-        const totalColumns = 7;
-        
         const borderAll = {
             top: { style: 'thin' }, left: { style: 'thin' },
             bottom: { style: 'thin' }, right: { style: 'thin' }
@@ -699,65 +813,153 @@ export const exportSemesterAttendanceToExcel = async (
 
         ws.addRow([]);
 
-        const headerRow = ws.getRow(5);
-        headerRow.values = ['NO', 'NAMA LENGKAP', 'HADIR (H)', 'SAKIT (S)', 'IZIN (I)', 'ALPHA (A)', 'PERSENTASE (%)'];
-        headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+        // Row 5: Header Level 1
+        ws.mergeCells(5, 1, 6, 1);
+        const noCell = ws.getCell(5, 1);
+        noCell.value = 'NO';
+
+        ws.mergeCells(5, 2, 6, 2);
+        const namaCell = ws.getCell(5, 2);
+        namaCell.value = 'NAMA LENGKAP';
+
+        resolvedMonths.forEach((m, idx) => {
+            const startCol = 3 + (idx * 4);
+            const endCol = startCol + 3;
+            ws.mergeCells(5, startCol, 5, endCol);
+            const mCell = ws.getCell(5, startCol);
+            mCell.value = m.label.toUpperCase();
+
+            // Row 6 sub-headers for this month
+            ws.getCell(6, startCol).value = 'S';
+            ws.getCell(6, startCol + 1).value = 'I';
+            ws.getCell(6, startCol + 2).value = 'A';
+            ws.getCell(6, startCol + 3).value = 'H';
+        });
+
+        const totalStartCol = 3 + (resolvedMonths.length * 4);
+        const totalEndCol = totalStartCol + 4;
+        ws.mergeCells(5, totalStartCol, 5, totalEndCol);
+        const totalCell = ws.getCell(5, totalStartCol);
+        totalCell.value = 'TOTAL SEMESTER';
+
+        // Row 6 under TOTAL SEMESTER
+        ws.getCell(6, totalStartCol).value = 'S';
+        ws.getCell(6, totalStartCol + 1).value = 'I';
+        ws.getCell(6, totalStartCol + 2).value = 'A';
+        ws.getCell(6, totalStartCol + 3).value = 'H';
+        ws.getCell(6, totalStartCol + 4).value = '%';
+
+        const row5 = ws.getRow(5);
+        row5.height = 24;
+        row5.eachCell({ includeEmpty: true }, (cell, colNumber) => {
             if (colNumber <= totalColumns) {
                 cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
                 cell.alignment = { horizontal: 'center', vertical: 'middle' };
-                if (colNumber <= 2) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } };
-                else if (colNumber === 7) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0284C7' } };
-                else cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF59E0B' } };
                 cell.border = borderAll;
+                if (colNumber <= 2) {
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } };
+                } else if (colNumber >= totalStartCol) {
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0284C7' } };
+                } else {
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF59E0B' } };
+                }
+            }
+        });
+
+        const row6 = ws.getRow(6);
+        row6.height = 20;
+        row6.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+            if (colNumber <= totalColumns) {
+                cell.font = { bold: true };
+                cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                cell.border = borderAll;
+                if (colNumber > 2 && colNumber < totalStartCol) {
+                    const subIdx = (colNumber - 3) % 4;
+                    if (subIdx === 0) { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } }; cell.font = { bold: true, color: { argb: 'FFB45309' } }; }
+                    else if (subIdx === 1) { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDBEAFE' } }; cell.font = { bold: true, color: { argb: 'FF1D4ED8' } }; }
+                    else if (subIdx === 2) { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } }; cell.font = { bold: true, color: { argb: 'FFB91C1C' } }; }
+                    else if (subIdx === 3) { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCFCE7' } }; cell.font = { bold: true, color: { argb: 'FF15803D' } }; }
+                } else if (colNumber >= totalStartCol) {
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0F2FE' } };
+                    if (colNumber === totalStartCol) cell.font = { bold: true, color: { argb: 'FFB45309' } };
+                    else if (colNumber === totalStartCol + 1) cell.font = { bold: true, color: { argb: 'FF1D4ED8' } };
+                    else if (colNumber === totalStartCol + 2) cell.font = { bold: true, color: { argb: 'FFB91C1C' } };
+                    else if (colNumber === totalStartCol + 3) cell.font = { bold: true, color: { argb: 'FF15803D' } };
+                    else cell.font = { bold: true, color: { argb: 'FF0369A1' } };
+                }
             }
         });
 
         ws.getColumn(1).width = 5;
-        ws.getColumn(2).width = 40;
-        ws.getColumn(3).width = 12;
-        ws.getColumn(4).width = 12;
-        ws.getColumn(5).width = 12;
-        ws.getColumn(6).width = 12;
-        ws.getColumn(7).width = 18;
-        
-        ws.views = [ { state: 'frozen', xSplit: 2, ySplit: 5, topLeftCell: 'C6' } ];
+        ws.getColumn(2).width = 36;
+        for (let c = 3; c < totalStartCol; c++) {
+            ws.getColumn(c).width = 6;
+        }
+        for (let c = totalStartCol; c < totalStartCol + 4; c++) {
+            ws.getColumn(c).width = 6;
+        }
+        ws.getColumn(totalEndCol).width = 8;
+
+        ws.views = [{ state: 'frozen', xSplit: 2, ySplit: 6, topLeftCell: 'C7' }];
 
         classData.students.forEach((student, index) => {
             const studentAttendance = attendanceData.filter((a) => a.student_id === student.id);
-            const h = studentAttendance.filter((a) => a.status === 'Hadir').length;
-            const s = studentAttendance.filter((a) => a.status === 'Sakit').length;
-            const i = studentAttendance.filter((a) => a.status === 'Izin').length;
-            const a = studentAttendance.filter((a) => a.status === 'Alpha').length;
-            const total = h + s + i + a;
-            const percentage = total > 0 ? Math.round((h / total) * 100) : 0;
+            const rowValues: (string | number)[] = [index + 1, ` ${student.name}`];
 
-            const row = ws.addRow([
-                index + 1,
-                ` ${student.name}`,
-                h, s, i, a,
-                `${percentage}%`
-            ]);
+            let totalH = 0, totalS = 0, totalI = 0, totalA = 0;
+
+            resolvedMonths.forEach((m) => {
+                const monthRecords = studentAttendance.filter(a => a.date?.startsWith(m.key));
+                const h = monthRecords.filter(a => a.status === 'Hadir').length;
+                const s = monthRecords.filter(a => a.status === 'Sakit').length;
+                const i = monthRecords.filter(a => a.status === 'Izin').length;
+                const a = monthRecords.filter(a => a.status === 'Alpha').length;
+
+                totalH += h;
+                totalS += s;
+                totalI += i;
+                totalA += a;
+
+                rowValues.push(s, i, a, h);
+            });
+
+            const totalDays = totalH + totalS + totalI + totalA;
+            const percentage = totalDays > 0 ? Math.round((totalH / totalDays) * 100) : 100;
+            rowValues.push(totalS, totalI, totalA, totalH, `${percentage}%`);
+
+            const row = ws.addRow(rowValues);
+            row.height = 20;
 
             const fillColor = index % 2 !== 0 ? 'FFF8FAFC' : 'FFFFFFFF';
             row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
                 if (colNumber <= totalColumns) {
                     cell.border = borderAll;
                     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
-                    if (colNumber === 1 || colNumber >= 3) {
+                    if (colNumber === 1) {
                         cell.alignment = { horizontal: 'center', vertical: 'middle' };
-                        if (colNumber >= 3) cell.font = { bold: true };
-                    } else {
+                    } else if (colNumber === 2) {
                         cell.alignment = { horizontal: 'left', vertical: 'middle' };
+                        cell.font = { bold: true };
+                    } else if (colNumber >= totalStartCol) {
+                        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                        cell.font = { bold: true };
+                        if (colNumber === totalStartCol) cell.font = { bold: true, color: { argb: 'FFB45309' } };
+                        else if (colNumber === totalStartCol + 1) cell.font = { bold: true, color: { argb: 'FF1D4ED8' } };
+                        else if (colNumber === totalStartCol + 2) cell.font = { bold: true, color: { argb: 'FFB91C1C' } };
+                        else if (colNumber === totalStartCol + 3) cell.font = { bold: true, color: { argb: 'FF15803D' } };
+                        else cell.font = { bold: true, color: { argb: 'FF0369A1' } };
+                    } else {
+                        cell.alignment = { horizontal: 'center', vertical: 'middle' };
                     }
                 }
             });
         });
 
-        const lastRow = classData.students.length + 5;
+        const lastRow = classData.students.length + 6;
         const printDateStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
         const teacherDisplay = classData.teacherName?.trim() ? classData.teacherName.trim() : '....................................';
 
-        const sigStartCol = Math.max(1, totalColumns - 2);
+        const sigStartCol = Math.max(1, totalColumns - 4);
 
         ws.mergeCells(lastRow + 2, sigStartCol, lastRow + 2, totalColumns);
         const sigCell1 = ws.getCell(lastRow + 2, sigStartCol);
@@ -766,14 +968,19 @@ export const exportSemesterAttendanceToExcel = async (
 
         ws.mergeCells(lastRow + 3, sigStartCol, lastRow + 3, totalColumns);
         const sigCell2 = ws.getCell(lastRow + 3, sigStartCol);
-        sigCell2.value = `Wali Kelas ${cleanClassName}`;
+        sigCell2.value = 'Mengetahui,';
         sigCell2.alignment = { horizontal: 'center', vertical: 'middle' };
 
-        ws.mergeCells(lastRow + 6, sigStartCol, lastRow + 6, totalColumns);
-        const sigCell3 = ws.getCell(lastRow + 6, sigStartCol);
-        sigCell3.value = `( ${teacherDisplay} )`;
-        sigCell3.font = { bold: true };
+        ws.mergeCells(lastRow + 4, sigStartCol, lastRow + 4, totalColumns);
+        const sigCell3 = ws.getCell(lastRow + 4, sigStartCol);
+        sigCell3.value = `Wali Kelas ${cleanClassName}`;
         sigCell3.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        ws.mergeCells(lastRow + 7, sigStartCol, lastRow + 7, totalColumns);
+        const sigCell4 = ws.getCell(lastRow + 7, sigStartCol);
+        sigCell4.value = `( ${teacherDisplay} )`;
+        sigCell4.font = { bold: true };
+        sigCell4.alignment = { horizontal: 'center', vertical: 'middle' };
     }
 
     const buffer = await workbook.xlsx.writeBuffer();

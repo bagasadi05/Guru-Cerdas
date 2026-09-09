@@ -1,4 +1,5 @@
 import React from 'react';
+import { X } from 'lucide-react';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { LayoutGridIcon, ListIcon, SearchIcon } from '../Icons';
@@ -33,11 +34,22 @@ export const StudentFilters: React.FC<StudentFiltersProps> = ({
                 </div>
                 <Input
                     type="text"
-                    placeholder="Cari nama atau kode akses siswa..."
+                    placeholder="Cari nama, NIS, atau kode akses siswa..."
                     value={searchTerm}
                     onChange={e => onSearchChange(e.target.value)}
-                    className="pl-10 h-11 text-xs sm:text-sm w-full shadow-sm border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 rounded-xl bg-white dark:bg-slate-800 transition-all"
+                    className="pl-10 pr-9 h-11 text-xs sm:text-sm w-full shadow-sm border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-emerald-500 rounded-xl bg-white dark:bg-slate-800 transition-all"
                 />
+                {searchTerm && (
+                    <button
+                        type="button"
+                        onClick={() => onSearchChange('')}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                        title="Hapus pencarian"
+                        aria-label="Hapus kata kunci pencarian"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                )}
             </div>
 
             {/* Filter Controls Row */}
@@ -74,7 +86,7 @@ export const StudentFilters: React.FC<StudentFiltersProps> = ({
                 <div className="flex-1 sm:flex-none min-w-[145px]">
                     <Select
                         value={genderFilter}
-                        onChange={(e) => onGenderFilterChange(e.target.value as any)}
+                        onChange={(e) => onGenderFilterChange(e.target.value as 'all' | 'Laki-laki' | 'Perempuan')}
                         className="h-11 !text-xs sm:!text-sm font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 !px-3 shadow-sm cursor-pointer"
                     >
                         <option value="all">Semua Gender</option>
@@ -87,7 +99,7 @@ export const StudentFilters: React.FC<StudentFiltersProps> = ({
                 <div className="flex-1 sm:flex-none min-w-[155px]">
                     <Select
                         value={accessCodeFilter}
-                        onChange={(e) => onAccessCodeFilterChange(e.target.value as any)}
+                        onChange={(e) => onAccessCodeFilterChange(e.target.value as 'all' | 'has_code' | 'no_code')}
                         className="h-11 !text-xs sm:!text-sm font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 !px-3 shadow-sm cursor-pointer"
                     >
                         <option value="all">Semua Status</option>

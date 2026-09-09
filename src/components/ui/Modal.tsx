@@ -113,7 +113,10 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
             animate={shouldReduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1, y: 0 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, opacity: 0, y: 20 }}
             transition={shouldReduceMotion ? { duration: 0 } : easing.spring}
-            className={`relative w-full ${maxWidth} mx-1 sm:mx-3 max-h-[95vh] flex flex-col`}
+            className={`relative w-full ${maxWidth} mx-1 sm:mx-3 mb-2 sm:mb-0 max-h-[95vh] flex flex-col`}
+            style={{
+              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+            }}
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
             id="modal-container"
           >

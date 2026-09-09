@@ -2322,12 +2322,15 @@ export type Database = {
         Row: {
           access_code: string | null
           avatar_url: string | null
+          birth_date: string | null
           class_id: string
           created_at: string
           deleted_at: string | null
           gender: Database["public"]["Enums"]["gender_enum"]
           id: string
           name: string
+          nis: string | null
+          nisn: string | null
           parent_name: string | null
           parent_phone: string | null
           user_id: string
@@ -2335,12 +2338,15 @@ export type Database = {
         Insert: {
           access_code?: string | null
           avatar_url?: string | null
+          birth_date?: string | null
           class_id: string
           created_at?: string
           deleted_at?: string | null
           gender?: Database["public"]["Enums"]["gender_enum"]
           id?: string
           name: string
+          nis?: string | null
+          nisn?: string | null
           parent_name?: string | null
           parent_phone?: string | null
           user_id: string
@@ -2348,12 +2354,15 @@ export type Database = {
         Update: {
           access_code?: string | null
           avatar_url?: string | null
+          birth_date?: string | null
           class_id?: string
           created_at?: string
           deleted_at?: string | null
           gender?: Database["public"]["Enums"]["gender_enum"]
           id?: string
           name?: string
+          nis?: string | null
+          nisn?: string | null
           parent_name?: string | null
           parent_phone?: string | null
           user_id?: string

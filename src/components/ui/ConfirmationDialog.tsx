@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangleIcon, TrashIcon, XIcon, AlertCircleIcon } from '../Icons';
 import { Button } from './Button';
 
@@ -82,7 +83,10 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
 
     if (!isOpen) return null;
 
-    return (
+    const isClient = typeof document !== 'undefined';
+    if (!isClient) return null;
+
+    return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
             <div
                 className={`w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border ${config.borderColor} overflow-hidden`}
@@ -159,7 +163,8 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
