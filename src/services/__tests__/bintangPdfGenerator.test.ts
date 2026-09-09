@@ -649,6 +649,53 @@ describe('bintangPdfGenerator', () => {
         const drawnLines = lineSpy.mock.calls;
         expect(drawnLines.some(call => Math.abs(Number(call[1]) - (pageHeight - 14)) < 1)).toBe(false);
     });
+
+    it('renders no-violations box with formal black color, balanced lines, and maxWidth constraint without overflow', async () => {
+        const doc = new jsPDF();
+        const textSpy = vi.spyOn(doc, 'text');
+        const setFillColorSpy = vi.spyOn(doc, 'setFillColor');
+        const setTextColorSpy = vi.spyOn(doc, 'setTextColor');
+
+        const report = {
+            student: { id: 's_novio', name: 'Siswa Bersih Pelanggaran', classes: { name: 'Kelas 4B' } },
+            aspects: {
+                ADAB: { grade: 'A', points: 0 },
+                KEDISIPLINAN: { grade: 'A', points: 0 },
+                KERAPIAN: { grade: 'A', points: 0 },
+            },
+            violations: [],
+            evaluation: {
+                adab_score: 'A',
+                kedisiplinan_score: 'A',
+                kerapian_score: 'A',
+                catatan_wali: 'Sangat disiplin dan berakhlak baik.',
+            },
+        };
+
+        await generateBintangReportPdf(
+            doc,
+            [report],
+            'Agustus 2026',
+            '5 September 2026',
+            { id: 'u1', name: 'Ustadzah Fatimah, S.Pd.I', avatarUrl: '' }
+        );
+
+        // Verify section header fill color uses formal black [0, 0, 0]
+        expect(setFillColorSpy).toHaveBeenCalledWith(0, 0, 0);
+
+        // Verify text color uses formal black [0, 0, 0]
+        expect(setTextColorSpy).toHaveBeenCalledWith(0, 0, 0);
+
+        // Verify no-violation message is rendered as a full single line
+        const printedTexts = textSpy.mock.calls.map(c => String(c[0]));
+        expect(printedTexts).toContain('Tidak terdapat catatan pelanggaran bulan ini. Ananda telah menunjukkan akhlak dan kedisiplinan yang baik sesuai tata tertib madrasah.');
+
+        // Verify maxWidth option was passed to prevent column overflow
+        const noVioCall = textSpy.mock.calls.find(c => c[0] === 'Tidak terdapat catatan pelanggaran bulan ini. Ananda telah menunjukkan akhlak dan kedisiplinan yang baik sesuai tata tertib madrasah.');
+        expect(noVioCall?.[3]).toHaveProperty('maxWidth');
+        expect(typeof (noVioCall?.[3] as any)?.maxWidth).toBe('number');
+        expect((noVioCall?.[3] as any)?.maxWidth).toBe(doc.internal.pageSize.getWidth() - 38);
+    });
 });
 
 

@@ -64,8 +64,8 @@ export const generateBintangReportPdf = async (
     const margin = 15;
 
 
-    const PRIMARY_DARK = [7, 54, 66] as [number, number, number]; // #073642
-    const MUTED = [71, 85, 105] as [number, number, number]; // slate-600
+    const PRIMARY_DARK = [0, 0, 0] as [number, number, number]; // Formal black for official reports (#000000)
+    const MUTED = [51, 65, 85] as [number, number, number]; // slate-700
     const BORDER = [203, 213, 225] as [number, number, number]; // slate-300
     const BG_LIGHT = [248, 250, 252] as [number, number, number]; // slate-50
 
@@ -359,14 +359,28 @@ export const generateBintangReportPdf = async (
         renderSectionHeader("B. Rincian Poin Pelanggaran");
 
         if (!report.violations || report.violations.length === 0) {
-            const noVioBoxHeight = 8.5 + (expansionFactor * 3.5);
+            const noVioBoxHeight = isTwoPageReport ? 8.5 : (8.0 + (expansionFactor * 1.5));
             targetDoc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
             targetDoc.setFillColor(255, 255, 255);
             targetDoc.roundedRect(margin, currentY, pageWidth - (margin * 2), noVioBoxHeight, 1.5, 1.5, 'FD');
-            targetDoc.setFont('helvetica', 'italic');
-            targetDoc.setFontSize(tableBFontSize);
-            targetDoc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-            targetDoc.text("Tidak terdapat catatan pelanggaran bulan ini. Ananda telah menunjukkan akhlak dan kedisiplinan yang baik sesuai tata tertib madrasah.", margin + 4, currentY + (noVioBoxHeight * 0.58));
+            targetDoc.setFont('helvetica', 'normal');
+            targetDoc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
+
+            const noVioText = "Tidak terdapat catatan pelanggaran bulan ini. Ananda telah menunjukkan akhlak dan kedisiplinan yang baik sesuai tata tertib madrasah.";
+            const maxTextWidth = pageWidth - (margin * 2) - 8;
+
+            // Dynamically calibrate font size so the single line spans full width without overflowing the right border
+            let noVioFontSize = 8.1;
+            targetDoc.setFontSize(noVioFontSize);
+            while (targetDoc.getTextWidth(noVioText) > (maxTextWidth - 1) && noVioFontSize > 6.0) {
+                noVioFontSize -= 0.1;
+                targetDoc.setFontSize(noVioFontSize);
+            }
+
+            targetDoc.text(noVioText, margin + 4, currentY + (noVioBoxHeight * 0.58) + 0.3, {
+                maxWidth: maxTextWidth
+            });
+
             currentY += noVioBoxHeight + sectionGap;
         } else {
             const totalPoin = report.violations.reduce((sum, v) => sum + (v.points || 0), 0);
