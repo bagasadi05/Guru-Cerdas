@@ -95,7 +95,9 @@ export const PembinaanTab: React.FC<PembinaanTabProps> = ({
                                     <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Siswa</th>
                                     <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Mentor</th>
                                     <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Catatan</th>
-                                    <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300 text-right">Aksi</th>
+                                    {isWalas && (
+                                        <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300 text-right">Aksi</th>
+                                    )}
                                 </tr>
                             </thead>
                             <tbody>
@@ -115,26 +117,28 @@ export const PembinaanTab: React.FC<PembinaanTabProps> = ({
                                         <td className="py-2.5 px-4 text-xs text-slate-600 dark:text-slate-400 max-w-[300px] truncate" title={log.notes}>
                                             {log.notes}
                                         </td>
-                                        <td className="py-2.5 px-4 text-right whitespace-nowrap">
-                                            <div className="flex justify-end gap-1">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => onOpenEditMentoring(log)}
-                                                    className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30"
-                                                    title="Edit"
-                                                >
-                                                    <Pencil size={13} />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => onDeleteMentoring(log)}
-                                                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30"
-                                                    title="Hapus"
-                                                >
-                                                    <Trash2 size={13} />
-                                                </button>
-                                            </div>
-                                        </td>
+                                        {isWalas && (
+                                            <td className="py-2.5 px-4 text-right whitespace-nowrap">
+                                                <div className="flex justify-end gap-1">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onOpenEditMentoring(log)}
+                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30"
+                                                        title="Edit"
+                                                    >
+                                                        <Pencil size={13} />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onDeleteMentoring(log)}
+                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30"
+                                                        title="Hapus"
+                                                    >
+                                                        <Trash2 size={13} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        )}
                                     </tr>
                                 ))}
                             </tbody>

@@ -69,6 +69,7 @@ export interface HomeroomNoteContext {
     activePoints?: number;
     violations?: StudentViolationSummaryItem[];
     seed?: number | string;
+    month?: string;
 }
 
 export type ViolationCluster = 'WAKTU' | 'KERAPIAN' | 'KBM_FOKUS' | 'ADAB_ETIKA' | 'UMUM';
@@ -175,7 +176,8 @@ export function generateContextualHomeroomNote(context: HomeroomNoteContext): st
     const violationCount = violations.length;
 
     const numericSeed = typeof customSeed === 'string' ? computeStringSeed(customSeed) : customSeed;
-    const seed = numericSeed ?? (studentName ? computeStringSeed(studentName) : 0);
+    const seedString = studentName ? `${studentName}${context.month ? `-${context.month}` : ''}` : '';
+    const seed = numericSeed ?? (seedString ? computeStringSeed(seedString) : 0);
     const greeting = getStudentGreeting(studentName);
 
     // ── BAGIAN 1: Apresiasi & Sapaan Awal (Nuansa Islami Madrasah Ibtidaiyah) ──
@@ -295,7 +297,7 @@ export function generateHomeroomNote(
     kedis?: BintangGrade,
     kerapian?: BintangGrade,
     activePoints: number = 0,
-    contextExt?: { studentName?: string; violations?: StudentViolationSummaryItem[] }
+    contextExt?: { studentName?: string; violations?: StudentViolationSummaryItem[]; month?: string; seed?: number | string }
 ): string {
     if (typeof adabOrContext === 'object') {
         return generateContextualHomeroomNote(adabOrContext);
@@ -309,6 +311,8 @@ export function generateHomeroomNote(
         activePoints: activePoints || 0,
         studentName: contextExt?.studentName,
         violations: contextExt?.violations || [],
+        month: contextExt?.month,
+        seed: contextExt?.seed,
     });
 }
 

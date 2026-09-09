@@ -61,7 +61,7 @@ function monthLabel(month: string): string {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-const BintangTrendChart: React.FC<BintangTrendChartProps> = ({ selectedClass }) => {
+export const BintangTrendChart: React.FC<BintangTrendChartProps> = ({ selectedClass }) => {
     const [students, setStudents] = useState<Array<{ id: string; name: string }>>([]);
     const [selectedStudent, setSelectedStudent] = useState(''); // '' means all students
     const [trendData, setTrendData] = useState<TrendMonth[]>([]);
@@ -135,10 +135,35 @@ const BintangTrendChart: React.FC<BintangTrendChartProps> = ({ selectedClass }) 
 
     const chartDimensions = { width: 600, height: 280, padding: { top: 20, right: 20, bottom: 40, left: 40 } };
 
+    const maxDataPoints = useMemo(() => {
+        if (!trendData.length) return 0;
+        return Math.max(
+            0,
+            ...trendData.flatMap(d => [d.ADAB.points, d.KEDISIPLINAN.points, d.KERAPIAN.points])
+        );
+    }, [trendData]);
+
+    const maxY = useMemo(() => {
+        // Minimum max Y is 25 to preserve the 4 tier bands (0, 10, 20, 25).
+        // If data exceeds 25, dynamically round up to the nearest multiple of 5 (e.g. 30, 35, 40...)
+        return Math.max(25, Math.ceil(maxDataPoints / 5) * 5);
+    }, [maxDataPoints]);
+
+    const yGridTicks = useMemo(() => {
+        const step = maxY > 50 ? 10 : 5;
+        const ticks: number[] = [];
+        for (let v = 0; v <= maxY; v += step) {
+            ticks.push(v);
+        }
+        if (ticks[ticks.length - 1] !== maxY) {
+            ticks.push(maxY);
+        }
+        return ticks;
+    }, [maxY]);
+
     const yScale = (points: number): number => {
         const { padding, height } = chartDimensions;
         const chartH = height - padding.top - padding.bottom;
-        const maxY = 25; // max violation points on chart
         const y = padding.top + chartH - (Math.min(Math.max(points, 0), maxY) / maxY) * chartH;
         return y;
     };
@@ -316,8 +341,8 @@ const BintangTrendChart: React.FC<BintangTrendChartProps> = ({ selectedClass }) 
                                     // SVG y increases downward: poin besar → Y kecil (atas), poin kecil → Y besar (bawah)
                                     // yTop = pixel atas band = yScale(batas poin terbesar band)
                                     // yBottom = pixel bawah band = yScale(batas poin terkecil band)
-                                    const yTop = band.max !== undefined ? yScale(band.max) : yScale(25);
-                                    const yBottom = band.min !== undefined ? yScale(band.min) : yScale(0);
+                                    const yTop = band.max !== undefined ? yScale(Math.min(band.max, maxY)) : yScale(maxY);
+                                    const yBottom = band.min !== undefined ? yScale(Math.min(band.min, maxY)) : yScale(0);
                                     const h = yBottom - yTop;
                                     return (
                                         <rect
@@ -332,7 +357,7 @@ const BintangTrendChart: React.FC<BintangTrendChartProps> = ({ selectedClass }) 
                                 })}
 
                                 {/* Horizontal grid lines */}
-                                {[0, 5, 10, 15, 20, 25].map(val => (
+                                {yGridTicks.map(val => (
                                     <g key={val}>
                                         <line
                                             x1={chartDimensions.padding.left}

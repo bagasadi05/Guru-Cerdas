@@ -401,7 +401,10 @@ export const generateBintangReportPdf = async (
         } else {
             const totalPoin = report.violations.reduce((sum, v) => sum + (v.points || 0), 0);
             const viosData = report.violations.map((v: { date: string; description: string; points: number }, idx: number) => {
-                const vDate = new Date(v.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                const parsed = v.date ? new Date(v.date) : null;
+                const vDate = parsed && !isNaN(parsed.getTime())
+                    ? parsed.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                    : '-';
                 return [
                     (idx + 1).toString(),
                     vDate,

@@ -2,11 +2,29 @@ import React from 'react';
 import { GlassCard } from './PortalComponents';
 import { SparklesIcon } from '../../Icons';
 
+export interface PortalBintangEvaluation {
+    id: string;
+    month: string;
+    is_published: boolean;
+    adab_score?: string | null;
+    adab_notes?: string | null;
+    kedisiplinan_score?: string | null;
+    kedisiplinan_notes?: string | null;
+    kerapian_score?: string | null;
+    kerapian_notes?: string | null;
+    catatan_wali?: string | null;
+}
+
 interface PortalBintangTabProps {
-    evaluations: any[];
+    evaluations: PortalBintangEvaluation[];
 }
 
 export const PortalBintangTab: React.FC<PortalBintangTabProps> = ({ evaluations }) => {
+    // Defensively filter only published evaluations so draft notes are never visible to parents
+    const publishedEvaluations = React.useMemo(() => {
+        return (evaluations || []).filter(item => Boolean(item?.is_published));
+    }, [evaluations]);
+
     return (
         <div className="space-y-6">
             <div className="mb-6">
@@ -19,7 +37,7 @@ export const PortalBintangTab: React.FC<PortalBintangTabProps> = ({ evaluations 
                 </p>
             </div>
             
-            {(!evaluations || evaluations.length === 0) ? (
+            {publishedEvaluations.length === 0 ? (
                 <GlassCard className="p-8 text-center border-dashed border-2 border-slate-200 dark:border-slate-700 bg-transparent">
                     <SparklesIcon className="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600 mb-4" />
                     <h4 className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">Belum Ada Rapor</h4>
@@ -29,7 +47,7 @@ export const PortalBintangTab: React.FC<PortalBintangTabProps> = ({ evaluations 
                 </GlassCard>
             ) : (
                 <div className="space-y-6">
-                    {evaluations.map((evalItem: any) => (
+                    {publishedEvaluations.map((evalItem) => (
                         <GlassCard key={evalItem.id} className="p-6">
                             <div className="flex justify-between items-center mb-4 border-b border-slate-200 dark:border-slate-700 pb-4">
                                 <h4 className="text-lg font-bold text-slate-800 dark:text-white">

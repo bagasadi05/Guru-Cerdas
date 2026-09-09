@@ -171,17 +171,19 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
             const activePts = getStudentQuizPoints?.(student.id) || 0;
             const studentVios = getStudentViolations?.(student.id) || [];
 
-            const regenerated = generateHomeroomNote(
-                formData.adab_score,
-                formData.kedisiplinan_score,
-                formData.kerapian_score,
-                activePts,
-                { studentName: student.name, violations: studentVios }
-            );
-            setFormData(prev => ({ ...prev, catatan_wali: regenerated }));
+            setFormData(prev => {
+                const regenerated = generateHomeroomNote(
+                    prev.adab_score,
+                    prev.kedisiplinan_score,
+                    prev.kerapian_score,
+                    activePts,
+                    { studentName: student.name, violations: studentVios, month: selectedMonth }
+                );
+                return { ...prev, catatan_wali: regenerated };
+            });
             toast.success('Catatan wali kelas berhasil dibuat ulang secara kontekstual');
         },
-        [formData.adab_score, formData.kedisiplinan_score, formData.kerapian_score, getStudentQuizPoints, getStudentViolations, toast]
+        [getStudentQuizPoints, getStudentViolations, selectedMonth, toast]
     );
 
     const handleSaveEvaluation = useCallback(

@@ -184,4 +184,46 @@ describe('generateHomeroomNote (Backward Compatibility)', () => {
         });
         expect(note).toContain('Ananda Zaid');
     });
+
+    it('should generate different notes across different months for the same student and grades (US-9)', () => {
+        const noteMonth1 = generateContextualHomeroomNote({
+            studentName: 'Umar',
+            adabGrade: 'B',
+            kedisGrade: 'B',
+            kerapianGrade: 'B',
+            violations: [],
+            month: '2026-08',
+        });
+
+        const noteMonth2 = generateContextualHomeroomNote({
+            studentName: 'Umar',
+            adabGrade: 'B',
+            kedisGrade: 'B',
+            kerapianGrade: 'B',
+            violations: [],
+            month: '2026-09',
+        });
+
+        expect(typeof noteMonth1).toBe('string');
+        expect(typeof noteMonth2).toBe('string');
+        // Notes should vary due to month-aware seed
+        expect(noteMonth1).not.toEqual(noteMonth2);
+    });
+
+    it('should properly generate notes for mixed average profile (Adab B, Kedisiplinan C, Kerapian C)', () => {
+        const note = generateContextualHomeroomNote({
+            studentName: 'Aliyah',
+            adabGrade: 'B',
+            kedisGrade: 'C',
+            kerapianGrade: 'C',
+            violations: [
+                { description: 'Terlambat masuk sekolah' },
+                { description: 'Tanpa bedge lokasi / Atribut sekolah (Topi, dasi, Rompi Dll.)' },
+            ],
+            month: '2026-09',
+        });
+
+        expect(note).toContain('Ananda Aliyah');
+        expect(note.length).toBeGreaterThan(50);
+    });
 });
