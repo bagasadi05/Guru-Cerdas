@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../../services/supabase';
+import { useAuth } from '../../../hooks/useAuth';
 import { useSemester } from '../../../contexts/SemesterContext';
 import { AlertTriangle, CalendarX, UserX, TrendingDown, CheckCircle2, Sparkles } from 'lucide-react';
 interface InsightCardData {
@@ -22,12 +23,14 @@ const SEV: Record<string, { ring: string; bg: string; text: string; iconText: st
 };
 
 const SmartInsightsPanel: React.FC = () => {
+    const { user } = useAuth();
     const navigate = useNavigate();
     const { activeSemester } = useSemester();
     const semesterId = activeSemester?.id ?? null;
 
     const { data, isLoading } = useQuery({
-        queryKey: ['smart_insights', semesterId],
+        queryKey: ['smart_insights', user?.id, semesterId],
+        enabled: !!user && !!semesterId,
         queryFn: async () => {
             const applySem = (q: any) => semesterId ? q.eq('semester_id', semesterId) : q;
             const [clsRes, stuRes, vioRes, attRes, acaRes] = await Promise.all([

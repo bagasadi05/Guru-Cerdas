@@ -369,8 +369,8 @@ export const queryKeys = {
         all: ['dashboard'] as const,
 
         /** Key for dashboard data */
-        data: (userId: string) =>
-            [...queryKeys.dashboard.all, 'data', userId] as const,
+        data: (userId: string, userRole?: string | null) =>
+            [...queryKeys.dashboard.all, 'data', userId, userRole ?? ''] as const,
 
         /** Key for AI insights */
         aiInsight: (userId: string) =>

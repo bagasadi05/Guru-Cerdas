@@ -128,8 +128,8 @@ const DashboardPage: React.FC = () => {
     className: resolveClassName(classes.find((c) => c.id === item.class_id)?.name, item.class_id),
   }));
 
-  // Show welcome state for new users with no data
-  if (!isLoading && data && students.length === 0 && classes.length === 0) {
+  // Show welcome state for new users with no data (exempt leadership/admin roles who manage the whole madrasah)
+  if (!isLoading && data && !isGlobalRole && students.length === 0 && classes.length === 0) {
     return (
       <div className="w-full min-h-full p-4 lg:p-8 flex items-center justify-center">
         <WelcomeEmptyState

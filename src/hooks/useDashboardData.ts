@@ -170,7 +170,7 @@ export const fetchDashboardData = async (userId: string, userRole: string): Prom
             .eq('day', todayDay as Database['public']['Tables']['schedules']['Row']['day'])
             .order('start_time'),
 
-        // Fetch classes (scoped by user_id for teachers)
+        // Fetch classes (scoped by user_id/wali_kelas_id for teachers, all active for leadership/admin)
         isGlobalRole
             ? supabase
                 .from('classes')
@@ -182,7 +182,7 @@ export const fetchDashboardData = async (userId: string, userRole: string): Prom
                 .select('id, name')
                 .is('deleted_at', null)
                 .eq('is_archived', false)
-                .eq('user_id', userId),
+                .or(`user_id.eq.${userId},wali_kelas_id.eq.${userId}`),
 
         // Fetch today's attendance (student_id selected to filter in memory)
         supabase
@@ -362,7 +362,7 @@ export const fetchDashboardData = async (userId: string, userRole: string): Prom
  * ```
  */
 export function useDashboardData(): UseDashboardDataReturn {
-    const { user, userRole } = useAuth();
+    const { user, userRole, loading: authLoading } = useAuth();
 
     const {
         data,
@@ -372,9 +372,9 @@ export function useDashboardData(): UseDashboardDataReturn {
         refetch,
         isRefetching
     } = useQuery({
-        queryKey: queryKeys.dashboard.data(user?.id ?? ''),
+        queryKey: queryKeys.dashboard.data(user?.id ?? '', userRole),
         queryFn: () => fetchDashboardData(user!.id, userRole ?? ''),
-        enabled: !!user && userRole !== undefined,
+        enabled: !!user && !authLoading && userRole !== null && userRole !== undefined,
         refetchOnWindowFocus: false,
         // Keep previous data while refetching
         placeholderData: (previousData) => previousData,

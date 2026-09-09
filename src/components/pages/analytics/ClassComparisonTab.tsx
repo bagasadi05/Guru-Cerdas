@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../../services/supabase';
+import { useAuth } from '../../../hooks/useAuth';
 import { useSemester } from '../../../contexts/SemesterContext';
 import { Card, CardContent } from '../../ui/Card';
 import { ChevronDown, ChevronUp, Trophy, AlertTriangle } from 'lucide-react';
@@ -17,6 +18,7 @@ interface ClassRow {
 type SortKey = 'className' | 'students' | 'violations' | 'avgScore' | 'attendanceRate';
 
 const ClassComparisonTab: React.FC = () => {
+    const { user } = useAuth();
     const { activeSemester } = useSemester();
     const semesterId = activeSemester?.id ?? null;
     const [sortKey, setSortKey] = useState<SortKey>('violations');
@@ -24,8 +26,8 @@ const ClassComparisonTab: React.FC = () => {
     const [expanded, setExpanded] = useState<string | null>(null);
 
     const { data, isLoading, error } = useQuery({
-        queryKey: ['class_comparison', semesterId],
-        enabled: true,
+        queryKey: ['class_comparison', user?.id, semesterId],
+        enabled: !!user && !!semesterId,
         queryFn: async () => {
             const applySem = (q: any) => semesterId ? q.eq('semester_id', semesterId) : q;
             const [clsRes, stuRes, rolesRes, vioRes, attRes, acaRes] = await Promise.all([

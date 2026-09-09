@@ -59,6 +59,9 @@ const LoginPage: React.FC = () => {
                 if (message.includes('invalid login credentials')) {
                     throw new Error('Email atau password tidak sesuai. Gunakan email yang didaftarkan dan password yang sama; persetujuan admin tidak mengubah password.');
                 }
+                if (message.includes('database error querying schema') || message.includes('database error')) {
+                    throw new Error('Terjadi kendala data akun pada database server (auth schema). Silakan perbarui kolom token akun di Supabase SQL Editor atau hubungi administrator.');
+                }
                 throw response.error;
             }
             
