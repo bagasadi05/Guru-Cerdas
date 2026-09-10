@@ -56,7 +56,8 @@ import { useGlobalSearch } from '../GlobalSearchContext';
 
 const DashboardPage: React.FC = () => {
   const { user, userRole } = useAuth();
-  const isGlobalRole = userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum' || userRole === 'kepala_madrasah' || userRole === 'admin';
+  const isLeadershipOnly = userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum' || userRole === 'kepala_madrasah';
+  const isGlobalRole = isLeadershipOnly || userRole === 'admin';
   const todayStr = new Date().toLocaleDateString('sv-SE');
   const { data: journalStatus } = useTodayJournalStatus(todayStr);
   const navigate = useNavigate();
@@ -278,8 +279,8 @@ const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Grade Audit (guru) or extra Smart Insights (leadership) */}
-          {!isGlobalRole && <GradeAuditWidget data={data} classes={classes} />}
+          {/* Grade Audit (guru/admin) */}
+          {!isLeadershipOnly && <GradeAuditWidget data={data} classes={classes} />}
         </div>
       </DashboardSection>
 
@@ -322,7 +323,7 @@ const DashboardPage: React.FC = () => {
               />
             </div>
 
-            {!isGlobalRole && <DashboardSummaryCards data={data} />}
+            {!isLeadershipOnly && <DashboardSummaryCards data={data} />}
           </div>
         )}
       </DashboardSection>
@@ -346,8 +347,8 @@ const DashboardPage: React.FC = () => {
             <LazyParentMessagesWidget />
           </Suspense>
 
-          {/* Activity Feed (teacher only) */}
-          {!isGlobalRole && (
+          {/* Activity Feed (teacher & admin) */}
+          {!isLeadershipOnly && (
             <Suspense fallback={<CardSkeleton />}>
               <LazyActivityFeedWidget
                 reminders={activeReminders}

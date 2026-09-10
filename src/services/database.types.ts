@@ -782,6 +782,7 @@ export type Database = {
           kedisiplinan_score: string | null
           kerapian_notes: string | null
           kerapian_score: string | null
+          manual_aspects: string[] | null
           month: string
           student_id: string
           updated_at: string
@@ -798,6 +799,7 @@ export type Database = {
           kedisiplinan_score?: string | null
           kerapian_notes?: string | null
           kerapian_score?: string | null
+          manual_aspects?: string[] | null
           month: string
           student_id: string
           updated_at?: string
@@ -814,6 +816,7 @@ export type Database = {
           kedisiplinan_score?: string | null
           kerapian_notes?: string | null
           kerapian_score?: string | null
+          manual_aspects?: string[] | null
           month?: string
           student_id?: string
           updated_at?: string
@@ -2699,6 +2702,14 @@ export type Database = {
       activate_semester: {
         Args: { p_semester_id: string; p_year_id: string }
         Returns: undefined
+      }
+      auto_fill_weekly_missing_attendance: {
+        Args: {
+          p_class_id?: string | null
+          p_target_date?: string | null
+          p_notes?: string | null
+        }
+        Returns: Json
       }
       apply_quiz_points_to_grade: {
         Args: {

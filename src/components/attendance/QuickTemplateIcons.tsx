@@ -7,8 +7,6 @@
 import React from 'react';
 import {
     CheckCircle,
-    XCircle,
-    Clock,
     CalendarOff,
 } from 'lucide-react';
 import { AttendanceStatus } from '../../types/enums';
@@ -44,18 +42,6 @@ const templates: Template[] = [
         applyToAll: true,
     },
     {
-        id: 'all-absent',
-        name: 'Semua Alpha',
-        shortName: 'Alpha',
-        description: 'Tandai semua siswa alpha',
-        icon: <XCircle className="w-5 h-5" />,
-        color: 'text-red-500',
-        iconBg: 'bg-red-500/10 dark:bg-red-900/30',
-        hoverColor: 'hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600',
-        defaultStatus: AttendanceStatus.Alpha,
-        applyToAll: true,
-    },
-    {
         id: 'weekend',
         name: 'Libur',
         shortName: 'Libur',
@@ -66,18 +52,6 @@ const templates: Template[] = [
         hoverColor: 'hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:text-purple-600',
         defaultStatus: AttendanceStatus.Libur,
         applyToAll: true,
-    },
-    {
-        id: 'morning-rush',
-        name: 'Hadir Pagi',
-        shortName: 'Sisa',
-        description: 'Tandai sisa siswa hadir',
-        icon: <Clock className="w-5 h-5" />,
-        color: 'text-orange-500',
-        iconBg: 'bg-orange-500/10 dark:bg-orange-900/30',
-        hoverColor: 'hover:bg-orange-50 dark:hover:bg-orange-900/30 hover:text-orange-600',
-        defaultStatus: AttendanceStatus.Hadir,
-        applyToAll: false,
     },
 ];
 

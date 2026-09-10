@@ -205,20 +205,26 @@ export const generateBintangReportPdf = async (
         const infoTopPadding = isTwoPageReport ? (3.8 + (p1Expansion * 0.8)) : (3.6 + (expansionFactor * 0.8));
         const infoLineSpacing = isTwoPageReport ? (4.6 + (p1Expansion * 1.0)) : (4.0 + (expansionFactor * 0.7));
 
-        const tableACellPadding = isTwoPageReport ? (1.6 + (p1Expansion * 0.6)) : (1.2 + (expansionFactor * 0.5));
+        const tableACellPadding = isTwoPageReport
+            ? { top: 2.0 + (p1Expansion * 0.4), bottom: 2.0 + (p1Expansion * 0.4), left: 2.5, right: 2.5 }
+            : { top: 1.4 + (expansionFactor * 0.5), bottom: 1.4 + (expansionFactor * 0.5), left: 2.0, right: 2.0 };
         const tableAFontSize = isTwoPageReport ? 8.5 : (8.0 + (expansionFactor * 0.4));
 
-        const tableBCellPadding = isTwoPageReport ? (1.3 + (p1Expansion * 0.4)) : (1.1 + (expansionFactor * 0.4));
+        const tableBCellPadding = isTwoPageReport
+            ? { top: 2.2 + (p1Expansion * 0.4), bottom: 2.2 + (p1Expansion * 0.4), left: 2.5, right: 2.5 }
+            : { top: 1.5 + (expansionFactor * 0.5), bottom: 1.5 + (expansionFactor * 0.5), left: 2.0, right: 2.0 };
         const tableBFontSize = isTwoPageReport ? 8.5 : (8.0 + (expansionFactor * 0.4));
 
         const notesLineH = isTwoPageReport ? 4.8 : (3.4 + (expansionFactor * 0.5));
         const notesBasePadding = isTwoPageReport ? 8.0 : (3.5 + (expansionFactor * 2.0));
         const notesBoxHeight = isTwoPageReport
-            ? Math.max(50.0, notesBasePadding + (notesLinesCount * notesLineH))
+            ? (hasQuiz
+                ? Math.max(36.0, notesBasePadding + (notesLinesCount * notesLineH))
+                : Math.max(46.0, notesBasePadding + (notesLinesCount * notesLineH)))
             : Math.max(12.0, notesBasePadding + (notesLinesCount * notesLineH) + (expansionFactor * 3.5));
 
         const signatureBoxHeight = isTwoPageReport ? 55.0 : (25.0 + (expansionFactor * 6.0));
-        const p2SectionGap = isTwoPageReport ? 16.0 : sectionGap;
+        const p2SectionGap = isTwoPageReport ? (hasQuiz ? 10.0 : 16.0) : sectionGap;
 
         // Helper: Section header bar
         const renderSectionHeader = (title: string) => {
@@ -361,13 +367,14 @@ export const generateBintangReportPdf = async (
                 fontSize: tableAFontSize,
                 lineWidth: 0.1,
                 lineColor: BORDER,
-                cellPadding: tableACellPadding
+                cellPadding: tableACellPadding,
+                valign: 'middle',
             },
             columnStyles: {
-                0: { halign: 'center', cellWidth: 10, textColor: MUTED },
-                1: { fontStyle: 'bold', cellWidth: 32 },
-                2: { halign: 'center', fontStyle: 'bold', cellWidth: 12, textColor: PRIMARY_DARK },
-                3: { cellWidth: 'auto', textColor: MUTED, halign: 'justify' }
+                0: { halign: 'center', cellWidth: 10, textColor: MUTED, valign: 'middle' },
+                1: { fontStyle: 'bold', cellWidth: 32, valign: 'middle' },
+                2: { halign: 'center', fontStyle: 'bold', cellWidth: 12, textColor: PRIMARY_DARK, valign: 'middle' },
+                3: { cellWidth: 'auto', textColor: MUTED, halign: 'justify', valign: 'middle' }
             },
             didDrawPage: (data: { cursor?: { y: number } | null }) => {
                 currentY = data.cursor?.y || currentY;
@@ -405,16 +412,29 @@ export const generateBintangReportPdf = async (
             currentY += noVioBoxHeight + sectionGap;
         } else {
             const totalPoin = report.violations.reduce((sum, v) => sum + (v.points || 0), 0);
-            const viosData = report.violations.map((v: { date: string; description: string; points: number }, idx: number) => {
+            const viosData = report.violations.map((v: any, idx: number) => {
                 const parsed = v.date ? new Date(v.date) : null;
                 const vDate = parsed && !isNaN(parsed.getTime())
                     ? parsed.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
                     : '-';
+                    
+                let rincian = v.description || '-';
+                const notes: string[] = [];
+                if (v.context_notes && v.context_notes.trim()) {
+                    notes.push(`• Kronologi: ${v.context_notes.trim()}`);
+                }
+                if (v.follow_up_notes && v.follow_up_notes.trim()) {
+                    notes.push(`• Tindak Lanjut: ${v.follow_up_notes.trim()}`);
+                }
+                if (notes.length > 0) {
+                    rincian += '\n' + notes.join('\n');
+                }
+                
                 return [
                     (idx + 1).toString(),
                     vDate,
-                    v.description || '-',
-                    v.points?.toString() || '0'
+                    rincian,
+                    (v.points !== undefined && v.points !== null) ? v.points.toString().trim() : '0'
                 ];
             });
 
@@ -424,7 +444,7 @@ export const generateBintangReportPdf = async (
             autoTable(targetDoc, {
                 startY: currentY,
                 margin: { left: margin, right: margin, bottom: 14 },
-                head: [['No', 'Tanggal', 'Jenis Pelanggaran', 'Poin']],
+                head: [['No', 'Tanggal', 'Rincian Pelanggaran', 'Poin']],
                 body: viosData,
                 theme: 'grid',
                 headStyles: {
@@ -442,19 +462,22 @@ export const generateBintangReportPdf = async (
                     fontSize: tableBFontSize,
                     lineWidth: 0.1,
                     lineColor: BORDER,
-                    cellPadding: tableBCellPadding
+                    cellPadding: tableBCellPadding,
+                    lineHeightFactor: 1.25,
+                    valign: 'middle',
                 },
                 columnStyles: {
-                    0: { halign: 'center', cellWidth: 10, textColor: MUTED },
-                    1: { halign: 'center', cellWidth: 26 },
-                    2: { cellWidth: 'auto' },
-                    3: { halign: 'center', cellWidth: 14, fontStyle: 'bold', textColor: [225, 29, 72] }
+                    0: { halign: 'center', cellWidth: 10, textColor: MUTED, valign: 'middle' },
+                    1: { halign: 'center', cellWidth: 28, valign: 'middle' },
+                    2: { cellWidth: 'auto', valign: 'middle' },
+                    3: { halign: 'center', cellWidth: 14, fontStyle: 'bold', textColor: [225, 29, 72], valign: 'middle' }
                 },
-                didParseCell: (data: { row: { index: number }; table: { body: unknown[] }; column: { index: number }; cell: { styles: { fillColor?: number[]; fontStyle?: string; textColor?: number[] } } }) => {
+                didParseCell: (data: { row: { index: number }; table: { body: unknown[] }; column: { index: number }; cell: { styles: { fillColor?: number[]; fontStyle?: string; textColor?: number[]; valign?: string } } }) => {
                     // Highlight TOTAL row with amber background
                     if (data.row.index === data.table.body.length - 1) {
                         data.cell.styles.fillColor = [254, 243, 199]; // amber-100
                         data.cell.styles.fontStyle = 'bold';
+                        data.cell.styles.valign = 'middle';
                         if (data.column.index === 3) {
                             data.cell.styles.textColor = [180, 83, 9]; // amber-700
                         }
@@ -470,11 +493,12 @@ export const generateBintangReportPdf = async (
         // 8. Rincian Poin Keaktifan & Prestasi (Section C - Conditional)
         let p1ContentFinalY = currentY;
         if (hasQuiz && report.quizPoints) {
-            const estC = 6.0 + 10.0 + (groupedQP.size * 5.0);
-            if (targetDoc.getCurrentPageInfo().pageNumber === reportStartPage && (currentY + estC > 268)) {
+            const estC = 6.8 + 7.6 + (groupedQP.size * 7.4) + sectionGap;
+            const shouldMoveCToP2 = targetDoc.getCurrentPageInfo().pageNumber === reportStartPage && (currentY + estC > 266);
+            if (shouldMoveCToP2) {
                 targetDoc.addPage();
                 addPdfHeader(targetDoc, { schoolName: resolvedSchoolName });
-                currentY = 41.5;
+                currentY = 44.0;
             }
 
             renderSectionHeader("C. Rincian Poin Keaktifan & Prestasi");
@@ -510,13 +534,15 @@ export const generateBintangReportPdf = async (
                     fontSize: tableBFontSize,
                     lineWidth: 0.1,
                     lineColor: BORDER,
-                    cellPadding: tableBCellPadding
+                    cellPadding: tableBCellPadding,
+                    lineHeightFactor: 1.25,
+                    valign: 'middle',
                 },
                 columnStyles: {
-                    0: { halign: 'center', cellWidth: 10, textColor: MUTED },
-                    1: { cellWidth: 'auto' },
-                    2: { halign: 'center', cellWidth: 26, fontStyle: 'bold' },
-                    3: { halign: 'center', cellWidth: 22, fontStyle: 'bold', textColor: [5, 150, 105] } // emerald-600
+                    0: { halign: 'center', cellWidth: 10, textColor: MUTED, valign: 'middle' },
+                    1: { cellWidth: 'auto', valign: 'middle' },
+                    2: { halign: 'center', cellWidth: 26, fontStyle: 'bold', valign: 'middle' },
+                    3: { halign: 'center', cellWidth: 22, fontStyle: 'bold', textColor: [5, 150, 105], valign: 'middle' } // emerald-600
                 },
                 didDrawPage: (data: { cursor?: { y: number } | null }) => {
                     currentY = data.cursor?.y || currentY;
@@ -713,7 +739,7 @@ export const generateBintangReportPdf = async (
 
             // probe2.p1ContentFinalY is the physically measured final Y on Page 1!
             const p1Remaining = Math.max(0, 252 - probe2.p1ContentFinalY);
-            p1Expansion = Math.min(1.0, Math.max(0, p1Remaining / 20));
+            p1Expansion = Math.min(1.0, Math.max(0, p1Remaining / 50));
         }
 
         // =========================================================================
@@ -872,7 +898,7 @@ export const downloadBintangReportAction = async ({
             ? supabase.from('bintang_monthly_evaluations').select('*').in('student_id', studentIds).eq('month', month)
             : Promise.resolve({ data: [] }),
         studentIds.length > 0
-            ? supabase.from('violations').select('id, student_id, description, points, date, severity').in('student_id', studentIds).gte('date', monthStart).lt('date', monthEnd).is('deleted_at', null)
+            ? supabase.from('violations').select('id, student_id, description, points, date, severity, context_notes, follow_up_notes, follow_up_status').in('student_id', studentIds).gte('date', monthStart).lt('date', monthEnd).is('deleted_at', null)
             : Promise.resolve({ data: [] }),
         studentIds.length > 0
             ? supabase.from('quiz_points').select('id, student_id, quiz_name, subject, points, category, quiz_date, semester_id').in('student_id', studentIds).is('deleted_at', null).gte('quiz_date', monthStart).lt('quiz_date', monthEnd).limit(2000)

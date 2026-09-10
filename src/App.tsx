@@ -18,8 +18,6 @@ import { GlobalSearchProvider } from './components/GlobalSearchContext';
 import { TourProvider } from './components/OnboardingHelp';
 import { useKeyboardShortcuts } from './components/advanced-features/useKeyboardShortcuts';
 import { startCleanupScheduler } from './services/CleanupService';
-import { useSessionTimeout } from './hooks/useSessionTimeout';
-import { SessionTimeoutWarning } from './components/ui/SessionTimeoutWarning';
 import { cleanupExpiredBackups } from './utils/dataBackup';
 import { SkipToMainContent } from './utils/pageAccessibility';
 import { useAppSearch } from './hooks/useAppSearch';
@@ -228,19 +226,6 @@ function AppContent() {
     return () => document.removeEventListener('open-help-center', handleOpenHelp);
   }, []);
 
-  // Session timeout - only for authenticated users
-  const { session, logout } = useAuth();
-  const { isWarningVisible, remainingSeconds, extendSession } = useSessionTimeout({
-    warningTime: 25 * 60 * 1000, // 25 minutes
-    logoutTime: 30 * 60 * 1000,  // 30 minutes
-    onLogout: () => {
-      if (session) {
-        logout();
-        navigate('/guru-login');
-      }
-    },
-  });
-
   return (
     <>
       <SkipToMainContent />
@@ -299,19 +284,6 @@ function AppContent() {
             />
             <KeyboardShortcutsPanel isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
           </Suspense>
-
-          {/* Session Timeout Warning */}
-          {session && (
-            <SessionTimeoutWarning
-              isOpen={isWarningVisible}
-              remainingSeconds={remainingSeconds}
-              onExtend={extendSession}
-              onLogout={() => {
-                logout();
-                navigate('/guru-login');
-              }}
-            />
-          )}
         </TourProvider>
       </GlobalSearchProvider>
     </>

@@ -17,6 +17,7 @@ interface UseAttendanceDataProps {
     calendarMonth: string;
     setAttendanceRecords: (records: Record<string, AttendanceRecord>) => void;
     setSelectedStudents: (students: Set<string>) => void;
+    setIsDirty?: (dirty: boolean) => void;
 }
 
 export const useAttendanceData = ({
@@ -30,6 +31,7 @@ export const useAttendanceData = ({
     calendarMonth,
     setAttendanceRecords,
     setSelectedStudents,
+    setIsDirty,
 }: UseAttendanceDataProps) => {
     const initialSyncRef = useRef(false);
     const localDirtyRef = useRef(false);
@@ -95,8 +97,9 @@ export const useAttendanceData = ({
         if (attendanceContextRef.current === nextContext) return;
         attendanceContextRef.current = nextContext;
         initialSyncRef.current = false; localDirtyRef.current = false;
+        setIsDirty?.(false);
         setAttendanceRecords({}); setSelectedStudents(new Set());
-    }, [user?.id, selectedClass, selectedDate, setAttendanceRecords, setSelectedStudents]);
+    }, [user?.id, selectedClass, selectedDate, setAttendanceRecords, setSelectedStudents, setIsDirty]);
 
     useEffect(() => {
         if (initialSyncRef.current || !hasLoadedAttendance) return;

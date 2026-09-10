@@ -125,21 +125,32 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                 <h4 className="font-bold text-sm lg:text-base leading-snug text-slate-800 dark:text-white line-clamp-2 uppercase tracking-wide">
                                     {student.name}
                                 </h4>
-                                {record?.note ? (
-                                    <p className="text-xs text-emerald-600 font-medium truncate flex items-center gap-1 mt-0.5 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-md w-fit">
-                                        <InfoIcon className="w-3 h-3" /> {record.note}
-                                    </p>
-                                ) : (
-                                    record?.status ? (
-                                        <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                                            Status: <span className="font-semibold text-slate-700 dark:text-slate-200">{record.status}</span>
-                                        </p>
-                                    ) : (
+                                {(() => {
+                                    const isSystemNote = record?.note?.includes('[Auto-fill');
+                                    const customNote = isSystemNote ? '' : (record?.note || '');
+
+                                    if (customNote) {
+                                        return (
+                                            <p className="text-xs text-emerald-600 font-medium truncate flex items-center gap-1 mt-0.5 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-md w-fit" title={customNote}>
+                                                <InfoIcon className="w-3 h-3 shrink-0" /> {customNote}
+                                            </p>
+                                        );
+                                    }
+
+                                    if (record?.status) {
+                                        return (
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                                                Status: <span className="font-semibold text-slate-700 dark:text-slate-200">{record.status}</span>
+                                            </p>
+                                        );
+                                    }
+
+                                    return (
                                         <p className="text-sm font-semibold text-amber-500 dark:text-amber-400 truncate mt-0.5">
                                             Belum diabsen
                                         </p>
-                                    )
-                                )}
+                                    );
+                                })()}
                             </div>
                         </div>
 
@@ -194,21 +205,29 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
 
                         {/* 3. Action Buttons (Bottom Row) */}
                         <div className="flex items-center justify-end gap-2">
-                            <button type="button"
-                                onClick={() => onNoteClick(student.id, record?.note || '')}
-                                className={`
-                                    w-10 h-10 flex items-center justify-center rounded-xl transition-all
-                                    ${record?.note
-                                        ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800'
-                                        : 'text-slate-400 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-800'
-                                    }
-                                `}
-                                title={record?.note ? 'Edit catatan' : 'Tambah catatan'}
-                                aria-label={record?.note ? 'Edit catatan siswa' : 'Tambah catatan siswa'}
-                            >
-                                <PencilIcon className="w-4 h-4" aria-hidden="true" />
-                                <span className="sr-only">{record?.note ? 'Edit catatan' : 'Tambah catatan'}</span>
-                            </button>
+                            {(() => {
+                                const isSystemNote = record?.note?.includes('[Auto-fill');
+                                const customNote = isSystemNote ? '' : (record?.note || '');
+                                const hasCustomNote = !!customNote.trim();
+
+                                return (
+                                    <button type="button"
+                                        onClick={() => onNoteClick(student.id, customNote)}
+                                        className={`
+                                            w-10 h-10 flex items-center justify-center rounded-xl transition-all
+                                            ${hasCustomNote
+                                                ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 font-bold'
+                                                : 'text-slate-400 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                            }
+                                        `}
+                                        title={hasCustomNote ? `Edit catatan: "${customNote}"` : 'Tambah catatan'}
+                                        aria-label={hasCustomNote ? 'Edit catatan siswa' : 'Tambah catatan siswa'}
+                                    >
+                                        <PencilIcon className="w-4 h-4" aria-hidden="true" />
+                                        <span className="sr-only">{hasCustomNote ? 'Edit catatan' : 'Tambah catatan'}</span>
+                                    </button>
+                                );
+                            })()}
                             {(() => {
                                 const hasValidPhone = !!(student.parent_phone && student.parent_phone.trim().replace(/\D/g, '').length >= 8);
                                 return hasValidPhone ? (

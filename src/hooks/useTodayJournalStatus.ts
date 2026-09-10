@@ -31,6 +31,7 @@ export const useTodayJournalStatus = (today: string) => {
   const { user } = useAuth();
   const userId = user?.id;
 
+  const INDONESIAN_DAY_NAMES = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'] as const;
   // Calculate Indonesian day name timezone-independently
   const getDayName = (dateString: string): string => {
     if (!dateString) return '';
@@ -40,7 +41,7 @@ export const useTodayJournalStatus = (today: string) => {
     const month = parseInt(parts[1], 10) - 1;
     const day = parseInt(parts[2], 10);
     const dateObj = new Date(year, month, day);
-    return dateObj.toLocaleDateString('id-ID', { weekday: 'long' });
+    return INDONESIAN_DAY_NAMES[dateObj.getDay()];
   };
 
   const dayName = getDayName(today);

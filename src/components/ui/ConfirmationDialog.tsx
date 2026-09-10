@@ -14,6 +14,7 @@ interface ConfirmationDialogProps {
     variant?: 'danger' | 'warning' | 'info';
     requireTyping?: string; // If set, user must type this to confirm
     isPending?: boolean;
+    maxWidth?: string;
 }
 
 const variantConfig = {
@@ -51,6 +52,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
     variant = 'danger',
     requireTyping,
     isPending = false,
+    maxWidth = 'max-w-lg',
 }) => {
     const [typedValue, setTypedValue] = useState('');
     const [isConfirming, setIsConfirming] = useState(false);
@@ -87,27 +89,27 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
     if (!isClient) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
             <div
-                className={`w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border ${config.borderColor} overflow-hidden`}
+                className={`w-full ${maxWidth} bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border ${config.borderColor} overflow-hidden transition-all`}
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="p-6 pb-4">
+                <div className="p-6 pb-5">
                     <div className="flex items-start gap-4">
-                        <div className={`flex-shrink-0 w-12 h-12 rounded-full ${config.iconBg} flex items-center justify-center`}>
+                        <div className={`flex-shrink-0 w-12 h-12 rounded-2xl ${config.iconBg} flex items-center justify-center shadow-inner`}>
                             <Icon className={`w-6 h-6 ${config.iconColor}`} />
                         </div>
-                        <div className="flex-1">
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                        <div className="flex-1 min-w-0">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-snug">
                                 {title}
                             </h3>
                             {typeof message === 'string' ? (
-                                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
                                     {message}
                                 </p>
                             ) : (
-                                <div className="mt-1">
+                                <div className="mt-2 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
                                     {message}
                                 </div>
                             )}
@@ -115,9 +117,10 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
                         <button type="button"
                             onClick={handleClose}
                             disabled={isConfirming || isPending}
-                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
+                            className="p-1.5 -mr-1 -mt-1 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 flex-shrink-0"
+                            aria-label="Tutup dialog"
                         >
-                            <XIcon className="w-5 h-5 text-gray-400" />
+                            <XIcon className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
@@ -140,26 +143,30 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
                 )}
 
                 {/* Actions */}
-                <div className="flex gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 p-4 sm:px-6 bg-gray-50/80 dark:bg-gray-800/40 border-t border-gray-100 dark:border-gray-800">
                     <Button
                         variant="outline"
+                        size="sm"
                         onClick={handleClose}
                         disabled={isConfirming || isPending}
-                        className="flex-1"
+                        className="w-full sm:w-auto px-5 h-10 text-sm font-semibold rounded-xl"
                     >
                         {cancelText}
                     </Button>
-                    <button type="button"
+                    <button
+                        type="button"
                         onClick={handleConfirm}
                         disabled={!canConfirm || isConfirming || isPending}
-                        className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${config.buttonColor} disabled:opacity-50 disabled:cursor-not-allowed`}
+                        className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 h-10 rounded-xl text-sm font-semibold whitespace-nowrap transition-all shadow-sm ${config.buttonColor} disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                         {isConfirming || isPending ? (
-                            <span className="flex items-center justify-center gap-2">
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                Memproses...
-                            </span>
-                        ) : confirmText}
+                            <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                                <span>Memproses...</span>
+                            </>
+                        ) : (
+                            <span>{confirmText}</span>
+                        )}
                     </button>
                 </div>
             </div>

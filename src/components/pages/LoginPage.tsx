@@ -216,7 +216,7 @@ const LoginPage: React.FC = () => {
                                     
                                     <div className="flex items-center justify-between mt-2 mb-2">
                                         <label className="flex items-center gap-2 cursor-pointer group">
-                                            <input type="checkbox" className="rounded border-gray-600 bg-gray-800/50 text-brand-400 focus:ring-brand-400/50 focus:ring-offset-gray-900 cursor-pointer" />
+                                            <input type="checkbox" defaultChecked className="rounded border-gray-600 bg-gray-800/50 text-brand-400 focus:ring-brand-400/50 focus:ring-offset-gray-900 cursor-pointer" />
                                             <span className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors">Ingat saya</span>
                                         </label>
                                         <button type="button" onClick={() => setIsForgotModalOpen(true)} className="text-xs text-brand-300 hover:text-brand-200 transition-colors">

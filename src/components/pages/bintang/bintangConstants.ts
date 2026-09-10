@@ -59,6 +59,11 @@ export interface StudentViolationSummaryItem {
     description: string;
     bintangAspect?: 'ADAB' | 'KEDISIPLINAN' | 'KERAPIAN';
     category?: string | null;
+    context_notes?: string | null;
+    date?: string;
+    follow_up_status?: string | null;
+    follow_up_notes?: string | null;
+    recorded_by_name?: string | null;
 }
 
 export interface HomeroomNoteContext {

@@ -506,8 +506,8 @@ describe('bintangPdfGenerator', () => {
             { id: 'u1', name: 'Bagas Riyadi, S.Pd', avatarUrl: '' }
         );
 
-        // Iqbal Bayhaqi with 10 violations now fits cleanly on 1 page!
-        expect(doc.getNumberOfPages()).toBe(1);
+        // Iqbal Bayhaqi with 10 violations uses 2 pages with Page 1 nicely filled and spacious signatures on Page 2
+        expect(doc.getNumberOfPages()).toBe(2);
 
         const secACall = textSpy.mock.calls.find(c => c[0] === 'A. Rekapitulasi Penilaian Bintang');
         const secBCall = textSpy.mock.calls.find(c => c[0] === 'B. Rincian Poin Pelanggaran');

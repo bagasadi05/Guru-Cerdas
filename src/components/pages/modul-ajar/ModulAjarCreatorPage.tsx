@@ -69,11 +69,8 @@ const ModulAjarCreatorPage: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   
   const [history, setHistory] = useState<any[]>([]);
-  const [selectedHistoryItem, setSelectedHistoryItem] = useState<any | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
-  const [isDeletingHistory, setIsDeletingHistory] = useState<boolean>(false);
-  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   const [aiCacheWarning, setAiCacheWarning] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string>('');

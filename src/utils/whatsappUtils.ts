@@ -41,3 +41,29 @@ Mohon maklum dan terima kasih atas perhatiannya.
 
 Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
 };
+
+export const generateAttendanceSummaryMessage = (
+    studentName: string,
+    hadir: number,
+    sakit: number,
+    izin: number,
+    alpha: number,
+    rate: number
+) => {
+    return `Assalamu'alaikum Warahmatullahi Wabarakatuh,
+
+Kepada Yth. Orang Tua/Wali murid dari ananda *${studentName}*,
+
+Berikut ringkasan rekapitulasi kehadiran ananda:
+• Hadir: ${hadir} hari
+• Sakit: ${sakit} hari
+• Izin: ${izin} hari
+• Tanpa Keterangan (Alpha): ${alpha} hari
+Tingkat Kehadiran: *${rate}%*
+
+${alpha > 0 || rate < 85 
+    ? 'Mohon perhatian dan kerjasamanya untuk membimbing serta memastikan ananda dapat mengikuti pembelajaran dengan tertib.' 
+    : 'Terima kasih atas kedisiplinan dan kerjasamanya dalam mendukung kehadiran ananda di sekolah.'}
+
+Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
+};

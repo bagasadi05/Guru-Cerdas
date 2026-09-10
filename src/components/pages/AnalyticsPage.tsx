@@ -23,12 +23,32 @@ import { Button } from '../ui/Button';
 import { CustomDropdown } from '../ui/CustomDropdown';
 import { Download, RefreshCwIcon, UsersIcon, CalendarIcon, LayoutDashboard, GraduationCap, Clock, ShieldAlert, BarChart3, Sparkles } from 'lucide-react';
 
+function getAnalyticsMonthOptions(): { value: string; label: string }[] {
+    const nowWib = new Date(Date.now() + 7 * 60 * 60 * 1000);
+    const currentYear = nowWib.getUTCFullYear();
+    const currentMonth = nowWib.getUTCMonth();
+
+    const opts: { value: string; label: string }[] = [];
+    for (let i = 0; i < 6; i++) {
+        const d = new Date(currentYear, currentMonth - i, 1);
+        const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const monthName = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        opts.push({
+            value: val,
+            label: i === 0 ? `${monthName} (Bulan Ini)` : monthName,
+        });
+    }
+    opts.push({ value: 'all', label: 'Semua (Semester Ini)' });
+    return opts;
+}
+
 const AnalyticsPage: React.FC = () => {
     const { start } = useTour();
     const { userRole } = useAuth();
     const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum' || userRole === 'admin';
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'overview' | 'academic' | 'attendance' | 'character' | 'comparison' | 'predictive'>('overview');
+    const [monthOptions] = useState(() => getAnalyticsMonthOptions());
 
     const {
         dateRange, setDateRange,
@@ -36,7 +56,8 @@ const AnalyticsPage: React.FC = () => {
         classes, isLoading, refetch,
         students, attendance, academicRecords, violations, quizPoints, tasks: _tasks,
         gradeStats, attendanceStats, classStats, atRiskStudents, topPerformingStudents,
-        dailyAttendance, taskStats, genderStats, violationsStats, quizPointsStats
+        dailyAttendance, taskStats, genderStats, violationsStats, quizPointsStats,
+        studentAttendanceSummaries, autoFillStats, missingWeekdays
     } = useAnalyticsData();
 
     React.useEffect(() => {
@@ -60,12 +81,19 @@ const AnalyticsPage: React.FC = () => {
         return () => clearTimeout(timer);
     }, [start]);
 
-    const dateRangeLabel = {
-        '7d': '7 Hari',
-        '30d': '30 Hari',
-        '90d': '90 Hari',
-        all: 'Semua',
-    }[dateRange];
+
+    const dateRangeLabel = React.useMemo(() => {
+        if (dateRange === 'all') return 'Semua (Semester Ini)';
+        if (dateRange === '7d') return '7 Hari Terakhir';
+        if (dateRange === '30d') return '30 Hari Terakhir';
+        if (dateRange === '90d') return '90 Hari Terakhir';
+        if (dateRange.match(/^\d{4}-\d{2}$/)) {
+            const [yStr, mStr] = dateRange.split('-');
+            const d = new Date(parseInt(yStr, 10), parseInt(mStr, 10) - 1, 1);
+            return d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        }
+        return dateRange;
+    }, [dateRange]);
 
     const selectedClassLabel = selectedClassId === 'all'
         ? 'Semua Kelas'
@@ -127,8 +155,8 @@ const AnalyticsPage: React.FC = () => {
 
                 {/* Filter Bar */}
                 <div className="flex flex-col sm:flex-row gap-3 p-3 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all border border-slate-200/70 dark:border-slate-700/60 shadow-sm">
-                    <div className="flex items-center gap-3 px-2 sm:px-4 py-1 sm:border-r border-slate-100 dark:border-slate-800">
-                        <UsersIcon className="w-4 h-4 text-slate-400 hidden sm:block" />
+                    <div className="flex items-center gap-3 px-2 sm:px-4 py-1 sm:border-r border-slate-100 dark:border-slate-800 w-full sm:w-auto min-w-[180px]">
+                        <UsersIcon className="w-4 h-4 text-slate-400 hidden sm:block flex-shrink-0" />
                         <CustomDropdown
                             value={selectedClassId}
                             onChange={setSelectedClassId}
@@ -138,17 +166,12 @@ const AnalyticsPage: React.FC = () => {
                             ]}
                         />
                     </div>
-                    <div className="flex items-center gap-3 px-2 sm:px-4 py-1">
-                        <CalendarIcon className="w-4 h-4 text-slate-400 hidden sm:block" />
+                    <div className="flex items-center gap-3 px-2 sm:px-4 py-1 w-full sm:w-auto min-w-[220px]">
+                        <CalendarIcon className="w-4 h-4 text-slate-400 hidden sm:block flex-shrink-0" />
                         <CustomDropdown
                             value={dateRange}
-                            onChange={(val) => setDateRange(val as '7d' | '30d' | '90d' | 'all')}
-                            options={[
-                                { value: '7d', label: '7 Hari Terakhir' },
-                                { value: '30d', label: '30 Hari Terakhir' },
-                                { value: '90d', label: '90 Hari Terakhir' },
-                                { value: 'all', label: 'Semua Waktu (Semester Ini)' },
-                            ]}
+                            onChange={(val) => setDateRange(val)}
+                            options={monthOptions}
                         />
                     </div>
                 </div>
@@ -196,8 +219,13 @@ const AnalyticsPage: React.FC = () => {
                     )}
                     {activeTab === 'attendance' && (
                         <AttendanceTab 
-                            dailyAttendance={dailyAttendance} attendanceStats={attendanceStats} 
+                            dailyAttendance={dailyAttendance}
+                            attendanceStats={attendanceStats} 
                             titleContext={selectedClassLabel}
+                            studentSummaries={studentAttendanceSummaries}
+                            autoFillStats={autoFillStats}
+                            missingWeekdays={missingWeekdays}
+                            selectedClassId={selectedClassId}
                         />
                     )}
                     {activeTab === 'character' && (

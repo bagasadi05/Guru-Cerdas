@@ -173,6 +173,8 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data, isLoad
         );
     }
 
+    const isAllClear = actions.length === 1 && actions[0].id === 'all-clear';
+
     return (
         <div className={isCombined ? "" : "overflow-hidden rounded-3xl border bg-white shadow-sm dark:bg-slate-900 border-slate-200/70 dark:border-slate-700/60"}>
             <div className={`flex flex-col gap-3 border-b border-slate-200/70 bg-[linear-gradient(135deg,#ecfdf5_0%,#ffffff_55%,#f8fafc_100%)] p-5 dark:border-slate-700/60 dark:bg-[linear-gradient(135deg,rgba(6,78,59,0.3)_0%,rgba(15,23,42,0.9)_100%)] sm:flex-row sm:items-center sm:justify-between`}>
@@ -184,32 +186,89 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data, isLoad
                     <h3 className={`mt-3 font-bold text-slate-900 dark:text-white ${'text-xl'}`}>{t.dashboard.actionsToday}</h3>
                     <p className={`mt-1 text-slate-500 dark:text-slate-400 ${'text-sm'}`}>{t.dashboard.actionsSubtitle}</p>
                 </div>
-                <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-                    {actions.length} item
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    isAllClear
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300/40 dark:border-emerald-700/40'
+                        : 'border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 text-slate-600 dark:text-slate-300'
+                }`}>
+                    {isAllClear ? 'Semua Beres' : `${actions.length} item`}
                 </span>
             </div>
 
-            <div className="grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-4">
-                {actions.map((item) => (
-                    <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => navigate(item.href)}
-                        className={`group rounded-2xl border p-5 text-left transition hover:-translate-y-1 hover:shadow-md ${getToneClass(item.tone)} ${
-                            ''
-                        }`}
-                    >
-                        <div className="flex items-start justify-between gap-3">
-                            <div className="rounded-2xl bg-white/80 p-2.5 shadow-sm dark:bg-white/10">
-                                <item.icon className={'h-5 w-5'} />
+            {isAllClear ? (
+                <div className="p-4 sm:p-5">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl border border-emerald-200/80 bg-emerald-50/70 dark:border-emerald-800/40 dark:bg-emerald-950/20">
+                        <div className="flex items-center gap-3.5">
+                            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white dark:bg-emerald-900/40 border border-emerald-200/60 dark:border-emerald-700/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-sm">
+                                <CheckCircleIcon className="w-6 h-6" />
                             </div>
-                            <span className="rounded-full bg-white/70 px-2.5 py-1 text-xs font-bold dark:bg-black/20">{item.badge}</span>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                                        {t.dashboard.noUrgentActions}
+                                    </h4>
+                                    <span className="rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xxs sm:text-xs px-2 sm:px-2.5 py-0.5 font-bold">
+                                        Aman
+                                    </span>
+                                </div>
+                                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-xl leading-relaxed">
+                                    {t.dashboard.noUrgentDesc}
+                                </p>
+                            </div>
                         </div>
-                        <p className={`mt-4 font-bold ${''}`}>{item.title}</p>
-                        <p className={`mt-1.5 line-clamp-2 font-medium opacity-90 ${'text-xs'}`}>{item.description}</p>
-                    </button>
-                ))}
-            </div>
+
+                        {/* Quick action shortcuts to keep the workspace interactive */}
+                        <div className="flex items-center gap-2 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-emerald-200/40 dark:border-emerald-800/40 shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => navigate('/absensi')}
+                                className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-sm transition-all"
+                            >
+                                Cek Absensi
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => navigate('/input-massal')}
+                                className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-sm transition-all"
+                            >
+                                Input Nilai
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => navigate('/jadwal')}
+                                className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-semibold rounded-xl bg-brand-600 hover:bg-brand-700 text-white shadow-sm transition-all"
+                            >
+                                Buka Jadwal
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <div className={`grid gap-4 p-4 ${
+                    actions.length === 1 ? 'grid-cols-1' :
+                    actions.length === 2 ? 'grid-cols-1 md:grid-cols-2' :
+                    actions.length === 3 ? 'grid-cols-1 md:grid-cols-3' :
+                    'grid-cols-1 md:grid-cols-2 xl:grid-cols-4'
+                }`}>
+                    {actions.map((item) => (
+                        <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => navigate(item.href)}
+                            className={`group rounded-2xl border p-5 text-left transition hover:-translate-y-1 hover:shadow-md ${getToneClass(item.tone)}`}
+                        >
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="rounded-2xl bg-white/80 p-2.5 shadow-sm dark:bg-white/10">
+                                    <item.icon className="h-5 w-5" />
+                                </div>
+                                <span className="rounded-full bg-white/70 px-2.5 py-1 text-xs font-bold dark:bg-black/20">{item.badge}</span>
+                            </div>
+                            <p className="mt-4 font-bold">{item.title}</p>
+                            <p className="mt-1.5 line-clamp-2 font-medium opacity-90 text-xs">{item.description}</p>
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

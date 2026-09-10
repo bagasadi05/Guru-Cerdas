@@ -22,6 +22,7 @@ export const useAttendanceState = (initialDate: string) => {
     
     const [isResetModalOpen, setIsResetModalOpen] = useState(false);
     const [isSaveConfirmOpen, setIsSaveConfirmOpen] = useState(false);
+    const [isDirty, setIsDirty] = useState(false);
 
     return {
         selectedSemesterId, setSelectedSemesterId,
@@ -36,6 +37,7 @@ export const useAttendanceState = (initialDate: string) => {
         searchQuery, setSearchQuery, deferredSearchQuery,
         viewMode, setViewMode,
         isResetModalOpen, setIsResetModalOpen,
-        isSaveConfirmOpen, setIsSaveConfirmOpen
+        isSaveConfirmOpen, setIsSaveConfirmOpen,
+        isDirty, setIsDirty,
     };
 };

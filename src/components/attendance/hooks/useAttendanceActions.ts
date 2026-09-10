@@ -4,7 +4,7 @@ import type { AppUser } from '../../../hooks/useAuth';
 import { supabase, wasLastResponseQueued } from '../../../services/supabase';
 import { addToQueue } from '../../../services/offlineQueue';
 import { AttendanceStatus } from '../../../types';
-import type { AttendanceRecord, StudentRow, SemesterRow, AttendanceInsert } from '../../../types';
+import type { AttendanceRecord, StudentRow, SemesterRow } from '../../../types';
 import type { useToast } from '../../../hooks/useToast';
 import { queryKeys } from '../../../lib/queryKeys';
 import { triggerPerfectAttendanceConfetti, triggerSubtleConfetti } from '../../../utils/confetti';
@@ -31,6 +31,7 @@ interface UseAttendanceActionsProps {
     activeSemester: SemesterRow | null;
     setIsResetModalOpen: (isOpen: boolean) => void;
     setIsSaveConfirmOpen: (isOpen: boolean) => void;
+    setIsDirty: (dirty: boolean) => void;
 }
 
 export const useAttendanceActions = ({
@@ -55,6 +56,7 @@ export const useAttendanceActions = ({
     activeSemester,
     setIsResetModalOpen,
     setIsSaveConfirmOpen,
+    setIsDirty,
 }: UseAttendanceActionsProps) => {
     const queryClient = useQueryClient();
 
@@ -90,6 +92,7 @@ export const useAttendanceActions = ({
         },
         onSettled: () => { 
             localDirtyRef.current = false; 
+            setIsDirty(false);
             queryClient.invalidateQueries({ queryKey: ['attendanceCalendar'] }); 
             queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all }); 
         },
@@ -99,6 +102,7 @@ export const useAttendanceActions = ({
         if (selectedStudents.size === 0) return;
         if (isSaving) { toast.warning('Tunggu sampai proses simpan selesai.'); return; }
         localDirtyRef.current = true;
+        setIsDirty(true);
         const updated = { ...attendanceRecords };
         Array.from(selectedStudents).forEach(id => { updated[id] = { ...updated[id], status: updated[id]?.status || 'Izin', note: noteText }; });
         setAttendanceRecords(updated); setSelectedStudents(new Set()); setIsNoteModalOpen(false); setNoteText('');
@@ -108,6 +112,7 @@ export const useAttendanceActions = ({
     const handleStatusChange = (studentId: string, status: AttendanceStatus) => {
         if (isSaving) { toast.warning('Tunggu sampai proses simpan selesai.'); return; }
         localDirtyRef.current = true;
+        setIsDirty(true);
         setAttendanceRecords(prev => ({ ...prev, [studentId]: { ...prev[studentId], status, note: prev[studentId]?.note || '' } }));
     };
 
@@ -123,6 +128,7 @@ export const useAttendanceActions = ({
         if (!students.length) return;
         if (isSaving) { toast.warning('Tunggu sampai proses simpan selesai.'); return; }
         localDirtyRef.current = true; initialSyncRef.current = true;
+        setIsDirty(true);
         const uc = template.applyToAll ? students.length : students.filter(s => !attendanceRecords[s.id]?.status).length;
         const updated = { ...attendanceRecords };
         students.forEach(s => { if (template.applyToAll || !updated[s.id]?.status) updated[s.id] = { ...updated[s.id], status: template.defaultStatus, note: updated[s.id]?.note || '' }; });
@@ -141,7 +147,7 @@ export const useAttendanceActions = ({
             if (error) throw error;
         },
         onSuccess: () => {
-            localDirtyRef.current = false; setAttendanceRecords({}); setIsResetModalOpen(false);
+            localDirtyRef.current = false; setIsDirty(false); setAttendanceRecords({}); setIsResetModalOpen(false);
             toast.success('Absensi berhasil direset!');
             ['attendanceData', 'attendanceCalendar', 'dashboardData', 'deleted-items', 'deleted-items-all'].forEach(k => queryClient.invalidateQueries({ queryKey: [k] }));
         },

@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { useOfflineStatus } from '../../hooks/useOfflineStatus';
@@ -6,6 +7,8 @@ import { useUserSettings } from '../../hooks/useUserSettings';
 import { useSemester } from '../../contexts/SemesterContext';
 import { statusOptions } from '../../constants';
 import { AttendanceStatus } from '../../types';
+import { queryKeys } from '../../lib/queryKeys';
+import { attendanceAutoFillService, type MissingWeekday } from '../../services/attendanceAutoFillService';
 
 import { useAttendanceState } from './hooks/useAttendanceState';
 import { useAttendanceData } from './hooks/useAttendanceData';
@@ -57,6 +60,7 @@ export const useAttendance = () => {
         calendarMonth: state.calendarMonth,
         setAttendanceRecords: state.setAttendanceRecords,
         setSelectedStudents: state.setSelectedStudents,
+        setIsDirty: state.setIsDirty,
     });
 
     const attendanceSummary = useMemo(() => {
@@ -124,7 +128,89 @@ export const useAttendance = () => {
         activeSemester,
         setIsResetModalOpen: state.setIsResetModalOpen,
         setIsSaveConfirmOpen: state.setIsSaveConfirmOpen,
+        setIsDirty: state.setIsDirty,
     });
+
+    const queryClient = useQueryClient();
+    const [missingWeekdays, setMissingWeekdays] = useState<MissingWeekday[]>([]);
+    const [isAutoFilling, setIsAutoFilling] = useState(false);
+    const [isAssistantDismissed, setIsAssistantDismissed] = useState(false);
+
+    // Reset dismissed state if class changes
+    useEffect(() => {
+        setIsAssistantDismissed(false);
+    }, [state.selectedClass]);
+
+    const studentIdsKey = useMemo(() => (data.students || []).map(s => s.id).sort().join(','), [data.students]);
+
+    const checkMissingWeekdays = useCallback(async () => {
+        if (!state.selectedClass || !data.students || data.students.length === 0) {
+            setMissingWeekdays(prev => (prev.length > 0 ? [] : prev));
+            return;
+        }
+        try {
+            const studentIds = data.students.map(s => s.id);
+            const missing = await attendanceAutoFillService.getMissingWeekdaysForClass(
+                state.selectedClass,
+                studentIds,
+                today
+            );
+            setMissingWeekdays(missing);
+        } catch (err) {
+            console.warn('Failed to check missing weekdays:', err);
+        }
+    }, [state.selectedClass, studentIdsKey, today]);
+
+    useEffect(() => {
+        if (!state.selectedClass || !data.students || data.students.length === 0) {
+            setMissingWeekdays(prev => (prev.length > 0 ? [] : prev));
+            return;
+        }
+
+        let isMounted = true;
+        const studentIds = data.students.map(s => s.id);
+        attendanceAutoFillService.getMissingWeekdaysForClass(
+            state.selectedClass,
+            studentIds,
+            today
+        ).then(missing => {
+            if (isMounted) {
+                setMissingWeekdays(missing);
+            }
+        }).catch(err => {
+            console.warn('Failed to check missing weekdays:', err);
+        });
+
+        return () => {
+            isMounted = false;
+        };
+    }, [state.selectedClass, studentIdsKey, today]);
+
+    const handleAutoFillWeekdays = useCallback(async (targetDate?: string) => {
+        if (!state.selectedClass) return;
+        setIsAutoFilling(true);
+        try {
+            const res = await attendanceAutoFillService.autoFillWeeklyAttendance({
+                classId: state.selectedClass,
+                targetDate: targetDate || state.selectedDate,
+                notes: '[Auto-fill Cepat: Hadir]',
+            });
+            toast.success(`Berhasil mengisi ${res.total_inserted} data kehadiran sebagai Hadir!`);
+            await queryClient.invalidateQueries({ queryKey: ['attendanceData'] });
+            await queryClient.invalidateQueries({ queryKey: ['attendanceCalendar'] });
+            await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+            await checkMissingWeekdays();
+        } catch (err: any) {
+            console.error('Auto-fill failed:', err);
+            toast.error(err.message || 'Gagal mengisi absensi otomatis');
+        } finally {
+            setIsAutoFilling(false);
+        }
+    }, [state.selectedClass, state.selectedDate, toast, queryClient, checkMissingWeekdays]);
+
+    const isCurrentDateAutoFilled = useMemo(() => {
+        return attendanceAutoFillService.isDateAutoFilled(state.attendanceRecords);
+    }, [state.attendanceRecords]);
 
     const handleExport = async (format: 'pdf' | 'excel') => { 
         await exportApi.handleExport(format, schoolName); 
@@ -146,6 +232,13 @@ export const useAttendance = () => {
         handleExport, 
         isOnline, 
         isHomeroom,
+        missingWeekdays,
+        isAutoFilling,
+        isAssistantDismissed,
+        setIsAssistantDismissed,
+        handleAutoFillWeekdays,
+        isCurrentDateAutoFilled,
+        checkMissingWeekdays,
     };
 };
 

@@ -100,7 +100,9 @@ const BintangDashboardPage: React.FC = () => {
         id: string; student_id: string; user_id: string | null; description: string; points: number;
         date: string; severity: string | null; semester_id: string | null; type: string | null;
         context_notes: string | null; evidence_url: string | null; created_at: string;
-        students: { name: string } | null;
+        follow_up_status?: string | null; follow_up_notes?: string | null;
+        parent_notified?: boolean | null; parent_notified_at?: string | null;
+        students?: any; users?: any;
     }>>([]);
     const [evaluations, setEvaluations] = useState<Array<{
         id: string; student_id: string; month: string;
@@ -342,7 +344,7 @@ const BintangDashboardPage: React.FC = () => {
     }, [violations, students, studentQuizMap]);
 
     const studentViolationsMap = useMemo(() => {
-        const map = new Map<string, Array<{ description: string; bintangAspect?: 'ADAB' | 'KEDISIPLINAN' | 'KERAPIAN'; category?: string | null }>>();
+        const map = new Map<string, Array<any>>();
         for (const v of violations) {
             const list = map.get(v.student_id) || [];
             const item = violationList.find(i => i.description === v.description);
@@ -350,6 +352,11 @@ const BintangDashboardPage: React.FC = () => {
                 description: v.description,
                 bintangAspect: item?.bintangAspect,
                 category: v.severity,
+                context_notes: v.context_notes,
+                date: v.date,
+                follow_up_status: v.follow_up_status,
+                follow_up_notes: v.follow_up_notes,
+                recorded_by_name: v.users?.name,
             });
             map.set(v.student_id, list);
         }
@@ -1243,10 +1250,17 @@ const BintangDashboardPage: React.FC = () => {
                                                     {(['adab_score', 'kedisiplinan_score', 'kerapian_score'] as const).map((field, idx) => {
                                                         const aspectKey = (['ADAB', 'KEDISIPLINAN', 'KERAPIAN'] as const)[idx];
                                                         const score = (ev?.[field] || aspect[aspectKey].grade) as BintangGrade;
+                                                        const isManual = (Array.isArray(ev?.manual_aspects) && ev.manual_aspects.includes(aspectKey)) || (!!ev?.[field] && ev[field] !== aspect[aspectKey].grade);
                                                         return (
                                                             <td key={field} className="py-2 px-1 sm:py-3 sm:px-4 text-center">
-                                                                <span className={`inline-flex px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold ring-1 ${gradeColors[score]}`}>
+                                                                <span
+                                                                    className={`inline-flex items-center justify-center gap-1 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold ring-1 ${gradeColors[score]}`}
+                                                                    title={isManual ? 'Nilai telah disesuaikan manual oleh guru (aman dari reset generate)' : `Nilai rekomendasi sistem: ${score}`}
+                                                                >
                                                                     {score}
+                                                                    {isManual && (
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" title="Penyesuaian manual" />
+                                                                    )}
                                                                 </span>
                                                             </td>
                                                         );
@@ -1433,23 +1447,38 @@ const BintangDashboardPage: React.FC = () => {
                     <AspectSectionEditor
                         aspectKey="ADAB" scoreField="adab_score"
                         formValue={evalHook.formData.adab_score} notesValue={evalHook.formData.adab_notes}
-                        onScoreChange={(val) => evalHook.setFormData(prev => ({ ...prev, adab_score: val }))}
+                        onScoreChange={(val) => evalHook.setFormData(prev => ({
+                            ...prev,
+                            adab_score: val,
+                            manual_aspects: Array.from(new Set([...(prev.manual_aspects || []), 'ADAB'])),
+                        }))}
                         onNotesChange={(val) => evalHook.setFormData(prev => ({ ...prev, adab_notes: val }))}
                         editingStudent={evalHook.editingStudent} getAspectSummary={getAspectSummary}
+                        studentViolations={evalHook.editingStudent ? studentViolationsMap.get(evalHook.editingStudent.id) || [] : []}
                     />
                     <AspectSectionEditor
                         aspectKey="KEDISIPLINAN" scoreField="kedisiplinan_score"
                         formValue={evalHook.formData.kedisiplinan_score} notesValue={evalHook.formData.kedisiplinan_notes}
-                        onScoreChange={(val) => evalHook.setFormData(prev => ({ ...prev, kedisiplinan_score: val }))}
+                        onScoreChange={(val) => evalHook.setFormData(prev => ({
+                            ...prev,
+                            kedisiplinan_score: val,
+                            manual_aspects: Array.from(new Set([...(prev.manual_aspects || []), 'KEDISIPLINAN'])),
+                        }))}
                         onNotesChange={(val) => evalHook.setFormData(prev => ({ ...prev, kedisiplinan_notes: val }))}
                         editingStudent={evalHook.editingStudent} getAspectSummary={getAspectSummary}
+                        studentViolations={evalHook.editingStudent ? studentViolationsMap.get(evalHook.editingStudent.id) || [] : []}
                     />
                     <AspectSectionEditor
                         aspectKey="KERAPIAN" scoreField="kerapian_score"
                         formValue={evalHook.formData.kerapian_score} notesValue={evalHook.formData.kerapian_notes}
-                        onScoreChange={(val) => evalHook.setFormData(prev => ({ ...prev, kerapian_score: val }))}
+                        onScoreChange={(val) => evalHook.setFormData(prev => ({
+                            ...prev,
+                            kerapian_score: val,
+                            manual_aspects: Array.from(new Set([...(prev.manual_aspects || []), 'KERAPIAN'])),
+                        }))}
                         onNotesChange={(val) => evalHook.setFormData(prev => ({ ...prev, kerapian_notes: val }))}
                         editingStudent={evalHook.editingStudent} getAspectSummary={getAspectSummary}
+                        studentViolations={evalHook.editingStudent ? studentViolationsMap.get(evalHook.editingStudent.id) || [] : []}
                     />
 
                     <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-800/30">
@@ -1559,38 +1588,54 @@ const BintangDashboardPage: React.FC = () => {
                                 </Button>
                             )}
                         </div>
-                        <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-slate-50 dark:bg-slate-800">
-                                    <tr>
-                                        <th className="py-2 px-3 font-medium text-slate-600 dark:text-slate-300">Tanggal</th>
-                                        <th className="py-2 px-3 font-medium text-slate-600 dark:text-slate-300">Pelanggaran</th>
-                                        <th className="py-2 px-3 font-medium text-slate-600 dark:text-slate-300 text-center">Poin</th>
-                                        {isWalas && <th className="py-2 px-3 text-right font-medium text-slate-600 dark:text-slate-300">Aksi</th>}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {violations.filter(v => v.student_id === detailStudentId).length === 0 ? (
-                                        <tr><td colSpan={4} className="py-4 text-center text-slate-500">Tidak ada pelanggaran bulan ini</td></tr>
-                                    ) : (
-                                        violations.filter(v => v.student_id === detailStudentId).map(v => (
-                                            <tr key={v.id} className="border-t border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                                                <td className="py-2 px-3 whitespace-nowrap">{new Date(v.date).toLocaleDateString('id-ID')}</td>
-                                                <td className="py-2 px-3 text-slate-700 dark:text-slate-300">{v.description}</td>
-                                                <td className="py-2 px-3 text-center font-bold text-rose-600 dark:text-rose-400">+{v.points}</td>
-                                                {isWalas && (
-                                                    <td className="py-2 px-3 text-right whitespace-nowrap">
-                                                        <div className="flex justify-end gap-1">
-                                                            <button onClick={() => { setDetailStudentId(null); openEditViolation(v as unknown as ViolationRow); }} className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30" title="Edit"><Pencil size={14}/></button>
-                                                            <button onClick={() => { setDetailStudentId(null); handleDeleteViolation(v as unknown as ViolationRow); }} className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30" title="Hapus"><Trash2 size={14}/></button>
-                                                        </div>
-                                                    </td>
+                        <div className="space-y-3">
+                            {violations.filter(v => v.student_id === detailStudentId).length === 0 ? (
+                                <div className="p-6 text-center text-slate-500 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/30">
+                                    Tidak ada pelanggaran bulan ini
+                                </div>
+                            ) : (
+                                violations.filter(v => v.student_id === detailStudentId).map(v => (
+                                    <div key={v.id} className="border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 p-4 shadow-sm relative">
+                                        {isWalas && (
+                                            <div className="absolute top-4 right-4 flex gap-1">
+                                                <button onClick={() => { setDetailStudentId(null); openEditViolation(v as unknown as ViolationRow); }} className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30" title="Edit"><Pencil size={14}/></button>
+                                                <button onClick={() => { setDetailStudentId(null); handleDeleteViolation(v as unknown as ViolationRow); }} className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30" title="Hapus"><Trash2 size={14}/></button>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between items-start mb-2 pr-16">
+                                            <div>
+                                                <h4 className="font-semibold text-slate-800 dark:text-slate-200 text-sm">{v.description}</h4>
+                                                <div className="text-xs text-slate-500 mt-1 flex items-center gap-2 flex-wrap">
+                                                    <span className="bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded font-medium">{new Date(v.date).toLocaleDateString('id-ID')}</span>
+                                                    {v.severity && <span className={`px-2 py-0.5 rounded uppercase text-[10px] font-bold ${v.severity === 'berat' ? 'bg-rose-100 text-rose-700' : v.severity === 'sedang' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>{v.severity}</span>}
+                                                    {v.users?.name && <span className="text-slate-400">Pencatat: {v.users.name}</span>}
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col items-end">
+                                                <span className="font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 px-2 py-1 rounded-lg">+{v.points} Poin</span>
+                                            </div>
+                                        </div>
+                                        
+                                        {(v.context_notes || v.follow_up_notes) && (
+                                            <div className="mt-3 text-sm space-y-2 border-t border-slate-100 dark:border-slate-700/50 pt-3">
+                                                {v.context_notes && (
+                                                    <div className="text-slate-600 dark:text-slate-400">
+                                                        <span className="font-medium text-slate-700 dark:text-slate-300 mr-1">Kronologi:</span>
+                                                        {v.context_notes}
+                                                    </div>
                                                 )}
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
+                                                {v.follow_up_notes && (
+                                                    <div className="text-slate-600 dark:text-slate-400">
+                                                        <span className="font-medium text-slate-700 dark:text-slate-300 mr-1">Tindak Lanjut:</span>
+                                                        {v.follow_up_notes}
+                                                        {v.follow_up_status && <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded-full ${v.follow_up_status === 'resolved' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{v.follow_up_status}</span>}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
 

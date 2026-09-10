@@ -86,12 +86,11 @@ const SchedulePage: React.FC = () => {
         const params = new URLSearchParams({ classId: item.class_id || '', subject: item.subject, date: dateStr, scheduleId: item.id });
         navigate(`/jurnal?${params.toString()}`);
     };
-
     const [modalState, setModalState] = useState<{ isOpen: boolean; mode: 'add' | 'edit'; data: ScheduleRow | null }>({ isOpen: false, mode: 'add', data: null });
     const [formData, setFormData] = useState<Omit<Database['public']['Tables']['schedules']['Insert'], 'id' | 'created_at' | 'user_id'>>({ day: 'Senin', start_time: '08:00', end_time: '09:30', subject: '', class_id: '' });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [viewMode, setViewMode] = useState<ScheduleViewMode>('daily');
-    const [selectedDay, setSelectedDay] = useState<string>(new Date().toLocaleDateString('id-ID', { weekday: 'long' }));
+    const [selectedDay, setSelectedDay] = useState<string>(() => DAY_NAMES[new Date().getDay()]);
     const [selectedClassId, setSelectedClassId] = useState<string>('');
     const [isAnalysisModalOpen, setAnalysisModalOpen] = useState(false);
     const [analysisResult, setAnalysisResult] = useState<{ sections: { title: string; points: string[] }[] } | { error: string } | null>(null);

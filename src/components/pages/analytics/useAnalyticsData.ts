@@ -8,8 +8,10 @@ import { violationList } from '../../../services/violations.data';
 import {
     AnalyticsClass, Student, AnalyticsAttendance, AnalyticsTask,
     AnalyticsAcademicRecord, AnalyticsViolation, AnalyticsQuizPoint,
-    GradeDistribution, AttendanceStats, ClassStats, DailyAttendance, AtRiskItem
+    GradeDistribution, AttendanceStats, ClassStats, DailyAttendance, AtRiskItem,
+    StudentAttendanceSummary, AutoFillStats
 } from './types';
+import { attendanceAutoFillService, MissingWeekday } from '../../../services/attendanceAutoFillService';
 
 // Constants
 const EMPTY_CLASSES: AnalyticsClass[] = [];
@@ -19,7 +21,9 @@ export const useAnalyticsData = () => {
     const { user, userRole } = useAuth();
     const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum' || userRole === 'admin';
     const { activeSemester } = useSemester();
-    const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>(isLeadership ? 'all' : '30d');
+    const nowWib = new Date(Date.now() + 7 * 60 * 60 * 1000);
+    const currentMonthStr = `${nowWib.getUTCFullYear()}-${String(nowWib.getUTCMonth() + 1).padStart(2, '0')}`;
+    const [dateRange, setDateRange] = useState<string>(currentMonthStr);
     const [selectedClassId, setSelectedClassId] = useState<string>('all');
 
     // Fetch Security: Get classes the teacher is allowed to see
@@ -88,19 +92,37 @@ export const useAnalyticsData = () => {
                 }
             }
 
-            const now = new Date();
-            let startDate: Date | null = null;
-            switch (dateRange) {
-                case '7d': startDate = new Date(now.setDate(now.getDate() - 7)); break;
-                case '30d': startDate = new Date(now.setDate(now.getDate() - 30)); break;
-                case '90d': startDate = new Date(now.setDate(now.getDate() - 90)); break;
-                default: startDate = null;
+            let startDateStr: string | null = null;
+            let endDateStr: string | null = null;
+
+            if (dateRange.match(/^\d{4}-\d{2}$/)) {
+                const [yStr, mStr] = dateRange.split('-');
+                const year = parseInt(yStr, 10);
+                const month = parseInt(mStr, 10);
+                const lastDay = new Date(year, month, 0).getDate();
+                startDateStr = `${dateRange}-01`;
+                endDateStr = `${dateRange}-${String(lastDay).padStart(2, '0')}`;
+            } else if (dateRange === '7d') {
+                const d = new Date();
+                d.setDate(d.getDate() - 7);
+                startDateStr = d.toISOString().split('T')[0];
+            } else if (dateRange === '30d') {
+                const d = new Date();
+                d.setDate(d.getDate() - 30);
+                startDateStr = d.toISOString().split('T')[0];
+            } else if (dateRange === '90d') {
+                const d = new Date();
+                d.setDate(d.getDate() - 90);
+                startDateStr = d.toISOString().split('T')[0];
+            } else {
+                startDateStr = null;
+                endDateStr = null;
             }
 
             // 1. Students in allowed classes
             const { data: studentsRes, error: studentsErr } = await supabase
                 .from('students')
-                .select('id, name, class_id, gender')
+                .select('id, name, class_id, gender, parent_phone')
                 .in('class_id', filterClassIds)
                 .is('deleted_at', null);
             if (studentsErr) throw studentsErr;
@@ -129,19 +151,22 @@ export const useAnalyticsData = () => {
             let allQuizPoints: AnalyticsQuizPoint[] = [];
 
             for (const chunk of studentIdChunks) {
-                let attendanceQuery = supabase.from('attendance').select('student_id, date, status').in('student_id', chunk).is('deleted_at', null);
-                if (startDate) attendanceQuery = attendanceQuery.gte('date', startDate.toISOString().split('T')[0]);
+                let attendanceQuery = supabase.from('attendance').select('student_id, date, status, notes').in('student_id', chunk).is('deleted_at', null);
+                if (startDateStr) attendanceQuery = attendanceQuery.gte('date', startDateStr);
+                if (endDateStr) attendanceQuery = attendanceQuery.lte('date', endDateStr);
                 if (activeSemester?.id) attendanceQuery = attendanceQuery.eq('semester_id', activeSemester.id); // Add semester filter
 
                 let academicQuery = supabase.from('academic_records').select('student_id, score, subject, assessment_name, created_at').in('student_id', chunk).is('deleted_at', null);
                 if (activeSemester?.id) academicQuery = academicQuery.eq('semester_id', activeSemester.id);
 
                 let violationsQuery = supabase.from('violations').select('id, student_id, type, description, points, date, created_at').in('student_id', chunk).is('deleted_at', null);
-                if (startDate) violationsQuery = violationsQuery.gte('date', startDate.toISOString().split('T')[0]);
+                if (startDateStr) violationsQuery = violationsQuery.gte('date', startDateStr);
+                if (endDateStr) violationsQuery = violationsQuery.lte('date', endDateStr);
                 if (activeSemester?.id) violationsQuery = violationsQuery.eq('semester_id', activeSemester.id); // Add semester filter
 
                 let quizPointsQuery = supabase.from('quiz_points').select('id, student_id, points, category, created_at').in('student_id', chunk).is('deleted_at', null);
-                if (startDate) quizPointsQuery = quizPointsQuery.gte('created_at', startDate.toISOString());
+                if (startDateStr) quizPointsQuery = quizPointsQuery.gte('created_at', `${startDateStr}T00:00:00`);
+                if (endDateStr) quizPointsQuery = quizPointsQuery.lte('created_at', `${endDateStr}T23:59:59.999Z`);
                 if (activeSemester?.id) quizPointsQuery = quizPointsQuery.eq('semester_id', activeSemester.id); // Add semester filter
 
                 const [att, aca, vio, qpz] = await Promise.all([attendanceQuery, academicQuery, violationsQuery, quizPointsQuery]);
@@ -235,6 +260,36 @@ export const useAnalyticsData = () => {
         };
     }, [attendance]);
 
+    const studentAttendanceSummaries = useMemo((): StudentAttendanceSummary[] => {
+        return students.map(student => {
+            const records = attendance.filter(a => a.student_id === student.id);
+            const hadir = records.filter(a => a.status === 'Hadir').length;
+            const izin = records.filter(a => a.status === 'Izin').length;
+            const sakit = records.filter(a => a.status === 'Sakit').length;
+            const alpha = records.filter(a => a.status === 'Alpha').length;
+            const total = records.length;
+            const rate = total > 0 ? Math.round((hadir / total) * 100) : 0;
+            const isAtRisk = alpha >= 2 || (total >= 5 && rate < 85);
+            return { student, hadir, izin, sakit, alpha, total, rate, isAtRisk };
+        }).sort((a, b) => {
+            if (a.isAtRisk !== b.isAtRisk) return a.isAtRisk ? -1 : 1;
+            if (a.rate !== b.rate) return a.rate - b.rate;
+            return b.alpha - a.alpha;
+        });
+    }, [students, attendance]);
+
+    const autoFillStats = useMemo((): AutoFillStats => {
+        const total = attendance.length;
+        const autoFilled = attendance.filter(a => a.notes?.includes('[Auto-fill')).length;
+        const manual = total - autoFilled;
+        return {
+            totalRecords: total,
+            autoFilledRecords: autoFilled,
+            manualRecords: manual,
+            autoFillPercentage: total > 0 ? Math.round((autoFilled / total) * 100) : 0,
+        };
+    }, [attendance]);
+
     const classStats = useMemo((): ClassStats[] => {
         return classes.map(cls => {
             const classStudents = students.filter(s => s.class_id === cls.id);
@@ -292,15 +347,42 @@ export const useAnalyticsData = () => {
     }, [students, academicRecords]);
 
     const dailyAttendance = useMemo((): DailyAttendance[] => {
-        const daysToCheck = dateRange === '7d' ? 7 : dateRange === '90d' ? 90 : 30;
         const fullRangeMap = new Map<string, DailyAttendance>();
-        const now = new Date();
 
-        for (let i = 0; i < daysToCheck; i++) {
-            const d = new Date();
-            d.setDate(now.getDate() - i);
-            const dateStr = d.toISOString().split('T')[0];
-            fullRangeMap.set(dateStr, { date: dateStr, hadir: 0, izin: 0, sakit: 0, alpha: 0, total: 0 });
+        if (dateRange.match(/^\d{4}-\d{2}$/)) {
+            const [yStr, mStr] = dateRange.split('-');
+            const year = parseInt(yStr, 10);
+            const month = parseInt(mStr, 10);
+            const lastDay = new Date(year, month, 0).getDate();
+            for (let day = 1; day <= lastDay; day++) {
+                const dateStr = `${dateRange}-${String(day).padStart(2, '0')}`;
+                fullRangeMap.set(dateStr, { date: dateStr, hadir: 0, izin: 0, sakit: 0, alpha: 0, total: 0 });
+            }
+        } else if (dateRange === 'all') {
+            const dateSet = new Set<string>();
+            attendance.forEach(a => { if (a.date) dateSet.add(a.date); });
+            if (dateSet.size > 0) {
+                Array.from(dateSet).sort().forEach(dateStr => {
+                    fullRangeMap.set(dateStr, { date: dateStr, hadir: 0, izin: 0, sakit: 0, alpha: 0, total: 0 });
+                });
+            } else {
+                const now = new Date();
+                for (let i = 0; i < 30; i++) {
+                    const d = new Date();
+                    d.setDate(now.getDate() - i);
+                    const dateStr = d.toISOString().split('T')[0];
+                    fullRangeMap.set(dateStr, { date: dateStr, hadir: 0, izin: 0, sakit: 0, alpha: 0, total: 0 });
+                }
+            }
+        } else {
+            const daysToCheck = dateRange === '7d' ? 7 : dateRange === '90d' ? 90 : 30;
+            const now = new Date();
+            for (let i = 0; i < daysToCheck; i++) {
+                const d = new Date();
+                d.setDate(now.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                fullRangeMap.set(dateStr, { date: dateStr, hadir: 0, izin: 0, sakit: 0, alpha: 0, total: 0 });
+            }
         }
 
         attendance.forEach(a => {
@@ -391,6 +473,52 @@ export const useAnalyticsData = () => {
         };
     }, [quizPoints, students]);
 
+    // Check missing weekdays for current week
+    const { data: missingWeekdays = [] } = useQuery({
+        queryKey: ['analytics_missing_weekdays', selectedClassId, allowedClasses.map(c => c.id).join(','), students.length],
+        queryFn: async (): Promise<MissingWeekday[]> => {
+            const targetClasses = selectedClassId !== 'all'
+                ? allowedClasses.filter(c => c.id === selectedClassId)
+                : allowedClasses;
+
+            if (targetClasses.length === 0) return [];
+
+            if (targetClasses.length === 1) {
+                const cls = targetClasses[0];
+                const classStudents = students.filter(s => s.class_id === cls.id);
+                if (classStudents.length === 0) return [];
+                return await attendanceAutoFillService.getMissingWeekdaysForClass(
+                    cls.id,
+                    classStudents.map(s => s.id)
+                );
+            }
+
+            // If multiple classes, check up to 10 classes concurrently
+            const classesToCheck = targetClasses.slice(0, 10);
+            const results = await Promise.all(
+                classesToCheck.map(cls => {
+                    const classStudents = students.filter(s => s.class_id === cls.id);
+                    if (classStudents.length === 0) return Promise.resolve([]);
+                    return attendanceAutoFillService.getMissingWeekdaysForClass(
+                        cls.id,
+                        classStudents.map(s => s.id)
+                    );
+                })
+            );
+
+            const dateMap = new Map<string, MissingWeekday>();
+            for (const list of results) {
+                for (const item of list) {
+                    if (!dateMap.has(item.date)) {
+                        dateMap.set(item.date, item);
+                    }
+                }
+            }
+            return Array.from(dateMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+        },
+        enabled: allowedClasses.length > 0 && students.length > 0,
+    });
+
     return {
         // State and setters
         dateRange, setDateRange,
@@ -404,5 +532,6 @@ export const useAnalyticsData = () => {
         // Computed Stats
         gradeStats, attendanceStats, classStats, atRiskStudents, topPerformingStudents,
         dailyAttendance, taskStats, genderStats, violationsStats, quizPointsStats,
+        studentAttendanceSummaries, autoFillStats, missingWeekdays,
     };
 };

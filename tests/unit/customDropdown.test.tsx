@@ -92,4 +92,25 @@ describe('CustomDropdown — Accessibility & Keyboard Navigation', () => {
         expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
         expect(trigger).toHaveAttribute('aria-expanded', 'false');
     });
+
+    it('renders with custom menuClassName and non-truncated option labels', () => {
+        render(
+            <CustomDropdown
+                value="1"
+                onChange={vi.fn()}
+                options={mockOptions}
+                menuClassName="custom-test-menu"
+                aria-label="Pilih Kelas"
+            />
+        );
+
+        const trigger = screen.getByRole('button', { name: /pilih kelas/i });
+        fireEvent.click(trigger);
+
+        const listbox = screen.getByRole('listbox');
+        expect(listbox.className).toContain('custom-test-menu');
+        expect(listbox.className).toContain('min-w-full');
+        const option1 = screen.getAllByRole('option')[0];
+        expect(option1.querySelector('span')).toHaveClass('whitespace-nowrap');
+    });
 });

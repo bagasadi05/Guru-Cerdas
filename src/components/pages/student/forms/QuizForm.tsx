@@ -76,7 +76,7 @@ export const QuizForm: React.FC<QuizFormProps> = ({ defaultValues, onSubmit, onC
     });
 
     const selectedCategory = useWatch({ control, name: 'category' });
-    const suggestions = selectedCategory ? ACTIVITY_SUGGESTIONS[selectedCategory] : [];
+    const suggestions = (selectedCategory && ACTIVITY_SUGGESTIONS[selectedCategory as PointCategory]) || [];
 
     const handleSuggestionClick = (suggestion: string) => {
         setValue('quiz_name', suggestion);
@@ -110,7 +110,7 @@ export const QuizForm: React.FC<QuizFormProps> = ({ defaultValues, onSubmit, onC
             </div>
 
             {/* Quick Suggestions */}
-            {suggestions.length > 0 && (
+            {(suggestions?.length ?? 0) > 0 && (
                 <div>
                     <label className="block text-sm font-medium mb-2 text-gray-500">Pilih Cepat:</label>
                     <div className="flex flex-wrap gap-2">

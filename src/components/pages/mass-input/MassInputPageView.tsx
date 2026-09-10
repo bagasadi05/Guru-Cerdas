@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '../../ui/Button';
 import { Modal } from '../../ui/Modal';
 import { ExcelImporter } from '../../ui/ExcelImporter';
@@ -14,6 +15,7 @@ import { ViolationExportPanel } from './components/ViolationExportPanel';
 import { InputMode, Step, StudentFilter, StudentRow, AcademicRecordRow, ClassRow, ViolationRow, AttitudeRecordRow } from './types';
 import { ImportPreviewModal } from '../bulk-grade-input/components/ImportPreviewModal';
 import { violationList } from '../../../services/violations.data';
+import { CheckCircle2, Loader2, AlertCircle, XIcon } from 'lucide-react';
 
 export interface MassInputPageViewProps {
     step: Step;
@@ -485,6 +487,81 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                         </div>
                     </div>
                 </Modal>
+
+                {/* Floating Save Bar for Step 2 — rendered via portal to escape parent transform/overflow stacking contexts */}
+                {step === 2 && mode !== 'violation_export' && (mode === 'subject_grade' ? gradedCount > 0 : selectedStudentIds.size > 0) && typeof document !== 'undefined' && createPortal(
+                    <div
+                        role="status"
+                        aria-live="polite"
+                        className="fixed bottom-20 lg:bottom-6 inset-x-0 z-50 pointer-events-none flex justify-center lg:pl-72 px-4 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5"
+                    >
+                        <div className="pointer-events-auto shadow-2xl bg-slate-900/95 dark:bg-slate-800/95 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl flex items-center gap-3 sm:gap-4 backdrop-blur-md border border-slate-700/60 dark:border-slate-600 shadow-black/40 max-w-[95vw]">
+                            <div className="flex items-center gap-2">
+                                <span className="relative flex h-2.5 w-2.5">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                                </span>
+                                <span className="text-xs sm:text-sm font-semibold tracking-tight whitespace-nowrap">
+                                    {mode === 'subject_grade'
+                                        ? `${gradedCount} siswa dinilai`
+                                        : mode === 'attitude'
+                                        ? `${selectedStudentIds.size} siswa terpilih (+${attitudePoints || 1} poin)`
+                                        : `${selectedStudentIds.size} siswa terpilih`}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => mode === 'subject_grade' ? setScores({}) : setSelectedStudentIds(new Set())}
+                                    className="p-1 text-slate-400 hover:text-rose-400 hover:bg-white/10 rounded-lg transition-colors ml-1"
+                                    title="Batalkan pilihan"
+                                    aria-label="Batalkan pilihan"
+                                >
+                                    <XIcon size={14} />
+                                </button>
+                            </div>
+
+                            {isSubmitDisabled && submitButtonTooltip && (
+                                <>
+                                    <div className="hidden sm:block h-4 w-px bg-white/20" />
+                                    <span className="hidden sm:inline-flex text-xs text-amber-300 font-medium items-center gap-1 max-w-[220px] truncate" title={submitButtonTooltip}>
+                                        <AlertCircle size={13} className="shrink-0" />
+                                        <span className="truncate">{submitButtonTooltip}</span>
+                                    </span>
+                                </>
+                            )}
+
+                            <div className="h-4 w-px bg-white/20" />
+
+                            <Button
+                                onClick={onHandleSubmit}
+                                disabled={isSubmitDisabled || isSubmitting}
+                                title={submitButtonTooltip}
+                                size="sm"
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm px-3.5 sm:px-4 py-1.5 h-8 sm:h-9 rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 size={14} className="animate-spin" />
+                                        Menyimpan...
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle2 size={14} />
+                                        {mode === 'violation'
+                                            ? `Simpan Pelanggaran (${selectedStudentIds.size})`
+                                            : mode === 'quiz'
+                                            ? `Simpan Kuis (${selectedStudentIds.size})`
+                                            : mode === 'attitude'
+                                            ? `Simpan Sikap (${selectedStudentIds.size})`
+                                            : mode === 'subject_grade'
+                                            ? `Simpan Nilai (${gradedCount})`
+                                            : `Simpan Data (${selectedStudentIds.size})`}
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>,
+                    document.body
+                )}
             </div>
         </div>
     );

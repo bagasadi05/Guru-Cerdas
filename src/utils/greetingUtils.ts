@@ -47,6 +47,13 @@ export function getHonorificTitle(
     }
   }
 
+  // Definite male markers that should prevent false female identification (e.g. Nur Hadi, Nur Huda, etc.)
+  const strongMaleMarkers = [
+    'hadi', 'huda', 'budi', 'joko', 'ahmad', 'achmad', 'muhammad', 'mochammad', 'bagas', 'agung',
+    'fajar', 'rudi', 'doto', 'mujibburrohman', 'mukhibun', 'syarif', 'athfal', 'nawfal', 'amarullah',
+    'dimas', 'setiawan', 'adesra', 'ramdhani', 'nugroho', 'susanto'
+  ];
+
   // Common Indonesian, Islamic, and modern female name indicators
   const femaleMarkers = [
     'siti', 'nur', 'nurul', 'fitri', 'fitriani', 'fatimah', 'aisyah', 'aisha', 'dewi', 'sri', 'rina', 'diah',
@@ -54,31 +61,51 @@ export function getHonorificTitle(
     'ani', 'suci', 'rahma', 'rahmah', 'zahra', 'zahrah', 'khadijah', 'maria', 'nisa', 'annisa', 'anisa', 'hasanah',
     'marlina', 'kusuma', 'nia', 'ratih', 'kartika', 'melati', 'hidayati', 'utami',
     'astuti', 'wahyuni', 'sulastri', 'suharti', 'widya', 'agustina', 'agustini', 'lestari',
-    'anggraini', 'oktavia', 'oktaviani', 'dwi', 'tri', 'bu', 'ibu', 'ning', 'ukhti', 'ummi',
+    'anggraini', 'oktavia', 'oktaviani', 'dwi', 'tri', 'bu', 'ibu', 'ning', 'ukhti', 'ummi', 'ummu',
     'dian', 'lia', 'nita', 'lusi', 'lucy', 'desy', 'desi', 'maya', 'anti', 'irma', 'vivi', 'ayu',
     'ayunda', 'putri', 'khansa', 'salma', 'safira', 'syafira', 'syifa', 'syifaa', 'hilya',
     'nabila', 'alya', 'hana', 'hannah', 'amalia', 'amelia', 'shafa', 'mutiara', 'nadia',
-    'nadya', 'novi', 'novia', 'novita', 'dinda', 'bella', 'tiara', 'rachel', 'grace',
+    'nadya', 'novi', 'novia', 'novita', 'novianti', 'dinda', 'bella', 'tiara', 'rachel', 'grace',
     'maryam', 'marwah', 'sarah', 'sara', 'humaira', 'zaskia', 'clarissa', 'cynthia',
     'citra', 'cantika', 'diana', 'elisa', 'eliza', 'eva', 'fina', 'fani', 'fanny',
-    'gita', 'helena', 'isna', 'icha', 'jihan', 'jasmine', 'keisha', 'laila', 'layla',
+    'gita', 'helena', 'isna', 'icha', 'jihan', 'jasmine', 'keisha', 'laila', 'layla', 'lailatul',
     'maharani', 'mira', 'mona', 'mutia', 'nadira', 'naila', 'nayla', 'olivia', 'pratiwi',
     'qonita', 'rahmi', 'rara', 'rika', 'rini', 'riska', 'rizka', 'safitri', 'salwa',
     'silvia', 'silvi', 'tania', 'tari', 'tasya', 'ulfa', 'ulfah', 'vania', 'vina',
     'wanda', 'wulan', 'yasmin', 'yolanda', 'yulia', 'yuliana', 'yunita', 'zahroh',
-    'zulaikha', 'zulfa', 'irene', 'iren', 'irena'
+    'zulaikha', 'zulfa', 'irene', 'iren', 'irena',
+    // Added Arabic/Islamic & Indonesian female names
+    'anwarul', 'muniroh', 'munirah', 'azizah', 'azzahra', 'cici', 'destyari', 'pawitra', 'sari',
+    'ining', 'nuryanti', 'badriyah', 'maratun', 'mar\'atun', 'sholikhah', 'sholehah',
+    'milatus', 'sa\'diyyah', 'sadiyyah', 'muzdalifah', 'purbasari', 'ratna', 'rosyidah',
+    'zakiya', 'zakiyah', 'sulfah', 'fathonah', 'qurotul', 'khalifah', 'nurcholifah',
+    'mustafida', 'rahmatin', 'waqingah', 'herawati'
   ];
 
   // Common female suffixes in Indonesian names
-  const femaleSuffixes = ['wati', 'ningsih', 'astuti', 'putri', 'safitri', 'fitriani', 'agustini', 'oktaviani', 'hidayati', 'wahyuni'];
+  const femaleSuffixes = [
+    'wati', 'ningsih', 'astuti', 'putri', 'safitri', 'fitriani', 'agustini', 'oktaviani',
+    'hidayati', 'wahyuni', 'ningrum', 'yanti', 'sari', 'iyyah', 'iyatan', 'iyah', 'iroh', 'uroh'
+  ];
 
   const nameParts = lowerName.split(/[\s,.]+/);
-  const isFemale = nameParts.some(part =>
+  const hasFemaleMarker = nameParts.some(part =>
     femaleMarkers.includes(part) ||
     femaleSuffixes.some(suffix => part.length > suffix.length && part.endsWith(suffix))
   );
 
-  return isFemale ? 'Ustadzah' : 'Ustadz';
+  const hasStrongMaleMarker = nameParts.some(part => strongMaleMarkers.includes(part));
+
+  // If both are present (e.g. Nur Hadi), strong male marker wins unless female marker is dominant/prefix like Ibu/Siti/Putri/Anwarul
+  if (hasFemaleMarker && hasStrongMaleMarker) {
+    const firstPart = nameParts[0];
+    if (['siti', 'putri', 'dewi', 'ibu', 'bu', 'anwarul'].includes(firstPart)) {
+      return 'Ustadzah';
+    }
+    return 'Ustadz';
+  }
+
+  return hasFemaleMarker ? 'Ustadzah' : 'Ustadz';
 }
 
 /**

@@ -13,6 +13,7 @@ interface CustomDropdownProps {
     placeholder?: string;
     id?: string;
     className?: string;
+    menuClassName?: string;
     disabled?: boolean;
     icon?: React.ReactNode;
     'aria-label'?: string;
@@ -25,6 +26,7 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
     placeholder = '-- Pilih --',
     id,
     className = '',
+    menuClassName = '',
     disabled = false,
     icon,
     'aria-label': ariaLabel,
@@ -169,7 +171,7 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
                     role="listbox"
                     tabIndex={-1}
                     aria-activedescendant={highlightedIndex >= 0 ? `${dropdownId}-option-${highlightedIndex}` : undefined}
-                    className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white dark:bg-slate-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm custom-scrollbar"
+                    className={`absolute z-50 mt-1 max-h-60 min-w-full w-max max-w-[calc(100vw-2rem)] overflow-auto rounded-xl bg-white dark:bg-slate-800 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm custom-scrollbar ${menuClassName}`}
                 >
                     {options.length === 0 ? (
                         <div className="relative cursor-default select-none py-2 px-4 text-slate-500">
@@ -199,7 +201,7 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
                                         buttonRef.current?.focus();
                                     }}
                                 >
-                                    <span className="block truncate">{option.label}</span>
+                                    <span className="block whitespace-nowrap">{option.label}</span>
                                 </div>
                             );
                         })

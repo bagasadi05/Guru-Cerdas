@@ -288,7 +288,7 @@ export const bintangService = {
 
       const { data, error } = await supabase
         .from('violations')
-        .select('id, student_id, user_id, date, description, context_notes, points, type, severity, semester_id, evidence_url, parent_notified, parent_notified_at, created_at, students(name)')
+        .select('id, student_id, user_id, date, description, context_notes, points, type, severity, semester_id, evidence_url, parent_notified, parent_notified_at, created_at, follow_up_status, follow_up_notes, students(name)')
         .in('student_id', studentIds)
         .gte('date', startDate)
         .lt('date', endDate)
@@ -299,7 +299,30 @@ export const bintangService = {
         console.warn('bintangService.getViolationsForClass error:', error);
         return [];
       }
-      return data || [];
+
+      const rawViolations = data || [];
+      const recorderIds = Array.from(new Set(rawViolations.map((v: any) => v.user_id).filter(Boolean)));
+      let recorderNames: Record<string, string> = {};
+      if (recorderIds.length > 0) {
+        try {
+          const { data: roleRows } = await supabase
+            .from('user_roles')
+            .select('user_id, full_name')
+            .in('user_id', recorderIds);
+          recorderNames = (roleRows || []).reduce((acc: Record<string, string>, r: any) => {
+            if (r.user_id) acc[r.user_id] = r.full_name || '';
+            return acc;
+          }, {});
+        } catch (roleErr) {
+          console.warn('Failed to enrich recorder names:', roleErr);
+        }
+      }
+
+      return rawViolations.map((v: any) => ({
+        ...v,
+        recorded_by_name: recorderNames[v.user_id] || null,
+        users: { name: recorderNames[v.user_id] || 'Guru' },
+      }));
     } catch (err) {
       console.warn('bintangService.getViolationsForClass exception:', err);
       return [];

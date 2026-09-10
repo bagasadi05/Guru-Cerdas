@@ -159,7 +159,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                 {/* Activity Category Selection */}
                                 <div className="space-y-2">
                                     <label className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Kategori Aktivitas</label>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    <div className="grid grid-cols-2 gap-2.5">
                                         {[
                                             { value: 'bertanya', label: 'Bertanya', icon: '❓' },
                                             { value: 'menjawab', label: 'Menjawab', icon: '💡' },
@@ -167,22 +167,27 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                             { value: 'diskusi', label: 'Diskusi', icon: '💬' },
                                             { value: 'tugas', label: 'Tugas Tambahan', icon: '📝' },
                                             { value: 'lainnya', label: 'Lainnya', icon: '⭐' },
-                                        ].map((cat) => (
-                                            <button
-                                                key={cat.value}
-                                                type="button"
-                                                onClick={() => {
-                                                    setQuizInfo(p => ({ ...p, name: CATEGORY_DEFAULT_NAMES[cat.value] || cat.label }));
-                                                }}
-                                                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all text-left min-w-0 overflow-hidden ${quizInfo.name === CATEGORY_DEFAULT_NAMES[cat.value]
-                                                    ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30'
-                                                    : 'border-slate-200 dark:border-slate-700 hover:border-brand-300 dark:hover:border-brand-600 bg-white dark:bg-slate-800'
-                                                    }`}
-                                            >
-                                                <span className="text-base sm:text-lg flex-shrink-0">{cat.icon}</span>
-                                                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate min-w-0 leading-tight">{cat.label}</span>
-                                            </button>
-                                        ))}
+                                        ].map((cat) => {
+                                            const isSelected = quizInfo.name === CATEGORY_DEFAULT_NAMES[cat.value] || quizInfo.name === cat.label;
+                                            return (
+                                                <button
+                                                    key={cat.value}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setQuizInfo(p => ({ ...p, name: CATEGORY_DEFAULT_NAMES[cat.value] || cat.label }));
+                                                    }}
+                                                    className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all text-left ${isSelected
+                                                        ? 'border-brand-500 bg-brand-50/90 dark:bg-brand-900/30 ring-2 ring-brand-500/50 shadow-sm'
+                                                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 hover:border-brand-300 dark:hover:border-slate-600'
+                                                        }`}
+                                                >
+                                                    <span className="text-xl flex-shrink-0">{cat.icon}</span>
+                                                    <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-white leading-tight">
+                                                        {cat.label}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
@@ -190,13 +195,17 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                     <label htmlFor="quiz-name" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Nama Aktivitas</label>
                                     <Input id="quiz-name" value={quizInfo.name} onChange={e => setQuizInfo(p => ({ ...p, name: e.target.value }))} placeholder="cth. Aktif Bertanya" className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30" />
                                     {/* Quick suggestions */}
-                                    <div className="flex flex-wrap gap-1.5">
+                                    <div className="flex flex-wrap gap-1.5 pt-1">
                                         {['Aktif bertanya', 'Menjawab benar', 'Presentasi bagus', 'Diskusi aktif', 'Tugas tambahan'].map((suggestion) => (
                                             <button
                                                 key={suggestion}
                                                 type="button"
                                                 onClick={() => setQuizInfo(p => ({ ...p, name: suggestion }))}
-                                                className="px-2 py-1 text-xs rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-brand-100 dark:hover:bg-brand-900/30 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+                                                className={`px-2.5 py-1 text-xs rounded-full transition-all ${
+                                                    quizInfo.name === suggestion
+                                                        ? 'bg-brand-600 text-white font-bold shadow-sm'
+                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-brand-100 dark:hover:bg-brand-900/40 hover:text-brand-600 dark:hover:text-brand-300'
+                                                }`}
                                             >
                                                 {suggestion}
                                             </button>

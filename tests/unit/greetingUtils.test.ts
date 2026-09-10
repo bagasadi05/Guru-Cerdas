@@ -43,6 +43,11 @@ describe('greetingUtils - getHonorificTitle', () => {
     expect(getHonorificTitle('Ahmad Budi')).toBe('Ustadz'); // Default to Ustadz if no female marker found
     expect(getHonorificTitle('Dewi Lestari')).toBe('Ustadzah');
     expect(getHonorificTitle('Muhammad Ali')).toBe('Ustadz');
+    expect(getHonorificTitle('Anwarul Muniroh, M. Pd')).toBe('Ustadzah');
+    expect(getHonorificTitle('AZIZAH AZZAHRA')).toBe('Ustadzah');
+    expect(getHonorificTitle('Nur Hadi, S. Pd.')).toBe('Ustadz');
+    expect(getHonorificTitle('UMMU ROSYIDAH')).toBe('Ustadzah');
+    expect(getHonorificTitle('Milatus Sa\'diyyah, S. Pd')).toBe('Ustadzah');
   });
 
   it('should support Ibu and Bapak explicit title overrides', () => {

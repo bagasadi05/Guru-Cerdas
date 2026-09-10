@@ -63,13 +63,16 @@ const getLastNDays = (count: number): string[] => {
     return dates;
 };
 
+const INDONESIAN_DAY_NAMES = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'] as const;
+
 /**
- * Gets today's day name in Indonesian locale.
+ * Gets today's day name in Indonesian.
+ * Uses index-based lookup to avoid browser locale fallbacks returning English names.
  * 
- * @returns Day name (e.g., "Senin", "Selasa")
+ * @returns Day name (e.g., "Senin", "Selasa", "Kamis")
  */
-const getTodayDayName = (): string => {
-    return new Date().toLocaleDateString('id-ID', { weekday: 'long' });
+const getTodayDayName = (date: Date = new Date()): string => {
+    return INDONESIAN_DAY_NAMES[date.getDay()];
 };
 
 /**
@@ -96,7 +99,7 @@ const calculateWeeklyAttendance = (
         const total = totalStudents || dayAttendance.length;
 
         // Get day name for display
-        const dayName = new Date(date).toLocaleDateString('id-ID', { weekday: 'long' });
+        const dayName = INDONESIAN_DAY_NAMES[new Date(date).getDay()];
 
         return {
             day: dayName,

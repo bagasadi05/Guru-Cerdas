@@ -1,4 +1,5 @@
 import React, { lazy, Suspense, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { AttendancePageSkeleton } from '../skeletons/PageSkeletons';
 import { SemesterSelector } from '../ui/SemesterSelector';
 import {
@@ -10,7 +11,11 @@ import {
     UsersIcon,
     RotateCcw,
     AlertTriangle,
-    XIcon
+    XIcon,
+    Sparkles,
+    CheckCircle2,
+    CalendarClock,
+    Loader2,
 } from 'lucide-react';
 import { statusOptions } from '../../constants';
 import { Button } from '../ui/Button';
@@ -18,8 +23,8 @@ import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
 import BottomSheet from '../ui/BottomSheet';
 
-// Hooks & Sub-components
 import { useAttendance } from '../attendance/useAttendance';
+import { useWarnUnsavedChanges } from '../../hooks/useWarnUnsavedChanges';
 import { AttendanceSummaryWidget } from '../attendance/AttendanceSummaryWidget';
 import { AttendanceHeader } from '../attendance/AttendanceHeader';
 import { AttendanceList } from '../attendance/AttendanceList';
@@ -106,8 +111,23 @@ const AttendancePage: React.FC = () => {
         handleAnalyzeAttendance,
         isOnline,
         isHomeroom,
+        missingWeekdays,
+        isAutoFilling,
+        isAssistantDismissed,
+        setIsAssistantDismissed,
+        handleAutoFillWeekdays,
+        isCurrentDateAutoFilled,
+        isDirty,
     } = useAttendance();
     const [highlightedStudentId, setHighlightedStudentId] = useState<string | null>(null);
+    const [isAutoFillBannerDismissed, setIsAutoFillBannerDismissed] = useState(false);
+
+    useWarnUnsavedChanges(isDirty, 'Ada data absensi yang belum disimpan. Yakin ingin keluar?');
+
+    // Reset auto-fill banner dismissal when class or date changes
+    React.useEffect(() => {
+        setIsAutoFillBannerDismissed(false);
+    }, [selectedClass, selectedDate]);
 
     const handleToggleSelect = useCallback((studentId: string) => {
         setSelectedStudents(prev => {
@@ -218,6 +238,82 @@ const AttendancePage: React.FC = () => {
             </div>
 
             <main className="bg-transparent flex flex-col">
+                {/* ─── Smart Assistant: Missing Weekdays Reminder ─────────────── */}
+                {missingWeekdays.length > 0 && !isAssistantDismissed && (
+                    <div className="mb-4 p-3.5 sm:p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 animate-fade-in">
+                        <div className="flex items-start gap-3">
+                            <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5">
+                                <Sparkles size={18} />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <h4 className="text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200">
+                                        Pengingat Absensi Hari Terlewat
+                                    </h4>
+                                    <span className="text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-300 font-semibold">
+                                        {missingWeekdays.length} hari belum diabsen
+                                    </span>
+                                </div>
+                                <p className="text-[11px] sm:text-xs text-amber-800/90 dark:text-amber-300/90 mt-0.5 leading-relaxed">
+                                    Kelas ini belum diabsen pada: <strong className="font-semibold">{missingWeekdays.map(m => m.formattedDate).join(', ')}</strong>.
+                                    Setiap Sabtu sore sistem otomatis mengisinya sebagai <em>Hadir</em>, atau Anda dapat mengisinya sekarang secara instan.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 w-full md:w-auto justify-end shrink-0">
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => handleAutoFillWeekdays()}
+                                disabled={isAutoFilling}
+                                className="bg-amber-600 hover:bg-amber-700 text-white shadow-sm border-none font-semibold text-xs px-3 py-1.5 h-auto min-h-[36px]"
+                            >
+                                {isAutoFilling ? (
+                                    <>
+                                        <Loader2 size={14} className="mr-1.5 animate-spin" />
+                                        Mengisi...
+                                    </>
+                                ) : (
+                                    <>
+                                        <CalendarClock size={14} className="mr-1.5" />
+                                        Isi Hadir Semua
+                                    </>
+                                )}
+                            </Button>
+                            <button
+                                type="button"
+                                onClick={() => setIsAssistantDismissed(true)}
+                                className="p-1.5 text-amber-700 dark:text-amber-400 hover:bg-amber-200/60 dark:hover:bg-amber-900/40 rounded-lg transition-colors"
+                                title="Tutup pengingat"
+                                aria-label="Tutup pengingat"
+                            >
+                                <XIcon size={16} />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* ─── Auto-filled Date Indicator Banner ────────────────────────── */}
+                {isCurrentDateAutoFilled && !isAutoFillBannerDismissed && (
+                    <div className="mb-4 p-3 rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/25 border border-emerald-200/80 dark:border-emerald-800/50 flex items-center justify-between gap-3 text-xs text-emerald-800 dark:text-emerald-300 animate-fade-in">
+                        <div className="flex items-center gap-2.5">
+                            <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                            <span>
+                                <strong>Absensi Terisi Otomatis:</strong> Data kehadiran tanggal ini diisi otomatis oleh sistem sebagai <em>Hadir</em>. Anda dapat mengedit siswa yang Sakit, Izin, atau Alpha seperti biasa.
+                            </span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setIsAutoFillBannerDismissed(true)}
+                            className="p-1 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200/50 dark:hover:bg-emerald-900/40 rounded-lg transition-colors shrink-0"
+                            title="Tutup pemberitahuan"
+                            aria-label="Tutup pemberitahuan"
+                        >
+                            <XIcon size={15} />
+                        </button>
+                    </div>
+                )}
+
                 {students && students.length > 0 && (
                     <AttendanceQuickActionsBar
                         hasAttendanceRecords={Object.keys(attendanceRecords).length > 0}
@@ -350,9 +446,17 @@ const AttendancePage: React.FC = () => {
                             onClick={handleSave}
                             disabled={isSaving}
                             data-tutorial="attendance-save"
-                            className="w-full h-14 text-lg font-bold shadow-[0_8px_30px_rgba(13,126,158,0.25)] bg-brand-700 hover:bg-brand-800 border border-white/20 rounded-2xl transition-all active:scale-[0.98] text-white"
+                            className={`w-full h-14 text-lg font-bold rounded-2xl transition-all active:scale-[0.98] text-white ${
+                                isDirty
+                                    ? 'bg-emerald-600 hover:bg-emerald-700 shadow-[0_8px_30px_rgba(16,185,129,0.35)] ring-2 ring-emerald-400/50'
+                                    : 'bg-brand-700 hover:bg-brand-800 shadow-[0_8px_30px_rgba(13,126,158,0.25)] border border-white/20'
+                            }`}
                         >
-                            {isSaving ? 'Menyimpan...' : (isOnline ? 'Simpan Perubahan Absensi' : 'Simpan Offline')}
+                            {isSaving
+                                ? 'Menyimpan...'
+                                : isDirty
+                                ? (isOnline ? 'Simpan Perubahan Absensi Sekarang' : 'Simpan Offline')
+                                : (isOnline ? 'Simpan Perubahan Absensi' : 'Simpan Offline')}
                         </Button>
                     </div>
                 )}
@@ -604,6 +708,47 @@ const AttendancePage: React.FC = () => {
                     </div>
                 </div>
             </Modal>
+
+            {/* Floating Save Bar for unsaved changes — rendered via portal to escape parent transform/overflow stacking contexts */}
+            {isDirty && viewMode === 'list' && typeof document !== 'undefined' && createPortal(
+                <div
+                    role="status"
+                    aria-live="polite"
+                    className="fixed bottom-20 lg:bottom-6 inset-x-0 z-50 pointer-events-none flex justify-center lg:pl-72 px-4 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5"
+                >
+                    <div className="pointer-events-auto shadow-2xl bg-slate-900/95 dark:bg-slate-800/95 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl flex items-center gap-3 sm:gap-4 backdrop-blur-md border border-slate-700/60 dark:border-slate-600 shadow-black/40 max-w-[95vw]">
+                        <div className="flex items-center gap-2">
+                            <span className="relative flex h-2.5 w-2.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                            </span>
+                            <span className="text-xs sm:text-sm font-semibold tracking-tight whitespace-nowrap">
+                                Perubahan belum disimpan
+                            </span>
+                        </div>
+                        <div className="h-4 w-px bg-white/20" />
+                        <Button
+                            onClick={handleSave}
+                            disabled={isSaving}
+                            size="sm"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm px-3.5 sm:px-4 py-1.5 h-8 sm:h-9 rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5 whitespace-nowrap"
+                        >
+                            {isSaving ? (
+                                <>
+                                    <Loader2 size={14} className="animate-spin" />
+                                    Menyimpan...
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircle2 size={14} />
+                                    {isOnline ? 'Simpan Sekarang' : 'Simpan Offline'}
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 };
