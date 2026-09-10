@@ -70,6 +70,8 @@ export interface HomeroomNoteContext {
     violations?: StudentViolationSummaryItem[];
     seed?: number | string;
     month?: string;
+    spiritualPredicate?: string;
+    socialPredicate?: string;
 }
 
 export type ViolationCluster = 'WAKTU' | 'KERAPIAN' | 'KBM_FOKUS' | 'ADAB_ETIKA' | 'UMUM';
@@ -286,7 +288,30 @@ export function generateContextualHomeroomNote(context: HomeroomNoteContext): st
         part3 = selectVariant(variants, seed + 3);
     }
 
-    return `${part1} ${part2} ${part3}`.trim();
+    // ── BAGIAN SIKAP: Sikap Spiritual (KI-1) & Sosial (KI-2) jika diinput ─────
+    let attitudeSentence = '';
+    const sp = (context.spiritualPredicate || '').toUpperCase().trim();
+    const so = (context.socialPredicate || '').toUpperCase().trim();
+
+    if (sp || so) {
+        if ((sp === 'SB' || sp === 'A') && (so === 'SB' || so === 'A')) {
+            attitudeSentence = 'Pada evaluasi sikap, Ananda menampilkan keteladanan sangat baik dalam pembiasaan ibadah dan kepedulian sosial terhadap sesama.';
+        } else if (sp === 'SB' || sp === 'A') {
+            attitudeSentence = 'Pada evaluasi sikap spiritual, Ananda menunjukkan keteladanan yang sangat baik dan istiqamah dalam pembiasaan ibadah harian.';
+        } else if (so === 'SB' || so === 'A') {
+            attitudeSentence = 'Pada evaluasi sikap sosial, Ananda menunjukkan kesantunan budi pekerti dan kepedulian yang sangat baik terhadap teman-temannya.';
+        } else if ((sp === 'C' || sp === 'K') && (so === 'C' || so === 'K')) {
+            attitudeSentence = 'Pada evaluasi sikap, Ananda memerlukan bimbingan rutin dalam ketertiban pembiasaan ibadah dan interaksi sosial yang harmonis.';
+        } else if (sp === 'C' || sp === 'K') {
+            attitudeSentence = 'Pada evaluasi sikap spiritual, Ananda masih memerlukan bimbingan rutin dalam ketertiban pembiasaan ibadah harian.';
+        } else if (so === 'C' || so === 'K') {
+            attitudeSentence = 'Pada evaluasi sikap sosial, Ananda perlu terus dimotivasi agar lebih santun dan aktif bekerja sama dengan sesama teman.';
+        } else if (sp === 'B' && so === 'B') {
+            attitudeSentence = 'Capaian sikap spiritual dan sosial Ananda terpantau baik dan berkembang selaras dengan pembiasaan di madrasah.';
+        }
+    }
+
+    return [part1, part2, attitudeSentence, part3].filter(Boolean).join(' ').trim();
 }
 
 /**
@@ -297,7 +322,7 @@ export function generateHomeroomNote(
     kedis?: BintangGrade,
     kerapian?: BintangGrade,
     activePoints: number = 0,
-    contextExt?: { studentName?: string; violations?: StudentViolationSummaryItem[]; month?: string; seed?: number | string }
+    contextExt?: { studentName?: string; violations?: StudentViolationSummaryItem[]; month?: string; seed?: number | string; spiritualPredicate?: string; socialPredicate?: string }
 ): string {
     if (typeof adabOrContext === 'object') {
         return generateContextualHomeroomNote(adabOrContext);
@@ -313,6 +338,8 @@ export function generateHomeroomNote(
         violations: contextExt?.violations || [],
         month: contextExt?.month,
         seed: contextExt?.seed,
+        spiritualPredicate: contextExt?.spiritualPredicate,
+        socialPredicate: contextExt?.socialPredicate,
     });
 }
 

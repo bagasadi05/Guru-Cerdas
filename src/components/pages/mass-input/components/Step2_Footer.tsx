@@ -93,7 +93,7 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                     <div className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
                         <p className="text-sm font-medium text-green-700 dark:text-green-200">{summaryText}</p>
                     </div>
-                    {(mode !== 'subject_grade' && selectedStudentIds.size > 0) || (mode === 'subject_grade' && gradedCount > 0) ? (
+                    {(mode !== 'subject_grade' && mode !== 'attitude' && selectedStudentIds.size > 0) || (mode === 'subject_grade' && gradedCount > 0) ? (
                         <Button
                             variant="ghost"
                             size="sm"
@@ -216,7 +216,7 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                     Memproses...
                                 </span>
-                            ) : (mode?.includes('print') || mode?.includes('report')) ? 'Cetak Laporan' : 'Simpan Data'}
+                            ) : mode === 'attitude' ? 'Simpan Predikat Sikap' : (mode?.includes('print') || mode?.includes('report')) ? 'Cetak Laporan' : 'Simpan Data'}
                         </Button>
                     )}
                 </div>

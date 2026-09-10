@@ -533,5 +533,134 @@ export const bintangService = {
 
     if (error) throw error;
     return data;
+  },
+
+  /**
+   * Unpublish evaluations for a class and month (revert is_published to false).
+   */
+  async unpublishEvaluations(classId: string, month: string) {
+    const evaluations = await this.getMonthlyEvaluations(classId, month);
+    if (!evaluations || evaluations.length === 0) return [];
+
+    const evaluationIds = evaluations.filter(e => e.is_published).map(e => e.id);
+    if (evaluationIds.length === 0) return [];
+
+    const { data, error } = await supabase
+      .from('bintang_monthly_evaluations')
+      .update({ is_published: false })
+      .in('id', evaluationIds)
+      .select();
+
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error('Tidak ada data rapor yang berhasil dibatalkan publikasinya.');
+    }
+    return data;
+  },
+
+  /**
+   * Unpublish a single evaluation by its ID (revert is_published to false).
+   */
+  async unpublishSingleEvaluation(evaluationId: string) {
+    const { data, error } = await supabase
+      .from('bintang_monthly_evaluations')
+      .update({ is_published: false })
+      .eq('id', evaluationId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Fetch attitude records for students in a class, optionally filtered by semester.
+   */
+  async getAttitudeRecordsForClass(classId: string, semesterId?: string) {
+    try {
+      const { data: students } = await supabase
+        .from('students')
+        .select('id')
+        .eq('class_id', classId)
+        .is('deleted_at', null);
+
+      if (!students || students.length === 0) return [];
+      const studentIds = students.map(s => s.id);
+
+      return this.getAttitudeRecordsForStudents(studentIds, semesterId);
+    } catch (err) {
+      console.warn('bintangService.getAttitudeRecordsForClass exception:', err);
+      return [];
+    }
+  },
+
+  /**
+   * Fetch attitude records for a list of student IDs.
+   */
+  async getAttitudeRecordsForStudents(studentIds: string[], semesterId?: string) {
+    if (!studentIds || studentIds.length === 0) return [];
+    try {
+      let query = supabase
+        .from('attitude_records')
+        .select('*')
+        .in('student_id', studentIds)
+        .is('deleted_at', null)
+        .order('date', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (semesterId) {
+        query = query.eq('semester_id', semesterId);
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        console.warn('bintangService.getAttitudeRecordsForStudents error:', error);
+        return [];
+      }
+      return data || [];
+    } catch (err) {
+      console.warn('bintangService.getAttitudeRecordsForStudents exception:', err);
+      return [];
+    }
+  },
+
+  /**
+   * Fetch attitude records mapped by student_id -> { spiritual?: string, social?: string }.
+   */
+  async getAttitudeMapForStudents(studentIds: string[], semesterId?: string): Promise<Record<string, { spiritual?: string; social?: string }>> {
+    const records = await this.getAttitudeRecordsForStudents(studentIds, semesterId);
+    const map: Record<string, { spiritual?: string; social?: string }> = {};
+    for (const r of records) {
+      if (!map[r.student_id]) {
+        map[r.student_id] = {};
+      }
+      if (!map[r.student_id].spiritual && r.spiritual_predicate) {
+        map[r.student_id].spiritual = r.spiritual_predicate;
+      }
+      if (!map[r.student_id].social && r.social_predicate) {
+        map[r.student_id].social = r.social_predicate;
+      }
+    }
+    return map;
+  },
+
+  /**
+   * Fetch attitude records mapped by student_id for all students in a class.
+   */
+  async getAttitudeMapForClass(classId: string, semesterId?: string): Promise<Record<string, { spiritual?: string; social?: string }>> {
+    try {
+      const { data: students } = await supabase
+        .from('students')
+        .select('id')
+        .eq('class_id', classId)
+        .is('deleted_at', null);
+
+      if (!students || students.length === 0) return {};
+      const studentIds = students.map(s => s.id);
+      return this.getAttitudeMapForStudents(studentIds, semesterId);
+    } catch (err) {
+      console.warn('bintangService.getAttitudeMapForClass exception:', err);
+      return {};
+    }
   }
 };

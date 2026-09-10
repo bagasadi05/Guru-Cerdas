@@ -226,4 +226,36 @@ describe('generateHomeroomNote (Backward Compatibility)', () => {
         expect(note).toContain('Ananda Aliyah');
         expect(note.length).toBeGreaterThan(50);
     });
+
+    it('should include contextual spiritual and social attitude sentences when attitude predicates are provided', () => {
+        const noteSB = generateContextualHomeroomNote({
+            studentName: 'Fatimah',
+            adabGrade: 'A',
+            kedisGrade: 'A',
+            kerapianGrade: 'A',
+            spiritualPredicate: 'SB',
+            socialPredicate: 'SB',
+        });
+        expect(noteSB).toContain('evaluasi sikap');
+        expect(noteSB).toMatch(/(pembiasaan ibadah|kepedulian sosial)/i);
+
+        const noteNeedGuidance = generateContextualHomeroomNote({
+            studentName: 'Hasan',
+            adabGrade: 'B',
+            kedisGrade: 'B',
+            kerapianGrade: 'B',
+            spiritualPredicate: 'C',
+            socialPredicate: 'K',
+        });
+        expect(noteNeedGuidance).toContain('evaluasi sikap');
+        expect(noteNeedGuidance).toMatch(/(memerlukan bimbingan|pembiasaan ibadah)/i);
+
+        const noteViaHomeroom = generateHomeroomNote('A', 'A', 'A', 0, {
+            studentName: 'Ibrahim',
+            spiritualPredicate: 'SB',
+            socialPredicate: 'B',
+        });
+        expect(noteViaHomeroom).toContain('sikap spiritual');
+    });
 });
+

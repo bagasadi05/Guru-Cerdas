@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { MotionDiv, AnimatePresence } from '../../ui/MotionComponents';import { Star, ClipboardCheck, BarChart3,
     Sparkles, Zap, Send, FileText, CheckCircle, PlusCircle, Info, Printer,
     ChevronDown, TrendingUp, Eye, Users, FileSpreadsheet,
-    Pencil, Trash2, ShieldAlert, Plus, Download, Loader2, X
+    Pencil, Trash2, ShieldAlert, Plus, Download, Loader2, X, RotateCcw
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../../hooks/useAuth';
@@ -61,6 +61,7 @@ const BintangDashboardPage: React.FC = () => {
     const { user, isAdmin, userRole } = useAuth();
     const toast = useToast();
     const { confirm: confirmPublish, Dialog: PublishConfirmDialog } = useConfirmation();
+    const { confirm: confirmUnpublish, Dialog: UnpublishConfirmDialog } = useConfirmation();
     const { confirm: confirmDeleteViolation, Dialog: DeleteViolationDialog } = useConfirmation();
     const { confirm: confirmDeleteQuiz, Dialog: DeleteQuizDialog } = useConfirmation();
     const { confirm: confirmDeleteMentoring, Dialog: DeleteMentoringDialog } = useConfirmation();
@@ -187,6 +188,9 @@ const BintangDashboardPage: React.FC = () => {
     const [obsNotes, setObsNotes] = useState('');
     const [isObsSubmitting, setIsObsSubmitting] = useState(false);
 
+    // ── Student Attitude records (KI-1 & KI-2) ───────────────────────────────
+    const [studentAttitudeMap, setStudentAttitudeMap] = useState<Record<string, { spiritual?: string; social?: string }>>({});
+
     // ── Data fetching ────────────────────────────────────────────────────────
 
     useEffect(() => {
@@ -200,7 +204,7 @@ const BintangDashboardPage: React.FC = () => {
     const fetchAllData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const [studentsRes, evalsData, viosData, logsData, obsData] = await Promise.all([
+            const [studentsRes, evalsData, viosData, logsData, obsData, attitudeData] = await Promise.all([
                 supabase
                     .from('students')
                     .select('id, name')
@@ -211,6 +215,7 @@ const BintangDashboardPage: React.FC = () => {
                 bintangService.getViolationsForClass(selectedClass, selectedMonth),
                 bintangService.getMentoringLogs(selectedClass),
                 bintangService.getDailyObservations(selectedClass, selectedMonth),
+                bintangService.getAttitudeMapForClass(selectedClass),
             ]);
 
             setStudents(studentsRes.data || []);
@@ -218,6 +223,7 @@ const BintangDashboardPage: React.FC = () => {
             setViolations(viosData || []);
             setMentoringLogs(logsData || []);
             setDailyObservations(obsData || []);
+            setStudentAttitudeMap(attitudeData || {});
 
             // Fetch quiz points (poin keaktifan) for offset calculation
             const studentIds = (studentsRes.data || []).map(s => s.id);
@@ -254,6 +260,7 @@ const BintangDashboardPage: React.FC = () => {
             setViolations([]);
             setEvaluations([]);
             setMentoringLogs([]);
+            setStudentAttitudeMap({});
         }
     }, [selectedClass, selectedMonth, fetchAllData]);
 
@@ -363,6 +370,7 @@ const BintangDashboardPage: React.FC = () => {
     const evalHook = useBintangEvaluation({
         toast,
         confirmPublish,
+        confirmUnpublish,
         fetchData: async () => { await fetchAllData(); },
         selectedMonth,
         user,
@@ -371,6 +379,7 @@ const BintangDashboardPage: React.FC = () => {
         selectedClass,
         getStudentQuizPoints: (studentId: string) => studentQuizMap.get(studentId)?.totalPoints || 0,
         getStudentViolations: (studentId: string) => studentViolationsMap.get(studentId) || [],
+        getStudentAttitude: (studentId: string) => studentAttitudeMap[studentId],
     });
 
     // ── Handlers ─────────────────────────────────────────────────────────────
@@ -1001,6 +1010,19 @@ const BintangDashboardPage: React.FC = () => {
                                     <Zap size={16} />
                                     <span className="hidden sm:inline">{evalHook.isGenerating ? 'Proses...' : 'Generate'}</span>
                                 </Button>
+                                {evalHook.evalStats.published > 0 && (
+                                    <Button
+                                        onClick={evalHook.handleUnpublish}
+                                        disabled={evalHook.isUnpublishing}
+                                        variant="outline"
+                                        className="flex items-center gap-1.5 text-sm h-10 px-3.5 font-medium border-amber-300 dark:border-amber-700/60 text-amber-700 dark:text-amber-400 bg-amber-50/70 dark:bg-amber-950/20 hover:bg-amber-100 dark:hover:bg-amber-950/40 rounded-xl shadow-sm"
+                                        title="Kembalikan semua rapor terbit ke status Draft agar bisa diedit kembali"
+                                    >
+                                        <RotateCcw size={15} />
+                                        <span className="hidden sm:inline">{evalHook.isUnpublishing ? 'Membatalkan...' : 'Batal Publikasi'}</span>
+                                        <span className="sm:hidden">Batal</span>
+                                    </Button>
+                                )}
                                 <Button
                                     onClick={evalHook.handlePublish}
                                     disabled={evaluations.length === 0 || evalHook.isPublishing}
@@ -1196,11 +1218,19 @@ const BintangDashboardPage: React.FC = () => {
                                                         </td>
                                                     )}
                                                     <td className="py-2 px-2 sm:py-3 sm:px-4 text-[11px] sm:text-sm font-medium text-slate-900 dark:text-white max-w-[90px] sm:max-w-none truncate" title={student.name}>
-                                                        <div className="flex items-center gap-1.5">
+                                                        <div className="flex items-center gap-1.5 flex-wrap">
                                                             <span className="truncate">{student.name}</span>
                                                             {hasKeaktifan && (
                                                                 <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-semibold" title={`+${activePts.totalPoints} poin keaktifan`}>
                                                                     +{activePts.totalPoints}
+                                                                </span>
+                                                            )}
+                                                            {studentAttitudeMap[student.id] && (studentAttitudeMap[student.id].spiritual || studentAttitudeMap[student.id].social) && (
+                                                                <span
+                                                                    className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-md bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-medium border border-purple-200 dark:border-purple-800"
+                                                                    title={`Sikap: KI-1 (Spiritual) ${studentAttitudeMap[student.id]?.spiritual || '-'} | KI-2 (Sosial) ${studentAttitudeMap[student.id]?.social || '-'}`}
+                                                                >
+                                                                    Sikap: {studentAttitudeMap[student.id]?.spiritual || '-'}/{studentAttitudeMap[student.id]?.social || '-'}
                                                                 </span>
                                                             )}
                                                         </div>
@@ -1255,10 +1285,23 @@ const BintangDashboardPage: React.FC = () => {
                                                                     className="px-1.5 py-1 sm:px-3 sm:py-1.5 h-auto min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                                                                     onClick={() => evalHook.handleOpenEditModal(student, getAspectSummary)}
                                                                     disabled={isPublished}
-                                                                    title={isCompleted ? 'Edit' : 'Isi Rapor'}
+                                                                    title={isPublished ? 'Rapor sudah terbit. Tarik ke Draft untuk mengedit kembali.' : isCompleted ? 'Edit' : 'Isi Rapor'}
                                                                 >
                                                                     <FileText size={14} className="sm:mr-1" />
                                                                     <span className="hidden lg:inline">{isCompleted ? 'Edit' : 'Isi'}</span>
+                                                                </Button>
+                                                            )}
+                                                            {isWalas && isPublished && (
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    className="px-1.5 py-1 sm:px-2.5 sm:py-1.5 h-auto min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 text-amber-600 hover:text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100"
+                                                                    onClick={() => evalHook.handleUnpublishSingle(student.id, student.name)}
+                                                                    disabled={evalHook.unpublishingStudentId === student.id}
+                                                                    title="Tarik rapor siswa ini kembali ke Draft agar bisa diedit kembali"
+                                                                >
+                                                                    <RotateCcw size={14} className="sm:mr-1" />
+                                                                    <span className="hidden lg:inline">{evalHook.unpublishingStudentId === student.id ? '...' : 'Tarik'}</span>
                                                                 </Button>
                                                             )}
                                                             {isWalas && (
@@ -1356,8 +1399,9 @@ const BintangDashboardPage: React.FC = () => {
                 </Tabs>
             )}
 
-            {/* ─── Publish Confirmation ──────────────────────────────────────── */}
+            {/* ─── Publish & Unpublish Confirmation ───────────────────────────── */}
             {PublishConfirmDialog}
+            {UnpublishConfirmDialog}
 
             {/* ─── Delete Quiz Point Confirmation ────────────────────────────── */}
             {DeleteQuizDialog}
@@ -1434,6 +1478,17 @@ const BintangDashboardPage: React.FC = () => {
                                                     +{activePts} Keaktifan
                                                 </span>
                                             )}
+                                            {(() => {
+                                                const att = studentAttitudeMap[evalHook.editingStudent.id];
+                                                if (att && (att.spiritual || att.social)) {
+                                                    return (
+                                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
+                                                            Sikap: KI-1 {att.spiritual || '-'} • KI-2 {att.social || '-'}
+                                                        </span>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
                                         </div>
                                     );
                                 })()}

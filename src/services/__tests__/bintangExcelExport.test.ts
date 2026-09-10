@@ -101,4 +101,29 @@ describe('bintangExcelExport', () => {
 
         await expect(exportBintangToExcel(options)).resolves.not.toThrow();
     });
+
+    it('should export bintang data including attitude map correctly', async () => {
+        const attitudeMap = new Map([
+            ['s1', { spiritual: 'SB', social: 'B' }],
+            ['s2', { spiritual: 'B', social: 'SB' }],
+        ]);
+
+        const options = {
+            className: 'Kelas 5A',
+            schoolName: 'MI AL IRSYAD',
+            monthName: 'September 2026',
+            academicYear: '2026/2027',
+            semesterName: 'Ganjil',
+            students: [
+                { id: 's1', name: 'Ahmad' },
+                { id: 's2', name: 'Budi' },
+            ],
+            violations: [],
+            quizPoints: [],
+            evaluations: [],
+            attitudeMap,
+        };
+
+        await expect(exportBintangToExcel(options)).resolves.not.toThrow();
+    });
 });

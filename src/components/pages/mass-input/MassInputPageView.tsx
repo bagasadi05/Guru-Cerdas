@@ -11,7 +11,7 @@ import { Step2_Configuration } from './components/Step2_Configuration';
 import { Step2_StudentList } from './components/Step2_StudentList';
 import { Step2_Footer } from './components/Step2_Footer';
 import { ViolationExportPanel } from './components/ViolationExportPanel';
-import { InputMode, Step, StudentFilter, StudentRow, AcademicRecordRow, ClassRow, ViolationRow } from './types';
+import { InputMode, Step, StudentFilter, StudentRow, AcademicRecordRow, ClassRow, ViolationRow, AttitudeRecordRow } from './types';
 import { ImportPreviewModal } from '../bulk-grade-input/components/ImportPreviewModal';
 import { violationList } from '../../../services/violations.data';
 
@@ -34,8 +34,22 @@ export interface MassInputPageViewProps {
     setSubjectGradeInfo: React.Dispatch<React.SetStateAction<{ subject: string; assessment_name: string; notes: string; semester: string }>>;
     kkm: number;
     setKkm: (v: number) => void;
+    attitudeDate?: string;
+    setAttitudeDate?: (v: string) => void;
+    attitudeCategory?: string;
+    setAttitudeCategory?: (cat: string) => void;
+    attitudeName?: string;
+    setAttitudeName?: (name: string) => void;
+    attitudePoints?: number;
+    setAttitudePoints?: (pts: number) => void;
+    attitudeNotes?: string;
+    setAttitudeNotes?: (notes: string) => void;
     attitudePredicates: Record<string, { spiritual: string; social: string }>;
     setAttitudePredicates: React.Dispatch<React.SetStateAction<Record<string, { spiritual: string; social: string }>>>;
+    handleAttitudePredicateChange?: (studentId: string, field: 'spiritual' | 'social', value: string) => void;
+    handleQuickFillAttitude?: (studentIds: string[], predicate: string, target?: 'both' | 'spiritual' | 'social') => void;
+    attitudeFilledCount?: number;
+    existingAttitudeRecords?: AttitudeRecordRow[];
     isCustomSubject: boolean;
     setIsCustomSubject: (v: boolean) => void;
     uniqueSubjects: string[] | undefined;
@@ -120,6 +134,12 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         step, mode, handleModeSelect, handleBack, currentCard,
         isConfigOpen, setIsConfigOpen, selectedClass, setSelectedClass, classes, isLoadingClasses,
         quizInfo, setQuizInfo, subjectGradeInfo, setSubjectGradeInfo, kkm, setKkm,
+        attitudeDate, setAttitudeDate,
+        attitudeCategory, setAttitudeCategory,
+        attitudeName, setAttitudeName,
+        attitudePoints, setAttitudePoints,
+        attitudeNotes, setAttitudeNotes,
+        existingAttitudeRecords,
         isCustomSubject, setIsCustomSubject, uniqueSubjects,
         selectedViolationCode, setSelectedViolationCode, violationDate, setViolationDate,
         violationNotes, setViolationNotes, noteMethod, setNoteMethod, templateNote, setTemplateNote,
@@ -178,6 +198,11 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                             {mode === 'violation' && selectedViolationCode && (
                                 <span className="inline-flex items-center gap-1.5 rounded-2xl bg-rose-550/10 px-3.5 py-1.5 font-extrabold text-rose-700 dark:text-rose-300 border border-rose-200/20 shadow-sm animate-scale-in">
                                     ⚠️ Pelanggaran: {violationList.find(v => v.code === selectedViolationCode)?.description || selectedViolationCode}
+                                </span>
+                            )}
+                            {mode === 'attitude' && attitudeCategory && (
+                                <span className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-550/10 px-3.5 py-1.5 font-extrabold text-emerald-700 dark:text-emerald-300 border border-emerald-200/20 shadow-sm animate-scale-in">
+                                    🌟 Sikap: {attitudeCategory} (+{attitudePoints || 1} Poin)
                                 </span>
                             )}
                         </div>
@@ -241,6 +266,16 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                     setBypassDuplicateGuard={setBypassDuplicateGuard}
                                     kkm={kkm}
                                     setKkm={setKkm}
+                                    attitudeDate={attitudeDate}
+                                    setAttitudeDate={setAttitudeDate}
+                                    attitudeCategory={attitudeCategory}
+                                    setAttitudeCategory={setAttitudeCategory}
+                                    attitudeName={attitudeName}
+                                    setAttitudeName={setAttitudeName}
+                                    attitudePoints={attitudePoints}
+                                    setAttitudePoints={setAttitudePoints}
+                                    attitudeNotes={attitudeNotes}
+                                    setAttitudeNotes={setAttitudeNotes}
                                     onOpenImport={mode === 'subject_grade' ? () => setShowImportModal(true) : undefined}
                                     handleSubmit={onHandleSubmit}
                                     isSubmitDisabled={isSubmitDisabled}
@@ -266,6 +301,9 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                     handleScoreChange={handleScoreChange}
                                     validationErrors={validationErrors}
                                     existingGrades={existingGrades}
+                                    existingAttitudeRecords={existingAttitudeRecords}
+                                    attitudePoints={attitudePoints}
+                                    attitudeCategory={attitudeCategory}
                                     classes={classes}
                                     selectedClass={selectedClass}
                                     handleSubmit={onHandleSubmit}

@@ -46,6 +46,11 @@ export function useMassInputState() {
     const [quizInfo, setQuizInfo] = useState({ name: '', subject: '', date: new Date().toISOString().slice(0, 10), points: 1, max_points: 1 });
     const [subjectGradeInfo, setSubjectGradeInfo] = useState(() => initialDraft?.subjectGradeInfo || { subject: '', assessment_name: '', notes: '', semester: '' });
     const [kkm, setKkm] = useState(75);
+    const [attitudeDate, setAttitudeDate] = useState(new Date().toISOString().slice(0, 10));
+    const [attitudeCategory, setAttitudeCategory] = useState('Adab & Akhlak');
+    const [attitudeName, setAttitudeName] = useState('Adab & Kesantunan');
+    const [attitudePoints, setAttitudePoints] = useState(1);
+    const [attitudeNotes, setAttitudeNotes] = useState('');
     const [attitudePredicates, setAttitudePredicates] = useState<Record<string, { spiritual: string; social: string }>>(() => ({}));
     const [scores, setScores] = useState<Record<string, string>>(() => initialDraft?.scores || {});
     const [pasteData, setPasteData] = useState('');
@@ -116,6 +121,7 @@ export function useMassInputState() {
         setPrevClass(selectedClass);
         setSelectedStudentIds(new Set());
         setScores({});
+        setAttitudePredicates({});
         setSearchTerm('');
         setStudentFilter('all');
         setBypassDuplicateGuard(false);
@@ -124,6 +130,7 @@ export function useMassInputState() {
     // Reset filter when mode changes
     if (prevMode !== mode) {
         setPrevMode(mode);
+        setAttitudePredicates({});
         setStudentFilter('all');
         setBypassDuplicateGuard(false);
     }
@@ -169,6 +176,12 @@ export function useMassInputState() {
         setStep(1); setMode(null); setSelectedClass('');
         setQuizInfo({ name: '', subject: '', date: new Date().toISOString().slice(0, 10), points: 1, max_points: 1 });
         setSubjectGradeInfo({ subject: '', assessment_name: '', notes: '', semester: activeSemester?.id || '' });
+        setAttitudeDate(new Date().toISOString().slice(0, 10));
+        setAttitudeCategory('Adab & Akhlak');
+        setAttitudeName('Adab & Kesantunan');
+        setAttitudePoints(1);
+        setAttitudeNotes('');
+        setAttitudePredicates({});
         setScores({}); setPasteData(''); setSelectedViolationCode('');
         setViolationDate(new Date().toISOString().slice(0, 10));
         setSelectedStudentIds(new Set()); setSearchTerm(''); setStudentFilter('all');
@@ -192,6 +205,45 @@ export function useMassInputState() {
         setScores(prev => ({ ...prev, [studentId]: value }));
     };
 
+    const handleAttitudePredicateChange = (
+        studentId: string,
+        field: 'spiritual' | 'social',
+        value: string
+    ) => {
+        isScoresDirty.current = true;
+        setAttitudePredicates(prev => {
+            const current = prev[studentId] || { spiritual: '', social: '' };
+            const nextVal = current[field] === value ? '' : value;
+            return {
+                ...prev,
+                [studentId]: {
+                    ...current,
+                    [field]: nextVal,
+                },
+            };
+        });
+    };
+
+    const handleQuickFillAttitude = (
+        studentIds: string[],
+        predicate: string,
+        target: 'both' | 'spiritual' | 'social' = 'both'
+    ) => {
+        if (!studentIds.length || !predicate) return;
+        isScoresDirty.current = true;
+        setAttitudePredicates(prev => {
+            const next = { ...prev };
+            studentIds.forEach(id => {
+                const current = next[id] || { spiritual: '', social: '' };
+                next[id] = {
+                    spiritual: target === 'social' ? current.spiritual : predicate,
+                    social: target === 'spiritual' ? current.social : predicate,
+                };
+            });
+            return next;
+        });
+    };
+
     const handleStudentSelect = (studentId: string) => {
         setSelectedStudentIds(prev => {
             const newSet = new Set(prev);
@@ -211,6 +263,11 @@ export function useMassInputState() {
         quizInfo, setQuizInfo,
         subjectGradeInfo, setSubjectGradeInfo,
         kkm, setKkm,
+        attitudeDate, setAttitudeDate,
+        attitudeCategory, setAttitudeCategory,
+        attitudeName, setAttitudeName,
+        attitudePoints, setAttitudePoints,
+        attitudeNotes, setAttitudeNotes,
         attitudePredicates, setAttitudePredicates,
         scores, setScores,
         pasteData, setPasteData,
@@ -236,6 +293,8 @@ export function useMassInputState() {
         saveSubjectGradeDraft,
         bypassDuplicateGuard, setBypassDuplicateGuard,
         pendingImportData, setPendingImportData,
-        handleModeSelect, handleBack, handleScoreChange, handleStudentSelect,
+        handleModeSelect, handleBack, handleScoreChange,
+        handleAttitudePredicateChange, handleQuickFillAttitude,
+        handleStudentSelect,
     };
 }

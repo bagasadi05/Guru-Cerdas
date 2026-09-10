@@ -17,6 +17,22 @@ const CATEGORY_DEFAULT_NAMES: Record<string, string> = {
     lainnya: 'Partisipasi aktif',
 };
 
+const BINTANG_ATTITUDE_ASPECTS = [
+    { value: 'Adab & Akhlak', label: 'Adab & Akhlak', icon: '🌟', menunjang: 'Menunjang Aspek Adab', defaultActivity: 'Adab & Kesantunan' },
+    { value: 'Kedisiplinan & Sikap', label: 'Kedisiplinan & Sikap', icon: '⚡', menunjang: 'Menunjang Aspek Sikap', defaultActivity: 'Tertib & Disiplin' },
+    { value: 'Kerapian & Kebersihan', label: 'Kerapian & Kebersihan', icon: '✨', menunjang: 'Menunjang Aspek Kerapian', defaultActivity: 'Menjaga Kebersihan Kelas' },
+    { value: 'Pembiasaan Ibadah', label: 'Pembiasaan Ibadah', icon: '🕌', menunjang: 'Menunjang Karakter Ibadah', defaultActivity: 'Shalat Dhuha / Berjamaah' },
+    { value: 'Keaktifan & Inisiatif', label: 'Keaktifan & Inisiatif', icon: '💡', menunjang: 'Menunjang Keaktifan', defaultActivity: 'Inisiatif Positif di Kelas' },
+];
+
+const ATTITUDE_SUGGESTIONS: Record<string, string[]> = {
+    'Adab & Akhlak': ['Adab & Kesantunan', 'Menghormati Guru & Teman', 'Berkata Santun & Jujur', 'Membantu Teman'],
+    'Kedisiplinan & Sikap': ['Tertib & Disiplin', 'Tepat Waktu Masuk Kelas', 'Patuh Tata Tertib', 'Tanggung Jawab Tugas'],
+    'Kerapian & Kebersihan': ['Menjaga Kebersihan Kelas', 'Piket Kebersihan', 'Kerapian Meja & Seragam', 'Merawat Sarana Kelas'],
+    'Pembiasaan Ibadah': ['Shalat Dhuha / Berjamaah', 'Tadarus Al-Qur\'an', 'Dzikir & Doa Bersama', 'Istiqamah Ibadah'],
+    'Keaktifan & Inisiatif': ['Inisiatif Positif di Kelas', 'Membantu Guru', 'Berani Memimpin Teman', 'Partisipasi Aktif'],
+};
+
 interface Step2_ConfigurationProps {
     mode: InputMode | null;
     isConfigOpen: boolean;
@@ -53,6 +69,16 @@ interface Step2_ConfigurationProps {
     setBypassDuplicateGuard: (v: boolean) => void;
     kkm: number;
     setKkm: (v: number) => void;
+    attitudeDate?: string;
+    setAttitudeDate?: (date: string) => void;
+    attitudeCategory?: string;
+    setAttitudeCategory?: (cat: string) => void;
+    attitudeName?: string;
+    setAttitudeName?: (name: string) => void;
+    attitudePoints?: number;
+    setAttitudePoints?: (pts: number) => void;
+    attitudeNotes?: string;
+    setAttitudeNotes?: (notes: string) => void;
     handleSubmit?: () => void;
     isSubmitDisabled?: boolean;
     isSubmitting?: boolean;
@@ -65,7 +91,12 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
     uniqueSubjects, selectedViolationCode, setSelectedViolationCode, violationDate, setViolationDate,
     violationNotes, setViolationNotes, noteMethod, setNoteMethod, templateNote, setTemplateNote,
     pasteData, setPasteData, isParsing, handleAiParse, isOnline, onOpenImport,
-    handleSubmit, isSubmitDisabled, isSubmitting, submitButtonTooltip, kkm, setKkm
+    handleSubmit, isSubmitDisabled, isSubmitting, submitButtonTooltip, kkm, setKkm,
+    attitudeDate, setAttitudeDate,
+    attitudeCategory = 'Adab & Akhlak', setAttitudeCategory,
+    attitudeName = 'Adab & Kesantunan', setAttitudeName,
+    attitudePoints = 1, setAttitudePoints,
+    attitudeNotes, setAttitudeNotes,
 }) => {
     const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
     const [violationSearchTerm, setViolationSearchTerm] = useState('');
@@ -525,37 +556,152 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
 
                         {mode === 'attitude' && (
                             <>
+                                {/* 1. Tanggal Penilaian */}
                                 <div className="space-y-2">
-                                    <label htmlFor="attitude-subject" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Mata Pelajaran</label>
-                                    {isCustomSubject ? (
-                                        <div className="flex gap-2">
-                                            <Input id="attitude-subject" value={subjectGradeInfo.subject} onChange={e => setSubjectGradeInfo(p => ({ ...p, subject: e.target.value }))} placeholder="Ketik nama mapel..." autoFocus required className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30" />
-                                            <Button variant="outline" onClick={() => { setIsCustomSubject(false); setSubjectGradeInfo(p => ({ ...p, subject: '' })); }} title="Kembali ke daftar" className="px-3 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-white"><XCircleIcon className="w-5 h-5" /></Button>
-                                        </div>
-                                    ) : (
-                                        <CustomDropdown id="attitude-subject" value={subjectGradeInfo.subject} onChange={val => { if (val === '__NEW__') { setIsCustomSubject(true); setSubjectGradeInfo(p => ({ ...p, subject: '' })); } else { setSubjectGradeInfo(p => ({ ...p, subject: val })); } }} placeholder="-- Pilih Mapel --" options={[{ value: 'Umum', label: 'Umum (Semua Mapel)' }, ...(uniqueSubjects?.map(s => ({ value: s, label: s })) || []), { value: '__NEW__', label: '+ Ketik Mapel Baru' }]} />
-                                    )}
+                                    <label htmlFor="attitude-date" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase flex items-center justify-between">
+                                        <span>Tanggal Penilaian</span>
+                                        <span className="text-xs font-normal text-slate-400 dark:text-slate-500">Rapot BINTANG</span>
+                                    </label>
+                                    <Input
+                                        id="attitude-date"
+                                        type="date"
+                                        value={attitudeDate || ''}
+                                        onChange={e => setAttitudeDate?.(e.target.value)}
+                                        className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl"
+                                    />
                                 </div>
+
+                                {/* 2. Kategori Aspek BINTANG */}
                                 <div className="space-y-2">
-                                    <label htmlFor="attitude-assessment" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Nama Penilaian</label>
-                                    <Input id="attitude-assessment" value={subjectGradeInfo.assessment_name} onChange={e => setSubjectGradeInfo(p => ({ ...p, assessment_name: e.target.value }))} placeholder="cth. Sikap Semester Ganjil" className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="attitude-semester" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Semester</label>
-                                    <SemesterSelector value={subjectGradeInfo.semester} onChange={(val) => setSubjectGradeInfo(p => ({ ...p, semester: val }))} includeAllOption={false} activeOnly={true} showIcon={true} className="w-full" />
-                                </div>
-                                <div className="p-3 rounded-xl bg-pink-50 dark:bg-pink-500/10 border border-pink-200 dark:border-pink-500/20">
-                                    <p className="text-xs font-bold text-pink-700 dark:text-pink-300 mb-2">Predikat Sikap:</p>
-                                    <div className="grid grid-cols-2 gap-2 text-xs text-pink-600 dark:text-pink-400">
-                                        <span>SB = Sangat Baik</span><span>B = Baik</span>
-                                        <span>C = Cukup</span><span>K = Kurang</span>
+                                    <label className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">
+                                        Kategori Sikap / Aspek BINTANG
+                                    </label>
+                                    <div className="flex flex-col gap-2">
+                                        {BINTANG_ATTITUDE_ASPECTS.map(asp => {
+                                            const isSelected = attitudeCategory === asp.value;
+                                            return (
+                                                <button
+                                                    key={asp.value}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setAttitudeCategory?.(asp.value);
+                                                        setAttitudeName?.(asp.defaultActivity);
+                                                    }}
+                                                    className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                                                        isSelected
+                                                            ? 'border-brand-500 bg-brand-50/90 dark:bg-brand-900/30 ring-2 ring-brand-500/50 shadow-sm'
+                                                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 hover:border-brand-300 dark:hover:border-slate-600'
+                                                    }`}
+                                                >
+                                                    <span className="text-2xl flex-shrink-0">{asp.icon}</span>
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white leading-snug">{asp.label}</p>
+                                                            {isSelected && (
+                                                                <span className="w-2 h-2 rounded-full bg-brand-600 dark:bg-brand-400 flex-shrink-0 animate-pulse" />
+                                                            )}
+                                                        </div>
+                                                        <p className="text-xxs sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">{asp.menunjang}</p>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
-                                <div className="p-3 rounded-xl bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20">
-                                    <p className="text-xs text-sky-600 dark:text-sky-300">
-                                        Isi predikat Sikap Spiritual (KI-1) dan Sikap Sosial (KI-2) untuk setiap siswa di panel daftar siswa.
+
+                                {/* 3. Nama / Aktivitas Pembiasaan Sikap */}
+                                <div className="space-y-2">
+                                    <label htmlFor="attitude-name" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">
+                                        Aktivitas / Sikap Positif
+                                    </label>
+                                    <Input
+                                        id="attitude-name"
+                                        value={attitudeName || ''}
+                                        onChange={e => setAttitudeName?.(e.target.value)}
+                                        placeholder="cth. Adab Berbicara Santun"
+                                        className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30"
+                                    />
+                                    {/* Quick chips */}
+                                    <div className="flex flex-wrap gap-1.5 pt-1">
+                                        {(ATTITUDE_SUGGESTIONS[attitudeCategory] || ATTITUDE_SUGGESTIONS['Adab & Akhlak']).map(sug => (
+                                            <button
+                                                key={sug}
+                                                type="button"
+                                                onClick={() => setAttitudeName?.(sug)}
+                                                className={`px-2.5 py-1 text-xs rounded-full transition-all ${
+                                                    attitudeName === sug
+                                                        ? 'bg-brand-600 text-white font-bold shadow-sm'
+                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-brand-100 dark:hover:bg-brand-900/40 hover:text-brand-600 dark:hover:text-brand-300'
+                                                }`}
+                                            >
+                                                {sug}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 4. Bobot Poin Sikap */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">
+                                        Bobot Poin Apresiasi
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                        {[1, 2, 3].map(pts => (
+                                            <button
+                                                key={pts}
+                                                type="button"
+                                                onClick={() => setAttitudePoints?.(pts)}
+                                                className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border ${
+                                                    (attitudePoints || 1) === pts
+                                                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20 scale-[1.02]'
+                                                        : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-emerald-400'
+                                                }`}
+                                            >
+                                                +{pts} Poin Bintang
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 5. Keterangan Tambahan (Opsional) */}
+                                <div className="space-y-2">
+                                    <label htmlFor="attitude-notes" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase flex items-center justify-between">
+                                        <span>Keterangan Tambahan</span>
+                                        <span className="text-xs font-normal text-slate-400 dark:text-slate-500">Opsional</span>
+                                    </label>
+                                    <Input
+                                        id="attitude-notes"
+                                        value={attitudeNotes || ''}
+                                        onChange={e => setAttitudeNotes?.(e.target.value)}
+                                        placeholder="cth. Membantu merapikan ruang kelas saat istirahat"
+                                        className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30"
+                                    />
+                                </div>
+
+                                {/* 6. Edukasi Rapot BINTANG Banner */}
+                                <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-brand-500/10 border border-emerald-500/20 space-y-1.5">
+                                    <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 font-bold text-xs">
+                                        <SparklesIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                                        <span>Terhubung ke Rapot BINTANG</span>
+                                    </div>
+                                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                        Poin ini otomatis menunjang nilai <strong>Adab, Sikap, dan Kerapian</strong> (menetralkan poin pelanggaran) serta tampil pada <strong>Rincian Poin Keaktifan &amp; Prestasi</strong> rapor.
                                     </p>
                                 </div>
+
+                                {handleSubmit && (
+                                    <div className="pt-2" title={submitButtonTooltip}>
+                                        <Button
+                                            type="button"
+                                            onClick={handleSubmit}
+                                            disabled={isSubmitDisabled || isSubmitting}
+                                            className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold tracking-wide shadow-md shadow-emerald-600/30"
+                                        >
+                                            <CheckIcon className="w-5 h-5 mr-2" />
+                                            {isSubmitting ? 'Menyimpan...' : 'Simpan Poin Sikap'}
+                                        </Button>
+                                    </div>
+                                )}
                             </>
                         )}
 

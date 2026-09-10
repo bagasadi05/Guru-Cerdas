@@ -92,7 +92,7 @@ export function useMassInputViewModel() {
     const filterOptions = useMemo((): { value: StudentFilter; label: string }[] => {
         if (state.mode === 'subject_grade')
             return [{ value: 'all', label: 'Semua' }, { value: 'graded', label: 'Sudah Dinilai' }, { value: 'ungraded', label: 'Belum Dinilai' }];
-        if (['quiz', 'violation', 'bulk_report', 'academic_print'].includes(state.mode || ''))
+        if (['quiz', 'violation', 'bulk_report', 'academic_print', 'attitude'].includes(state.mode || ''))
             return [{ value: 'all', label: 'Semua' }, { value: 'selected', label: 'Terpilih' }, { value: 'unselected', label: 'Belum Dipilih' }];
         return [];
     }, [state.mode]);
@@ -102,6 +102,11 @@ export function useMassInputViewModel() {
         selectedClass: state.selectedClass,
         quizInfo: state.quizInfo,
         subjectGradeInfo: state.subjectGradeInfo,
+        attitudeDate: state.attitudeDate,
+        attitudeCategory: state.attitudeCategory,
+        attitudeName: state.attitudeName,
+        attitudePoints: state.attitudePoints,
+        attitudeNotes: state.attitudeNotes,
         scores: state.scores,
         validationErrors: state.validationErrors,
         existingGrades: data.existingGrades,
@@ -123,11 +128,35 @@ export function useMassInputViewModel() {
         clearSubjectGradeDraft: state.clearSubjectGradeDraft,
     });
 
+    const attitudeFilledCount = useMemo(() => {
+        return Object.values(state.attitudePredicates).filter(p => p && (p.spiritual?.trim() || p.social?.trim())).length;
+    }, [state.attitudePredicates]);
+
+    // Pre-fill attitude predicates from existing records
+    useEffect(() => {
+        if (state.mode === 'attitude' && data.existingAttitudeRecords && data.existingAttitudeRecords.length > 0) {
+            const map: Record<string, { spiritual: string; social: string }> = {};
+            data.existingAttitudeRecords.forEach(rec => {
+                map[rec.student_id] = {
+                    spiritual: rec.spiritual_predicate || '',
+                    social: rec.social_predicate || '',
+                };
+            });
+            state.setAttitudePredicates(prev => {
+                // If user has already made edits, keep them, otherwise use existing
+                const hasEdits = Object.values(prev).some(p => p.spiritual || p.social);
+                if (hasEdits) return { ...map, ...prev };
+                return map;
+            });
+        }
+    }, [state.mode, data.existingAttitudeRecords]);
+
     const summaryText = useMemo(() => {
         const totalStudents = data.studentsData?.length || 0;
         if (state.mode === 'subject_grade') return `${gradedCount} dari ${totalStudents} siswa telah dinilai.`;
+        if (state.mode === 'attitude') return `${state.selectedStudentIds.size} dari ${totalStudents} siswa dipilih (+${state.attitudePoints} poin ${state.attitudeCategory}).`;
         return `${state.selectedStudentIds.size} dari ${totalStudents} siswa dipilih.`;
-    }, [state.mode, gradedCount, state.selectedStudentIds.size, data.studentsData]);
+    }, [state.mode, gradedCount, state.attitudePoints, state.attitudeCategory, state.selectedStudentIds.size, data.studentsData]);
 
     const submitButtonTooltip = useMemo(() => {
         if (!mutations.isOnline) return 'Fitur ini memerlukan koneksi internet.';
@@ -137,6 +166,9 @@ export function useMassInputViewModel() {
             case 'subject_grade':
                 if (!state.subjectGradeInfo.subject || !state.subjectGradeInfo.assessment_name) return 'Lengkapi mata pelajaran dan nama penilaian.';
                 if (gradedCount === 0) return 'Masukkan setidaknya satu nilai siswa.'; break;
+            case 'attitude':
+                if (!state.attitudeName?.trim()) return 'Isi nama aktivitas sikap terlebih dahulu.';
+                if (state.selectedStudentIds.size === 0) return 'Pilih setidaknya satu siswa untuk diberi poin sikap.'; break;
             case 'quiz':
                 if (!state.quizInfo.name || !state.quizInfo.subject) return 'Lengkapi nama dan mata pelajaran aktivitas.';
                 if (state.selectedStudentIds.size === 0) return 'Pilih setidaknya satu siswa.'; break;
@@ -149,7 +181,7 @@ export function useMassInputViewModel() {
                 if (state.mode === 'academic_print' && !state.subjectGradeInfo.subject) return 'Pilih mata pelajaran untuk dicetak.'; break;
         }
         return '';
-    }, [mutations.isOnline, mutations.isSubmitting, mutations.isExporting, mutations.isDeleting, state.selectedClass, state.mode, state.subjectGradeInfo, gradedCount, state.quizInfo, state.selectedStudentIds, state.selectedViolationCode]);
+    }, [mutations.isOnline, mutations.isSubmitting, mutations.isExporting, mutations.isDeleting, state.selectedClass, state.mode, state.subjectGradeInfo, gradedCount, state.attitudeName, state.selectedStudentIds, state.quizInfo, state.selectedViolationCode]);
 
     const isSubmitDisabled = !!submitButtonTooltip;
 
@@ -228,8 +260,23 @@ export function useMassInputViewModel() {
         setSubjectGradeInfo: state.setSubjectGradeInfo,
         kkm: state.kkm,
         setKkm: state.setKkm,
+        attitudeDate: state.attitudeDate,
+        setAttitudeDate: state.setAttitudeDate,
+        attitudeCategory: state.attitudeCategory,
+        setAttitudeCategory: state.setAttitudeCategory,
+        attitudeName: state.attitudeName,
+        setAttitudeName: state.setAttitudeName,
+        attitudePoints: state.attitudePoints,
+        setAttitudePoints: state.setAttitudePoints,
+        attitudeNotes: state.attitudeNotes,
+        setAttitudeNotes: state.setAttitudeNotes,
         attitudePredicates: state.attitudePredicates,
         setAttitudePredicates: state.setAttitudePredicates,
+        handleAttitudePredicateChange: state.handleAttitudePredicateChange,
+        handleQuickFillAttitude: state.handleQuickFillAttitude,
+        attitudeFilledCount,
+        existingAttitudeRecords: data.existingAttitudeRecords,
+        isLoadingAttitude: data.isLoadingAttitude,
         isCustomSubject: state.isCustomSubject,
         setIsCustomSubject: state.setIsCustomSubject,
         uniqueSubjects: data.uniqueSubjects,

@@ -3,6 +3,7 @@ import { Database } from '../../../services/database.types';
 export type ClassRow = Database['public']['Tables']['classes']['Row'];
 export type StudentRow = Database['public']['Tables']['students']['Row'];
 export type AcademicRecordRow = Database['public']['Tables']['academic_records']['Row'];
+export type AttitudeRecordRow = Database['public']['Tables']['attitude_records']['Row'];
 
 type ViolationRowBase = Database['public']['Tables']['violations']['Row'];
 type ViolationRowRequiredKeys =
@@ -42,6 +43,12 @@ export interface MassInputState {
     selectedClass: string;
     quizInfo: { name: string; subject: string; date: string; points: number; max_points: number };
     subjectGradeInfo: { subject: string; assessment_name: string; notes: string; semester: string };
+    attitudeDate: string;
+    attitudeCategory: string;
+    attitudeName: string;
+    attitudePoints: number;
+    attitudeNotes?: string;
+    attitudePredicates: Record<string, { spiritual: string; social: string }>;
     scores: Record<string, string>;
     pasteData: string;
     isParsing: boolean;

@@ -13,6 +13,7 @@ interface StudentSummary {
     keaktifanPoints: number;
     keaktifanCount: number;
     evaluationStatus: 'Published' | 'Draft' | 'Auto';
+    attitude?: { spiritual?: string; social?: string };
 }
 
 interface BintangExcelOptions {
@@ -33,6 +34,7 @@ interface BintangExcelOptions {
     evaluations: Array<{
         student_id: string; is_published: boolean;
     }>;
+    attitudeMap?: Map<string, { spiritual?: string; social?: string }> | Record<string, { spiritual?: string; social?: string }>;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -81,6 +83,7 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
         violations = [],
         quizPoints = [],
         evaluations = [],
+        attitudeMap,
     } = options || {};
 
     const ExcelJS = await getExcelJS();
@@ -123,6 +126,11 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
         if (evalRecord?.is_published) evalStatus = 'Published';
         else if (evalRecord) evalStatus = 'Draft';
 
+        let studentAtt: { spiritual?: string; social?: string } | undefined;
+        if (attitudeMap) {
+            studentAtt = attitudeMap instanceof Map ? attitudeMap.get(student.id) : attitudeMap[student.id];
+        }
+
         return {
             id: student.id,
             name: student.name || 'Siswa',
@@ -132,6 +140,7 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
             keaktifanPoints: totalQP,
             keaktifanCount: studentQP.length,
             evaluationStatus: evalStatus,
+            attitude: studentAtt,
         };
     });
 
@@ -139,7 +148,7 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
     // SHEET 1: Rekap Kelas
     // ═══════════════════════════════════════════════════════════════════════
     const wsRekap = workbook.addWorksheet('Rekap Kelas');
-    const totalColsRekap = 13;
+    const totalColsRekap = 15;
     
     wsRekap.mergeCells(1, 1, 1, totalColsRekap);
     const title1Rekap = wsRekap.getCell(1, 1);
@@ -175,6 +184,7 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
         'Adab (Poin)', 'Adab (Grade)', 'Disiplin (Poin)', 'Disiplin (Grade)',
         'Rapi (Poin)', 'Rapi (Grade)',
         'Poin Keaktifan', 'Frekuensi Keaktifan',
+        'Sikap Spiritual (KI-1)', 'Sikap Sosial (KI-2)',
         'Status Evaluasi'
     ]);
     styleHeaderRow(headerRekap, totalColsRekap);
@@ -192,7 +202,9 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
     wsRekap.getColumn(10).width = 20;
     wsRekap.getColumn(11).width = 15;
     wsRekap.getColumn(12).width = 15;
-    wsRekap.getColumn(13).width = 18;
+    wsRekap.getColumn(13).width = 22;
+    wsRekap.getColumn(14).width = 22;
+    wsRekap.getColumn(15).width = 18;
 
     studentSummaries.forEach((s, idx) => {
         const row = wsRekap.addRow([
@@ -205,6 +217,8 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
             s.aspects.KERAPIAN.points, getGradeColorLabel(s.aspects.KERAPIAN.grade),
             s.keaktifanPoints,
             s.keaktifanCount,
+            s.attitude?.spiritual || '-',
+            s.attitude?.social || '-',
             s.evaluationStatus,
         ]);
         
@@ -225,6 +239,15 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
                     else if (gradeVal.startsWith('C')) cell.font = { color: { argb: 'FFCA8A04' }, bold: true };
                     else if (gradeVal.startsWith('D')) cell.font = { color: { argb: 'FFDC2626' }, bold: true };
                 }
+
+                // Colorize attitude predicates
+                if ([13, 14].includes(colNumber)) {
+                    const attVal = cell.value?.toString() || '';
+                    if (attVal === 'SB' || attVal === 'A') cell.font = { color: { argb: 'FF16A34A' }, bold: true };
+                    else if (attVal === 'B') cell.font = { color: { argb: 'FF2563EB' }, bold: true };
+                    else if (attVal === 'C') cell.font = { color: { argb: 'FFCA8A04' }, bold: true };
+                    else if (attVal === 'K') cell.font = { color: { argb: 'FFDC2626' }, bold: true };
+                }
             }
         });
     });
@@ -238,7 +261,8 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
         studentSummaries.reduce((s, st) => s + st.aspects.KEDISIPLINAN.points, 0), '',
         studentSummaries.reduce((s, st) => s + st.aspects.KERAPIAN.points, 0), '',
         studentSummaries.reduce((s, st) => s + st.keaktifanPoints, 0),
-        studentSummaries.reduce((s, st) => s + st.keaktifanCount, 0), '',
+        studentSummaries.reduce((s, st) => s + st.keaktifanCount, 0),
+        '', '', '',
     ]);
     summaryRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
         if (colNumber <= totalColsRekap) {

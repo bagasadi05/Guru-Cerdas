@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../../../services/supabase';
-import { ClassRow, StudentRow, AcademicRecordRow, ViolationRow } from '../types';
+import { ClassRow, StudentRow, AcademicRecordRow, ViolationRow, AttitudeRecordRow } from '../types';
 import { useAuth } from '../../../../hooks/useAuth';
 import { getAssignedSubjects, TeacherClassAssignmentRow } from '../../../../services/teacherAssignments';
 import { dedupeAcademicRecords } from '../../../../utils/academicRecordUtils';
@@ -190,6 +190,33 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
         enabled: (mode === 'violation' || mode === 'violation_export') && !!selectedClass && !!studentsData,
     });
 
+    const { data: existingAttitudeRecords, isLoading: isLoadingAttitude } = useQuery({
+        queryKey: ['existingAttitudeRecords', selectedClass, subject, assessmentName, semesterId],
+        queryFn: async (): Promise<AttitudeRecordRow[]> => {
+            if (!selectedClass || !studentsData || studentsData.length === 0) return [];
+            let query = supabase
+                .from('attitude_records')
+                .select('*')
+                .in('student_id', studentsData.map(s => s.id))
+                .is('deleted_at', null);
+
+            if (subject) {
+                query = query.eq('subject', subject);
+            }
+            if (assessmentName) {
+                query = query.eq('assessment_name', assessmentName);
+            }
+            if (semesterId) {
+                query = query.eq('semester_id', semesterId);
+            }
+
+            const { data, error } = await query;
+            if (error) throw error;
+            return (data || []) as AttitudeRecordRow[];
+        },
+        enabled: mode === 'attitude' && !!selectedClass && !!studentsData && studentsData.length > 0,
+    });
+
     return {
         classes,
         isLoadingClasses,
@@ -200,6 +227,8 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
         existingGrades,
         isLoadingGrades,
         existingViolations,
-        isLoadingViolations
+        isLoadingViolations,
+        existingAttitudeRecords,
+        isLoadingAttitude,
     };
 };

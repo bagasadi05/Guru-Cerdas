@@ -37,6 +37,11 @@ export interface UseMassInputMutationsParams {
     selectedClass: string;
     quizInfo: { name: string; subject: string; date: string; points: number; max_points: number };
     subjectGradeInfo: { subject: string; assessment_name: string; notes: string; semester: string };
+    attitudeDate?: string;
+    attitudeCategory?: string;
+    attitudeName?: string;
+    attitudePoints?: number;
+    attitudeNotes?: string;
     scores: Record<string, string>;
     validationErrors: Record<string, string>;
     existingGrades: AcademicRecordRow[] | undefined;
@@ -72,6 +77,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
     const {
         mode, selectedClass, quizInfo, subjectGradeInfo, scores, validationErrors,
         existingGrades, selectedStudentIds, selectedViolationCode, violationDate, violationNotes,
+        attitudeDate, attitudeCategory, attitudeName, attitudePoints, attitudeNotes,
         studentsData, noteMethod, templateNote, pasteData,
         gradedCount, classes,
         setScores, setSelectedStudentIds, bypassDuplicateGuard, isScoresDirtyRef, clearSubjectGradeDraft,
@@ -126,7 +132,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
 
         // Get recorder names for all user_ids (both current user and other teachers)
         const allUserIds = Array.from(new Set(existingRows.map((r: any) => r.user_id).filter(Boolean)));
-        let nameMap: Record<string, string> = {};
+        const nameMap: Record<string, string> = {};
         if (allUserIds.length > 0) {
             const { data: roleRows } = await supabase
                 .from('user_roles')
@@ -291,6 +297,67 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                         ? `Pelanggaran untuk ${records.length} siswa berhasil dicatat. ${duplicateStudentIds.size} siswa yang sudah tercatat sebelumnya dilewati.`
                         : `Pelanggaran untuk ${records.length} siswa berhasil dicatat.`;
                 }
+                case 'attitude': {
+                    const targetStudentIds = Array.from(selectedStudentIds);
+                    if (targetStudentIds.length === 0) {
+                        throw new Error('Pilih minimal satu siswa untuk diberi poin sikap.');
+                    }
+                    const resolvedName = (attitudeName || '').trim();
+                    if (!resolvedName) {
+                        throw new Error('Nama aktivitas sikap harus diisi.');
+                    }
+                    const resolvedCategory = (attitudeCategory || 'Adab & Akhlak').trim();
+                    const resolvedPoints = Math.max(1, attitudePoints || 1);
+                    const resolvedDate = attitudeDate || new Date().toISOString().slice(0, 10);
+                    const semesterId = (subjectGradeInfo.semester && subjectGradeInfo.semester.trim() !== '')
+                        ? subjectGradeInfo.semester
+                        : (activeSemester?.id || null);
+
+                    // 1. Simpan ke quiz_points (Poin Keaktifan/Sikap Rapot BINTANG - Tabel C & Offset Aspek)
+                    const quizRecords = targetStudentIds.map(student_id => ({
+                        student_id,
+                        user_id: user.id,
+                        subject: null, // Poin sikap BINTANG tidak terikat mapel spesifik
+                        quiz_name: resolvedName,
+                        quiz_date: resolvedDate,
+                        points: resolvedPoints,
+                        max_points: resolvedPoints,
+                        category: resolvedCategory,
+                        is_used: false,
+                        semester_id: semesterId,
+                    }));
+
+                    const { data: qpData, error: qpError } = await supabase
+                        .from('quiz_points')
+                        .insert(quizRecords)
+                        .select();
+
+                    if (qpError) throw qpError;
+                    if (qpData && qpData.length > 0) {
+                        await recordAction(user.id, 'create', 'quiz_points', qpData.map(d => d.id));
+                    }
+
+                    // 2. Sinkronkan ke attitude_records untuk kompatibilitas data historis
+                    try {
+                        const attitudeRecords: Database['public']['Tables']['attitude_records']['Insert'][] = targetStudentIds.map(student_id => ({
+                            student_id,
+                            subject: 'Sikap & Pembiasaan',
+                            assessment_name: resolvedName,
+                            date: resolvedDate,
+                            spiritual_predicate: (resolvedCategory.includes('Ibadah') || resolvedCategory.includes('Adab')) ? 'SB' : 'B',
+                            social_predicate: (resolvedCategory.includes('Kedisiplinan') || resolvedCategory.includes('Kerapian') || resolvedCategory.includes('Keaktifan')) ? 'SB' : 'B',
+                            semester_id: semesterId,
+                            user_id: user.id,
+                        }));
+                        await supabase
+                            .from('attitude_records')
+                            .upsert(attitudeRecords, { onConflict: 'student_id,subject,assessment_name,semester_id' });
+                    } catch (attErr) {
+                        console.warn('Silent sync to attitude_records skipped:', attErr);
+                    }
+
+                    return `Poin sikap (+${resolvedPoints} ${resolvedName}) berhasil dicatat untuk ${targetStudentIds.length} siswa. Data otomatis terhubung ke Rapot BINTANG.`;
+                }
                 default:
                     throw new Error(`Mode "${mode}" tidak mendukung penyimpanan data.`);
             }
@@ -298,9 +365,13 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         onSuccess: async (message: string) => {
             toast.success(message || 'Data berhasil disimpan!');
             queryClient.invalidateQueries({ queryKey: ['existingGrades'] });
+            queryClient.invalidateQueries({ queryKey: ['existingAttitudeRecords'] });
             queryClient.invalidateQueries({ queryKey: ['studentDetails'] });
             queryClient.invalidateQueries({ queryKey: ['studentStats'] });
             queryClient.invalidateQueries({ queryKey: ['existingViolations'] });
+            queryClient.invalidateQueries({ queryKey: ['quiz_points'] });
+            queryClient.invalidateQueries({ queryKey: ['bintangEvaluations'] });
+            queryClient.invalidateQueries({ queryKey: ['bintangDashboard'] });
             isScoresDirtyRef.current = false;
             clearSubjectGradeDraft();
 
@@ -309,6 +380,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                 try {
                     const classObj = classes?.find(c => c.id === selectedClass);
                     const details: Record<string, string> = {};
+                    let studentCount = selectedStudentIds.size;
                     if (mode === 'quiz') {
                         details.quizName = quizInfo.name;
                         details.subject = quizInfo.subject;
@@ -317,6 +389,12 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                         details.assessmentName = subjectGradeInfo.assessment_name;
                     } else if (mode === 'violation') {
                         details.violationDesc = selectedViolation?.description || '';
+                    } else if (mode === 'attitude') {
+                        details.attitudeCategory = attitudeCategory || 'Adab & Akhlak';
+                        details.attitudeName = attitudeName || 'Sikap';
+                        details.attitudeDate = attitudeDate || '';
+                        if (attitudeNotes) details.attitudeNotes = attitudeNotes;
+                        studentCount = selectedStudentIds.size;
                     }
 
                     await supabase.from('daily_input_log').insert({
@@ -324,7 +402,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                         teacher_name: user?.name || 'Guru',
                         teacher_id: user!.id,
                         class_name: classObj?.name || '',
-                        student_count: selectedStudentIds.size,
+                        student_count: studentCount,
                         details,
                     });
                 } catch {

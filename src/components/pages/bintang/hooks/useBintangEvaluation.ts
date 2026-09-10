@@ -29,6 +29,14 @@ export interface UseBintangEvaluationOptions {
         variant: 'warning' | 'danger' | 'info';
         onConfirm: () => Promise<void>;
     }) => Promise<boolean>;
+    confirmUnpublish?: (opts: {
+        title: string;
+        message: string;
+        confirmText: string;
+        cancelText?: string;
+        variant: 'warning' | 'danger' | 'info';
+        onConfirm: () => Promise<void>;
+    }) => Promise<boolean>;
     fetchData: () => Promise<void>;
     selectedMonth: string;
     user: any;
@@ -44,6 +52,8 @@ export interface UseBintangEvaluationOptions {
     getStudentQuizPoints?: (studentId: string) => number;
     /** Getter function for student violations list — allows contextual note generation */
     getStudentViolations?: (studentId: string) => StudentViolationSummaryItem[];
+    /** Getter function for student attitude predicates (KI-1 Spiritual & KI-2 Sosial) */
+    getStudentAttitude?: (studentId: string) => { spiritual?: string; social?: string } | undefined;
 }
 
 export interface UseBintangEvaluationReturn {
@@ -55,6 +65,8 @@ export interface UseBintangEvaluationReturn {
     setFormData: React.Dispatch<React.SetStateAction<EvaluationFormData>>;
     isSubmitting: boolean;
     isPublishing: boolean;
+    isUnpublishing: boolean;
+    unpublishingStudentId: string | null;
     isGenerating: boolean;
     downloadingStudentId: string | null;
     isDownloadingClass: boolean;
@@ -70,6 +82,8 @@ export interface UseBintangEvaluationReturn {
     handleSaveEvaluation: (e: React.FormEvent, getAspectSummary: (id: string) => AspectPointsSummary) => Promise<void>;
     handleGenerateAll: (getAspectSummary: (id: string) => AspectPointsSummary) => Promise<void>;
     handlePublish: () => Promise<void>;
+    handleUnpublish: () => Promise<void>;
+    handleUnpublishSingle: (studentId: string, studentName?: string) => Promise<void>;
     handleDownloadSinglePdf: (studentId: string) => Promise<void>;
     handleDownloadClassPdf: () => Promise<void>;
     handleDownloadBulkPdf: (studentIds: string[]) => Promise<void>;
@@ -84,12 +98,15 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
     const {
         toast, confirmPublish, fetchData, selectedMonth, user,
         students, evaluations, selectedClass, getStudentQuizPoints, getStudentViolations,
+        getStudentAttitude,
     } = options;
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingStudent, setEditingStudent] = useState<any>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
+    const [isUnpublishing, setIsUnpublishing] = useState(false);
+    const [unpublishingStudentId, setUnpublishingStudentId] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [downloadingStudentId, setDownloadingStudentId] = useState<string | null>(null);
     const [isDownloadingClass, setIsDownloadingClass] = useState(false);
@@ -130,6 +147,7 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
             const aspect = getAspectSummary(student.id);
             const activePts = getStudentQuizPoints?.(student.id) || 0;
             const studentVios = getStudentViolations?.(student.id) || [];
+            const attitude = getStudentAttitude?.(student.id);
 
             if (existingEval) {
                 setFormData({
@@ -148,7 +166,12 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                     aspect.KEDISIPLINAN.grade,
                     aspect.KERAPIAN.grade,
                     activePts,
-                    { studentName: student.name, violations: studentVios }
+                    {
+                        studentName: student.name,
+                        violations: studentVios,
+                        spiritualPredicate: attitude?.spiritual,
+                        socialPredicate: attitude?.social,
+                    }
                 );
                 setFormData({
                     adab_score: aspect.ADAB.grade,
@@ -162,7 +185,7 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
             }
             setIsEditModalOpen(true);
         },
-        [getEvaluationForStudent, getStudentQuizPoints, getStudentViolations]
+        [getEvaluationForStudent, getStudentQuizPoints, getStudentViolations, getStudentAttitude]
     );
 
     const handleRegenerateHomeroomNote = useCallback(
@@ -170,6 +193,7 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
             if (!student) return;
             const activePts = getStudentQuizPoints?.(student.id) || 0;
             const studentVios = getStudentViolations?.(student.id) || [];
+            const attitude = getStudentAttitude?.(student.id);
 
             setFormData(prev => {
                 const regenerated = generateHomeroomNote(
@@ -177,13 +201,19 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                     prev.kedisiplinan_score,
                     prev.kerapian_score,
                     activePts,
-                    { studentName: student.name, violations: studentVios, month: selectedMonth }
+                    {
+                        studentName: student.name,
+                        violations: studentVios,
+                        month: selectedMonth,
+                        spiritualPredicate: attitude?.spiritual,
+                        socialPredicate: attitude?.social,
+                    }
                 );
                 return { ...prev, catatan_wali: regenerated };
             });
             toast.success('Catatan wali kelas berhasil dibuat ulang secara kontekstual');
         },
-        [getStudentQuizPoints, getStudentViolations, selectedMonth, toast]
+        [getStudentQuizPoints, getStudentViolations, getStudentAttitude, selectedMonth, toast]
     );
 
     const handleSaveEvaluation = useCallback(
@@ -224,13 +254,19 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                     const aspect = getAspectSummary(student.id);
                     const activePts = getStudentQuizPoints?.(student.id) || 0;
                     const studentVios = getStudentViolations?.(student.id) || [];
+                    const attitude = getStudentAttitude?.(student.id);
                     const autoNotes = generateAutoNote(aspect.ADAB.grade, aspect.KEDISIPLINAN.grade, aspect.KERAPIAN.grade, activePts);
                     const autoHomeroomNote = generateHomeroomNote(
                         aspect.ADAB.grade,
                         aspect.KEDISIPLINAN.grade,
                         aspect.KERAPIAN.grade,
                         activePts,
-                        { studentName: student.name, violations: studentVios }
+                        {
+                            studentName: student.name,
+                            violations: studentVios,
+                            spiritualPredicate: attitude?.spiritual,
+                            socialPredicate: attitude?.social,
+                        }
                     );
                     return {
                         student_id: student.id,
@@ -256,13 +292,13 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                 setIsGenerating(false);
             }
         },
-        [students, selectedMonth, user, getStudentQuizPoints, getStudentViolations, toast, fetchData]
+        [students, selectedMonth, user, getStudentQuizPoints, getStudentViolations, getStudentAttitude, toast, fetchData]
     );
 
     const handlePublish = useCallback(async () => {
         await confirmPublish({
             title: 'Publikasi Rapor BINTANG',
-            message: `Anda akan mempublikasikan rapor BINTANG untuk ${evalStats.filled} siswa. Rapor yang sudah dipublikasikan tidak dapat diubah lagi. Lanjutkan?`,
+            message: `Anda akan mempublikasikan rapor BINTANG untuk ${evalStats.filled} siswa. Rapor akan dapat dilihat oleh orang tua di portal. Anda dapat membatalkan publikasi ke status Draft sewaktu-waktu jika perlu mengedit kembali. Lanjutkan?`,
             confirmText: 'Ya, Publikasikan',
             variant: 'warning',
             onConfirm: async () => {
@@ -280,6 +316,55 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
             },
         });
     }, [confirmPublish, evalStats.filled, selectedClass, selectedMonth, toast, fetchData]);
+
+    const handleUnpublish = useCallback(async () => {
+        const confirmFn = options.confirmUnpublish || confirmPublish;
+        await confirmFn({
+            title: 'Batalkan Publikasi Rapor BINTANG',
+            message: `Anda akan membatalkan publikasi rapor BINTANG untuk ${evalStats.published} siswa. Rapor akan dikembalikan ke status Draft dan sementara disembunyikan dari Portal Orang Tua sehingga Anda dapat mengedit nilainya kembali. Lanjutkan?`,
+            confirmText: 'Ya, Kembalikan ke Draft',
+            variant: 'warning',
+            onConfirm: async () => {
+                setIsUnpublishing(true);
+                try {
+                    await bintangService.unpublishEvaluations(selectedClass, selectedMonth);
+                    toast.success('Publikasi rapor berhasil dibatalkan. Rapor kembali ke status Draft.');
+                    await fetchData();
+                } catch (error) {
+                    console.error(error);
+                    toast.error('Gagal membatalkan publikasi rapor');
+                } finally {
+                    setIsUnpublishing(false);
+                }
+            },
+        });
+    }, [options.confirmUnpublish, confirmPublish, evalStats.published, selectedClass, selectedMonth, toast, fetchData]);
+
+    const handleUnpublishSingle = useCallback(async (studentId: string, studentName?: string) => {
+        const ev = evaluations.find(e => e.student_id === studentId);
+        if (!ev) return;
+        const confirmFn = options.confirmUnpublish || confirmPublish;
+        const displayName = studentName || students.find(s => s.id === studentId)?.name || 'siswa ini';
+        await confirmFn({
+            title: 'Batalkan Publikasi Rapor Siswa',
+            message: `Kembalikan rapor BINTANG untuk ${displayName} ke status Draft? Rapor akan sementara disembunyikan dari Portal Orang Tua agar Anda dapat mengedit nilainya kembali.`,
+            confirmText: 'Ya, Kembalikan ke Draft',
+            variant: 'warning',
+            onConfirm: async () => {
+                setUnpublishingStudentId(studentId);
+                try {
+                    await bintangService.unpublishSingleEvaluation(ev.id);
+                    toast.success(`Rapor untuk ${displayName} dikembalikan ke Draft`);
+                    await fetchData();
+                } catch (error) {
+                    console.error(error);
+                    toast.error('Gagal membatalkan publikasi rapor');
+                } finally {
+                    setUnpublishingStudentId(null);
+                }
+            },
+        });
+    }, [options.confirmUnpublish, confirmPublish, evaluations, students, toast, fetchData]);
 
     const handleDownloadSinglePdf = useCallback(
         async (studentId: string) => {
@@ -453,6 +538,9 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                 violations: filteredVios,
                 quizPoints: quizData || [],
                 evaluations: filteredEvals,
+                attitudeMap: getStudentAttitude
+                    ? new Map(effectiveStudents.map(s => [s.id, getStudentAttitude(s.id) || {}]))
+                    : undefined,
             });
 
             toast.success(`Data BINTANG (${effectiveStudents.length} siswa) berhasil diexport ke Excel`);
@@ -462,7 +550,7 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
         } finally {
             setIsExportingExcel(false);
         }
-    }, [selectedClass, selectedMonth, students, evaluations, toast]);
+    }, [selectedClass, selectedMonth, students, evaluations, getStudentAttitude, toast]);
 
     return {
         isEditModalOpen,
@@ -472,6 +560,8 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
         setFormData,
         isSubmitting,
         isPublishing,
+        isUnpublishing,
+        unpublishingStudentId,
         isGenerating,
         downloadingStudentId,
         isDownloadingClass,
@@ -486,6 +576,8 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
         handleSaveEvaluation,
         handleGenerateAll,
         handlePublish,
+        handleUnpublish,
+        handleUnpublishSingle,
         handleDownloadSinglePdf,
         handleDownloadClassPdf,
         handleDownloadBulkPdf,

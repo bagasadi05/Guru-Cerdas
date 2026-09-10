@@ -20,12 +20,16 @@ import type { BintangGrade, AspectPointsSummary } from '../../../../../services/
 const mockUpsertEvaluation = vi.fn();
 const mockBulkUpsertEvaluations = vi.fn();
 const mockPublishEvaluations = vi.fn();
+const mockUnpublishEvaluations = vi.fn();
+const mockUnpublishSingleEvaluation = vi.fn();
 
 vi.mock('../../../../../services/bintangService', () => ({
     bintangService: {
         upsertEvaluation: (...args: any[]) => mockUpsertEvaluation(...args),
         bulkUpsertEvaluations: (...args: any[]) => mockBulkUpsertEvaluations(...args),
         publishEvaluations: (...args: any[]) => mockPublishEvaluations(...args),
+        unpublishEvaluations: (...args: any[]) => mockUnpublishEvaluations(...args),
+        unpublishSingleEvaluation: (...args: any[]) => mockUnpublishSingleEvaluation(...args),
     },
     calculateAspectPoints: vi.fn(),
     pointsToGrade: vi.fn((): BintangGrade => 'A'),
@@ -138,6 +142,8 @@ describe('useBintangEvaluation', () => {
         mockUpsertEvaluation.mockReset();
         mockBulkUpsertEvaluations.mockReset();
         mockPublishEvaluations.mockReset();
+        mockUnpublishEvaluations.mockReset();
+        mockUnpublishSingleEvaluation.mockReset();
         mockDownloadBintangReportAction.mockReset();
         // generateAutoNote/HomeroomNote need default return values (some tests
         // open modal without existing eval, which triggers these functions)
@@ -326,6 +332,33 @@ describe('useBintangEvaluation', () => {
             expect(getStudentViolations).toHaveBeenCalledWith('student-1');
             expect(result.current.formData.catatan_wali).toBe('Regenerated note with violations');
             expect(toast.success).toHaveBeenCalledWith('Catatan wali kelas berhasil dibuat ulang secara kontekstual');
+        });
+
+        it('should pass spiritual and social attitude predicates from getStudentAttitude to generateHomeroomNote', async () => {
+            const { useBintangEvaluation } = await import('../useBintangEvaluation');
+            const getStudentAttitude = vi.fn().mockReturnValue({ spiritual: 'SB', social: 'B' });
+            const options = createDefaultOptions({ getStudentAttitude });
+
+            mockGenerateHomeroomNote.mockReturnValue('Auto note with attitude');
+
+            const { result } = renderHook(() => useBintangEvaluation(options));
+
+            await act(async () => {
+                result.current.handleOpenEditModal(
+                    { id: 'student-1', name: 'Ahmad Fauzi' },
+                    mockGetAspectSummary,
+                );
+            });
+
+            expect(getStudentAttitude).toHaveBeenCalledWith('student-1');
+            expect(mockGenerateHomeroomNote).toHaveBeenCalledWith(
+                'B', 'A', 'C', 0,
+                expect.objectContaining({
+                    studentName: 'Ahmad Fauzi',
+                    spiritualPredicate: 'SB',
+                    socialPredicate: 'B',
+                })
+            );
         });
     });
 
@@ -576,6 +609,119 @@ describe('useBintangEvaluation', () => {
             });
 
             expect(toast.error).toHaveBeenCalledWith('Gagal mempublikasikan rapor');
+        });
+    });
+
+    // ── handleUnpublish ───────────────────────────────────────────────────────
+
+    describe('handleUnpublish', () => {
+        it('should unpublish class evaluations after confirmation', async () => {
+            const { useBintangEvaluation } = await import('../useBintangEvaluation');
+            const toast = { success: vi.fn(), error: vi.fn() };
+            const fetchData = vi.fn().mockResolvedValue(undefined);
+            const confirmUnpublish = vi.fn(async (opts: any) => {
+                await opts.onConfirm();
+                return true;
+            });
+            const options = createDefaultOptions({
+                toast,
+                fetchData,
+                confirmUnpublish,
+                selectedClass: 'class-1',
+                selectedMonth: '2026-01',
+                evaluations: [
+                    {
+                        id: 'pub-1', student_id: 's-1', month: '2026-01',
+                        adab_score: 'A', kedisiplinan_score: 'A', kerapian_score: 'A',
+                        adab_notes: null, kedisiplinan_notes: null, kerapian_notes: null,
+                        catatan_wali: null, is_published: true, evaluator_id: 'u-1',
+                    }
+                ],
+            });
+
+            mockUnpublishEvaluations.mockResolvedValue([{ id: 'pub-1', is_published: false }]);
+
+            const { result } = renderHook(() => useBintangEvaluation(options));
+
+            await act(async () => {
+                await result.current.handleUnpublish();
+            });
+
+            expect(confirmUnpublish).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    title: 'Batalkan Publikasi Rapor BINTANG',
+                    confirmText: 'Ya, Kembalikan ke Draft',
+                })
+            );
+            expect(mockUnpublishEvaluations).toHaveBeenCalledWith('class-1', '2026-01');
+            expect(toast.success).toHaveBeenCalledWith('Publikasi rapor berhasil dibatalkan. Rapor kembali ke status Draft.');
+            expect(fetchData).toHaveBeenCalled();
+        });
+
+        it('should handle unpublish error gracefully', async () => {
+            const { useBintangEvaluation } = await import('../useBintangEvaluation');
+            const toast = { success: vi.fn(), error: vi.fn() };
+            const confirmUnpublish = vi.fn(async (opts: any) => {
+                await opts.onConfirm();
+                return true;
+            });
+            const options = createDefaultOptions({ toast, confirmUnpublish });
+
+            mockUnpublishEvaluations.mockRejectedValue(new Error('Unpublish failed'));
+
+            const { result } = renderHook(() => useBintangEvaluation(options));
+
+            await act(async () => {
+                await result.current.handleUnpublish();
+            });
+
+            expect(toast.error).toHaveBeenCalledWith('Gagal membatalkan publikasi rapor');
+        });
+    });
+
+    // ── handleUnpublishSingle ─────────────────────────────────────────────────
+
+    describe('handleUnpublishSingle', () => {
+        it('should unpublish a single student evaluation after confirmation', async () => {
+            const { useBintangEvaluation } = await import('../useBintangEvaluation');
+            const toast = { success: vi.fn(), error: vi.fn() };
+            const fetchData = vi.fn().mockResolvedValue(undefined);
+            const confirmUnpublish = vi.fn(async (opts: any) => {
+                await opts.onConfirm();
+                return true;
+            });
+            const options = createDefaultOptions({
+                toast,
+                fetchData,
+                confirmUnpublish,
+                students: [{ id: 's-1', name: 'Ahmad' }],
+                evaluations: [
+                    {
+                        id: 'pub-1', student_id: 's-1', month: '2026-01',
+                        adab_score: 'A', kedisiplinan_score: 'A', kerapian_score: 'A',
+                        adab_notes: null, kedisiplinan_notes: null, kerapian_notes: null,
+                        catatan_wali: null, is_published: true, evaluator_id: 'u-1',
+                    }
+                ],
+            });
+
+            mockUnpublishSingleEvaluation.mockResolvedValue({ id: 'pub-1', is_published: false });
+
+            const { result } = renderHook(() => useBintangEvaluation(options));
+
+            await act(async () => {
+                await result.current.handleUnpublishSingle('s-1', 'Ahmad');
+            });
+
+            expect(confirmUnpublish).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    title: 'Batalkan Publikasi Rapor Siswa',
+                    confirmText: 'Ya, Kembalikan ke Draft',
+                })
+            );
+            expect(mockUnpublishSingleEvaluation).toHaveBeenCalledWith('pub-1');
+            expect(toast.success).toHaveBeenCalledWith('Rapor untuk Ahmad dikembalikan ke Draft');
+            expect(fetchData).toHaveBeenCalled();
         });
     });
 

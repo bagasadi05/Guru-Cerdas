@@ -743,6 +743,66 @@ describe('bintangPdfGenerator', () => {
         // It should contain advice about uniform/attribute (KERAPIAN)
         expect(renderedNote).toMatch(/(seragam|atribut|rapi)/i);
     });
+
+    it('renders 3 core aspects in Table A, and displays attitude activities in Table C and contextual notes', async () => {
+        const doc = new jsPDF();
+        const splitTextSpy = vi.spyOn(doc, 'splitTextToSize');
+        const { getAutoTable } = await import('../../utils/dynamicImports');
+        const mockAutoTable = (await getAutoTable()).default;
+
+        const report = {
+            student: { id: 's_att', name: 'FATIMAH AZZAHRA', classes: { name: 'Kelas 4A' } },
+            aspects: {
+                ADAB: { grade: 'A', points: 0 },
+                KEDISIPLINAN: { grade: 'A', points: 0 },
+                KERAPIAN: { grade: 'A', points: 0 },
+            },
+            violations: [],
+            evaluation: null, // trigger contextual auto note
+            quizPoints: [
+                { quiz_name: 'Adab & Kesantunan', category: 'Adab & Akhlak', points: 2 },
+                { quiz_name: 'Shalat Tepat Waktu', category: 'Pembiasaan Ibadah', points: 2 },
+            ],
+            attitude: { spiritual: 'SB', social: 'B' },
+        };
+
+        await generateBintangReportPdf(
+            doc,
+            [report],
+            'September 2026',
+            '10 September 2026',
+            { id: 'u1', name: 'Ustadz Abdullah, S.Pd.I', avatarUrl: '' }
+        );
+
+        // Check Table A has exactly 3 rows: Adab, Kedisiplinan, Kerapian
+        const autoTableCalls = vi.mocked(mockAutoTable).mock.calls;
+        const tableACall = autoTableCalls.find(call => {
+            const opts = call[1] as any;
+            return opts && opts.body && opts.body.some((row: any[]) => row[1] === 'Adab');
+        });
+        expect(tableACall).toBeDefined();
+        const bodyRows = (tableACall![1] as any).body;
+        expect(bodyRows.length).toBe(3);
+        expect(bodyRows[0][1]).toBe('Adab');
+        expect(bodyRows[1][1]).toBe('Kedisiplinan');
+        expect(bodyRows[2][1]).toBe('Kerapian');
+
+        // Check Table C contains the attitude activities
+        const tableCCall = autoTableCalls.find(call => {
+            const opts = call[1] as any;
+            return opts && opts.head && opts.head[0] && opts.head[0][1] === 'Kegiatan / Prestasi';
+        });
+        expect(tableCCall).toBeDefined();
+        const tableCRows = (tableCCall![1] as any).body;
+        expect(tableCRows.some((r: any[]) => r[1] === 'Adab & Kesantunan')).toBe(true);
+        expect(tableCRows.some((r: any[]) => r[1] === 'Shalat Tepat Waktu')).toBe(true);
+
+        // Check that generated note has active points appreciation
+        const calls = splitTextSpy.mock.calls.map(c => String(c[0]));
+        const renderedNote = calls.find(c => c.includes('FATIMAH'));
+        expect(renderedNote).toBeDefined();
+        expect(renderedNote).toContain('poin keaktifan');
+    });
 });
 
 

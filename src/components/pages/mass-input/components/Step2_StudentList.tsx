@@ -3,7 +3,7 @@ import { Input } from '../../../ui/Input';
 import { Checkbox } from '../../../ui/Checkbox';
 import { SearchIcon, CheckSquareIcon, BarChartIcon, CheckIcon, SparklesIcon } from '../../../Icons';
 import { FilterPills } from './FilterPills';
-import { StudentRow, InputMode, StudentFilter, AcademicRecordRow, ClassRow } from '../types';
+import { StudentRow, InputMode, StudentFilter, AcademicRecordRow, ClassRow, AttitudeRecordRow } from '../types';
 import { useGridNavigation } from '../../../../hooks/useGridNavigation';
 import { StudentSortControls, GroupHeader, sortStudents, groupStudents, SortField, SortDirection, GroupBy } from '../../../ui/StudentSortControls';
 import { GradeDistributionMini } from '../../../ui/GradeDistributionChart';
@@ -28,6 +28,9 @@ interface Step2_StudentListProps {
     handleScoreChange: (id: string, value: string) => void;
     validationErrors?: Record<string, string>;
     existingGrades: AcademicRecordRow[] | undefined;
+    existingAttitudeRecords?: AttitudeRecordRow[];
+    attitudePoints?: number;
+    attitudeCategory?: string;
     classes?: ClassRow[];
     selectedClass?: string;
     handleSubmit?: () => void;
@@ -40,6 +43,8 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     mode, searchTerm, setSearchTerm, filterOptions, studentFilter, setStudentFilter,
     isLoadingStudents, students, isAllSelected, handleSelectAllStudents,
     selectedStudentIds, handleStudentSelect, scores, handleScoreChange, validationErrors = {}, existingGrades,
+    existingAttitudeRecords,
+    attitudePoints = 1, attitudeCategory = 'Adab & Akhlak',
     classes, selectedClass, handleSubmit, isSubmitDisabled, isSubmitting, onShowAdjustment
 }) => {
     // Sorting and Grouping State
@@ -100,6 +105,14 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
         }
         return map;
     }, [existingGrades]);
+
+    const existingAttitudeMap = useMemo(() => {
+        const map = new Map<string, AttitudeRecordRow>();
+        if (existingAttitudeRecords) {
+            existingAttitudeRecords.forEach(r => map.set(r.student_id, r));
+        }
+        return map;
+    }, [existingAttitudeRecords]);
 
     const globalIndexMap = useMemo(() => {
         const map = new Map<string, number>();
@@ -215,8 +228,8 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                             />
                                         </th>
                                         <th className="p-4 text-left font-bold tracking-wide uppercase text-xs">Nama Siswa</th>
-                                        <th className="p-4 text-left font-bold tracking-wide uppercase text-xs">
-                                            {mode === 'subject_grade' ? 'Input Nilai' : mode === 'academic_print' ? 'Nilai Saat Ini' : 'Status'}
+                                        <th className={`p-4 text-left font-bold tracking-wide uppercase text-xs ${mode === 'attitude' ? 'w-80 min-w-[280px]' : ''}`}>
+                                            {mode === 'subject_grade' ? 'Input Nilai' : mode === 'attitude' ? 'Apresiasi Sikap (BINTANG)' : mode === 'academic_print' ? 'Nilai Saat Ini' : 'Status'}
                                         </th>
                                     </tr>
                                 </thead>
@@ -236,6 +249,8 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                 const gradeRecord = existingGradesMap.get(s.id);
                                                 const hasGrade = !!gradeRecord;
                                                 const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
+                                                const attitudeRecord = existingAttitudeMap.get(s.id);
+                                                const hasAttitude = !!attitudeRecord;
 
                                                 return (
                                                     <tr
@@ -286,11 +301,16 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                             ⚠️ Nilai Sudah Ada
                                                                         </span>
                                                                     )}
+                                                                    {mode === 'attitude' && hasAttitude && (
+                                                                        <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1 w-fit mt-1">
+                                                                            ✓ Tersimpan di database
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className="p-4 rounded-r-xl border-y border-r border-slate-100 dark:border-white/5 group-hover:border-slate-200 dark:group-hover:border-white/10">
-                                                            {mode === 'subject_grade' ?
+                                                        <td className={`p-4 rounded-r-xl border-y border-r border-slate-100 dark:border-white/5 group-hover:border-slate-200 dark:group-hover:border-white/10 ${mode === 'attitude' ? 'w-80 min-w-[280px]' : ''}`}>
+                                                            {mode === 'subject_grade' ? (
                                                                 <div className="relative">
                                                                     <Input
                                                                         ref={(el) => registerRef(globalIndex, el)}
@@ -314,17 +334,33 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                             </div>
                                                                         </div>
                                                                     )}
-                                                                </div> :
-                                                                mode === 'academic_print' ?
-                                                                    <span className={`font-bold px-4 py-2 rounded-lg text-sm ${hasGrade ? 'bg-brand-100 dark:bg-brand-500/30 text-brand-700 dark:text-brand-200 border border-brand-200 dark:border-brand-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-gray-500 border border-slate-200 dark:border-white/5'}`}>
-                                                                        {hasGrade ? gradeRecord?.score : 'N/A'}
-                                                                    </span> :
-                                                                    isSelected ?
-                                                                        <span className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-400/10 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-400/20 w-fit">
-                                                                            <CheckSquareIcon className="w-4 h-4" />Terpilih
-                                                                        </span> :
-                                                                        <span className="text-slate-400 dark:text-white/30 text-sm italic">Belum dipilih</span>
-                                                            }
+                                                                </div>
+                                                            ) : mode === 'attitude' ? (
+                                                                isSelected ? (
+                                                                    <div className="flex items-center">
+                                                                        <span className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-200 bg-emerald-100/90 dark:bg-emerald-500/20 px-3.5 py-1.5 rounded-xl border border-emerald-300/80 dark:border-emerald-500/30 whitespace-nowrap shadow-sm">
+                                                                            <SparklesIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                                                                            <span className="font-bold text-emerald-700 dark:text-emerald-300">+{attitudePoints || 1} Poin</span>
+                                                                            <span className="text-emerald-400/60 dark:text-emerald-500/60 font-normal">•</span>
+                                                                            <span className="font-medium text-emerald-800 dark:text-emerald-200">{attitudeCategory || 'Sikap'}</span>
+                                                                        </span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="text-slate-400 dark:text-white/30 text-xs italic whitespace-nowrap">
+                                                                        Belum dipilih (klik baris untuk beri poin)
+                                                                    </span>
+                                                                )
+                                                            ) : mode === 'academic_print' ? (
+                                                                <span className={`font-bold px-4 py-2 rounded-lg text-sm ${hasGrade ? 'bg-brand-100 dark:bg-brand-500/30 text-brand-700 dark:text-brand-200 border border-brand-200 dark:border-brand-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-gray-500 border border-slate-200 dark:border-white/5'}`}>
+                                                                    {hasGrade ? gradeRecord?.score : 'N/A'}
+                                                                </span>
+                                                            ) : isSelected ? (
+                                                                <span className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-400/10 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-400/20 w-fit">
+                                                                    <CheckSquareIcon className="w-4 h-4" />Terpilih
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-slate-400 dark:text-white/30 text-sm italic">Belum dipilih</span>
+                                                            )}
                                                         </td>
                                                     </tr>
                                                 )
@@ -348,6 +384,8 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                         const gradeRecord = existingGradesMap.get(s.id);
                                         const hasGrade = !!gradeRecord;
                                         const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
+                                        const attitudeRecord = existingAttitudeMap.get(s.id);
+                                        const hasAttitude = !!attitudeRecord;
 
                                         return (
                                             <div
@@ -364,6 +402,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                         `}
                                             >
                                                 <div className="flex items-start gap-3 mb-3">
+                                                    {mode !== 'subject_grade' && (
                                                         <Checkbox
                                                             checked={isSelected}
                                                             onChange={(e) => {
@@ -373,6 +412,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                             onClick={(e) => e.stopPropagation()}
                                                             className="w-5 h-5 mt-1 border-white/30 data-[state=checked]:bg-brand-600 data-[state=checked]:border-brand-500"
                                                         />
+                                                    )}
                                                     <img
                                                         src={getStudentAvatar(s.avatar_url, s.gender, s.id, s.name, 'sm')}
                                                         alt={s.name}
@@ -392,6 +432,11 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                             {mode === 'subject_grade' && hasGrade && (
                                                                 <span className="animate-pulse text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50 flex items-center gap-1 w-fit">
                                                                     ⚠️ Nilai Sudah Ada
+                                                                </span>
+                                                            )}
+                                                            {mode === 'attitude' && hasAttitude && (
+                                                                <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1 w-fit">
+                                                                    ✓ Tersimpan
                                                                 </span>
                                                             )}
                                                         </div>
@@ -431,6 +476,22 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                 * {validationErrors[s.id]}
                                                             </div>
                                                         )}
+                                                    </div>
+                                                ) : mode === 'attitude' ? (
+                                                    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-between gap-2">
+                                                        {isSelected ? (
+                                                            <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-200 bg-emerald-100/90 dark:bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-300/80 dark:border-emerald-500/30 inline-flex items-center gap-1.5 whitespace-nowrap shadow-sm">
+                                                                <SparklesIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                                                                <span className="font-bold text-emerald-700 dark:text-emerald-300">+{attitudePoints || 1} Poin</span>
+                                                                <span className="text-emerald-400/60">•</span>
+                                                                <span className="font-medium text-emerald-800 dark:text-emerald-200">{attitudeCategory || 'Sikap'}</span>
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-xs text-slate-400 dark:text-white/30 italic whitespace-nowrap">
+                                                                Belum dipilih (tap untuk beri poin)
+                                                            </span>
+                                                        )}
+                                                        <span className="text-xxs text-slate-400 font-medium whitespace-nowrap flex-shrink-0">Rapot BINTANG</span>
                                                     </div>
                                                 ) : mode === 'academic_print' ? (
                                                     <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200 dark:border-white/10">

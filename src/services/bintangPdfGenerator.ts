@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import { getAutoTable } from '../utils/dynamicImports';
 import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
-import { BintangGrade, calculateAspectPoints } from './bintangService';
+import { BintangGrade, calculateAspectPoints, bintangService } from './bintangService';
 import { supabase } from './supabase';
 import { formatExportDate } from '../utils/exportUtils';
 import { formatDegreeProperly } from '../utils/greetingUtils';
@@ -50,6 +50,7 @@ export const generateBintangReportPdf = async (
         aspects: any;
         violations?: { date: string; description: string; points: number; severity?: string }[];
         quizPoints?: { quiz_name?: string | null; category?: string | null; points: number }[];
+        attitude?: { spiritual?: string; social?: string };
     }>,
     monthName: string,
     printDate: string,
@@ -171,7 +172,9 @@ export const generateBintangReportPdf = async (
                         category: v.severity,
                     };
                 }) || [],
-                seed: report.student.id
+                seed: report.student.id,
+                spiritualPredicate: report.attitude?.spiritual,
+                socialPredicate: report.attitude?.social,
             });
         }
 
@@ -330,16 +333,18 @@ export const generateBintangReportPdf = async (
         // 6. Main Evaluation Table (Section A)
         renderSectionHeader("A. Rekapitulasi Penilaian Bintang");
 
+        const tableABody: (string | null)[][] = [
+            ['1', 'Adab', String(adabScore), DESKRIPSI_ASPEK.ADAB[adabScore as BintangGrade]],
+            ['2', 'Kedisiplinan', String(kedisiplinanScore), DESKRIPSI_ASPEK.KEDISIPLINAN[kedisiplinanScore as BintangGrade]],
+            ['3', 'Kerapian', String(kerapianScore), DESKRIPSI_ASPEK.KERAPIAN[kerapianScore as BintangGrade]]
+        ];
+
         autoTable(targetDoc, {
             startY: currentY,
             margin: { left: margin, right: margin, bottom: 14 },
             pageBreak: 'avoid',
             head: [['No', 'Aspek Penilaian', 'Nilai', 'Deskripsi']],
-            body: [
-                ['1', 'Adab', adabScore, DESKRIPSI_ASPEK.ADAB[adabScore as BintangGrade]],
-                ['2', 'Kedisiplinan', kedisiplinanScore, DESKRIPSI_ASPEK.KEDISIPLINAN[kedisiplinanScore as BintangGrade]],
-                ['3', 'Kerapian', kerapianScore, DESKRIPSI_ASPEK.KERAPIAN[kerapianScore as BintangGrade]]
-            ],
+            body: tableABody,
             theme: 'grid',
             headStyles: {
                 fillColor: [248, 250, 252],
@@ -854,7 +859,7 @@ export const downloadBintangReportAction = async ({
 
     const reports = [];
 
-    // Batch fetch untuk seluruh siswa (hindari N+1): 3 query, bukan 3×siswa
+    // Batch fetch untuk seluruh siswa (hindari N+1): 4 query, bukan 4×siswa
     const studentIds = studentsToFetch.map(s => s.id);
     const [year, monthNum] = month.split('-');
     const nextMonthNum = parseInt(monthNum) === 12 ? 1 : parseInt(monthNum) + 1;
@@ -862,7 +867,7 @@ export const downloadBintangReportAction = async ({
     const monthStart = `${month}-01`;
     const monthEnd = `${nextYear}-${nextMonthNum.toString().padStart(2, '0')}-01`;
 
-    const [evalsBatch, viosBatch, qpBatch] = await Promise.all([
+    const [evalsBatch, viosBatch, qpBatch, attitudeMap] = await Promise.all([
         studentIds.length > 0
             ? supabase.from('bintang_monthly_evaluations').select('*').in('student_id', studentIds).eq('month', month)
             : Promise.resolve({ data: [] }),
@@ -872,6 +877,9 @@ export const downloadBintangReportAction = async ({
         studentIds.length > 0
             ? supabase.from('quiz_points').select('id, student_id, quiz_name, subject, points, category, quiz_date, semester_id').in('student_id', studentIds).is('deleted_at', null).gte('quiz_date', monthStart).lt('quiz_date', monthEnd).limit(2000)
             : Promise.resolve({ data: [] }),
+        studentIds.length > 0
+            ? bintangService.getAttitudeMapForStudents(studentIds)
+            : Promise.resolve({} as Record<string, { spiritual?: string; social?: string }>),
     ]);
 
     const allEvals = (evalsBatch.data || []) as any[];
@@ -900,7 +908,8 @@ export const downloadBintangReportAction = async ({
             evaluation: currentEval || null,
             aspects,
             violations: vios,
-            quizPoints: allQuiz.filter(q => q.student_id === student.id)
+            quizPoints: allQuiz.filter(q => q.student_id === student.id),
+            attitude: attitudeMap?.[student.id],
         });
     }
 

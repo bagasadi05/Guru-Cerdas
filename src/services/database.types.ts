@@ -535,6 +535,7 @@ export type Database = {
         Row: {
           assessment_name: string
           created_at: string
+          date: string | null
           deleted_at: string | null
           id: string
           notes: string | null
@@ -551,6 +552,7 @@ export type Database = {
         Insert: {
           assessment_name?: string
           created_at?: string
+          date?: string | null
           deleted_at?: string | null
           id?: string
           notes?: string | null
@@ -567,6 +569,7 @@ export type Database = {
         Update: {
           assessment_name?: string
           created_at?: string
+          date?: string | null
           deleted_at?: string | null
           id?: string
           notes?: string | null

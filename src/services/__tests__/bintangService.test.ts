@@ -129,4 +129,11 @@ describe('calculateAspectPoints', () => {
         const { bintangService } = await import('../bintangService');
         expect(typeof bintangService.bulkInsertViolations).toBe('function');
     });
+
+    it('bintangService provides publishEvaluations, unpublishEvaluations and unpublishSingleEvaluation methods', async () => {
+        const { bintangService } = await import('../bintangService');
+        expect(typeof bintangService.publishEvaluations).toBe('function');
+        expect(typeof bintangService.unpublishEvaluations).toBe('function');
+        expect(typeof bintangService.unpublishSingleEvaluation).toBe('function');
+    });
 });
