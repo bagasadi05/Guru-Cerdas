@@ -23,6 +23,7 @@ import { writeAuditLog } from '../../../../services/auditTrail';
 import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../../../utils/academicRecordUtils';
 import { generateSimpleAccessCode } from '../../../../utils/accessCode';
 import { useStudentMutations } from './useStudentMutations';
+import { normalizeStudentName } from '../../../../utils/textSanitizer';
 import { useConfetti } from '../../../../hooks/useConfetti';
 import { type SeverityLevel } from '../violationMeta';
 import { type DuplicateViolationData } from '../components/DuplicateViolationDialog';
@@ -207,10 +208,12 @@ export const useStudentDetailPage = () => {
             if (recorderIds.length > 0) {
                 const { data: roleRows } = await supabase
                     .from('user_roles')
-                    .select('user_id, full_name')
+                    .select('user_id, full_name, email')
                     .in('user_id', recorderIds);
                 recorderNames = (roleRows || []).reduce((acc, r) => {
-                    if (r.user_id) acc[r.user_id] = r.full_name || '';
+                    if (r.user_id) {
+                        acc[r.user_id] = r.full_name?.trim() || (r.email ? r.email.split('@')[0] : '') || '';
+                    }
                     return acc;
                 }, {} as Record<string, string>);
             }
@@ -239,10 +242,12 @@ export const useStudentDetailPage = () => {
             if (recorderIds.length > 0) {
                 const { data: roleRows } = await supabase
                     .from('user_roles')
-                    .select('user_id, full_name')
+                    .select('user_id, full_name, email')
                     .in('user_id', recorderIds);
                 recorderNames = (roleRows || []).reduce((acc, r) => {
-                    if (r.user_id) acc[r.user_id] = r.full_name || '';
+                    if (r.user_id) {
+                        acc[r.user_id] = r.full_name?.trim() || (r.email ? r.email.split('@')[0] : '') || '';
+                    }
                     return acc;
                 }, {} as Record<string, string>);
             }
@@ -267,10 +272,12 @@ export const useStudentDetailPage = () => {
             if (recorderIds.length > 0) {
                 const { data: roleRows } = await supabase
                     .from('user_roles')
-                    .select('user_id, full_name')
+                    .select('user_id, full_name, email')
                     .in('user_id', recorderIds);
                 recorderNames = (roleRows || []).reduce((acc, r) => {
-                    if (r.user_id) acc[r.user_id] = r.full_name || '';
+                    if (r.user_id) {
+                        acc[r.user_id] = r.full_name?.trim() || (r.email ? r.email.split('@')[0] : '') || '';
+                    }
                     return acc;
                 }, {} as Record<string, string>);
             }
@@ -419,7 +426,7 @@ export const useStudentDetailPage = () => {
 
     const handleEditStudentSubmit = (data: EditStudentFormValues) => {
         const studentPayload: StudentMutationVars = {
-            name: data.name,
+            name: normalizeStudentName(data.name),
             gender: data.gender,
             class_id: data.class_id,
         };

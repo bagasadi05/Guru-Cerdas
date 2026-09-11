@@ -231,6 +231,7 @@ const summarizeViolations = (items: ViolationRow[]) => {
  * @since 1.0.0
  */
 import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
+import { normalizeTextForPdf } from '../utils/textSanitizer';
 
 
 
@@ -369,7 +370,7 @@ export const generateStudentReport = async (
     doc.setFont('helvetica', 'normal');
 
     const infoData = [
-        ['Nama Siswa', ': ' + student.name, 'Tahun Ajaran', ': ' + academicYear],
+        ['Nama Siswa', ': ' + normalizeTextForPdf(student.name), 'Tahun Ajaran', ': ' + academicYear],
         ['Kelas', ': ' + (student.classes?.name || 'N/A'), 'Semester', ': ' + semester],
         ['NIS/NISN', ': - / -', 'Fase', ': -'] // Placeholder for NIS/Fase
     ];
@@ -664,7 +665,7 @@ export const generateStudentReport = async (
     }
     drawSectionTitle(`${noteLetter}. Catatan Wali Kelas`, true);
 
-    const noteText = teacherNote || 'Tidak ada catatan khusus untuk semester ini.';
+    const noteText = normalizeTextForPdf(teacherNote || 'Tidak ada catatan khusus untuk semester ini.');
     const noteWidth = PAGE_WIDTH - MARGIN * 2 - 10;
 
     // Calculate height first using splitTextToSize just for the box height calculation

@@ -307,10 +307,13 @@ export const bintangService = {
         try {
           const { data: roleRows } = await supabase
             .from('user_roles')
-            .select('user_id, full_name')
+            .select('user_id, full_name, email')
             .in('user_id', recorderIds);
           recorderNames = (roleRows || []).reduce((acc: Record<string, string>, r: any) => {
-            if (r.user_id) acc[r.user_id] = r.full_name || '';
+            if (r.user_id) {
+              const name = r.full_name?.trim() || (r.email ? r.email.split('@')[0] : '') || '';
+              acc[r.user_id] = name;
+            }
             return acc;
           }, {});
         } catch (roleErr) {
@@ -318,11 +321,14 @@ export const bintangService = {
         }
       }
 
-      return rawViolations.map((v: any) => ({
-        ...v,
-        recorded_by_name: recorderNames[v.user_id] || null,
-        users: { name: recorderNames[v.user_id] || 'Guru' },
-      }));
+      return rawViolations.map((v: any) => {
+        const recorderName = recorderNames[v.user_id] || null;
+        return {
+          ...v,
+          recorded_by_name: recorderName,
+          users: { name: recorderName || 'Guru' },
+        };
+      });
     } catch (err) {
       console.warn('bintangService.getViolationsForClass exception:', err);
       return [];
@@ -448,7 +454,7 @@ export const bintangService = {
 
       const { data, error } = await supabase
         .from('violations')
-        .select('id, student_id, description, points, date, severity')
+        .select('id, student_id, user_id, description, points, date, severity, context_notes, follow_up_notes, follow_up_status')
         .eq('student_id', studentId)
         .gte('date', startDate)
         .lt('date', endDate)
@@ -459,7 +465,36 @@ export const bintangService = {
         console.warn('bintangService.getViolationsForStudent error:', error);
         return [];
       }
-      return data || [];
+
+      const rawViolations = data || [];
+      const recorderIds = Array.from(new Set(rawViolations.map((v: any) => v.user_id).filter(Boolean)));
+      let recorderNames: Record<string, string> = {};
+      if (recorderIds.length > 0) {
+        try {
+          const { data: roleRows } = await supabase
+            .from('user_roles')
+            .select('user_id, full_name, email')
+            .in('user_id', recorderIds);
+          recorderNames = (roleRows || []).reduce((acc: Record<string, string>, r: any) => {
+            if (r.user_id) {
+              const name = r.full_name?.trim() || (r.email ? r.email.split('@')[0] : '') || '';
+              acc[r.user_id] = name;
+            }
+            return acc;
+          }, {});
+        } catch (roleErr) {
+          console.warn('Failed to enrich recorder names in getViolationsForStudent:', roleErr);
+        }
+      }
+
+      return rawViolations.map((v: any) => {
+        const recorderName = recorderNames[v.user_id] || null;
+        return {
+          ...v,
+          recorded_by_name: recorderName,
+          users: { name: recorderName || 'Guru' },
+        };
+      });
     } catch (err) {
       console.warn('bintangService.getViolationsForStudent exception:', err);
       return [];

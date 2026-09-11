@@ -11,6 +11,7 @@ import { getStudentAvatar } from '../../utils/avatarUtils';
 
 import { generateSimpleAccessCode } from '../../utils/accessCode';
 import { softDelete, softDeleteBulk } from '../../services/SoftDeleteService';
+import { normalizeStudentName } from '../../utils/textSanitizer';
 
 const pickLiveColumns = <T extends Record<string, unknown>>(data: T, columns: readonly string[]) => (
   Object.fromEntries(Object.entries(data).filter(([key]) => columns.includes(key)))
@@ -239,7 +240,7 @@ export const useStudentsPageActions = ({
     if (!userId) return;
 
     const formData = new FormData(event.currentTarget);
-    const name = ((formData.get('name') as string) || '').trim();
+    const name = normalizeStudentName((formData.get('name') as string) || '');
     const classId = formData.get('class_id') as string;
     const nis = ((formData.get('nis') as string) || '').trim() || null;
     const nisn = ((formData.get('nisn') as string) || '').trim() || null;

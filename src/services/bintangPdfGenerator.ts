@@ -7,6 +7,7 @@ import { formatExportDate } from '../utils/exportUtils';
 import { formatDegreeProperly } from '../utils/greetingUtils';
 import { generateContextualHomeroomNote } from '../components/pages/bintang/bintangConstants';
 import { violationList } from './violations.data';
+import { normalizeTextForPdf } from '../utils/textSanitizer';
 
 
 
@@ -158,7 +159,7 @@ export const generateBintangReportPdf = async (
 
         if (generalNotes === '-' || hasContradictoryZeroViolationClaim) {
             generalNotes = generateContextualHomeroomNote({
-                studentName: report.student.name || undefined,
+                studentName: normalizeTextForPdf(report.student.name || '') || undefined,
                 adabGrade: adabScore as BintangGrade,
                 kedisGrade: kedisiplinanScore as BintangGrade,
                 kerapianGrade: kerapianScore as BintangGrade,
@@ -178,6 +179,7 @@ export const generateBintangReportPdf = async (
             });
         }
 
+        generalNotes = normalizeTextForPdf(generalNotes);
         const notesLines = targetDoc.splitTextToSize(generalNotes, notesWidth);
         const notesLinesCount = notesLines.length;
 
@@ -274,7 +276,7 @@ export const generateBintangReportPdf = async (
         targetDoc.text(":", col1X + colonOffset, lineY);
         targetDoc.setFont('helvetica', 'normal');
         targetDoc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
-        targetDoc.text((report.student.name || '').toUpperCase(), col1X + valueOffset, lineY);
+        targetDoc.text(normalizeTextForPdf(report.student.name || '').toUpperCase(), col1X + valueOffset, lineY);
 
         targetDoc.setFont('helvetica', 'bold');
         targetDoc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
@@ -641,7 +643,7 @@ export const generateBintangReportPdf = async (
         targetDoc.text("( ................................... )", leftCenterX, signerLineY, { align: 'center' });
 
         const hasValidTeacherName = !!(user?.name && user.name.trim() !== '' && user.name.trim().toLowerCase() !== 'wali kelas');
-        const teacherName = hasValidTeacherName ? formatDegreeProperly(user.name.trim()) : "...................................";
+        const teacherName = hasValidTeacherName ? normalizeTextForPdf(formatDegreeProperly(user.name.trim())) : "...................................";
         targetDoc.setFont('helvetica', 'bold');
         targetDoc.setFontSize(isTwoPageReport ? 8.5 : (8.0 + (expansionFactor * 0.5)));
         targetDoc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);

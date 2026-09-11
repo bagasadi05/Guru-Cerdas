@@ -1,5 +1,6 @@
 import { getAutoTable, getJsPDF } from './dynamicImports';
 import { addPdfHeader, ensureLogosLoaded } from './pdfHeaderUtils';
+import { normalizeTextForPdf } from './textSanitizer';
 
 interface AttendanceRecord {
     student_id: string;
@@ -74,7 +75,7 @@ export const exportDailyAttendanceToPDF = async (
         const status = record?.status || '-';
         return [
             index + 1,
-            student.name,
+            normalizeTextForPdf(student.name),
             student.gender || '-',
             status === 'Hadir' ? '✓' : '',
             status === 'Sakit' ? '✓' : '',

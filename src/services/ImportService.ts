@@ -9,6 +9,7 @@
  */
 
 import { getXLSX } from '../utils/dynamicImports';
+import { normalizeStudentName } from '../utils/textSanitizer';
 
 /**
  * Column mapping configuration
@@ -195,7 +196,9 @@ export const validateRow = (
                 message: `${mapping.targetField} wajib diisi`,
             });
         } else {
-            data[mapping.targetField] = transformedValue;
+            data[mapping.targetField] = mapping.targetField === 'name' && transformedValue
+                ? normalizeStudentName(String(transformedValue))
+                : transformedValue;
         }
     }
 
