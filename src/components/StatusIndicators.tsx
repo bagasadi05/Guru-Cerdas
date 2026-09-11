@@ -679,23 +679,81 @@ export const LoadingWithStatus: React.FC<LoadingWithStatusProps> = ({
 // ============================================
 
 /**
- * Non-intrusive banner that appears when a new Service Worker is available.
- * Users can choose to reload at their own convenience instead of being
- * force-reloaded mid-task (which was causing the "reload when saving" bug).
+ * Smart Auto-Reboot Banner that appears when a new version is deployed.
+ * Automatically counts down from 3 to 1 and reboots the page to use the latest version,
+ * while giving users the option to reboot immediately or snooze for 1 minute if typing.
  */
 export const SWUpdateBanner: React.FC = () => {
     const [updateFn, setUpdateFn] = useState<(() => void) | null>(null);
     const [visible, setVisible] = useState(false);
+    const [countdown, setCountdown] = useState(3);
+    const [isPaused, setIsPaused] = useState(false);
+    const rebootTriggeredRef = useRef(false);
+
+    const executeReboot = useCallback(() => {
+        if (rebootTriggeredRef.current) return;
+        rebootTriggeredRef.current = true;
+
+        try {
+            sessionStorage.setItem('post-reload-path', window.location.pathname + window.location.search);
+        } catch {
+            // ignore storage errors
+        }
+
+        if (updateFn) {
+            updateFn();
+        } else {
+            window.location.reload();
+        }
+        // Safety fallback if controllerchange does not reload immediately
+        setTimeout(() => {
+            window.location.reload();
+        }, 1500);
+    }, [updateFn]);
 
     useEffect(() => {
         const handler = (e: Event) => {
             const { updateSW } = (e as CustomEvent).detail as { updateSW: (reload?: boolean) => void };
             setUpdateFn(() => () => updateSW(true));
+            setCountdown(3);
+            setIsPaused(false);
+            rebootTriggeredRef.current = false;
             setVisible(true);
         };
         window.addEventListener('sw-update-available', handler);
         return () => window.removeEventListener('sw-update-available', handler);
     }, []);
+
+    useEffect(() => {
+        if (!visible || isPaused) return;
+
+        if (countdown <= 0) {
+            executeReboot();
+            return;
+        }
+
+        const timer = setInterval(() => {
+            setCountdown((prev) => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    executeReboot();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [visible, isPaused, countdown, executeReboot]);
+
+    const handleSnooze = () => {
+        setIsPaused(true);
+        // Snooze for 60 seconds, then resume countdown
+        setTimeout(() => {
+            setCountdown(3);
+            setIsPaused(false);
+        }, 60000);
+    };
 
     if (!visible) return null;
 
@@ -703,51 +761,71 @@ export const SWUpdateBanner: React.FC = () => {
         <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:w-96 z-[9999] animate-slide-up">
             <div className="relative overflow-hidden rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/60 shadow-2xl p-4 sm:p-5">
                 {/* Glowing accent at the top */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 animate-pulse"></div>
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 animate-pulse" />
+
+                {/* Visual progress bar matching 3s countdown */}
+                {!isPaused && (
+                    <div className="absolute top-1.5 left-0 right-0 h-0.5 bg-slate-100 dark:bg-slate-800">
+                        <div
+                            className="h-full bg-emerald-500 transition-all duration-1000 ease-linear"
+                            style={{ width: `${((3 - countdown) / 3) * 100}%` }}
+                        />
+                    </div>
+                )}
                 
-                <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 bg-emerald-100 dark:bg-emerald-500/20 p-2.5 rounded-full ring-4 ring-emerald-50 dark:ring-emerald-500/10 mt-1">
+                <div className="flex items-start gap-3.5 mt-1">
+                    <div className="relative flex-shrink-0 bg-emerald-100 dark:bg-emerald-500/20 p-2.5 rounded-full ring-4 ring-emerald-50 dark:ring-emerald-500/10">
                         <RefreshCw className="w-5 h-5 text-emerald-600 dark:text-emerald-400 animate-[spin_3s_linear_infinite]" />
+                        {!isPaused && countdown > 0 && (
+                            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-900">
+                                {countdown}
+                            </span>
+                        )}
                     </div>
                     
                     <div className="flex-1 pt-0.5">
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                            Pembaruan Tersedia!
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            Pembaruan Terdeteksi!
                         </h3>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 leading-relaxed pr-4">
-                            Versi terbaru aplikasi siap digunakan. Perbarui sekarang untuk mendapatkan fitur terbaru dan peningkatan performa.
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 leading-relaxed pr-5">
+                            {isPaused ? (
+                                'Pembaruan ditunda selama 1 menit. Klik "Muat Ulang Sekarang" jika Anda telah siap.'
+                            ) : (
+                                <>
+                                    Aplikasi versi terbaru telah tersedia. Memuat ulang otomatis dalam{' '}
+                                    <span className="font-bold text-emerald-600 dark:text-emerald-400">{countdown} detik</span>...
+                                </>
+                            )}
                         </p>
                         
-                        <div className="mt-4 flex items-center gap-2 sm:gap-3">
+                        <div className="mt-3.5 flex items-center gap-2">
                             <button
                                 type="button"
-                                onClick={() => {
-                                    if (updateFn) {
-                                        updateFn();
-                                    } else {
-                                        window.location.reload();
-                                    }
-                                    setVisible(false);
-                                }}
-                                className="flex-1 sm:flex-none bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all duration-300 shadow-[0_4px_14px_0_rgba(16,185,129,0.39)] hover:shadow-[0_6px_20px_rgba(16,185,129,0.23)] hover:-translate-y-0.5 active:translate-y-0"
+                                onClick={executeReboot}
+                                className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 flex items-center justify-center gap-1.5"
                             >
-                                Perbarui Sekarang
+                                <RefreshCw className="w-3.5 h-3.5" />
+                                <span>Muat Ulang Sekarang</span>
                             </button>
-                            <button
-                                type="button"
-                                onClick={() => setVisible(false)}
-                                className="flex-1 sm:flex-none bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-medium px-4 py-2.5 rounded-xl transition-colors active:scale-95"
-                            >
-                                Nanti Saja
-                            </button>
+                            {!isPaused && (
+                                <button
+                                    type="button"
+                                    onClick={handleSnooze}
+                                    className="flex-1 sm:flex-none bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-medium px-3 py-2 rounded-xl transition-colors active:scale-95 flex items-center justify-center gap-1"
+                                >
+                                    <Clock className="w-3 h-3 text-slate-400" />
+                                    <span>Tunda 1 Menit</span>
+                                </button>
+                            )}
                         </div>
                     </div>
                     
                     <button
                         type="button"
-                        onClick={() => setVisible(false)}
+                        onClick={handleSnooze}
                         className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 p-1.5 rounded-full transition-colors"
-                        aria-label="Tutup notifikasi"
+                        aria-label="Tunda pembaruan"
+                        title="Tunda 1 Menit"
                     >
                         <X className="w-4 h-4" />
                     </button>

@@ -53,6 +53,11 @@ const mockGenerateHomeroomNote = vi.fn();
 vi.mock('../../bintangConstants', () => ({
     generateAutoNote: (...args: any[]) => mockGenerateAutoNote(...args),
     generateHomeroomNote: (...args: any[]) => mockGenerateHomeroomNote(...args),
+    getAspectAutoNote: vi.fn((aspect: string, grade: string) => `Auto note for ${aspect} ${grade}`),
+    isAutoAdabNote: vi.fn((note?: string | null) => !note || note.startsWith('Auto note') || note.startsWith('Alhamdulillah')),
+    isAutoKedisNote: vi.fn((note?: string | null) => !note || note.startsWith('Auto note') || note.startsWith('Kedisiplinan')),
+    isAutoKerapianNote: vi.fn((note?: string | null) => !note || note.startsWith('Auto note') || note.startsWith('Senantiasa')),
+    isAutoHomeroomNote: vi.fn((note?: string | null) => !note || note.startsWith('Alhamdulillah') || note.startsWith('Barakallah') || note.startsWith('Homeroom note')),
     gradeColors: {
         A: 'bg-emerald-100 text-emerald-800',
         B: 'bg-blue-100 text-blue-800',
@@ -1015,6 +1020,146 @@ describe('useBintangEvaluation', () => {
                 month: '2026-01',
                 user: null,
             });
+        });
+    });
+
+    // ── Automatic Note Adjustment ───────────────────────────────────────────
+
+    describe('automatic note adjustment when grade changes', () => {
+        it('should automatically adjust aspect notes and regenerate catatan_wali when score is changed via handleAspectScoreChange', async () => {
+            const { useBintangEvaluation } = await import('../useBintangEvaluation');
+            const options = createDefaultOptions();
+
+            const { result } = renderHook(() => useBintangEvaluation(options));
+
+            // Open modal for student-1 (default B from mockGetAspectSummary)
+            act(() => {
+                result.current.handleOpenEditModal(MOCK_STUDENTS[0], mockGetAspectSummary);
+            });
+
+            expect(result.current.formData.adab_score).toBe('B');
+
+            // Change Adab to C
+            act(() => {
+                result.current.handleAspectScoreChange('ADAB', 'C');
+            });
+
+            expect(result.current.formData.adab_score).toBe('C');
+            expect(result.current.formData.adab_notes).toBe('Auto note for ADAB C');
+            expect(result.current.formData.manual_aspects).toContain('ADAB');
+            expect(mockGenerateHomeroomNote).toHaveBeenCalledWith(
+                'C', 'A', 'C', 0,
+                expect.objectContaining({ studentName: 'Ahmad Fauzi' })
+            );
+        });
+
+        it('should NOT overwrite custom aspect notes or custom catatan_wali when score changes', async () => {
+            const { useBintangEvaluation } = await import('../useBintangEvaluation');
+            const options = createDefaultOptions();
+
+            const { result } = renderHook(() => useBintangEvaluation(options));
+
+            act(() => {
+                result.current.handleOpenEditModal(MOCK_STUDENTS[0], mockGetAspectSummary);
+            });
+
+            // Set custom notes
+            act(() => {
+                result.current.setFormData(prev => ({
+                    ...prev,
+                    adab_notes: 'Pesan kustom guru untuk adab Ahmad',
+                    catatan_wali: 'Pesan khusus wali kelas untuk orang tua Ahmad',
+                    manual_aspects: ['CUSTOM_ADAB_NOTES', 'CUSTOM_CATATAN_WALI'],
+                }));
+            });
+
+            // Change Adab to A
+            act(() => {
+                result.current.handleAspectScoreChange('ADAB', 'A');
+            });
+
+            expect(result.current.formData.adab_score).toBe('A');
+            // Custom notes must NOT be overwritten
+            expect(result.current.formData.adab_notes).toBe('Pesan kustom guru untuk adab Ahmad');
+            expect(result.current.formData.catatan_wali).toBe('Pesan khusus wali kelas untuk orang tua Ahmad');
+        });
+
+        it('should allow resetting aspect note to auto-generated template via handleResetAspectNote', async () => {
+            const { useBintangEvaluation } = await import('../useBintangEvaluation');
+            const options = createDefaultOptions();
+
+            const { result } = renderHook(() => useBintangEvaluation(options));
+
+            act(() => {
+                result.current.handleOpenEditModal(MOCK_STUDENTS[0], mockGetAspectSummary);
+            });
+
+            act(() => {
+                result.current.setFormData(prev => ({
+                    ...prev,
+                    adab_score: 'B',
+                    adab_notes: 'Catatan kustom',
+                    manual_aspects: ['CUSTOM_ADAB_NOTES'],
+                }));
+            });
+
+            act(() => {
+                result.current.handleResetAspectNote('ADAB');
+            });
+
+            expect(result.current.formData.adab_notes).toBe('Auto note for ADAB B');
+            expect(result.current.formData.manual_aspects).not.toContain('CUSTOM_ADAB_NOTES');
+            expect(options.toast.success).toHaveBeenCalledWith(expect.stringContaining('berhasil direset'));
+        });
+
+        it('should synchronize aspect notes and homeroom notes with manual scores on handleGenerateAll when notes are auto', async () => {
+            const { useBintangEvaluation } = await import('../useBintangEvaluation');
+            // Student 2 has manual adab_score 'C'
+            const evaluationsWithManual = [
+                {
+                    id: 'eval-1',
+                    student_id: 'student-2',
+                    month: '2026-01',
+                    adab_score: 'C',
+                    kedisiplinan_score: 'A',
+                    kerapian_score: 'C',
+                    adab_notes: 'Auto note for ADAB A', // Old note before score was changed to C
+                    kedisiplinan_notes: null,
+                    kerapian_notes: null,
+                    catatan_wali: 'Alhamdulillah lama...', // Auto homeroom note from when it was A
+                    is_published: false,
+                    evaluator_id: 'teacher-1',
+                    manual_aspects: ['ADAB'],
+                },
+            ];
+
+            const options = createDefaultOptions({ evaluations: evaluationsWithManual });
+            mockBulkUpsertEvaluations.mockResolvedValue(undefined);
+            mockGenerateAutoNote.mockImplementation((adab, kedis, kerapian) => ({
+                adabNote: `Auto note for ADAB ${adab}`,
+                kedisNote: `Auto note for KEDISIPLINAN ${kedis}`,
+                kerapianNote: `Auto note for KERAPIAN ${kerapian}`,
+            }));
+
+            const { result } = renderHook(() => useBintangEvaluation(options));
+
+            await act(async () => {
+                await result.current.handleGenerateAll(mockGetAspectSummary);
+            });
+
+            expect(mockBulkUpsertEvaluations).toHaveBeenCalledTimes(1);
+            const inserts = mockBulkUpsertEvaluations.mock.calls[0][0];
+            const student2Insert = inserts.find((i: any) => i.student_id === 'student-2');
+
+            expect(student2Insert).toBeDefined();
+            expect(student2Insert.adab_score).toBe('C');
+            // Should be regenerated to reflect C, not A!
+            expect(student2Insert.adab_notes).toBe('Auto note for ADAB C');
+            // Homeroom note should be called with C
+            expect(mockGenerateHomeroomNote).toHaveBeenCalledWith(
+                'C', 'A', 'C', 0,
+                expect.objectContaining({ studentName: 'Budi Santoso' })
+            );
         });
     });
 });

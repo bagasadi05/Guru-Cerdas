@@ -3,7 +3,16 @@ import type { BintangGrade, AspectPointsSummary } from '../../../../services/bin
 import { bintangService } from '../../../../services/bintangService';
 import { downloadBintangReportAction } from '../../../../services/bintangPdfGenerator';
 import { exportBintangToExcel } from '../../../../services/bintangExcelExport';
-import { generateAutoNote, generateHomeroomNote, type StudentViolationSummaryItem } from '../bintangConstants';
+import {
+    generateAutoNote,
+    generateHomeroomNote,
+    getAspectAutoNote,
+    isAutoAdabNote,
+    isAutoKedisNote,
+    isAutoKerapianNote,
+    isAutoHomeroomNote,
+    type StudentViolationSummaryItem
+} from '../bintangConstants';
 import { supabase } from '../../../../services/supabase';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -80,6 +89,8 @@ export interface UseBintangEvaluationReturn {
 
     // Handlers
     handleOpenEditModal: (student: any, getAspectSummary: (id: string) => AspectPointsSummary) => void;
+    handleAspectScoreChange: (aspectKey: 'ADAB' | 'KEDISIPLINAN' | 'KERAPIAN', newScore: BintangGrade) => void;
+    handleResetAspectNote: (aspectKey: 'ADAB' | 'KEDISIPLINAN' | 'KERAPIAN') => void;
     handleRegenerateHomeroomNote: (student: any, getAspectSummary: (id: string) => AspectPointsSummary) => void;
     handleSaveEvaluation: (e: React.FormEvent, getAspectSummary: (id: string) => AspectPointsSummary) => Promise<void>;
     handleGenerateAll: (getAspectSummary: (id: string) => AspectPointsSummary) => Promise<void>;
@@ -170,14 +181,44 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                     detectedManual.push('KERAPIAN');
                 }
 
+                // Detect custom notes vs auto templates
+                if (existingEval.adab_notes && !isAutoAdabNote(existingEval.adab_notes) && !detectedManual.includes('CUSTOM_ADAB_NOTES')) {
+                    detectedManual.push('CUSTOM_ADAB_NOTES');
+                }
+                if (existingEval.kedisiplinan_notes && !isAutoKedisNote(existingEval.kedisiplinan_notes) && !detectedManual.includes('CUSTOM_KEDIS_NOTES')) {
+                    detectedManual.push('CUSTOM_KEDIS_NOTES');
+                }
+                if (existingEval.kerapian_notes && !isAutoKerapianNote(existingEval.kerapian_notes) && !detectedManual.includes('CUSTOM_KERAPIAN_NOTES')) {
+                    detectedManual.push('CUSTOM_KERAPIAN_NOTES');
+                }
+                if (existingEval.catatan_wali && !isAutoHomeroomNote(existingEval.catatan_wali) && !detectedManual.includes('CUSTOM_CATATAN_WALI')) {
+                    detectedManual.push('CUSTOM_CATATAN_WALI');
+                }
+
+                const effAdabScore = (existingEval.adab_score as BintangGrade) || aspect.ADAB.grade;
+                const effKedisScore = (existingEval.kedisiplinan_score as BintangGrade) || aspect.KEDISIPLINAN.grade;
+                const effKerapianScore = (existingEval.kerapian_score as BintangGrade) || aspect.KERAPIAN.grade;
+
                 setFormData({
-                    adab_score: (existingEval.adab_score as BintangGrade) || aspect.ADAB.grade,
-                    kedisiplinan_score: (existingEval.kedisiplinan_score as BintangGrade) || aspect.KEDISIPLINAN.grade,
-                    kerapian_score: (existingEval.kerapian_score as BintangGrade) || aspect.KERAPIAN.grade,
-                    adab_notes: existingEval.adab_notes || '',
-                    kedisiplinan_notes: existingEval.kedisiplinan_notes || '',
-                    kerapian_notes: existingEval.kerapian_notes || '',
-                    catatan_wali: existingEval.catatan_wali || '',
+                    adab_score: effAdabScore,
+                    kedisiplinan_score: effKedisScore,
+                    kerapian_score: effKerapianScore,
+                    adab_notes: existingEval.adab_notes || getAspectAutoNote('ADAB', effAdabScore, activePts),
+                    kedisiplinan_notes: existingEval.kedisiplinan_notes || getAspectAutoNote('KEDISIPLINAN', effKedisScore, activePts),
+                    kerapian_notes: existingEval.kerapian_notes || getAspectAutoNote('KERAPIAN', effKerapianScore, activePts),
+                    catatan_wali: existingEval.catatan_wali || generateHomeroomNote(
+                        effAdabScore,
+                        effKedisScore,
+                        effKerapianScore,
+                        activePts,
+                        {
+                            studentName: student.name,
+                            violations: studentVios,
+                            month: selectedMonth,
+                            spiritualPredicate: attitude?.spiritual,
+                            socialPredicate: attitude?.social,
+                        }
+                    ),
                     manual_aspects: detectedManual,
                 });
             } else {
@@ -190,6 +231,7 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                     {
                         studentName: student.name,
                         violations: studentVios,
+                        month: selectedMonth,
                         spiritualPredicate: attitude?.spiritual,
                         socialPredicate: attitude?.social,
                     }
@@ -207,7 +249,114 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
             }
             setIsEditModalOpen(true);
         },
-        [getEvaluationForStudent, getStudentQuizPoints, getStudentViolations, getStudentAttitude]
+        [getEvaluationForStudent, getStudentQuizPoints, getStudentViolations, getStudentAttitude, selectedMonth]
+    );
+
+    const handleAspectScoreChange = useCallback(
+        (aspectKey: 'ADAB' | 'KEDISIPLINAN' | 'KERAPIAN', newScore: BintangGrade) => {
+            if (!editingStudent) return;
+            const activePts = getStudentQuizPoints?.(editingStudent.id) || 0;
+            const studentVios = getStudentViolations?.(editingStudent.id) || [];
+            const attitude = getStudentAttitude?.(editingStudent.id);
+
+            setFormData(prev => {
+                const manualAspectsSet = new Set<string>(prev.manual_aspects || []);
+                manualAspectsSet.add(aspectKey);
+
+                const newAdab = aspectKey === 'ADAB' ? newScore : prev.adab_score;
+                const newKedis = aspectKey === 'KEDISIPLINAN' ? newScore : prev.kedisiplinan_score;
+                const newKerapian = aspectKey === 'KERAPIAN' ? newScore : prev.kerapian_score;
+
+                // 1. Aspect notes auto adjustment if not custom
+                let updatedAdabNotes = prev.adab_notes;
+                let updatedKedisNotes = prev.kedisiplinan_notes;
+                let updatedKerapianNotes = prev.kerapian_notes;
+
+                if (aspectKey === 'ADAB') {
+                    const isCustomAdab = manualAspectsSet.has('CUSTOM_ADAB_NOTES') || !isAutoAdabNote(prev.adab_notes);
+                    if (!isCustomAdab) {
+                        updatedAdabNotes = getAspectAutoNote('ADAB', newScore, activePts);
+                    }
+                } else if (aspectKey === 'KEDISIPLINAN') {
+                    const isCustomKedis = manualAspectsSet.has('CUSTOM_KEDIS_NOTES') || !isAutoKedisNote(prev.kedisiplinan_notes);
+                    if (!isCustomKedis) {
+                        updatedKedisNotes = getAspectAutoNote('KEDISIPLINAN', newScore, activePts);
+                    }
+                } else if (aspectKey === 'KERAPIAN') {
+                    const isCustomKerapian = manualAspectsSet.has('CUSTOM_KERAPIAN_NOTES') || !isAutoKerapianNote(prev.kerapian_notes);
+                    if (!isCustomKerapian) {
+                        updatedKerapianNotes = getAspectAutoNote('KERAPIAN', newScore, activePts);
+                    }
+                }
+
+                // 2. Homeroom note auto adjustment if not custom
+                let updatedHomeroomNote = prev.catatan_wali;
+                const isCustomHomeroom = manualAspectsSet.has('CUSTOM_CATATAN_WALI') || !isAutoHomeroomNote(prev.catatan_wali);
+                if (!isCustomHomeroom) {
+                    updatedHomeroomNote = generateHomeroomNote(
+                        newAdab,
+                        newKedis,
+                        newKerapian,
+                        activePts,
+                        {
+                            studentName: editingStudent.name,
+                            violations: studentVios,
+                            month: selectedMonth,
+                            spiritualPredicate: attitude?.spiritual,
+                            socialPredicate: attitude?.social,
+                        }
+                    );
+                }
+
+                return {
+                    ...prev,
+                    adab_score: newAdab,
+                    kedisiplinan_score: newKedis,
+                    kerapian_score: newKerapian,
+                    adab_notes: updatedAdabNotes,
+                    kedisiplinan_notes: updatedKedisNotes,
+                    kerapian_notes: updatedKerapianNotes,
+                    catatan_wali: updatedHomeroomNote,
+                    manual_aspects: Array.from(manualAspectsSet),
+                };
+            });
+        },
+        [editingStudent, getStudentQuizPoints, getStudentViolations, getStudentAttitude, selectedMonth]
+    );
+
+    const handleResetAspectNote = useCallback(
+        (aspectKey: 'ADAB' | 'KEDISIPLINAN' | 'KERAPIAN') => {
+            if (!editingStudent) return;
+            const activePts = getStudentQuizPoints?.(editingStudent.id) || 0;
+
+            setFormData(prev => {
+                const manualAspectsSet = new Set<string>(prev.manual_aspects || []);
+                if (aspectKey === 'ADAB') {
+                    manualAspectsSet.delete('CUSTOM_ADAB_NOTES');
+                    return {
+                        ...prev,
+                        adab_notes: getAspectAutoNote('ADAB', prev.adab_score, activePts),
+                        manual_aspects: Array.from(manualAspectsSet),
+                    };
+                }
+                if (aspectKey === 'KEDISIPLINAN') {
+                    manualAspectsSet.delete('CUSTOM_KEDIS_NOTES');
+                    return {
+                        ...prev,
+                        kedisiplinan_notes: getAspectAutoNote('KEDISIPLINAN', prev.kedisiplinan_score, activePts),
+                        manual_aspects: Array.from(manualAspectsSet),
+                    };
+                }
+                manualAspectsSet.delete('CUSTOM_KERAPIAN_NOTES');
+                return {
+                    ...prev,
+                    kerapian_notes: getAspectAutoNote('KERAPIAN', prev.kerapian_score, activePts),
+                    manual_aspects: Array.from(manualAspectsSet),
+                };
+            });
+            toast.success(`Catatan ${aspectKey.toLowerCase()} berhasil direset ke deskripsi otomatis`);
+        },
+        [editingStudent, getStudentQuizPoints, toast]
     );
 
     const handleRegenerateHomeroomNote = useCallback(
@@ -231,7 +380,9 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                         socialPredicate: attitude?.social,
                     }
                 );
-                return { ...prev, catatan_wali: regenerated };
+                const manualAspectsSet = new Set<string>(prev.manual_aspects || []);
+                manualAspectsSet.delete('CUSTOM_CATATAN_WALI');
+                return { ...prev, catatan_wali: regenerated, manual_aspects: Array.from(manualAspectsSet) };
             });
             toast.success('Catatan wali kelas berhasil dibuat ulang secara kontekstual');
         },
@@ -257,9 +408,31 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                     manualAspectsSet.add('KERAPIAN');
                 }
 
+                // Check if notes are custom or auto
+                if (formData.adab_notes && !isAutoAdabNote(formData.adab_notes)) {
+                    manualAspectsSet.add('CUSTOM_ADAB_NOTES');
+                } else {
+                    manualAspectsSet.delete('CUSTOM_ADAB_NOTES');
+                }
+
+                if (formData.kedisiplinan_notes && !isAutoKedisNote(formData.kedisiplinan_notes)) {
+                    manualAspectsSet.add('CUSTOM_KEDIS_NOTES');
+                } else {
+                    manualAspectsSet.delete('CUSTOM_KEDIS_NOTES');
+                }
+
+                if (formData.kerapian_notes && !isAutoKerapianNote(formData.kerapian_notes)) {
+                    manualAspectsSet.add('CUSTOM_KERAPIAN_NOTES');
+                } else {
+                    manualAspectsSet.delete('CUSTOM_KERAPIAN_NOTES');
+                }
+
                 // If custom homeroom note was written, record it
-                if (formData.catatan_wali && formData.catatan_wali.trim()) {
+                if (formData.catatan_wali && !isAutoHomeroomNote(formData.catatan_wali)) {
+                    manualAspectsSet.add('CUSTOM_CATATAN_WALI');
                     manualAspectsSet.add('CATATAN_WALI');
+                } else {
+                    manualAspectsSet.delete('CUSTOM_CATATAN_WALI');
                 }
 
                 const finalManualAspects = Array.from(manualAspectsSet);
@@ -300,7 +473,6 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                     const activePts = getStudentQuizPoints?.(student.id) || 0;
                     const studentVios = getStudentViolations?.(student.id) || [];
                     const attitude = getStudentAttitude?.(student.id);
-                    const autoNotes = generateAutoNote(aspect.ADAB.grade, aspect.KEDISIPLINAN.grade, aspect.KERAPIAN.grade, activePts);
 
                     // Check which aspects are manual
                     const manualAspects: string[] = Array.isArray(existingEval?.manual_aspects)
@@ -317,14 +489,24 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                     const kedisScore = isKedisManual && existingEval?.kedisiplinan_score ? (existingEval.kedisiplinan_score as BintangGrade) : aspect.KEDISIPLINAN.grade;
                     const kerapianScore = isKerapianManual && existingEval?.kerapian_score ? (existingEval.kerapian_score as BintangGrade) : aspect.KERAPIAN.grade;
 
-                    // Effective notes: preserve manual notes if aspect was manual and has notes
-                    const adabNotes = isAdabManual && existingEval?.adab_notes ? existingEval.adab_notes : autoNotes.adabNote;
-                    const kedisNotes = isKedisManual && existingEval?.kedisiplinan_notes ? existingEval.kedisiplinan_notes : autoNotes.kedisNote;
-                    const kerapianNotes = isKerapianManual && existingEval?.kerapian_notes ? existingEval.kerapian_notes : autoNotes.kerapianNote;
+                    // Auto notes generated from the EFFECTIVE grades!
+                    const effectiveAutoNotes = generateAutoNote(adabScore, kedisScore, kerapianScore, activePts);
 
-                    // Catatan wali: preserve if existing has non-empty catatan_wali
+                    // Check if notes were custom typed by teacher
+                    const isCustomAdabNote = manualAspects.includes('CUSTOM_ADAB_NOTES') || (!!existingEval?.adab_notes && !isAutoAdabNote(existingEval.adab_notes));
+                    const isCustomKedisNote = manualAspects.includes('CUSTOM_KEDIS_NOTES') || (!!existingEval?.kedisiplinan_notes && !isAutoKedisNote(existingEval.kedisiplinan_notes));
+                    const isCustomKerapianNote = manualAspects.includes('CUSTOM_KERAPIAN_NOTES') || (!!existingEval?.kerapian_notes && !isAutoKerapianNote(existingEval.kerapian_notes));
+
+                    // Effective notes: preserve custom notes, but if it was auto/empty, regenerate to match effective grade
+                    const adabNotes = isCustomAdabNote && existingEval?.adab_notes ? existingEval.adab_notes : effectiveAutoNotes.adabNote;
+                    const kedisNotes = isCustomKedisNote && existingEval?.kedisiplinan_notes ? existingEval.kedisiplinan_notes : effectiveAutoNotes.kedisNote;
+                    const kerapianNotes = isCustomKerapianNote && existingEval?.kerapian_notes ? existingEval.kerapian_notes : effectiveAutoNotes.kerapianNote;
+
+                    // Catatan wali: preserve only if custom typed by teacher, otherwise regenerate with new grades
+                    const isCustomHomeroomNote = manualAspects.includes('CUSTOM_CATATAN_WALI') || (!!existingEval?.catatan_wali && !isAutoHomeroomNote(existingEval.catatan_wali));
+
                     let finalHomeroomNote: string;
-                    if (existingEval?.catatan_wali && existingEval.catatan_wali.trim()) {
+                    if (isCustomHomeroomNote && existingEval?.catatan_wali && existingEval.catatan_wali.trim()) {
                         finalHomeroomNote = existingEval.catatan_wali;
                     } else {
                         finalHomeroomNote = generateHomeroomNote(
@@ -337,6 +519,7 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                                 violations: studentVios,
                                 spiritualPredicate: attitude?.spiritual,
                                 socialPredicate: attitude?.social,
+                                month: selectedMonth,
                             }
                         );
                     }
@@ -347,7 +530,10 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
                         ...(isAdabManual ? ['ADAB'] : []),
                         ...(isKedisManual ? ['KEDISIPLINAN'] : []),
                         ...(isKerapianManual ? ['KERAPIAN'] : []),
-                        ...(existingEval?.catatan_wali && existingEval.catatan_wali.trim() ? ['CATATAN_WALI'] : []),
+                        ...(isCustomAdabNote ? ['CUSTOM_ADAB_NOTES'] : []),
+                        ...(isCustomKedisNote ? ['CUSTOM_KEDIS_NOTES'] : []),
+                        ...(isCustomKerapianNote ? ['CUSTOM_KERAPIAN_NOTES'] : []),
+                        ...(isCustomHomeroomNote ? ['CUSTOM_CATATAN_WALI', 'CATATAN_WALI'] : []),
                     ]));
 
                     return {
@@ -655,6 +841,8 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
         evalStats,
 
         handleOpenEditModal,
+        handleAspectScoreChange,
+        handleResetAspectNote,
         handleRegenerateHomeroomNote,
         handleSaveEvaluation,
         handleGenerateAll,

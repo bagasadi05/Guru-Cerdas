@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import { CustomDropdown } from '../../ui/CustomDropdown';
 import { gradeTextColors, aspectMeta } from './bintangConstants';
 import type { BintangGrade } from '../../../services/bintangService';
@@ -13,6 +13,7 @@ interface AspectSectionEditorProps {
     notesValue: string;
     onScoreChange: (value: BintangGrade) => void;
     onNotesChange: (value: string) => void;
+    onResetNotes?: () => void;
     editingStudent: any;
     getAspectSummary: (studentId: string) => AspectPointsSummary;
     studentViolations: StudentViolationSummaryItem[];
@@ -25,6 +26,7 @@ export const AspectSectionEditor: React.FC<AspectSectionEditorProps> = ({
     notesValue,
     onScoreChange,
     onNotesChange,
+    onResetNotes,
     editingStudent,
     getAspectSummary,
     studentViolations,
@@ -112,7 +114,20 @@ export const AspectSectionEditor: React.FC<AspectSectionEditorProps> = ({
                 />
             </div>
             <div className="w-full mt-3">
-                <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Catatan {meta.label}</label>
+                <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400">Catatan {meta.label}</label>
+                    {onResetNotes && (
+                        <button
+                            type="button"
+                            onClick={onResetNotes}
+                            className="text-[10px] text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 font-medium flex items-center gap-1 transition-colors"
+                            title={`Kembalikan catatan ${meta.label.toLowerCase()} ke deskripsi otomatis sistem`}
+                        >
+                            <RotateCcw size={10} />
+                            <span>Reset Otomatis</span>
+                        </button>
+                    )}
+                </div>
                 <textarea
                     className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
                     rows={2}

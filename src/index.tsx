@@ -64,27 +64,72 @@ if (import.meta.env.DEV && 'serviceWorker' in navigator) {
 
 // Register Service Worker for PWA
 if (isProduction) {
+  let swRegistration: ServiceWorkerRegistration | undefined;
+
   const updateSW = registerSW({
     onNeedRefresh() {
-      logger.info('New content available. Prompting user to update.', 'SW');
-      // Show a non-intrusive banner rather than force-reloading mid-task.
-      // We dispatch a custom event so any mounted component can react to it.
+      logger.info('New content available. Triggering smart update.', 'SW');
+      // If the tab is currently in the background / hidden, reload immediately without waiting
+      if (document.hidden) {
+        logger.info('Tab is hidden, updating immediately in background.', 'SW');
+        try {
+          sessionStorage.setItem('post-reload-path', window.location.pathname + window.location.search);
+        } catch {
+          // ignore
+        }
+        void updateSW(true);
+        return;
+      }
+      // Show auto-reboot countdown banner
       window.dispatchEvent(new CustomEvent('sw-update-available', { detail: { updateSW } }));
     },
     onOfflineReady() {
       logger.info('App is ready to work offline.', 'SW');
     },
+    onRegistered(registration) {
+      logger.info('Service Worker registered successfully.', 'SW');
+      swRegistration = registration;
+      if (registration) {
+        // Immediate check on startup
+        void registration.update();
+      }
+    },
+    onRegisterError(error) {
+      logger.error('Service Worker registration failed:', 'SW', error);
+    }
   });
 
-  // Check for service worker updates every hour to keep long-open tabs up-to-date
-  const UPDATE_CHECK_INTERVAL = 60 * 60 * 1000;
+  // Check for updates periodically every 2 minutes
+  const UPDATE_CHECK_INTERVAL = 2 * 60 * 1000;
   const intervalId = setInterval(() => {
-    logger.info('Checking for service worker updates...', 'SW');
-    void updateSW();
+    if (swRegistration) {
+      logger.info('Checking for service worker updates...', 'SW');
+      void swRegistration.update();
+    }
   }, UPDATE_CHECK_INTERVAL);
+
+  // Check for updates whenever user returns to the app / focuses the tab
+  const handleTabFocus = () => {
+    if (!document.hidden && swRegistration) {
+      logger.info('Tab focused. Checking for service worker updates...', 'SW');
+      void swRegistration.update();
+    }
+  };
+
+  window.addEventListener('focus', handleTabFocus);
+  document.addEventListener('visibilitychange', handleTabFocus);
+
+  // Check for updates on route navigation
+  window.addEventListener('app-check-sw-update', () => {
+    if (swRegistration) {
+      void swRegistration.update();
+    }
+  });
 
   window.addEventListener('beforeunload', () => {
     clearInterval(intervalId);
+    window.removeEventListener('focus', handleTabFocus);
+    document.removeEventListener('visibilitychange', handleTabFocus);
   });
 }
 

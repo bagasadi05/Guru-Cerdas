@@ -30,29 +30,116 @@ export const aspectMeta = {
 
 // ─── Auto-Note Generators (Disesuaikan khusus untuk Madrasah Ibtidaiyah / MI) ───
 
+export const DEFAULT_ADAB_TEMPLATES: Record<BintangGrade, string> = {
+    A: 'Alhamdulillah, Ananda menunjukkan akhlakul karimah, kesantunan, dan adab islami yang sangat baik kepada ustadz/ustadzah serta teman.',
+    B: 'Secara umum adab dan kesantunan Ananda sudah baik, mari terus dibimbing agar tutur kata dan perilakunya semakin santun.',
+    C: 'Adab dan tutur kata Ananda perlu bimbingan lebih di rumah, terutama dalam menjaga sopan santun dan adab pergaulan islami di madrasah.',
+    D: 'Sangat membutuhkan bimbingan intensif dari Ayah/Bunda di rumah terkait adab, sopan santun, dan pembiasaan akhlakul karimah.',
+};
+
+export const DEFAULT_KEDISIPLINAN_TEMPLATES: Record<BintangGrade, string> = {
+    A: 'Kedisiplinan Ananda di madrasah sangat tinggi, senantiasa tertib hadir tepat waktu dan khusyuk mengikuti pembiasaan pagi.',
+    B: 'Kedisiplinan Ananda cukup baik, sesekali masih perlu diingatkan untuk konsisten mematuhi tata tertib madrasah.',
+    C: 'Ananda masih perlu dimotivasi agar lebih disiplin waktu hadir di madrasah dan tertib saat kegiatan belajar berlangsung.',
+    D: 'Tingkat kedisiplinan Ananda memerlukan perhatian dan kerja sama pengawasan yang intensif antara madrasah dan Ayah/Bunda di rumah.',
+};
+
+export const DEFAULT_KERAPIAN_TEMPLATES: Record<BintangGrade, string> = {
+    A: 'Senantiasa menjaga kebersihan, kesucian diri, serta kerapian seragam madrasah dengan sangat baik dan istiqamah.',
+    B: 'Penampilan seragam sudah rapi, mohon pertahankan kelengkapan atribut seragam madrasah sesuai jadwal hari.',
+    C: 'Kerapian seragam Ananda perlu dicek kembali sebelum berangkat ke madrasah agar senantiasa rapi dan lengkap.',
+    D: 'Kerapian dan kelengkapan seragam madrasah sangat perlu bimbingan dan pembiasaan rutin dari Ayah/Bunda di rumah.',
+};
+
+export const LEGACY_FORMAL_ASPECT_TEMPLATES: string[] = [
+    "Ananda telah menunjukkan adab yang sangat baik dan budi pekerti luhur dalam berinteraksi dengan Bapak/Ibu Guru serta teman sebaya. Mohon untuk terus dipertahankan.",
+    "Adab dan perilaku Ananda secara umum sudah baik, namun masih perlu arahan dan bimbingan agar senantiasa menjaga tata krama dan lisan dalam pergaulan sehari-hari.",
+    "Adab Ananda masih perlu banyak bimbingan. Mohon perhatian orang tua untuk membantu Ananda memperbaiki tata krama dan sopan santun dalam pergaulan sehari-hari.",
+    "Ananda memerlukan perhatian dan bimbingan ekstra dari orang tua di rumah terkait etika dan kesantunan, agar dapat mencerminkan akhlak mulia sesuai harapan kita bersama.",
+    "Ananda memiliki kedisiplinan yang sangat tinggi, senantiasa mematuhi aturan kelas, dan menjalankan tugas dengan penuh tanggung jawab.",
+    "Kedisiplinan Ananda sudah cukup memadai, namun mohon bantuan orang tua untuk terus memotivasi agar lebih konsisten dalam mematuhi tata tertib sekolah.",
+    "Kedisiplinan Ananda masih kurang konsisten. Mohon bantuan orang tua untuk lebih tegas mengawasi kepatuhan Ananda terhadap jadwal dan aturan sekolah.",
+    "Tingkat kedisiplinan Ananda masih butuh perhatian khusus. Kami memohon sinergi dari orang tua untuk lebih intensif memantau dan membimbing kedisiplinan Ananda.",
+    "Ananda senantiasa menjaga kebersihan dan kerapian diri dengan konsisten, serta selalu mengenakan atribut seragam sekolah dengan sangat rapi.",
+    "Kerapian Ananda terpantau cukup baik, namun sesekali masih perlu diingatkan terkait kelengkapan atribut seragam sekolah sesuai hari yang ditentukan.",
+    "Kerapian Ananda masih perlu banyak perbaikan. Mohon orang tua membiasakan Ananda untuk selalu mengecek kelengkapan dan kerapian seragam sebelum berangkat sekolah.",
+    "Ananda masih perlu bimbingan dalam menjaga kerapian berpenampilan. Mohon kerja sama orang tua untuk senantiasa mengecek seragam Ananda sebelum berangkat sekolah.",
+    "Sangat santun dan ramah kepada guru maupun teman.",
+    "Mohon tingkatkan lagi tata krama saat berinteraksi.",
+    "Pertahankan sikap saling menghargai di kelas.",
+    "Sangat disiplin dan tepat waktu.",
+    "Mohon perhatikan agar datang lebih awal.",
+    "Tingkatkan fokus dan tidak mengobrol saat pelajaran.",
+    "Selalu berpakaian rapi dan bersih.",
+    "Mohon lengkapi atribut seragam sekolah.",
+    "Perlu merapikan rambut sesuai tata tertib sekolah."
+];
+
+export function isAutoAdabNote(note?: string | null): boolean {
+    if (!note || !note.trim()) return true;
+    const clean = note.trim();
+    const isDefault = Object.values(DEFAULT_ADAB_TEMPLATES).some(tpl => clean.startsWith(tpl) || tpl.startsWith(clean));
+    if (isDefault) return true;
+    return LEGACY_FORMAL_ASPECT_TEMPLATES.includes(clean);
+}
+
+export function isAutoKedisNote(note?: string | null): boolean {
+    if (!note || !note.trim()) return true;
+    const clean = note.trim();
+    const isDefault = Object.values(DEFAULT_KEDISIPLINAN_TEMPLATES).some(tpl => clean.startsWith(tpl) || tpl.startsWith(clean));
+    if (isDefault) return true;
+    return LEGACY_FORMAL_ASPECT_TEMPLATES.includes(clean);
+}
+
+export function isAutoKerapianNote(note?: string | null): boolean {
+    if (!note || !note.trim()) return true;
+    const clean = note.trim();
+    const isDefault = Object.values(DEFAULT_KERAPIAN_TEMPLATES).some(tpl => clean.startsWith(tpl) || tpl.startsWith(clean));
+    if (isDefault) return true;
+    return LEGACY_FORMAL_ASPECT_TEMPLATES.includes(clean);
+}
+
+export function isAutoHomeroomNote(note?: string | null): boolean {
+    if (!note || !note.trim()) return true;
+    const clean = note.trim();
+    return (
+        clean.startsWith('Alhamdulillah') ||
+        clean.startsWith('Barakallah') ||
+        clean.startsWith('Apresiasi setinggi-tingginya') ||
+        clean.startsWith('Secara umum') ||
+        clean.startsWith('Potensi dan semangat') ||
+        clean.includes('uswah hasanah') ||
+        clean.includes('catatan pelanggaran bulan ini') ||
+        clean.includes('tanpa catatan pelanggaran') ||
+        clean.includes('tidak memiliki catatan pelanggaran') ||
+        clean.includes('tata tertib madrasah') ||
+        clean.includes('pembiasaan islami') ||
+        clean.includes('generasi qur\'ani')
+    );
+}
+
+export function getAspectAutoNote(
+    aspect: 'ADAB' | 'KEDISIPLINAN' | 'KERAPIAN',
+    grade: BintangGrade,
+    activePoints: number = 0
+): string {
+    if (aspect === 'ADAB') {
+        const base = DEFAULT_ADAB_TEMPLATES[grade] || DEFAULT_ADAB_TEMPLATES.A;
+        const activeBonusText = activePoints > 0 ? ` Serta sangat aktif dan bersemangat di kelas (+${activePoints} poin keaktifan).` : '';
+        return grade === 'D' ? base : `${base}${activeBonusText}`;
+    }
+    if (aspect === 'KEDISIPLINAN') {
+        return DEFAULT_KEDISIPLINAN_TEMPLATES[grade] || DEFAULT_KEDISIPLINAN_TEMPLATES.A;
+    }
+    return DEFAULT_KERAPIAN_TEMPLATES[grade] || DEFAULT_KERAPIAN_TEMPLATES.A;
+}
+
 export function generateAutoNote(adab: BintangGrade, kedis: BintangGrade, kerapian: BintangGrade, activePoints: number = 0) {
-    let adabNote = '';
-    let kedisNote = '';
-    let kerapianNote = '';
-
-    const activeBonusText = activePoints > 0 ? ` Serta sangat aktif dan bersemangat di kelas (+${activePoints} poin keaktifan).` : '';
-
-    if (adab === 'A') adabNote = `Alhamdulillah, Ananda menunjukkan akhlakul karimah, kesantunan, dan adab islami yang sangat baik kepada ustadz/ustadzah serta teman.${activeBonusText}`;
-    else if (adab === 'B') adabNote = `Secara umum adab dan kesantunan Ananda sudah baik, mari terus dibimbing agar tutur kata dan perilakunya semakin santun.${activeBonusText}`;
-    else if (adab === 'C') adabNote = `Adab dan tutur kata Ananda perlu bimbingan lebih di rumah, terutama dalam menjaga sopan santun dan adab pergaulan islami di madrasah.${activeBonusText}`;
-    else adabNote = `Sangat membutuhkan bimbingan intensif dari Ayah/Bunda di rumah terkait adab, sopan santun, dan pembiasaan akhlakul karimah.`;
-
-    if (kedis === 'A') kedisNote = "Kedisiplinan Ananda di madrasah sangat tinggi, senantiasa tertib hadir tepat waktu dan khusyuk mengikuti pembiasaan pagi.";
-    else if (kedis === 'B') kedisNote = "Kedisiplinan Ananda cukup baik, sesekali masih perlu diingatkan untuk konsisten mematuhi tata tertib madrasah.";
-    else if (kedis === 'C') kedisNote = "Ananda masih perlu dimotivasi agar lebih disiplin waktu hadir di madrasah dan tertib saat kegiatan belajar berlangsung.";
-    else kedisNote = "Tingkat kedisiplinan Ananda memerlukan perhatian dan kerja sama pengawasan yang intensif antara madrasah dan Ayah/Bunda di rumah.";
-
-    if (kerapian === 'A') kerapianNote = "Senantiasa menjaga kebersihan, kesucian diri, serta kerapian seragam madrasah dengan sangat baik dan istiqamah.";
-    else if (kerapian === 'B') kerapianNote = "Penampilan seragam sudah rapi, mohon pertahankan kelengkapan atribut seragam madrasah sesuai jadwal hari.";
-    else if (kerapian === 'C') kerapianNote = "Kerapian seragam Ananda perlu dicek kembali sebelum berangkat ke madrasah agar senantiasa rapi dan lengkap.";
-    else kerapianNote = "Kerapian dan kelengkapan seragam madrasah sangat perlu bimbingan dan pembiasaan rutin dari Ayah/Bunda di rumah.";
-
-    return { adabNote, kedisNote, kerapianNote };
+    return {
+        adabNote: getAspectAutoNote('ADAB', adab, activePoints),
+        kedisNote: getAspectAutoNote('KEDISIPLINAN', kedis, activePoints),
+        kerapianNote: getAspectAutoNote('KERAPIAN', kerapian, activePoints),
+    };
 }
 
 export interface StudentViolationSummaryItem {

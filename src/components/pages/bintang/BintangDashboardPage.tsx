@@ -1447,36 +1447,39 @@ const BintangDashboardPage: React.FC = () => {
                     <AspectSectionEditor
                         aspectKey="ADAB" scoreField="adab_score"
                         formValue={evalHook.formData.adab_score} notesValue={evalHook.formData.adab_notes}
-                        onScoreChange={(val) => evalHook.setFormData(prev => ({
+                        onScoreChange={(val) => evalHook.handleAspectScoreChange('ADAB', val)}
+                        onNotesChange={(val) => evalHook.setFormData(prev => ({
                             ...prev,
-                            adab_score: val,
-                            manual_aspects: Array.from(new Set([...(prev.manual_aspects || []), 'ADAB'])),
+                            adab_notes: val,
+                            manual_aspects: Array.from(new Set([...(prev.manual_aspects || []), 'CUSTOM_ADAB_NOTES'])),
                         }))}
-                        onNotesChange={(val) => evalHook.setFormData(prev => ({ ...prev, adab_notes: val }))}
+                        onResetNotes={() => evalHook.handleResetAspectNote('ADAB')}
                         editingStudent={evalHook.editingStudent} getAspectSummary={getAspectSummary}
                         studentViolations={evalHook.editingStudent ? studentViolationsMap.get(evalHook.editingStudent.id) || [] : []}
                     />
                     <AspectSectionEditor
                         aspectKey="KEDISIPLINAN" scoreField="kedisiplinan_score"
                         formValue={evalHook.formData.kedisiplinan_score} notesValue={evalHook.formData.kedisiplinan_notes}
-                        onScoreChange={(val) => evalHook.setFormData(prev => ({
+                        onScoreChange={(val) => evalHook.handleAspectScoreChange('KEDISIPLINAN', val)}
+                        onNotesChange={(val) => evalHook.setFormData(prev => ({
                             ...prev,
-                            kedisiplinan_score: val,
-                            manual_aspects: Array.from(new Set([...(prev.manual_aspects || []), 'KEDISIPLINAN'])),
+                            kedisiplinan_notes: val,
+                            manual_aspects: Array.from(new Set([...(prev.manual_aspects || []), 'CUSTOM_KEDIS_NOTES'])),
                         }))}
-                        onNotesChange={(val) => evalHook.setFormData(prev => ({ ...prev, kedisiplinan_notes: val }))}
+                        onResetNotes={() => evalHook.handleResetAspectNote('KEDISIPLINAN')}
                         editingStudent={evalHook.editingStudent} getAspectSummary={getAspectSummary}
                         studentViolations={evalHook.editingStudent ? studentViolationsMap.get(evalHook.editingStudent.id) || [] : []}
                     />
                     <AspectSectionEditor
                         aspectKey="KERAPIAN" scoreField="kerapian_score"
                         formValue={evalHook.formData.kerapian_score} notesValue={evalHook.formData.kerapian_notes}
-                        onScoreChange={(val) => evalHook.setFormData(prev => ({
+                        onScoreChange={(val) => evalHook.handleAspectScoreChange('KERAPIAN', val)}
+                        onNotesChange={(val) => evalHook.setFormData(prev => ({
                             ...prev,
-                            kerapian_score: val,
-                            manual_aspects: Array.from(new Set([...(prev.manual_aspects || []), 'KERAPIAN'])),
+                            kerapian_notes: val,
+                            manual_aspects: Array.from(new Set([...(prev.manual_aspects || []), 'CUSTOM_KERAPIAN_NOTES'])),
                         }))}
-                        onNotesChange={(val) => evalHook.setFormData(prev => ({ ...prev, kerapian_notes: val }))}
+                        onResetNotes={() => evalHook.handleResetAspectNote('KERAPIAN')}
                         editingStudent={evalHook.editingStudent} getAspectSummary={getAspectSummary}
                         studentViolations={evalHook.editingStudent ? studentViolationsMap.get(evalHook.editingStudent.id) || [] : []}
                     />
@@ -1542,7 +1545,11 @@ const BintangDashboardPage: React.FC = () => {
                                 className="w-full bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 leading-relaxed"
                                 rows={4}
                                 value={evalHook.formData.catatan_wali}
-                                onChange={(e) => evalHook.setFormData(prev => ({ ...prev, catatan_wali: e.target.value }))}
+                                onChange={(e) => evalHook.setFormData(prev => ({
+                                    ...prev,
+                                    catatan_wali: e.target.value,
+                                    manual_aspects: Array.from(new Set([...(prev.manual_aspects || []), 'CUSTOM_CATATAN_WALI'])),
+                                }))}
                                 placeholder="Tuliskan catatan umum wali kelas di sini..."
                             />
                         </div>

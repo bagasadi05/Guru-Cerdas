@@ -220,6 +220,12 @@ function AppContent() {
     });
   }, [registerShortcut]);
 
+  const location = useLocation();
+
+  React.useEffect(() => {
+    window.dispatchEvent(new CustomEvent('app-check-sw-update'));
+  }, [location.pathname]);
+
   React.useEffect(() => {
     const handleOpenHelp = () => setShowHelp(true);
     document.addEventListener('open-help-center', handleOpenHelp);
