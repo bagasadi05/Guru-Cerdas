@@ -3,12 +3,41 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../ui/Card';
 import { GraduationCapIcon, BookOpenIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { GradeDistribution } from './types';
-import GradeCompletionAnalysis from './GradeCompletionAnalysis';
+// Lazy load heavy components to optimize initial bundle size
+const AcademicTrendChart = React.lazy(() =>
+    import('./academic/AcademicTrendChart').then((m) => ({ default: m.AcademicTrendChart }))
+);
+const GradeCompletionAnalysis = React.lazy(() =>
+    import('./GradeCompletionAnalysis')
+);
+const SubjectDetailModal = React.lazy(() =>
+    import('./academic/SubjectDetailModal').then((m) => ({ default: m.SubjectDetailModal }))
+);
 import { AcademicKPICards } from './academic/AcademicKPICards';
 import { SubjectAnalysisGrid } from './academic/SubjectAnalysisGrid';
-import { SubjectDetailModal } from './academic/SubjectDetailModal';
-import { AcademicTrendChart } from './academic/AcademicTrendChart';
 import { AcademicInsightPanel } from './academic/AcademicInsightPanel';
+
+const ChartSkeleton = () => (
+    <Card className="border-slate-200 dark:border-slate-800 animate-pulse">
+        <CardHeader>
+            <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-48" />
+        </CardHeader>
+        <CardContent>
+            <div className="h-[280px] bg-slate-100 dark:bg-slate-800/50 rounded-xl" />
+        </CardContent>
+    </Card>
+);
+
+const SectionSkeleton = () => (
+    <Card className="border-slate-200 dark:border-slate-800 animate-pulse">
+        <CardHeader>
+            <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-56" />
+        </CardHeader>
+        <CardContent>
+            <div className="h-44 bg-slate-100 dark:bg-slate-800/50 rounded-xl" />
+        </CardContent>
+    </Card>
+);
 import {
     calculateSubjectStats,
     calculateAcademicKPI,
@@ -148,27 +177,38 @@ export const AcademicTab: React.FC<AcademicTabProps> = ({ gradeStats, classes, s
 
             {/* Trend Chart */}
             {subjectStats.length > 0 && (
-                <AcademicTrendChart trends={trendData} kktpThreshold={DEFAULT_KKTP} />
+                <React.Suspense fallback={<ChartSkeleton />}>
+                    <AcademicTrendChart
+                        trends={trendData}
+                        academicRecords={academicRecords}
+                        subjects={subjectStats.map((s) => s.subject)}
+                        kktpThreshold={DEFAULT_KKTP}
+                    />
+                </React.Suspense>
             )}
 
             {/* Grade Completion Analysis (promoted - always visible) */}
             {hasData && (
                 <div id="kktp-section">
-                    <GradeCompletionAnalysis
-                        classes={classes}
-                        students={students}
-                        academicRecords={academicRecords}
-                        selectedClassId={selectedClassId}
-                    />
+                    <React.Suspense fallback={<SectionSkeleton />}>
+                        <GradeCompletionAnalysis
+                            classes={classes}
+                            students={students}
+                            academicRecords={academicRecords}
+                            selectedClassId={selectedClassId}
+                        />
+                    </React.Suspense>
                 </div>
             )}
 
             {/* Subject Detail Modal */}
-            <SubjectDetailModal
-                subject={selectedSubject}
-                studentsBelowKKTP={studentsBelowKKTP}
-                onClose={() => setSelectedSubject(null)}
-            />
+            <React.Suspense fallback={null}>
+                <SubjectDetailModal
+                    subject={selectedSubject}
+                    studentsBelowKKTP={studentsBelowKKTP}
+                    onClose={() => setSelectedSubject(null)}
+                />
+            </React.Suspense>
         </div>
     );
 };

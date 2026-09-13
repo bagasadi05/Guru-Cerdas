@@ -4,7 +4,7 @@ import { MoreHorizontalIcon } from '../Icons';
 import { useSound } from '../../hooks/useSound';
 import { useHaptic } from '../../hooks/useHaptic';
 import { MobileNavItem } from './mobileNavConfig';
-import { preloadRoute } from '../../App';
+import { preloadRoute } from '../../utils/routePreloader';
 
 interface MoreMenuItem {
   href: string;

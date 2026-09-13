@@ -5,7 +5,7 @@ import { PlusIcon, BarChartIcon, PencilIcon, TrashIcon, TrendingUpIcon, Download
 import { AcademicRecordRow } from './types';
 import { GradeTrendChart } from '../../ui/GradeTrendChart';
 import { useSemester } from '../../../contexts/SemesterContext';
-import { formatExportDate } from '../../../utils/exportUtils';
+import { formatExportDate } from '../../../utils/exportFormatUtils';
 
 // Default KKM value - can be made configurable
 const DEFAULT_KKM = 75;

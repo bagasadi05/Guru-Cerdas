@@ -3,6 +3,7 @@ import { MotionDiv, MotionCircle } from '../../../../ui/MotionComponents';
 import { duration as motionDuration, easing } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 import { CheckIcon } from '../../../../Icons';
+import { stripMarkdown } from '../../../../../utils/textSanitizer';
 
 // ── Prop Types ──────────────────────────────────────────────────────────────
 interface DevelopmentScoreCardProps {
@@ -189,7 +190,7 @@ export const DevelopmentScoreCard: React.FC<DevelopmentScoreCardProps> = ({
                 className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300"
               >
                 <CheckIcon className="w-4 h-4 mt-0.5 flex-shrink-0 text-emerald-500" />
-                <span>{point}</span>
+                <span>{stripMarkdown(point)}</span>
               </li>
             ))}
           </ul>

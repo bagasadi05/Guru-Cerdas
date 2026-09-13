@@ -3,6 +3,7 @@ import { MotionLi, type Variants } from '../../../../ui/MotionComponents';
 import { ClockIcon, CalendarIcon } from '../../../../Icons';
 import { duration as motionDuration, easing } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
+import { stripMarkdown } from '../../../../../utils/textSanitizer';
 
 // ── Prop Types ──────────────────────────────────────────────────────────────
 interface DevelopmentTimelineProps {
@@ -70,7 +71,7 @@ const TimelineSection: React.FC<{
           {/* Small dot */}
           <span className="mt-1.5 w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600 flex-shrink-0" />
           <span className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-snug">
-            {target}
+            {stripMarkdown(target)}
           </span>
         </MotionLi>
       ))}

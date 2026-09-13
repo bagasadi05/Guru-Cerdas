@@ -202,13 +202,13 @@ export const fetchDashboardData = async (userId: string, userRole: string): Prom
             .lte('date', last5Days[4])
             .is('deleted_at', null),
 
-        // Fetch academic records for grade analysis
+        // Fetch academic records for grade analysis (up to 3000 records to support class-wide analytics)
         supabase
             .from('academic_records')
             .select('student_id, subject, score, assessment_name, created_at')
             .is('deleted_at', null)
             .order('created_at', { ascending: false })
-            .limit(10),
+            .limit(3000),
 
         // Fetch violations for behavior analysis
         supabase
@@ -249,12 +249,17 @@ export const fetchDashboardData = async (userId: string, userRole: string): Prom
             .select('*')
     ]);
 
-    // Collect any errors from the queries
-    const errors = [
-        studentsRes,
-        tasksRes,
-        scheduleRes,
-        classesRes,
+    // Separate core errors (fatal) from secondary errors (graceful degradation)
+    const coreErrors = [studentsRes, tasksRes, scheduleRes, classesRes]
+        .map(res => res.error)
+        .filter((e): e is NonNullable<typeof e> => e !== null);
+
+    if (coreErrors.length > 0) {
+        throw new Error(coreErrors.map(e => e.message).join(', '));
+    }
+
+    // Secondary errors log a warning and fall back to empty datasets to prevent crashing the entire dashboard
+    const secondaryErrors = [
         dailyAttendanceRes,
         weeklyAttendanceRes,
         academicRecordsRes,
@@ -267,8 +272,8 @@ export const fetchDashboardData = async (userId: string, userRole: string): Prom
         .map(res => res.error)
         .filter((e): e is NonNullable<typeof e> => e !== null);
 
-    if (errors.length > 0) {
-        throw new Error(errors.map(e => e.message).join(', '));
+    if (secondaryErrors.length > 0) {
+        console.warn('[DashboardData] Non-fatal secondary query warnings:', secondaryErrors.map(e => e.message));
     }
 
     // Filter active classes and active students in memory
@@ -320,9 +325,10 @@ export const fetchDashboardData = async (userId: string, userRole: string): Prom
             total: dailyAttendanceForActive.length
         },
         weeklyAttendance,
-        academicRecords: (academicRecordsRes.data || []).filter(r => activeStudents.some(s => s.id === r.student_id)),
-        violations: (violationsRes.data || []).filter(v => activeStudents.some(s => s.id === v.student_id)),
-        achievements: ((achievementsRes.data || []) as any[]).filter(ach => activeStudents.some(s => s.id === ach.student_id)),
+        // O(1) Set lookups instead of O(N * M) quadratic linear scans
+        academicRecords: (academicRecordsRes.data || []).filter(r => activeStudentIds.has(r.student_id)),
+        violations: (violationsRes.data || []).filter(v => activeStudentIds.has(v.student_id)),
+        achievements: ((achievementsRes.data || []) as any[]).filter(ach => activeStudentIds.has(ach.student_id)),
         recentTasks: recentTasksRes.data || [],
         todayAttendanceRecords: recentAttendanceForActive.slice(0, 10).reduce((acc: { created_at: string; status: string; count: number }[], record) => {
             const existing = acc.find(a => a.created_at === record.created_at && a.status === record.status);
@@ -333,7 +339,7 @@ export const fetchDashboardData = async (userId: string, userRole: string): Prom
             }
             return acc;
         }, []) || [],
-        unreadParentMessages: (unreadParentMessagesRes.data || []).filter(m => activeStudents.some(s => s.id === m.student_id)),
+        unreadParentMessages: (unreadParentMessagesRes.data || []).filter(m => activeStudentIds.has(m.student_id)),
     };
 };
 

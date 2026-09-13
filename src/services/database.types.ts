@@ -2699,6 +2699,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_class_analytics_attendance: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       activate_semester: {
         Args: { p_semester_id: string; p_year_id: string }
         Returns: undefined

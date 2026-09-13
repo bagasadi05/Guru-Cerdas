@@ -1,9 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { BarChartIcon, TrendingUpIcon, UsersIcon, ChevronDown, ChevronUp } from 'lucide-react';
+import { BarChartIcon, TrendingUpIcon, UsersIcon, ChevronDown, ChevronUp, RotateCw } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { DashboardPanel } from './DashboardPanel';
 import { supabase } from '../../services/supabase';
-import { useAuth } from '../../hooks/useAuth';
 
 interface ClassStats {
     classId: string;
@@ -18,6 +17,11 @@ interface MonthlyAttendance {
     percentage: number;
 }
 
+interface ClassAnalyticsAttendanceData {
+    class_rates: Record<string, number>;
+    monthly_trend: { month: string; percentage: number }[];
+}
+
 interface ClassAnalyticsSectionProps {
     classes: { id: string; name: string }[];
     students: { id: string; class_id: string | null }[];
@@ -25,6 +29,36 @@ interface ClassAnalyticsSectionProps {
     attendanceRecords?: { student_id: string; status: string; date: string }[];
     defaultOpen?: boolean;
 }
+
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+const computeMonthlyTrendFromRecords = (records: { status: string; date: string }[]): MonthlyAttendance[] => {
+    const monthMap: Record<string, { present: number; total: number }> = {};
+
+    records.forEach(record => {
+        const date = new Date(record.date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+        if (!monthMap[monthKey]) {
+            monthMap[monthKey] = { present: 0, total: 0 };
+        }
+        monthMap[monthKey].total++;
+        if (record.status === 'Hadir') {
+            monthMap[monthKey].present++;
+        }
+    });
+
+    return Object.entries(monthMap)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .slice(-6)
+        .map(([key, data]) => {
+            const [, month] = key.split('-');
+            return {
+                month: MONTH_NAMES[parseInt(month, 10) - 1],
+                percentage: data.total > 0 ? Math.round((data.present / data.total) * 100) : 0,
+            };
+        });
+};
 
 const extractGradeLevel = (name: string): string => {
     const match = name.match(/(?:Kelas\s+)?(\d+|[IVXLCDM]+)/i);
@@ -38,33 +72,59 @@ export const ClassAnalyticsSection: React.FC<ClassAnalyticsSectionProps> = ({
     attendanceRecords,
     defaultOpen = false,
 }) => {
-    const { user } = useAuth();
     const [isOpen, setIsOpen] = useState(defaultOpen);
     const [selectedGrade, setSelectedGrade] = useState<string>('Semua');
 
-    // Fetch attendance as fallback if not provided or empty
-    const { data: fetchedAttendance = [] } = useQuery({
-        queryKey: ['class-analytics-attendance', user?.id],
+    // 1. Fetch pre-aggregated class rates and monthly trend via RPC
+    const { data: rpcData, refetch: refetchRpc, isFetching: isFetchingRpc } = useQuery<ClassAnalyticsAttendanceData | null>({
+        queryKey: ['class-analytics-rpc-attendance'],
         queryFn: async () => {
-            if (!user) return [];
-            const { data, error } = await supabase
-                .from('attendance')
-                .select('student_id, status, date')
-                .eq('user_id', user.id)
-                .is('deleted_at', null);
-            if (error) throw error;
-            return (data || []) as { student_id: string; status: string; date: string }[];
+            if (typeof supabase.rpc !== 'function') return null;
+            const { data, error } = await supabase.rpc('get_class_analytics_attendance');
+            if (error) {
+                console.warn('Failed to fetch class analytics attendance via RPC:', error);
+                return null;
+            }
+            return (data as unknown) as ClassAnalyticsAttendanceData;
         },
-        enabled: !!user && (!attendanceRecords || attendanceRecords.length === 0),
+        enabled: !attendanceRecords || attendanceRecords.length === 0,
         staleTime: 5 * 60 * 1000,
     });
 
-    const effectiveAttendance = attendanceRecords && attendanceRecords.length > 0
-        ? attendanceRecords
-        : fetchedAttendance;
+    // 2. Secondary fallback query if RPC returns null and no attendanceRecords were provided
+    const { data: fallbackAttendance = [], refetch: refetchFallback, isFetching: isFetchingFallback } = useQuery({
+        queryKey: ['class-analytics-fallback-attendance'],
+        queryFn: async () => {
+            const sixMonthsAgo = new Date();
+            sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+            sixMonthsAgo.setDate(1);
+            const dateStr = sixMonthsAgo.toISOString().split('T')[0];
+
+            const { data, error } = await supabase
+                .from('attendance')
+                .select('student_id, status, date')
+                .gte('date', dateStr)
+                .order('date', { ascending: false })
+                .limit(2000);
+
+            if (error) return [];
+            return (data || []) as { student_id: string; status: string; date: string }[];
+        },
+        enabled: (!attendanceRecords || attendanceRecords.length === 0) && rpcData === null,
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const isRefreshing = isFetchingRpc || isFetchingFallback;
+    const handleRefresh = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        await Promise.all([refetchRpc(), refetchFallback()]);
+    };
 
     // Calculate class statistics
     const classStats = useMemo((): ClassStats[] => {
+        const hasPropAttendance = Boolean(attendanceRecords && attendanceRecords.length > 0);
+        const effectiveAttendance = hasPropAttendance ? attendanceRecords! : fallbackAttendance;
+
         return classes.map(cls => {
             const classStudents = students.filter(s => s.class_id === cls.id);
             const classStudentIds = new Set(classStudents.map(s => s.id));
@@ -76,11 +136,16 @@ export const ClassAnalyticsSection: React.FC<ClassAnalyticsSectionProps> = ({
                 : 0;
 
             // Attendance rate
-            const classAttendance = effectiveAttendance.filter(r => classStudentIds.has(r.student_id));
-            const presentCount = classAttendance.filter(r => r.status === 'Hadir').length;
-            const attendanceRate = classAttendance.length > 0
-                ? Math.round((presentCount / classAttendance.length) * 100)
-                : 0;
+            let attendanceRate = 0;
+            if (hasPropAttendance || (!rpcData?.class_rates && effectiveAttendance.length > 0)) {
+                const classAttendance = effectiveAttendance.filter(r => classStudentIds.has(r.student_id));
+                const presentCount = classAttendance.filter(r => r.status === 'Hadir').length;
+                attendanceRate = classAttendance.length > 0
+                    ? Math.round((presentCount / classAttendance.length) * 100)
+                    : 0;
+            } else if (rpcData?.class_rates) {
+                attendanceRate = rpcData.class_rates[cls.id] ?? 0;
+            }
 
             return {
                 classId: cls.id,
@@ -90,7 +155,7 @@ export const ClassAnalyticsSection: React.FC<ClassAnalyticsSectionProps> = ({
                 attendanceRate: attendanceRate,
             };
         }).filter(c => c.studentCount > 0);
-    }, [classes, students, academicRecords, effectiveAttendance]);
+    }, [classes, students, academicRecords, attendanceRecords, rpcData, fallbackAttendance]);
 
     // Available grade levels for filter chips
     const gradeLevels = useMemo(() => {
@@ -114,54 +179,98 @@ export const ClassAnalyticsSection: React.FC<ClassAnalyticsSectionProps> = ({
 
     // Calculate monthly attendance trend
     const monthlyAttendance = useMemo((): MonthlyAttendance[] => {
-        const monthMap: Record<string, { present: number; total: number }> = {};
+        if (attendanceRecords && attendanceRecords.length > 0) {
+            return computeMonthlyTrendFromRecords(attendanceRecords);
+        }
+        if (rpcData?.monthly_trend && rpcData.monthly_trend.length > 0) {
+            return rpcData.monthly_trend;
+        }
+        if (fallbackAttendance.length > 0) {
+            return computeMonthlyTrendFromRecords(fallbackAttendance);
+        }
+        return [];
+    }, [attendanceRecords, rpcData, fallbackAttendance]);
 
-        effectiveAttendance.forEach(record => {
-            const date = new Date(record.date);
-            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const chartWidth = 500;
+    const chartHeight = 150;
+    const paddingX = 40;
+    const paddingTop = 22;
+    const paddingBottom = 28;
+    const drawingHeight = chartHeight - paddingTop - paddingBottom;
+    const baselineY = chartHeight - paddingBottom;
 
-            if (!monthMap[monthKey]) {
-                monthMap[monthKey] = { present: 0, total: 0 };
-            }
-            monthMap[monthKey].total++;
-            if (record.status === 'Hadir') {
-                monthMap[monthKey].present++;
-            }
+    const chartPoints = useMemo(() => {
+        if (monthlyAttendance.length === 0) return [];
+        return monthlyAttendance.map((m, i) => {
+            const x = monthlyAttendance.length > 1
+                ? paddingX + i * ((chartWidth - paddingX * 2) / (monthlyAttendance.length - 1))
+                : chartWidth / 2;
+            const y = paddingTop + drawingHeight * (1 - Math.min(Math.max(m.percentage, 0), 100) / 100);
+            return {
+                x,
+                y,
+                month: m.month,
+                percentage: m.percentage,
+            };
         });
+    }, [monthlyAttendance, drawingHeight]);
 
-        const months = Object.entries(monthMap)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .slice(-6) // Last 6 months
-            .map(([key, data]) => {
-                const [, month] = key.split('-');
-                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-                return {
-                    month: monthNames[parseInt(month) - 1],
-                    percentage: data.total > 0 ? Math.round((data.present / data.total) * 100) : 0,
-                };
-            });
+    const { linePath, areaPath } = useMemo(() => {
+        if (chartPoints.length === 0) return { linePath: '', areaPath: '' };
+        if (chartPoints.length === 1) {
+            const p = chartPoints[0];
+            return {
+                linePath: `M ${(p.x - 30).toFixed(1)} ${p.y.toFixed(1)} L ${(p.x + 30).toFixed(1)} ${p.y.toFixed(1)}`,
+                areaPath: `M ${(p.x - 30).toFixed(1)} ${p.y.toFixed(1)} L ${(p.x + 30).toFixed(1)} ${p.y.toFixed(1)} L ${(p.x + 30).toFixed(1)} ${baselineY} L ${(p.x - 30).toFixed(1)} ${baselineY} Z`,
+            };
+        }
 
-        return months;
-    }, [effectiveAttendance]);
+        const lineD = chartPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+        const firstX = chartPoints[0].x.toFixed(1);
+        const lastX = chartPoints[chartPoints.length - 1].x.toFixed(1);
+        const areaD = `${lineD} L ${lastX} ${baselineY} L ${firstX} ${baselineY} Z`;
+
+        return { linePath: lineD, areaPath: areaD };
+    }, [chartPoints, baselineY]);
 
     if (classStats.length === 0) {
         return null;
     }
 
+
     const maxGrade = Math.max(...classStats.map(c => c.averageGrade), 100);
 
     return (
         <DashboardPanel className="flex flex-col h-full">
-            <button type="button"
-                onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-            >
-                <div className="flex items-center gap-2">
+            <div className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <button
+                    type="button"
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="flex-1 flex items-center gap-2 text-left cursor-pointer select-none"
+                >
                     <BarChartIcon className="w-5 h-5 text-emerald-500" />
                     <h3 className="font-semibold text-slate-900 dark:text-white">Analisis Kelas</h3>
+                </button>
+                <div className="flex items-center gap-1.5">
+                    <button
+                        type="button"
+                        onClick={handleRefresh}
+                        disabled={isRefreshing}
+                        title="Segarkan data analisis kelas"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-all cursor-pointer disabled:opacity-50"
+                    >
+                        <RotateCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-emerald-500' : ''}`} />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setIsOpen(!isOpen)}
+                        aria-label={isOpen ? "Tutup analisis kelas" : "Buka analisis kelas"}
+                        className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                    >
+                        {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </button>
                 </div>
-                {isOpen ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
-            </button>
+            </div>
 
             {isOpen && (
                 <div className="p-4 border-t border-slate-200/60 dark:border-slate-700/60 space-y-4">
@@ -270,86 +379,137 @@ export const ClassAnalyticsSection: React.FC<ClassAnalyticsSectionProps> = ({
                     {/* Monthly Attendance Trend */}
                     {monthlyAttendance.length > 0 && (
                         <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                            <div className="flex items-center gap-2 mb-4">
-                                <TrendingUpIcon className="w-5 h-5 text-emerald-500" />
-                                <h3 className="font-semibold text-sm text-slate-900 dark:text-white">Tren Kehadiran Bulanan</h3>
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                    <TrendingUpIcon className="w-5 h-5 text-emerald-500" />
+                                    <h3 className="font-semibold text-sm text-slate-900 dark:text-white">Tren Kehadiran Bulanan</h3>
+                                </div>
+                                {monthlyAttendance.length >= 2 && (
+                                    <div className="text-xs font-medium">
+                                        {monthlyAttendance[monthlyAttendance.length - 1].percentage >= monthlyAttendance[monthlyAttendance.length - 2].percentage ? (
+                                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold inline-flex items-center gap-1">
+                                                <TrendingUpIcon className="w-3.5 h-3.5" />
+                                                +{(monthlyAttendance[monthlyAttendance.length - 1].percentage - monthlyAttendance[monthlyAttendance.length - 2].percentage)}%
+                                                <span className="text-slate-400 dark:text-slate-500 font-normal ml-0.5">vs bln lalu</span>
+                                            </span>
+                                        ) : (
+                                            <span className="text-rose-600 dark:text-rose-400 font-semibold inline-flex items-center gap-1">
+                                                <TrendingUpIcon className="w-3.5 h-3.5 rotate-180" />
+                                                -{(monthlyAttendance[monthlyAttendance.length - 2].percentage - monthlyAttendance[monthlyAttendance.length - 1].percentage)}%
+                                                <span className="text-slate-400 dark:text-slate-500 font-normal ml-0.5">vs bln lalu</span>
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Line Chart */}
-                            <div className="relative h-40">
-                                <svg className="w-full h-full" preserveAspectRatio="none">
+                            <div className="relative w-full bg-slate-50/50 dark:bg-slate-800/30 rounded-xl p-3 border border-slate-100 dark:border-slate-800/60">
+                                <svg
+                                    viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+                                    className="w-full h-40 overflow-visible select-none"
+                                >
                                     <defs>
                                         <linearGradient id="lineGradientMonth" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%" stopColor="rgb(16, 185, 129)" stopOpacity="0.3" />
-                                            <stop offset="100%" stopColor="rgb(16, 185, 129)" stopOpacity="0" />
+                                            <stop offset="0%" stopColor="rgb(16, 185, 129)" stopOpacity="0.35" />
+                                            <stop offset="100%" stopColor="rgb(16, 185, 129)" stopOpacity="0.0" />
+                                        </linearGradient>
+                                        <linearGradient id="lineStrokeMonth" x1="0" y1="0" x2="1" y2="0">
+                                            <stop offset="0%" stopColor="#059669" />
+                                            <stop offset="100%" stopColor="#10b981" />
                                         </linearGradient>
                                     </defs>
 
-                                    {/* Grid lines */}
-                                    {[0, 25, 50, 75, 100].map(val => (
-                                        <line
-                                            key={val}
-                                            x1="0%"
-                                            y1={`${100 - val}%`}
-                                            x2="100%"
-                                            y2={`${100 - val}%`}
-                                            stroke="currentColor"
-                                            strokeWidth="1"
-                                            className="text-slate-100 dark:text-slate-800"
-                                        />
-                                    ))}
+                                    {/* Grid lines & Y-axis labels */}
+                                    {[0, 25, 50, 75, 100].map(val => {
+                                        const y = paddingTop + drawingHeight * (1 - val / 100);
+                                        return (
+                                            <g key={val}>
+                                                <line
+                                                    x1={paddingX}
+                                                    y1={y}
+                                                    x2={chartWidth - paddingX}
+                                                    y2={y}
+                                                    stroke="currentColor"
+                                                    strokeWidth="1"
+                                                    strokeDasharray="3 3"
+                                                    className="text-slate-200/80 dark:text-slate-700/60"
+                                                />
+                                                <text
+                                                    x={paddingX - 8}
+                                                    y={y + 3}
+                                                    textAnchor="end"
+                                                    className="text-[9px] font-medium fill-slate-400 dark:fill-slate-500"
+                                                >
+                                                    {val}%
+                                                </text>
+                                            </g>
+                                        );
+                                    })}
 
                                     {/* Area fill */}
-                                    <path
-                                        d={`
-                                    M 0 ${100 - monthlyAttendance[0]?.percentage || 100}
-                                    ${monthlyAttendance.map((m, i) => `L ${(i / Math.max(monthlyAttendance.length - 1, 1)) * 100} ${100 - m.percentage}`).join(' ')}
-                                    L 100 100
-                                    L 0 100
-                                    Z
-                                `}
-                                        fill="url(#lineGradientMonth)"
-                                        className="transform scale-y-[-1] origin-center"
-                                    />
+                                    {areaPath && (
+                                        <path
+                                            d={areaPath}
+                                            fill="url(#lineGradientMonth)"
+                                        />
+                                    )}
 
                                     {/* Line */}
-                                    <polyline
-                                        points={monthlyAttendance.map((m, i) =>
-                                            `${(i / Math.max(monthlyAttendance.length - 1, 1)) * 100},${100 - m.percentage}`
-                                        ).join(' ')}
-                                        fill="none"
-                                        stroke="rgb(16, 185, 129)"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
-
-                                    {/* Points */}
-                                    {monthlyAttendance.map((m, i) => (
-                                        <circle
-                                            key={i}
-                                            cx={`${(i / Math.max(monthlyAttendance.length - 1, 1)) * 100}%`}
-                                            cy={`${100 - m.percentage}%`}
-                                            r="4"
-                                            fill="white"
-                                            stroke="rgb(16, 185, 129)"
-                                            strokeWidth="2"
+                                    {linePath && (
+                                        <path
+                                            d={linePath}
+                                            fill="none"
+                                            stroke="url(#lineStrokeMonth)"
+                                            strokeWidth="2.5"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
                                         />
+                                    )}
+
+                                    {/* Points and Labels */}
+                                    {chartPoints.map((p, i) => (
+                                        <g key={i}>
+                                            {/* Glow outer ring */}
+                                            <circle
+                                                cx={p.x}
+                                                cy={p.y}
+                                                r="7"
+                                                className="fill-emerald-500/15 dark:fill-emerald-400/20"
+                                            />
+                                            {/* Point marker */}
+                                            <circle
+                                                cx={p.x}
+                                                cy={p.y}
+                                                r="4.5"
+                                                className="fill-white dark:fill-slate-900 stroke-emerald-500 dark:stroke-emerald-400"
+                                                strokeWidth="2.5"
+                                            />
+                                            {/* Percentage value label floating directly above point */}
+                                            <text
+                                                x={p.x}
+                                                y={Math.max(p.y - 10, 14)}
+                                                textAnchor="middle"
+                                                className="text-[11px] font-bold fill-emerald-600 dark:fill-emerald-400"
+                                            >
+                                                {p.percentage}%
+                                            </text>
+                                            {/* Month name along baseline */}
+                                            <text
+                                                x={p.x}
+                                                y={baselineY + 18}
+                                                textAnchor="middle"
+                                                className="text-[11px] font-semibold fill-slate-600 dark:fill-slate-300"
+                                            >
+                                                {p.month}
+                                            </text>
+                                        </g>
                                     ))}
                                 </svg>
                             </div>
-
-                            {/* Labels */}
-                            <div className="flex justify-between mt-2">
-                                {monthlyAttendance.map((m, i) => (
-                                    <div key={i} className="text-center">
-                                        <p className="text-xs font-medium text-slate-600 dark:text-slate-400">{m.month}</p>
-                                        <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold">{m.percentage}%</p>
-                                    </div>
-                                ))}
-                            </div>
                         </div>
                     )}
+
                 </div>
             )}
         </DashboardPanel>

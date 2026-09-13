@@ -163,3 +163,50 @@ export function normalizeTextForPdf(text: string | null | undefined): string {
 
   return result;
 }
+
+/**
+ * Strips markdown symbols (bold **, italic *, headings #, strikethrough ~~, backticks `)
+ * leaving clean, readable text.
+ */
+export function stripMarkdown(text: string | null | undefined): string {
+  if (!text) return '';
+  return text
+    // Replace markdown bold/italic (**text**, *text*, __text__, _text_)
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    .replace(/_(.*?)_/g, '$1')
+    // Replace strikethrough (~~text~~)
+    .replace(/~~(.*?)~~/g, '$1')
+    // Replace inline code (`text`)
+    .replace(/`([^`]+)`/g, '$1')
+    // Remove markdown headers (### Header)
+    .replace(/^#{1,6}\s+/gm, '')
+    // Remove stray asterisks or formatting tokens
+    .replace(/\*+/g, '')
+    // Clean up multiple spaces while preserving newlines
+    .replace(/[ \t]+/g, ' ')
+    .trim();
+}
+
+/**
+ * Recursively traverses objects and arrays to sanitize all string fields,
+ * stripping markdown symbols and normalizing text.
+ */
+export function sanitizeAnalysisData<T>(data: T): T {
+  if (typeof data === 'string') {
+    return stripMarkdown(data) as unknown as T;
+  }
+  if (Array.isArray(data)) {
+    return data.map(item => sanitizeAnalysisData(item)) as unknown as T;
+  }
+  if (data !== null && typeof data === 'object') {
+    const sanitizedObj: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(data)) {
+      sanitizedObj[key] = sanitizeAnalysisData(value);
+    }
+    return sanitizedObj as T;
+  }
+  return data;
+}
+

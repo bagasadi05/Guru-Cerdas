@@ -7,7 +7,7 @@
 import React, { useState, useMemo, memo } from 'react';
 import { TrendingUp, Download, Info, Calendar, ChevronDown } from 'lucide-react';
 import { MotionDiv, AnimatePresence } from '../ui/MotionComponents';
-import { formatExportDate } from '../../utils/exportUtils';
+import { formatExportDate } from '../../utils/exportFormatUtils';
 
 interface AttendanceData {
     day: string;

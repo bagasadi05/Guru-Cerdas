@@ -6,6 +6,11 @@ export const editStudentSchema = z.object({
     name: z.string().min(1, "Nama lengkap harus diisi"),
     gender: z.enum(["Laki-laki", "Perempuan"]),
     class_id: z.string().min(1, "Kelas harus dipilih"),
+    birth_date: z.string().optional().nullable(),
+    nis: z.string().optional().nullable(),
+    nisn: z.string().optional().nullable(),
+    parent_name: z.string().optional().nullable(),
+    parent_phone: z.string().optional().nullable(),
 });
 
 export const editStudentRules: ValidationRules = {

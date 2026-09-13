@@ -154,9 +154,9 @@ export function useMassInputViewModel() {
     const summaryText = useMemo(() => {
         const totalStudents = data.studentsData?.length || 0;
         if (state.mode === 'subject_grade') return `${gradedCount} dari ${totalStudents} siswa telah dinilai.`;
-        if (state.mode === 'attitude') return `${state.selectedStudentIds.size} dari ${totalStudents} siswa dipilih (+${state.attitudePoints} poin ${state.attitudeCategory}).`;
+        if (state.mode === 'attitude') return `${state.selectedStudentIds.size} dari ${totalStudents} siswa dipilih (+1 poin ${state.attitudeCategory}).`;
         return `${state.selectedStudentIds.size} dari ${totalStudents} siswa dipilih.`;
-    }, [state.mode, gradedCount, state.attitudePoints, state.attitudeCategory, state.selectedStudentIds.size, data.studentsData]);
+    }, [state.mode, gradedCount, state.attitudeCategory, state.selectedStudentIds.size, data.studentsData]);
 
     const submitButtonTooltip = useMemo(() => {
         if (!mutations.isOnline) return 'Fitur ini memerlukan koneksi internet.';

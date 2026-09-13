@@ -2,7 +2,7 @@ import type jsPDF from 'jspdf';
 import { getAutoTable, getJsPDF } from './dynamicImports';
 import { ExportOptions } from '../components/pages/analytics/AnalyticsExportModal';
 import { addPdfHeader, ensureLogosLoaded } from './pdfHeaderUtils';
-import { formatExportDate } from './exportUtils';
+import { formatExportDate } from './exportFormatUtils';
 
 // Extend jsPDF type to include autoTable
 interface jsPDFWithAutoTable extends jsPDF {

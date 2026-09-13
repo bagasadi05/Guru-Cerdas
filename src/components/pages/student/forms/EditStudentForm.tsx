@@ -22,13 +22,19 @@ export const EditStudentForm: React.FC<EditStudentFormProps> = ({ defaultValues,
             name: defaultValues.name,
             gender: defaultValues.gender as "Laki-laki" | "Perempuan",
             class_id: defaultValues.class_id || '',
+            birth_date: defaultValues.birth_date ? defaultValues.birth_date.substring(0, 10) : '',
+            nis: defaultValues.nis || '',
+            nisn: defaultValues.nisn || '',
+            parent_name: defaultValues.parent_name || '',
+            parent_phone: defaultValues.parent_phone || '',
         }
     });
 
     const selectedGender = watch('gender');
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-h-[75vh] overflow-y-auto px-1 pr-2">
+            {/* Nama Lengkap */}
             <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Nama Lengkap <span className="text-rose-500">*</span>
@@ -36,20 +42,60 @@ export const EditStudentForm: React.FC<EditStudentFormProps> = ({ defaultValues,
                 <Input {...register('name')} error={errors.name?.message} placeholder="Masukkan nama lengkap siswa..." />
             </div>
 
-            <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    Kelas <span className="text-rose-500">*</span>
-                </label>
-                <Select {...register('class_id')} error={errors.class_id?.message}>
-                    <option value="">-- Pilih Kelas --</option>
-                    {classes.map((c) => (
-                        <option key={c.id} value={c.id}>
-                            {c.name}
-                        </option>
-                    ))}
-                </Select>
+            {/* Kelas & Tanggal Lahir */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                        Kelas <span className="text-rose-500">*</span>
+                    </label>
+                    <Select {...register('class_id')} error={errors.class_id?.message}>
+                        <option value="">-- Pilih Kelas --</option>
+                        {classes.map((c) => (
+                            <option key={c.id} value={c.id}>
+                                {c.name}
+                            </option>
+                        ))}
+                    </Select>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                        Tanggal Lahir
+                    </label>
+                    <Input
+                        type="date"
+                        {...register('birth_date')}
+                        error={errors.birth_date?.message}
+                    />
+                </div>
             </div>
 
+            {/* NIS & NISN */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                        NIS (Nomor Induk Siswa)
+                    </label>
+                    <Input
+                        {...register('nis')}
+                        error={errors.nis?.message}
+                        placeholder="Contoh: 2024001"
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                        NISN (Nasional)
+                    </label>
+                    <Input
+                        {...register('nisn')}
+                        error={errors.nisn?.message}
+                        placeholder="Contoh: 0081234567"
+                    />
+                </div>
+            </div>
+
+            {/* Jenis Kelamin */}
             <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Jenis Kelamin <span className="text-rose-500">*</span>
@@ -108,6 +154,46 @@ export const EditStudentForm: React.FC<EditStudentFormProps> = ({ defaultValues,
                     </label>
                 </div>
                 {errors.gender && <p className="text-rose-500 text-xs mt-1">{errors.gender.message}</p>}
+            </div>
+
+            {/* Identitas Orang Tua / Wali */}
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-700 space-y-3.5">
+                <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        Informasi Orang Tua / Wali
+                    </h4>
+                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                        Untuk Notifikasi WA & Portal
+                    </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                            Nama Orang Tua / Wali
+                        </label>
+                        <Input
+                            {...register('parent_name')}
+                            error={errors.parent_name?.message}
+                            placeholder="Contoh: Bapak Ahmad"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                            No. WhatsApp Orang Tua
+                        </label>
+                        <Input
+                            type="tel"
+                            {...register('parent_phone')}
+                            error={errors.parent_phone?.message}
+                            placeholder="Contoh: 081234567890"
+                        />
+                    </div>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Nomor WhatsApp digunakan untuk mengirim notifikasi pelanggaran, laporan bulanan BINTANG, dan tautan akses ke Portal Orang Tua.
+                </p>
             </div>
 
             <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">

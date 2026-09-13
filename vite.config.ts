@@ -169,6 +169,10 @@ export default defineConfig(({ mode }) => {
             'vendor-canvas': ['html2canvas'],
             'vendor-excel': ['exceljs'],
 
+            // ── Charts (recharts + d3 sub-dependencies) ──
+            // Separated into lazy vendor chunk so initial pages do not pay ~300KB+
+            'vendor-charts': ['recharts'],
+
             // ── Utilities ──
             'vendor-utils': ['zod', 'date-fns'],
 
@@ -200,14 +204,14 @@ export default defineConfig(({ mode }) => {
           entryFileNames: 'assets/js/[name]-[hash].js',
         },
       },
-      // Stop Vite from module-preloding export-library chunks (jspdf, exceljs,
-      // html2canvas). All three are dynamically imported on demand and should
+      // Stop Vite from module-preloding export-library and charting chunks (jspdf, exceljs,
+      // html2canvas, recharts). They are loaded on demand and should
       // never land in initial load — but Vite default modulepreload eagerly
-      // preloads them anyway. Filtering here saves 133.8 KB gzip (vendor-pdf)
+      // preloads them anyway. Filtering here saves significant gzip bandwidth
       // from the login page, verified in docs/BUNDLE_PERFORMANCE_REPORT.md.
       modulePreload: {
         resolveDependencies: (_filename, deps) => {
-          const excludeChunks = ['vendor-pdf', 'vendor-excel', 'vendor-canvas'];
+          const excludeChunks = ['vendor-pdf', 'vendor-excel', 'vendor-canvas', 'vendor-charts'];
           return deps.filter(dep =>
             !excludeChunks.some(chunk => dep.includes(chunk))
           );
@@ -247,6 +251,7 @@ export default defineConfig(({ mode }) => {
     test: {
       globals: true,
       environment: 'jsdom',
+      testTimeout: 15000,
       setupFiles: './src/setupTests.ts',
       exclude: ['node_modules', 'dist', '.git', '.cache', '.freebuff/**', 'e2e/**', 'tests/e2e/**', '**/*.spec.ts'],
       coverage: {

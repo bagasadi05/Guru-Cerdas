@@ -8,7 +8,7 @@ import { useToast } from '../../../../hooks/useToast';
 import { useSemester } from '../../../../contexts/SemesterContext';
 import { useOfflineStatus } from '../../../../hooks/useOfflineStatus';
 import { Database } from '../../../../services/database.types';
-import { formatExportDate } from '../../../../utils/exportUtils';
+import { formatExportDate } from '../../../../utils/exportFormatUtils';
 import { generateStudentReport, ReportData as ReportDataType } from '../../../../services/pdfGenerator';
 import { addPdfHeader, ensureLogosLoaded } from '../../../../utils/pdfHeaderUtils';
 import { getAutoTable, getJsPDF } from '../../../../utils/dynamicImports';
@@ -238,7 +238,10 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                                 semester_id: subjectGradeInfo.semester || null,
                             };
                         });
-                    const { data, error } = await supabase.from('academic_records').upsert(records).select();
+                    const { data, error } = await supabase
+                        .from('academic_records')
+                        .upsert(records, { onConflict: 'student_id,subject,assessment_name,semester_id' })
+                        .select();
                     if (error) throw error;
                     await recordAction(user.id, 'create', 'academic_records', data.map(d => d.id));
                     return `Nilai untuk ${records.length} siswa berhasil disimpan.`;

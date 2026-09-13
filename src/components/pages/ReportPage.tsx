@@ -13,7 +13,7 @@ import { getJsPDF } from '../../utils/dynamicImports';
 import { useToast } from '../../hooks/useToast';
 import FloatingActionButton from '../ui/FloatingActionButton';
 import { useSemester } from '../../contexts/SemesterContext';
-import { formatExportDate } from '../../utils/exportUtils';
+import { formatExportDate } from '../../utils/exportFormatUtils';
 import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../utils/academicRecordUtils';
 import { ReportPageSkeleton } from '../skeletons';
 import { StudentAchievement } from '../../types';

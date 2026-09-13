@@ -9,6 +9,7 @@ interface SubjectAnalysisGridProps {
 }
 
 const kktpBadge = (status: SubjectStats['kktpStatus'], gap: number) => {
+    const gapLabel = `${Math.abs(gap)} poin di bawah`;
     switch (status) {
         case 'safe':
             return (
@@ -19,13 +20,13 @@ const kktpBadge = (status: SubjectStats['kktpStatus'], gap: number) => {
         case 'warning':
             return (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                    <AlertCircle className="w-3 h-3" /> {gap} pts
+                    <AlertCircle className="w-3 h-3" /> {gapLabel}
                 </span>
             );
         case 'critical':
             return (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
-                    <AlertTriangle className="w-3 h-3" /> {gap} pts
+                    <AlertTriangle className="w-3 h-3" /> {gapLabel}
                 </span>
             );
     }
@@ -100,6 +101,15 @@ export const SubjectAnalysisGrid: React.FC<SubjectAnalysisGridProps> = ({ subjec
                         key={stat.subject}
                         className="bg-white dark:bg-slate-900 border-0 shadow-md hover:shadow-lg transition-all cursor-pointer group"
                         onClick={() => onSelectSubject(stat)}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Lihat detail analisis ${stat.subject}`}
+                        onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                onSelectSubject(stat);
+                            }
+                        }}
                     >
                         <CardContent className="p-4">
                             <div className="flex items-start justify-between mb-2">

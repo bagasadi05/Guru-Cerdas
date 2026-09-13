@@ -28,7 +28,7 @@ import { getJsPDF, getAutoTable } from '../../../../../utils/dynamicImports';
 import { MotionDiv, MotionSpan, AnimatePresence } from '../../../../ui/MotionComponents';
 import { duration as motionDuration } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
-import { formatExportDate } from '../../../../../utils/exportUtils';
+import { formatExportDate } from '../../../../../utils/exportFormatUtils';
 import { addPdfHeader, ensureLogosLoaded } from '../../../../../utils/pdfHeaderUtils';
 import { calculateRadarPoints, calculateAxisEndpoints, calculateLabelPositions } from '../utils/radarChartUtils';
 import { LoadingProgress } from '../components/LoadingProgress';
@@ -43,6 +43,7 @@ import { SubjectPerformanceChart } from '../components/SubjectPerformanceChart';
 import { DevelopmentTimeline } from '../components/DevelopmentTimeline';
 import { WarningBanner } from '../components/WarningBanner';
 import { useUserSettings } from '../../../../../hooks/useUserSettings';
+import { stripMarkdown, sanitizeAnalysisData } from '../../../../../utils/textSanitizer';
 import type { jsPDF } from 'jspdf';
 import type { Database } from '../../../../../services/database.types';
 
@@ -63,7 +64,8 @@ const getTableEndY = (doc: unknown): number =>
 // Helper function to sanitize text for jsPDF rendering (stripping emojis/unicode >= 256 except bullet U+2022)
 const cleanTextForPDF = (text: string | null | undefined): string => {
   if (!text) return '';
-  const cleaned = text
+  const noMd = stripMarkdown(text);
+  const cleaned = noMd
     .replace(/[\u201c\u201d\u201e\u201f\u2033\u2036]/g, '"')
     .replace(/[\u2018\u2019\u201a\u201b\u2032\u2035]/g, "'")
     .replace(/[\u2013\u2014\u2015]/g, '-')
@@ -620,9 +622,9 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       const savedAnalysis = localStorage.getItem(getStorageKey());
       if (savedAnalysis) {
         try {
-          const parsed = JSON.parse(savedAnalysis);
+          const parsed = sanitizeAnalysisData(JSON.parse(savedAnalysis));
           setAnalysis(parsed);
-          setGeneratedAt(parsed.generatedAt || null);
+          setGeneratedAt((parsed as ComprehensiveChildAnalysis & { generatedAt?: string }).generatedAt || null);
         } catch (e) {
           console.error('Failed to parse saved analysis:', e);
           localStorage.removeItem(getStorageKey());
@@ -655,9 +657,9 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       const savedComp = localStorage.getItem(`comp_analysis_${studentData.student.id}_${activeAcademicYear.id}`);
       if (savedComp) {
         try {
-          const parsed = JSON.parse(savedComp);
+          const parsed = sanitizeAnalysisData(JSON.parse(savedComp));
           setComparativeAnalysis(parsed);
-          setCompGeneratedAt(parsed.generatedAt || null);
+          setCompGeneratedAt((parsed as ComparativeChildAnalysis & { generatedAt?: string }).generatedAt || null);
         } catch (e) {
           console.error('Failed to parse saved comparative analysis:', e);
         }
@@ -673,7 +675,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
 
     const cleanText = (text: string) => {
       if (!text) return '';
-      return text
+      return stripMarkdown(text)
         .replace(/^(?:[\s\d•\-*🌟💡🎯🏠🏆👣🏫⭐🎒😇🔥👍👌💪★►]|🙋‍♂️|🏃‍♂️|🛠️)+/u, '') 
         .trim();
     };
@@ -801,6 +803,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       }
       if (!result) throw new Error('Gagal menghasilkan analisis setelah beberapa percobaan.');
 
+      result = sanitizeAnalysisData(result);
       const now = new Date().toISOString();
       (result as ComprehensiveChildAnalysis & { generatedAt?: string }).generatedAt = now;
       setGeneratedAt(now);
@@ -1207,6 +1210,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
       }
       if (!result) throw new Error('Gagal menghasilkan analisis perbandingan setelah beberapa percobaan.');
 
+      result = sanitizeAnalysisData(result);
       const now = new Date().toISOString();
       (result as ComparativeChildAnalysis & { generatedAt?: string }).generatedAt = now;
       setCompGeneratedAt(now);
@@ -2306,7 +2310,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                 </div>
                 <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm tracking-wide uppercase mb-1">Ulasan Pertumbuhan Menyeluruh Ananda</h4>
                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-                  {comparativeAnalysis.summary.overallComparison}
+                  {stripMarkdown(comparativeAnalysis.summary.overallComparison)}
                 </p>
               </MotionDiv>
             )}
@@ -2333,7 +2337,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                         <p className="text-[11px] font-bold text-slate-400 mb-1">Kekuatan Belajar</p>
                         <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
                           {comparativeAnalysis.cognitive.semester1Strengths.map((str, idx) => (
-                            <li key={idx}>{str}</li>
+                            <li key={idx}>{stripMarkdown(str)}</li>
                           ))}
                         </ul>
                       </div>
@@ -2349,7 +2353,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                         <p className="text-[11px] font-bold text-slate-400 mb-1">Kekuatan Belajar</p>
                         <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
                           {comparativeAnalysis.cognitive.semester2Strengths.map((str, idx) => (
-                            <li key={idx}>{str}</li>
+                            <li key={idx}>{stripMarkdown(str)}</li>
                           ))}
                         </ul>
                       </div>
@@ -2362,7 +2366,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                     <span>🌱</span> Analisis Pertumbuhan Kognitif
                   </h5>
                   <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-                    {comparativeAnalysis.cognitive.comparisonNarrative}
+                    {stripMarkdown(comparativeAnalysis.cognitive.comparisonNarrative)}
                   </p>
                 </div>
               </div>
@@ -2387,7 +2391,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                         <p className="text-[11px] font-bold text-slate-400 mb-1">Karakter Unggul</p>
                         <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
                           {comparativeAnalysis.affective.semester1PositiveCharacters.map((char, idx) => (
-                            <li key={idx}>{char}</li>
+                            <li key={idx}>{stripMarkdown(char)}</li>
                           ))}
                         </ul>
                       </div>
@@ -2403,7 +2407,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                         <p className="text-[11px] font-bold text-slate-400 mb-1">Karakter Unggul</p>
                         <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
                           {comparativeAnalysis.affective.semester2PositiveCharacters.map((char, idx) => (
-                            <li key={idx}>{char}</li>
+                            <li key={idx}>{stripMarkdown(char)}</li>
                           ))}
                         </ul>
                       </div>
@@ -2416,7 +2420,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                     <span>🤝</span> Analisis Pertumbuhan Karakter & Sosial
                   </h5>
                   <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-                    {comparativeAnalysis.affective.comparisonNarrative}
+                    {stripMarkdown(comparativeAnalysis.affective.comparisonNarrative)}
                   </p>
                 </div>
               </div>
@@ -2441,7 +2445,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                         <p className="text-[11px] font-bold text-slate-400 mb-1">Keterampilan Kuat</p>
                         <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
                           {comparativeAnalysis.psychomotor.semester1Skills.map((sk, idx) => (
-                            <li key={idx}>{sk}</li>
+                            <li key={idx}>{stripMarkdown(sk)}</li>
                           ))}
                         </ul>
                       </div>
@@ -2457,7 +2461,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                         <p className="text-[11px] font-bold text-slate-400 mb-1">Keterampilan Kuat</p>
                         <ul className="list-disc pl-4 text-xs text-slate-600 dark:text-slate-300 space-y-1 font-medium">
                           {comparativeAnalysis.psychomotor.semester2Skills.map((sk, idx) => (
-                            <li key={idx}>{sk}</li>
+                            <li key={idx}>{stripMarkdown(sk)}</li>
                           ))}
                         </ul>
                       </div>
@@ -2470,7 +2474,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
                     <span>🚀</span> Analisis Pertumbuhan Motorik & Fisik
                   </h5>
                   <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-                    {comparativeAnalysis.psychomotor.comparisonNarrative}
+                    {stripMarkdown(comparativeAnalysis.psychomotor.comparisonNarrative)}
                   </p>
                 </div>
               </div>

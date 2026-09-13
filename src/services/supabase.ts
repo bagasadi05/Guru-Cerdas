@@ -230,18 +230,63 @@ const resilientSupabaseFetch = async (input: RequestInfo | URL, init?: RequestIn
       }
 
       const method = init?.method?.toUpperCase();
-      let mockBodyText = JSON.stringify({ offline: true, queued: true });
-      if (method === 'POST') {
-        mockBodyText = '[]';
-      } else if (init?.body) {
-        mockBodyText = typeof init.body === 'string' ? init.body : JSON.stringify(init.body);
+      
+      let isSingleObjectRequested = false;
+      if (init?.headers) {
+        if (typeof (init.headers as any).get === 'function') {
+          isSingleObjectRequested = Boolean((init.headers as any).get('Accept')?.includes('application/vnd.pgrst.object+json'));
+        } else if (Array.isArray(init.headers)) {
+          isSingleObjectRequested = init.headers.some(([k, v]) => k.toLowerCase() === 'accept' && v.includes('application/vnd.pgrst.object+json'));
+        } else if (typeof init.headers === 'object') {
+          const headersObj = init.headers as Record<string, string>;
+          const acceptKey = Object.keys(headersObj).find(k => k.toLowerCase() === 'accept');
+          if (acceptKey && headersObj[acceptKey]?.includes('application/vnd.pgrst.object+json')) {
+            isSingleObjectRequested = true;
+          }
+        }
+      }
+
+      let parsedBody: any = null;
+      if (init?.body) {
+        try {
+          parsedBody = typeof init.body === 'string' ? JSON.parse(init.body) : init.body;
+        } catch {
+          parsedBody = null;
+        }
+      }
+
+      let mockBodyText: string;
+      const contentType = isSingleObjectRequested
+        ? 'application/vnd.pgrst.object+json'
+        : 'application/json';
+
+      if (isSingleObjectRequested) {
+        let singleItem: any = { offline: true, queued: true };
+        if (Array.isArray(parsedBody) && parsedBody.length > 0) {
+          singleItem = { ...parsedBody[0], offline: true, queued: true };
+        } else if (parsedBody && typeof parsedBody === 'object') {
+          singleItem = { ...parsedBody, offline: true, queued: true };
+        }
+        mockBodyText = JSON.stringify(singleItem);
+      } else if (method === 'POST') {
+        if (Array.isArray(parsedBody)) {
+          mockBodyText = JSON.stringify(parsedBody.map(item => typeof item === 'object' && item !== null ? { ...item, offline: true, queued: true } : item));
+        } else if (parsedBody && typeof parsedBody === 'object') {
+          mockBodyText = JSON.stringify([{ ...parsedBody, offline: true, queued: true }]);
+        } else {
+          mockBodyText = '[]';
+        }
+      } else if (parsedBody) {
+        mockBodyText = JSON.stringify(parsedBody);
+      } else {
+        mockBodyText = JSON.stringify({ offline: true, queued: true });
       }
       
       return new Response(mockBodyText, {
         status: 202,
         statusText: 'Accepted (Offline Queued)',
         headers: { 
-          'Content-Type': 'application/json',
+          'Content-Type': contentType,
           [OFFLINE_QUEUED_HEADER]: 'true'
         }
       });

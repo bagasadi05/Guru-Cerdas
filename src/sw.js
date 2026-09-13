@@ -75,21 +75,19 @@ registerRoute(
 
 
 // ============================================
-// OFFLINE MUTATION QUEUE (BACKGROUND SYNC)
+// OFFLINE MUTATION ROUTING (NETWORK-ONLY)
 // ============================================
-// Intercepts failed POST/PATCH/PUT/DELETE requests to Supabase and saves them to IndexedDB.
-// When internet is restored, the Service Worker automatically retries these requests.
-const bgSyncPlugin = new BackgroundSyncPlugin('supabase-mutations-queue', {
-    maxRetentionTime: 24 * 60, // Retry for max of 24 Hours (specified in minutes)
-});
-
+// The application layer (OfflineQueueService in src/services/offlineQueue.ts and
+// resilientSupabaseFetch in src/services/supabase.ts) manages mutation queueing,
+// retry backoff, conflict resolution, UI sync progress, and undo capability.
+// To avoid double-submission on reconnection, the Service Worker passes mutation
+// requests directly through NetworkOnly so network failures are handled cleanly
+// by the application-layer queue.
 registerRoute(
     ({ url, request }) =>
         url.hostname.includes('supabase') &&
         ['POST', 'PATCH', 'PUT', 'DELETE'].includes(request.method),
-    new NetworkOnly({
-        plugins: [bgSyncPlugin],
-    })
+    new NetworkOnly()
 );
 
 // Cache Supabase API responses (NetworkFirst - try network, fallback to cache)

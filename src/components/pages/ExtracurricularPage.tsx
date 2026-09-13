@@ -4,7 +4,7 @@ import { Trophy, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { getJsPDF, getAutoTable, getExcelJS } from '../../utils/dynamicImports';
-import { formatExportDate } from '../../utils/exportUtils';
+import { formatExportDate } from '../../utils/exportFormatUtils';
 
 // Types & Hooks
 import { Extracurricular, Gender } from './extracurricular/types';

@@ -17,7 +17,7 @@ import { OfflineBanner, SWUpdateBanner } from './components/StatusIndicators';
 import { GlobalSearchProvider } from './components/GlobalSearchContext';
 import { TourProvider } from './components/OnboardingHelp';
 import { useKeyboardShortcuts } from './components/advanced-features/useKeyboardShortcuts';
-import { startCleanupScheduler } from './services/CleanupService';
+import { startCleanupScheduler, stopCleanupScheduler } from './services/CleanupService';
 import { cleanupExpiredBackups } from './utils/dataBackup';
 import { SkipToMainContent } from './utils/pageAccessibility';
 import { useAppSearch } from './hooks/useAppSearch';
@@ -44,11 +44,6 @@ import {
   ExtracurricularPageSkeleton,
 } from '@/components/skeletons';
 
-// Start cleanup scheduler on app load
-startCleanupScheduler();
-
-// Cleanup expired backups on app load
-void cleanupExpiredBackups();
 
 // Lazy load pages for code splitting using path aliases
 const RoleSelectionPage = lazy(() => import('@/components/pages/RoleSelectionPage'));
@@ -80,26 +75,9 @@ const SimpleHelpCenter = lazy(() => import('./components/SimpleHelpCenter').then
 const GlobalSearchModal = lazy(() => import('./components/SearchSystem').then(m => ({ default: m.GlobalSearchModal })));
 const KeyboardShortcutsPanel = lazy(() => import('./components/advanced-features/KeyboardShortcutsPanel').then(m => ({ default: m.KeyboardShortcutsPanel })));
 
-export const preloadRoute = (path: string) => {
-  const baseRoute = path.split('/')[1]; // get the first part of the path
-  switch (`/${baseRoute}`) {
-    case '/dashboard': import('@/components/pages/DashboardPage'); break;
-    case '/absensi': import('@/components/pages/AttendancePage'); break;
-    case '/siswa': import('@/components/pages/StudentsPage'); import('@/components/pages/StudentDetailPage'); break;
-    case '/jadwal': import('@/components/pages/SchedulePage'); break;
-    case '/pengaturan': import('@/components/pages/SettingsPage'); break;
-    case '/tugas': import('@/components/pages/TasksPage'); break;
-    case '/cetak-rapot': import('@/components/pages/ReportPage'); break;
-    case '/input-massal': import('@/components/pages/MassInputPage'); break;
-    case '/analytics': import('@/components/pages/AnalyticsPage'); break;
-    case '/admin': import('@/components/pages/AdminPage'); break;
-    case '/ekstrakurikuler': import('@/components/pages/ExtracurricularPage'); break;
-    case '/brankas': import('@/components/pages/BrankasPage'); break;
-    case '/pemulihan': import('@/components/pages/PemulihanPage'); break;
-    case '/bintang': import('@/components/pages/bintang/BintangDashboardPage'); break;
-    case '/modul-ajar': import('@/components/pages/modul-ajar/ModulAjarCreatorPage'); break;
-  }
-};
+// Re-export preloadRoute from dedicated utility for backward compatibility
+export { preloadRoute } from './utils/routePreloader';
+
 
 
 // A wrapper for routes that require authentication.
@@ -230,6 +208,14 @@ function AppContent() {
     const handleOpenHelp = () => setShowHelp(true);
     document.addEventListener('open-help-center', handleOpenHelp);
     return () => document.removeEventListener('open-help-center', handleOpenHelp);
+  }, []);
+
+  React.useEffect(() => {
+    startCleanupScheduler();
+    void cleanupExpiredBackups();
+    return () => {
+      stopCleanupScheduler();
+    };
   }, []);
 
   return (

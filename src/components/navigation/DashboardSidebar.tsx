@@ -8,7 +8,7 @@ import { useSound } from '../../hooks/useSound';
 import { getDashboardNavSections } from './dashboardMenuConfig';
 import { EASY_MODE_PATHS } from './menuRegistry';
 import { useAccessibility } from '../ui/AccessibilityFeatures';
-import { preloadRoute } from '../../App';
+import { preloadRoute } from '../../utils/routePreloader';
 
 interface DashboardSidebarProps {
   isAdmin: boolean;

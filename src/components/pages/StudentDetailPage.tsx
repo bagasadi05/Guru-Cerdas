@@ -354,13 +354,35 @@ const StudentDetailPage = () => {
                                 <h1 className="f-text-xl text-slate-900 dark:text-white font-bold leading-snug truncate">
                                     {student.name}
                                 </h1>
-                                <p className="f-text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                                    {student.classes?.name
-                                        ? (student.classes.name.toLowerCase().startsWith('kelas')
-                                            ? student.classes.name
-                                            : `Kelas ${student.classes.name}`)
-                                        : 'N/A'}
-                                </p>
+                                <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                                    <p className="f-text-sm text-slate-500 dark:text-slate-400">
+                                        {student.classes?.name
+                                            ? (student.classes.name.toLowerCase().startsWith('kelas')
+                                                ? student.classes.name
+                                                : `Kelas ${student.classes.name}`)
+                                            : 'N/A'}
+                                    </p>
+                                    {student.gender && (
+                                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                            {student.gender}
+                                        </span>
+                                    )}
+                                    {student.nis && (
+                                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                            NIS: {student.nis}
+                                        </span>
+                                    )}
+                                    {student.nisn && (
+                                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                            NISN: {student.nisn}
+                                        </span>
+                                    )}
+                                    {student.parent_phone && (
+                                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
+                                            WA: {student.parent_phone}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
@@ -495,6 +517,8 @@ const StudentDetailPage = () => {
 
                                         onNotifyParent={handleNotifyParent}
                                         studentName={student.name}
+                                        parentName={student.parent_name}
+                                        parentPhone={student.parent_phone}
                                         className={student.classes?.name || '-'}
                                         isOnline={isOnline}
                                         currentUserId={user?.id}
@@ -682,16 +706,21 @@ const StudentDetailPage = () => {
                         </div>
                     </Modal>
                 ) : modalState.type !== 'closed' && modalState.type !== 'confirmDelete' && (
-                    <Modal isOpen={true} onClose={() => setModalState({ type: 'closed' })} title={
-                        modalState.type === 'editStudent' ? 'Edit Profil Siswa' :
-                            modalState.type === 'report' ? (modalState.data ? 'Edit Catatan' : 'Tambah Catatan Baru') :
-                                modalState.type === 'academic' ? (modalState.data ? 'Edit Nilai' : 'Tambah Nilai Baru') :
-                                    modalState.type === 'quiz' ? (modalState.data ? 'Edit Poin' : 'Tambah Poin Keaktifan') :
-                                        modalState.type === 'editCommunication' ? 'Edit Pesan' :
-                                            modalState.type === 'portalAccess' ? 'Akses Portal Orang Tua' :
-                                                modalState.type === 'achievement' ? (modalState.mode === 'edit' ? 'Edit Prestasi' : 'Tambah Prestasi Baru') :
-                                                    'Tambah Pelanggaran'
-                    }>
+                    <Modal
+                        isOpen={true}
+                        onClose={() => setModalState({ type: 'closed' })}
+                        maxWidth={modalState.type === 'editStudent' ? 'max-w-xl' : undefined}
+                        title={
+                            modalState.type === 'editStudent' ? 'Edit Profil Siswa' :
+                                modalState.type === 'report' ? (modalState.data ? 'Edit Catatan' : 'Tambah Catatan Baru') :
+                                    modalState.type === 'academic' ? (modalState.data ? 'Edit Nilai' : 'Tambah Nilai Baru') :
+                                        modalState.type === 'quiz' ? (modalState.data ? 'Edit Poin' : 'Tambah Poin Keaktifan') :
+                                            modalState.type === 'editCommunication' ? 'Edit Pesan' :
+                                                modalState.type === 'portalAccess' ? 'Akses Portal Orang Tua' :
+                                                    modalState.type === 'achievement' ? (modalState.mode === 'edit' ? 'Edit Prestasi' : 'Tambah Prestasi Baru') :
+                                                        'Tambah Pelanggaran'
+                        }
+                    >
                         {modalState.type === 'editStudent' && (
                             <EditStudentForm
                                 defaultValues={modalState.data}

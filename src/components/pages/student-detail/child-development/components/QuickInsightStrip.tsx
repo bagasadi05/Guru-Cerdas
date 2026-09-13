@@ -2,6 +2,7 @@ import React from 'react';
 import { MotionDiv, type Variants } from '../../../../ui/MotionComponents';
 import { duration as motionDuration, easing } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
+import { stripMarkdown } from '../../../../../utils/textSanitizer';
 
 /**
  * QuickInsightStrip — Three bite-sized insights at a glance.
@@ -112,7 +113,7 @@ export const QuickInsightStrip: React.FC<QuickInsightStripProps> = ({
               {cfg.title}
             </p>
             <p className="text-sm font-medium leading-snug text-slate-700 dark:text-slate-200 line-clamp-3">
-              {values[cfg.key]}
+              {stripMarkdown(values[cfg.key])}
             </p>
           </div>
         </MotionDiv>

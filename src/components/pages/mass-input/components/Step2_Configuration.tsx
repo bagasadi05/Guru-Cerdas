@@ -95,7 +95,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
     attitudeDate, setAttitudeDate,
     attitudeCategory = 'Adab & Akhlak', setAttitudeCategory,
     attitudeName = 'Adab & Kesantunan', setAttitudeName,
-    attitudePoints = 1, setAttitudePoints,
+    attitudePoints: _attitudePoints = 1, setAttitudePoints: _setAttitudePoints,
     attitudeNotes, setAttitudeNotes,
 }) => {
     const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
@@ -259,15 +259,8 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                     <label htmlFor="quiz-date" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Tanggal</label>
                                     <Input id="quiz-date" type="date" value={quizInfo.date} onChange={e => setQuizInfo(p => ({ ...p, date: e.target.value }))} className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl" />
                                 </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="space-y-2">
-                                        <label htmlFor="quiz-points" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Poin</label>
-                                        <Input id="quiz-points" type="number" min="1" max="100" value={quizInfo.points} onChange={e => setQuizInfo(p => ({ ...p, points: Math.max(1, Number(e.target.value) || 1) }))} className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-center font-bold" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label htmlFor="quiz-max-points" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Poin Maks</label>
-                                        <Input id="quiz-max-points" type="number" min="1" max="100" value={quizInfo.max_points} onChange={e => setQuizInfo(p => ({ ...p, max_points: Math.max(1, Number(e.target.value) || 1) }))} className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-center font-bold" />
-                                    </div>
+                                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+                                    <span className="font-bold">+1 poin tetap</span> diberikan untuk setiap siswa yang dipilih.
                                 </div>
                                 
                                 {handleSubmit && selectedClass === 'all' && (
@@ -649,26 +642,13 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                     </div>
                                 </div>
 
-                                {/* 4. Bobot Poin Sikap */}
+                                {/* 4. Poin Sikap */}
                                 <div className="space-y-2">
                                     <label className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">
-                                        Bobot Poin Apresiasi
+                                        Poin Apresiasi
                                     </label>
-                                    <div className="flex items-center gap-2">
-                                        {[1, 2, 3].map(pts => (
-                                            <button
-                                                key={pts}
-                                                type="button"
-                                                onClick={() => setAttitudePoints?.(pts)}
-                                                className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all border ${
-                                                    (attitudePoints || 1) === pts
-                                                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20 scale-[1.02]'
-                                                        : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-emerald-400'
-                                                }`}
-                                            >
-                                                +{pts} Poin Bintang
-                                            </button>
-                                        ))}
+                                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200">
+                                        <span className="font-bold">+1 poin tetap</span> untuk setiap siswa yang dipilih.
                                     </div>
                                 </div>
 

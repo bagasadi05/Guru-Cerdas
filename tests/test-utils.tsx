@@ -10,18 +10,18 @@ import { vi } from 'vitest';
 
 // Mock supabase to prevent errors in SemesterProvider
 vi.mock('../src/services/supabase', () => {
-    const createSelectBuilder = () => ({
-        order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        single: vi.fn(() => Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'No rows found' } })),
-        eq: vi.fn(() => ({
-            eq: vi.fn(() => Promise.resolve({ data: [], error: null })),
-            is: vi.fn(() => ({
-                order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-            })),
+    const createSelectBuilder = () => {
+        const builder: any = {
             order: vi.fn(() => Promise.resolve({ data: [], error: null })),
             single: vi.fn(() => Promise.resolve({ data: null, error: { code: 'PGRST116', message: 'No rows found' } })),
-        })),
-    });
+            maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })),
+            is: vi.fn(() => builder),
+            eq: vi.fn(() => builder),
+            then: (onfulfilled?: any, onrejected?: any) =>
+                Promise.resolve({ data: [], error: null }).then(onfulfilled, onrejected),
+        };
+        return builder;
+    };
 
     return {
         supabase: {

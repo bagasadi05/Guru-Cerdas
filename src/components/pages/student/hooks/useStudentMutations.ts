@@ -6,6 +6,7 @@ import { StudentMutationVars, ReportMutationVars, AcademicMutationVars, QuizMuta
 import { writeAuditLog } from '../../../../services/auditTrail';
 import { queryKeys } from '../../../../lib/queryKeys';
 import { dedupeAcademicRecords } from '../../../../utils/academicRecordUtils';
+import { normalizeStudentName } from '../../../../utils/textSanitizer';
 
 const DUPLICATE_GUARD_WINDOW_MINUTES = 10;
 
@@ -70,9 +71,12 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
     const studentMutation = useMutation({
         mutationFn: async (data: StudentMutationVars) => {
             if (!studentId) throw new Error("Student ID is missing");
-            const authUser = await getAuthUser();
-            const userId = authUser.id;
-            const { error } = await supabase.from('students').update(data).eq('id', studentId).eq('user_id', userId);
+            await getAuthUser();
+            const updatePayload = {
+                ...data,
+                ...(data.name ? { name: normalizeStudentName(data.name) } : {}),
+            };
+            const { error } = await supabase.from('students').update(updatePayload).eq('id', studentId);
             if (error) throw error;
         },
         ...mutationOptions

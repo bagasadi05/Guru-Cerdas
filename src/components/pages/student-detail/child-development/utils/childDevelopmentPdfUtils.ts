@@ -1,9 +1,11 @@
 import type jsPDF from 'jspdf';
+import { stripMarkdown } from '../../../../../utils/textSanitizer';
 
-// Helper function to sanitize text for jsPDF rendering (stripping emojis/unicode >= 256 except bullet U+2022)
+// Helper function to sanitize text for jsPDF rendering (stripping markdown asterisks and emojis/unicode >= 256 except bullet U+2022)
 export const cleanTextForPDF = (text: string | null | undefined): string => {
   if (!text) return '';
-  const cleaned = text
+  const noMd = stripMarkdown(text);
+  const cleaned = noMd
     .replace(/[\u201c\u201d\u201e\u201f\u2033\u2036]/g, '"')
     .replace(/[\u2018\u2019\u201a\u201b\u2032\u2035]/g, "'")
     .replace(/[\u2013\u2014\u2015]/g, '-')

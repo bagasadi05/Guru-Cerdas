@@ -134,7 +134,7 @@ export const useStudentDetailPage = () => {
             if (!studentId || !user) throw new Error("User or Student ID not found");
             const studentRes = await supabase
                 .from('students')
-                .select('id, name, user_id, class_id, gender, avatar_url, access_code, parent_name, parent_phone, created_at, deleted_at')
+                .select('id, name, user_id, class_id, gender, avatar_url, access_code, parent_name, parent_phone, nis, nisn, birth_date, created_at, deleted_at')
                 .eq('id', studentId)
                 .is('deleted_at', null)
                 .single();
@@ -429,6 +429,11 @@ export const useStudentDetailPage = () => {
             name: normalizeStudentName(data.name),
             gender: data.gender,
             class_id: data.class_id,
+            birth_date: data.birth_date ? data.birth_date : null,
+            nis: data.nis?.trim() || null,
+            nisn: data.nisn?.trim() || null,
+            parent_name: data.parent_name?.trim() || null,
+            parent_phone: data.parent_phone?.trim() || null,
         };
         studentMutation.mutate(studentPayload);
     };

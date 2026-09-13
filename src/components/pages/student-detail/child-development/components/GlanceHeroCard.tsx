@@ -5,6 +5,7 @@ import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 import { ScoreRing } from './ScoreRing';
 import { DownloadIcon, RefreshCwIcon, SparklesIcon, WifiOffIcon, AlertTriangleIcon } from '../../../../Icons';
 import { Button } from '../../../../ui/Button';
+import { stripMarkdown } from '../../../../../utils/textSanitizer';
 
 /**
  * GlanceHeroCard — Top-level student summary card.
@@ -150,7 +151,7 @@ export const GlanceHeroCard: React.FC<GlanceHeroCardProps> = ({
             {/* Narrative assessment (max 2 lines) */}
             {overallAssessment && (
               <p className="mt-2.5 text-sm leading-relaxed text-slate-600 dark:text-slate-300 line-clamp-2">
-                {overallAssessment}
+                {stripMarkdown(overallAssessment)}
               </p>
             )}
           </div>

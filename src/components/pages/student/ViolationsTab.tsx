@@ -1,14 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { CardTitle, CardDescription } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { PlusIcon, ShieldAlertIcon, PencilIcon, TrashIcon, AlertTriangleIcon, CameraIcon, BellIcon, FilterIcon, FileTextIcon, FileSpreadsheetIcon, DownloadIcon, LockIcon, UserIcon } from 'lucide-react';
+import { PlusIcon, ShieldAlertIcon, PencilIcon, TrashIcon, AlertTriangleIcon, CameraIcon, BellIcon, FilterIcon, FileTextIcon, FileSpreadsheetIcon, DownloadIcon, LockIcon, UserIcon, MessageCircle } from 'lucide-react';
 import { ViolationRow } from './types';
 import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../../ui/DropdownMenu';
 import { exportViolationsToPDF, exportViolationsToExcel } from '../../../services/violationExport';
 import { useAuth } from '../../../hooks/useAuth';
 import { useToast } from '../../../hooks/useToast';
-
-
+import { createWhatsAppLink, generateViolationMessage } from '../../../utils/whatsappUtils';
 import { useSemester } from '../../../contexts/SemesterContext';
 
 // Severity levels configuration
@@ -39,6 +38,8 @@ interface ViolationsTabProps {
     isOnline: boolean;
     currentUserId?: string;
     studentName?: string;
+    parentName?: string | null;
+    parentPhone?: string | null;
     className?: string;
     semesterLabel?: string;
     isHomeroomTeacher?: boolean;
@@ -146,6 +147,9 @@ const ViolationStats: React.FC<{ violations: ViolationRow[] }> = ({ violations }
 // Violation Card Component
 const ViolationCard: React.FC<{
     violation: ViolationRow;
+    studentName?: string;
+    parentName?: string | null;
+    parentPhone?: string | null;
     onEdit: () => void;
     onDelete: () => void;
     onNotifyParent?: () => void;
@@ -154,10 +158,50 @@ const ViolationCard: React.FC<{
     currentUserId?: string;
     isHomeroomTeacher?: boolean;
     canManageAllRecords?: boolean;
-}> = ({ violation, onEdit, onDelete, onNotifyParent, isOnline, isLocked = false, currentUserId, isHomeroomTeacher = false, canManageAllRecords = false }) => {
+}> = ({
+    violation,
+    studentName,
+    parentName,
+    parentPhone,
+    onEdit,
+    onDelete,
+    onNotifyParent,
+    isOnline,
+    isLocked = false,
+    currentUserId,
+    isHomeroomTeacher = false,
+    canManageAllRecords = false,
+}) => {
+    const toast = useToast();
     const severity = isSeverityLevel(violation.severity) ? SEVERITY_LEVELS[violation.severity] : SEVERITY_LEVELS.ringan;
     const isCreator = violation.user_id === currentUserId;
     const canModify = (isCreator || isHomeroomTeacher || canManageAllRecords) && !isLocked;
+
+    const handleSendWhatsApp = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!parentPhone || parentPhone.trim() === '') {
+            toast.error('Nomor WhatsApp orang tua belum terdaftar di profil siswa. Silakan lengkapi di form edit siswa.');
+            return;
+        }
+        const message = generateViolationMessage(
+            studentName || 'Siswa',
+            {
+                description: violation.description,
+                points: violation.points,
+                date: violation.date,
+                severity: violation.severity,
+                context_notes: violation.context_notes,
+                recorded_by_name: violation.recorded_by_name,
+            },
+            parentName
+        );
+        const link = createWhatsAppLink(parentPhone, message);
+        window.open(link, '_blank', 'noopener,noreferrer');
+
+        if (onNotifyParent) {
+            onNotifyParent();
+        }
+    };
 
     return (
         <div className={`group relative p-4 rounded-xl border-2 ${severity.borderClass} ${severity.bgClass} transition-all hover:shadow-md`}>
@@ -175,7 +219,18 @@ const ViolationCard: React.FC<{
                         </span>
                     )}
                 </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+                        onClick={handleSendWhatsApp}
+                        disabled={!isOnline}
+                        title={parentPhone ? `Kirim WA ke Orang Tua (${parentPhone})` : 'Nomor WA orang tua belum diisi'}
+                        aria-label="Kirim notifikasi via WhatsApp"
+                    >
+                        <MessageCircle className="h-4 w-4" />
+                    </Button>
                     {!violation.parent_notified && onNotifyParent && (
                         <Button
                             variant="ghost"
@@ -183,7 +238,7 @@ const ViolationCard: React.FC<{
                             className="h-8 w-8 text-blue-500 hover:text-blue-600"
                             onClick={onNotifyParent}
                             disabled={!isOnline}
-                            title="Notifikasi Orang Tua"
+                            title="Notifikasi Portal Siswa"
                         >
                             <BellIcon className="h-4 w-4" />
                         </Button>
@@ -254,6 +309,8 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
     isOnline,
     currentUserId,
     studentName,
+    parentName,
+    parentPhone,
     className,
     isHomeroomTeacher = false,
     semesterLabel,
@@ -377,6 +434,9 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
                                 <ViolationCard
                                     key={v.id}
                                     violation={v}
+                                    studentName={studentName}
+                                    parentName={parentName}
+                                    parentPhone={parentPhone}
                                     onEdit={() => onEdit(v)}
                                     onDelete={() => onDelete(v.id)}
                                     onNotifyParent={onNotifyParent ? () => onNotifyParent(v) : undefined}

@@ -31,32 +31,50 @@ if (typeof window !== 'undefined') {
 }
 
 // Mock Supabase client
-vi.mock('./services/supabase', () => ({
-    supabase: {
-        from: vi.fn(() => ({
-            select: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                    eq: vi.fn(() => ({
-                        order: vi.fn().mockResolvedValue({ data: [], error: null }),
-                    })),
-                    in: vi.fn().mockResolvedValue({ data: [], error: null }),
-                })),
-            })),
+vi.mock('./services/supabase', () => {
+    const createBuilder = () => {
+        const builder: any = {
+            select: vi.fn(() => builder),
+            insert: vi.fn(() => builder),
+            update: vi.fn(() => builder),
+            delete: vi.fn(() => builder),
             upsert: vi.fn().mockResolvedValue({ error: null }),
-        })),
-        auth: {
-            getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
-            onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
-            signInWithPassword: vi.fn(),
-            signOut: vi.fn(),
-        }
-    },
-    ai: {
-        models: {
-            generateContent: vi.fn(),
-        }
-    }
-}));
+            eq: vi.fn(() => builder),
+            neq: vi.fn(() => builder),
+            is: vi.fn(() => builder),
+            in: vi.fn(() => builder),
+            or: vi.fn(() => builder),
+            gte: vi.fn(() => builder),
+            lte: vi.fn(() => builder),
+            order: vi.fn(() => builder),
+            limit: vi.fn(() => builder),
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            then: (onfulfilled?: any, onrejected?: any) =>
+                Promise.resolve({ data: [], error: null }).then(onfulfilled, onrejected),
+        };
+        return builder;
+    };
+
+    return {
+        supabase: {
+            from: vi.fn(() => createBuilder()),
+            auth: {
+                getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+                onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+                signInWithPassword: vi.fn(),
+                signOut: vi.fn(),
+            },
+            rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+            channel: vi.fn(() => ({ on: vi.fn().mockReturnThis(), subscribe: vi.fn() })),
+        },
+        ai: {
+            models: {
+                generateContent: vi.fn(),
+            },
+        },
+    };
+});
 
 // JSDOM does not implement scrollIntoView. Components that scroll a selected
 // item into view would otherwise throw during effect flush.

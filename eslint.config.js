@@ -48,4 +48,12 @@ export default tseslint.config(
             '@typescript-eslint/no-unused-expressions': 'error',
         },
     },
+    {
+        files: ['tests/**/*.{ts,tsx}', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}', 'src/setupTests.ts'],
+        rules: {
+            // Test files frequently use 'any' for partial mocks, spies, and synthetic test payloads
+            '@typescript-eslint/no-explicit-any': 'off',
+        },
+    },
 );
+

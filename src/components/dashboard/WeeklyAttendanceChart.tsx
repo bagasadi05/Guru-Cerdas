@@ -5,12 +5,12 @@ type WeeklyAttendance = { day: string; present_percentage: number };
 const WeeklyAttendanceChart: React.FC<{ data: WeeklyAttendance[] }> = ({ data }) => {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const chartHeight = 160;
-    const barWidth = 32;
-    const gap = 20;
+    const barWidth = 38;
+    const gap = 18;
     const totalWidth = data.length * (barWidth + gap) + gap;
 
     return (
-        <div className="w-full h-full flex justify-center items-end pb-2">
+        <div className="w-full flex justify-center items-end py-2">
             <svg
                 width="100%"
                 height={chartHeight}
@@ -32,10 +32,13 @@ const WeeklyAttendanceChart: React.FC<{ data: WeeklyAttendance[] }> = ({ data })
                     </filter>
                 </defs>
                 {data.map((day, index) => {
+                    const isWeekend = day.day.toLowerCase().startsWith('sab') || day.day.toLowerCase().startsWith('min');
+                    const isHoliday = isWeekend && day.present_percentage === 0;
                     const barHeight = day.present_percentage > 0 ? (day.present_percentage / 100) * (chartHeight - 48) : 4;
                     const x = index * (barWidth + gap) + gap;
                     const y = chartHeight - barHeight - 24;
                     const isHovered = hoveredIndex === index;
+
 
                     return (
                         <g
@@ -87,10 +90,12 @@ const WeeklyAttendanceChart: React.FC<{ data: WeeklyAttendance[] }> = ({ data })
                                 className={`transition-colors duration-200 ${
                                     isHovered
                                         ? 'fill-emerald-600 dark:fill-emerald-400 font-extrabold'
+                                        : isHoliday
+                                        ? 'fill-slate-400 dark:fill-slate-500 font-medium'
                                         : 'fill-slate-500 dark:fill-slate-400'
                                 }`}
                             >
-                                {Math.round(day.present_percentage)}%
+                                {isHoliday ? 'Libur' : `${Math.round(day.present_percentage)}%`}
                             </text>
 
                             {/* Day Name Label */}
@@ -113,9 +118,9 @@ const WeeklyAttendanceChart: React.FC<{ data: WeeklyAttendance[] }> = ({ data })
                             {isHovered && (
                                 <g className="transition-opacity duration-300 animate-fade-in pointer-events-none" style={{ opacity: 1 }}>
                                     <rect
-                                        x={x + barWidth / 2 - 24}
+                                        x={x + barWidth / 2 - (isHoliday ? 34 : 26)}
                                         y={Math.max(y - 40, 2)}
-                                        width={48}
+                                        width={isHoliday ? 68 : 52}
                                         height={26}
                                         rx="6"
                                         className="fill-slate-900 dark:fill-white shadow-xl"
@@ -128,7 +133,7 @@ const WeeklyAttendanceChart: React.FC<{ data: WeeklyAttendance[] }> = ({ data })
                                         fontWeight="bold"
                                         className="fill-white dark:fill-slate-900"
                                     >
-                                        {Math.round(day.present_percentage)}%
+                                        {isHoliday ? 'Hari Libur' : `${Math.round(day.present_percentage)}%`}
                                     </text>
                                 </g>
                             )}

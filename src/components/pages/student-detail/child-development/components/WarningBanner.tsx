@@ -3,6 +3,7 @@ import { MotionSpan, MotionDiv, AnimatePresence } from '../../../../ui/MotionCom
 import { duration as motionDuration, easing } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
 import { AlertCircleIcon, ChevronDownIcon } from '../../../../Icons';
+import { stripMarkdown } from '../../../../../utils/textSanitizer';
 
 // ── Prop Types ──────────────────────────────────────────────────────────────
 interface WarningBannerProps {
@@ -88,7 +89,7 @@ export const WarningBanner: React.FC<WarningBannerProps> = ({
                     className="flex items-start gap-2 text-sm text-rose-700 dark:text-rose-300"
                   >
                     <AlertCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0 text-rose-400 dark:text-rose-500" />
-                    <span>{warning}</span>
+                    <span>{stripMarkdown(warning)}</span>
                   </li>
                 ))}
               </ul>

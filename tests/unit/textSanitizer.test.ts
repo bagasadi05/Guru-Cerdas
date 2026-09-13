@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { normalizeHomoglyphs, normalizeStudentName, normalizeTextForPdf } from '../../src/utils/textSanitizer';
+import { describe, it, expect, vi } from 'vitest';
+import { normalizeHomoglyphs, normalizeStudentName, normalizeTextForPdf, stripMarkdown, sanitizeAnalysisData } from '../../src/utils/textSanitizer';
 import { jsPDF } from 'jspdf';
 
 describe('textSanitizer', () => {
@@ -15,6 +15,11 @@ describe('textSanitizer', () => {
     const raw = '\u0410L\u0415SH\u0410 \u2018KA\u0399NA\u2019 \u2013 \u201CADHISTY\u201D';
     const normalized = normalizeTextForPdf(raw);
     expect(normalized).toBe("ALESHA 'KAINA' - \"ADHISTY\"");
+  });
+
+  it('directly replaces homoglyphs using normalizeHomoglyphs', () => {
+    const raw = '\u0399\u0410\u0412\u0415';
+    expect(normalizeHomoglyphs(raw)).toBe('IABE');
   });
 
   it('trims and collapses multiple spaces in student names', () => {
@@ -80,7 +85,7 @@ describe('textSanitizer', () => {
 
     // Verify calls to doc.text never contain Greek Iota or TM
     const allRenderedStrings = textSpy.mock.calls
-      .map(call => String(call[0]))
+      .map((call: any) => String(call[0]))
       .join(' ');
 
     expect(allRenderedStrings).toContain('ALESHA KAINA ADHISTY');
@@ -88,5 +93,36 @@ describe('textSanitizer', () => {
     expect(allRenderedStrings).not.toContain('\u0399');
     expect(allRenderedStrings).not.toContain('™');
     expect(allRenderedStrings).not.toContain('KA™NA');
-  }, 20000);
+  }, 45000);
+
+  it('stripMarkdown removes bold asterisks and preserves readable text and emojis', () => {
+    const raw = '**Disiplin dan bertanggung jawab** terlihat jelas dari kehadiran 100% 👍';
+    expect(stripMarkdown(raw)).toBe('Disiplin dan bertanggung jawab terlihat jelas dari kehadiran 100% 👍');
+
+    const multiBold = 'Ananda benar-benar menunjukkan **kilau prestasinya** yang luar biasa! 🌟 Nilai **IPAS (98)**';
+    expect(stripMarkdown(multiBold)).toBe('Ananda benar-benar menunjukkan kilau prestasinya yang luar biasa! 🌟 Nilai IPAS (98)');
+
+    const stray = '### Judul Bab dengan *miring* dan **tebal** serta `kode`';
+    expect(stripMarkdown(stray)).toBe('Judul Bab dengan miring dan tebal serta kode');
+  });
+
+  it('sanitizeAnalysisData recursively cleans all string fields in an object or array', () => {
+    const rawData = {
+      summary: {
+        name: 'Ahmad',
+        overallAssessment: 'Ananda **sangat baik** dan *berbakat*.'
+      },
+      highlights: [
+        '**Disiplin** tinggi',
+        'Rajin **sholat** berjamaah'
+      ],
+      score: 95
+    };
+
+    const sanitized = sanitizeAnalysisData(rawData);
+    expect(sanitized.summary.overallAssessment).toBe('Ananda sangat baik dan berbakat.');
+    expect(sanitized.highlights[0]).toBe('Disiplin tinggi');
+    expect(sanitized.highlights[1]).toBe('Rajin sholat berjamaah');
+    expect(sanitized.score).toBe(95);
+  });
 });

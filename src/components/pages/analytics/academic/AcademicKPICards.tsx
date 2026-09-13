@@ -66,7 +66,7 @@ export const AcademicKPICards: React.FC<AcademicKPICardsProps> = ({ kpi, kktpThr
                                 style={{ width: `${kpi.completionRate}%` }}
                             />
                         </div>
-                        <p className="text-[11px] text-slate-400 mt-0.5">{kpi.completionRate}% kelengkapan</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">{kpi.completionRate}% siswa tercatat</p>
                     </div>
                 </CardContent>
             </Card>
@@ -100,7 +100,7 @@ export const AcademicKPICards: React.FC<AcademicKPICardsProps> = ({ kpi, kktpThr
                 <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                            Kelengkapan
+                            Cakupan Siswa
                         </span>
                         <div className={`p-1.5 rounded-lg ${kpi.completionRate >= 80 ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-rose-100 dark:bg-rose-900/30'}`}>
                             <CheckCircle className={`w-4 h-4 ${kpi.completionRate >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`} />

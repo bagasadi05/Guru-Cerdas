@@ -8,12 +8,14 @@ interface LeaderboardCardProps {
     studentsData: StudentGameData[];
     classes: { id: string; name: string }[];
     defaultOpen?: boolean;
+    collapsible?: boolean;
 }
 
 export const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
     studentsData,
     classes,
-    defaultOpen = false,
+    defaultOpen = true,
+    collapsible = false,
 }) => {
     const [selectedClass, setSelectedClass] = useState<string>('');
     const [limit, setLimit] = useState(5);
@@ -26,19 +28,20 @@ export const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
     const getRankStyle = (rank: number) => {
         switch (rank) {
             case 1:
-                return 'bg-gradient-to-r from-amber-700 to-orange-800 text-white';
+                return 'bg-gradient-to-br from-amber-400 to-yellow-500 text-amber-950 font-black shadow-sm';
             case 2:
-                return 'bg-gradient-to-r from-slate-100 to-slate-200 text-slate-900';
+                return 'bg-gradient-to-br from-slate-200 to-slate-300 text-slate-800 dark:from-slate-600 dark:to-slate-500 dark:text-white font-bold shadow-sm';
             case 3:
-                return 'bg-gradient-to-r from-amber-700 to-orange-800 text-white';
+                return 'bg-gradient-to-br from-amber-700 to-orange-700 text-white font-bold shadow-sm';
             default:
-                return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
+                return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold';
         }
     };
 
     const getRankIcon = (rank: number) => {
-        if (rank === 1) return <TrophyIcon className="w-4 h-4" />;
-        if (rank <= 3) return <MedalIcon className="w-4 h-4" />;
+        if (rank === 1) return <TrophyIcon className="w-4 h-4 text-amber-950" />;
+        if (rank === 2) return <MedalIcon className="w-4 h-4 text-slate-800 dark:text-white" />;
+        if (rank === 3) return <MedalIcon className="w-4 h-4 text-white" />;
         return rank;
     };
 
@@ -50,23 +53,36 @@ export const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-700/60 overflow-hidden shadow-sm h-full flex flex-col">
             {/* Header */}
             <div className="p-4 border-b border-slate-200/60 dark:border-slate-700/60 bg-amber-50/70 dark:bg-amber-900/20">
-                <div className="flex items-center justify-between">
-                    <button type="button"
-                        onClick={() => setIsOpen(!isOpen)}
-                        className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-                    >
-                        <TrophyIcon className="w-5 h-5 text-amber-500" />
-                        <h3 className="font-bold text-slate-900 dark:text-white">Papan Peringkat</h3>
-                        {isOpen ? <ChevronUpIcon className="w-4 h-4 text-slate-500" /> : <ChevronDownIcon className="w-4 h-4 text-slate-500" />}
-                    </button>
+                <div className="flex items-center justify-between gap-2">
+                    {collapsible ? (
+                        <button
+                            type="button"
+                            onClick={() => setIsOpen(!isOpen)}
+                            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                        >
+                            <TrophyIcon className="w-5 h-5 text-amber-500" />
+                            <h3 className="font-bold text-slate-900 dark:text-white">Papan Peringkat</h3>
+                            {isOpen ? <ChevronUpIcon className="w-4 h-4 text-slate-500" /> : <ChevronDownIcon className="w-4 h-4 text-slate-500" />}
+                        </button>
+                    ) : (
+                        <div className="flex items-center gap-2.5">
+                            <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-lg text-amber-600 dark:text-amber-400">
+                                <TrophyIcon className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-slate-900 dark:text-white leading-tight">Papan Peringkat</h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Top Siswa Berprestasi</p>
+                            </div>
+                        </div>
+                    )}
 
-                    {/* Class Filter - Only show if open */}
-                    {isOpen && (
+                    {/* Class Filter */}
+                    {isOpen && classes.length > 0 && (
                         <div className="relative">
                             <select
                                 value={selectedClass}
                                 onChange={(e) => setSelectedClass(e.target.value)}
-                                className="appearance-none pl-3 pr-8 py-1.5 text-xs font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                className="appearance-none pl-3 pr-8 py-1.5 text-xs font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-700 dark:text-slate-200"
                             >
                                 <option value="">Semua Kelas</option>
                                 {classes.map(c => (
@@ -81,46 +97,52 @@ export const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
 
             {/* Leaderboard List */}
             {isOpen && (
-                <>
-                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                        {leaderboard.map((entry) => (
-                            <Link
-                                key={entry.studentId}
-                                to={`/siswa/${entry.studentId}`}
-                                className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                            >
-                                {/* Rank */}
-                                <div
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${getRankStyle(entry.rank)}`}
+                <div className="flex-1 flex flex-col justify-between">
+                    {leaderboard.length === 0 ? (
+                        <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                            Belum ada data siswa atau poin untuk kelas ini.
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                            {leaderboard.map((entry) => (
+                                <Link
+                                    key={entry.studentId}
+                                    to={`/siswa/${entry.studentId}`}
+                                    className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                                 >
-                                    {getRankIcon(entry.rank)}
-                                </div>
+                                    {/* Rank */}
+                                    <div
+                                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${getRankStyle(entry.rank)}`}
+                                    >
+                                        {getRankIcon(entry.rank)}
+                                    </div>
 
-                                {/* Student Info */}
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-slate-900 dark:text-white truncate">
-                                        {entry.studentName}
-                                    </p>
-                                    <p className="text-xs text-slate-500 truncate">{entry.className}</p>
-                                </div>
+                                    {/* Student Info */}
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-slate-900 dark:text-white truncate">
+                                            {entry.studentName}
+                                        </p>
+                                        <p className="text-xs text-slate-500 truncate">{entry.className}</p>
+                                    </div>
 
-                                {/* Badges */}
-                                <BadgeIcons badges={entry.badges} />
+                                    {/* Badges */}
+                                    <BadgeIcons badges={entry.badges} />
 
-                                {/* Points */}
-                                <div className="text-right">
-                                    <p className="font-bold text-amber-600 dark:text-amber-400">
-                                        {entry.totalPoints}
-                                    </p>
-                                    <p className="text-xxs text-slate-400">poin</p>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
+                                    {/* Points */}
+                                    <div className="text-right">
+                                        <p className="font-bold text-amber-600 dark:text-amber-400">
+                                            {entry.totalPoints}
+                                        </p>
+                                        <p className="text-xxs text-slate-400">poin</p>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
 
                     {/* Show More */}
                     {leaderboard.length >= limit && (
-                        <div className="p-3 border-t border-slate-100 dark:border-slate-800">
+                        <div className="p-3 border-t border-slate-100 dark:border-slate-800 mt-auto">
                             <button type="button"
                                 onClick={() => setLimit(prev => prev + 5)}
                                 className="w-full py-2 text-sm font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
@@ -129,7 +151,7 @@ export const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
                             </button>
                         </div>
                     )}
-                </>
+                </div>
             )}
         </div>
     );

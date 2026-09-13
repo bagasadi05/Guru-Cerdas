@@ -265,9 +265,9 @@ const DashboardPage: React.FC = () => {
         icon={<BrainCircuitIcon className="w-5 h-5 text-brand-600 dark:text-brand-400" />}
         dataTutorial="ai-insight"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+        <div className={`grid grid-cols-1 ${isLeadershipOnly ? 'lg:grid-cols-1' : 'lg:grid-cols-2'} gap-4 items-stretch`}>
           {/* AI Insight */}
-          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-sm flex flex-col h-full">
+          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-sm flex flex-col h-full w-full">
             <div className="p-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-gradient-to-r from-brand-500/10 to-brand-400/5">
               <h3 className="flex items-center gap-2 font-semibold text-base text-slate-900 dark:text-white">
                 <BrainCircuitIcon className="w-4 h-4 text-brand-600" />
@@ -312,8 +312,8 @@ const DashboardPage: React.FC = () => {
 
         {/* Leaderboard + Summary Cards */}
         {data && data.students.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4 items-stretch">
-            <div className="h-full">
+          <div className={`grid grid-cols-1 ${isLeadershipOnly ? 'lg:grid-cols-1' : 'lg:grid-cols-2'} gap-4 mt-4 items-stretch`}>
+            <div className="h-full w-full">
               <LeaderboardCard
                 studentsData={data.students.map((s) => {
                   const className = data.classes.find((c) => c.id === s.class_id)?.name || 'N/A';

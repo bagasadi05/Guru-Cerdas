@@ -4,6 +4,7 @@ import { MarkdownText } from '../../../../ui/MarkdownText';
 import { MotionSpan, MotionDiv, AnimatePresence } from '../../../../ui/MotionComponents';
 import { duration as motionDuration } from '../../../../../styles/motion';
 import { useReducedMotion } from '../../../../../hooks/useReducedMotion';
+import { stripMarkdown } from '../../../../../utils/textSanitizer';
 
 const categoryEmojis: Record<string, string> = {
   'Kognitif': '📚',
@@ -74,7 +75,7 @@ export const ActionableRecommendation: React.FC<{
         </div>
 
         {/* Title */}
-        <h4 className="font-bold text-slate-800 dark:text-slate-100 mb-1.5 text-sm">{title}</h4>
+        <h4 className="font-bold text-slate-800 dark:text-slate-100 mb-1.5 text-sm">{stripMarkdown(title)}</h4>
 
         {/* Description */}
         <div className={`text-sm text-slate-600 dark:text-slate-400 leading-relaxed ${!isDescriptionExpanded && isLongDescription ? 'line-clamp-2' : ''}`}>
@@ -122,7 +123,7 @@ export const ActionableRecommendation: React.FC<{
                     <span className="text-base flex-shrink-0 mt-0.5">
                       {actionStepEmojis[idx] || '📌'}
                     </span>
-                    <span className="font-medium leading-relaxed">{action}</span>
+                    <span className="font-medium leading-relaxed">{stripMarkdown(action)}</span>
                   </li>
                 ))}
               </ol>

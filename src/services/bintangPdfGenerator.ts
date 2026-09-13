@@ -3,7 +3,7 @@ import { getAutoTable } from '../utils/dynamicImports';
 import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
 import { BintangGrade, calculateAspectPoints, bintangService } from './bintangService';
 import { supabase } from './supabase';
-import { formatExportDate } from '../utils/exportUtils';
+import { formatExportDate } from '../utils/exportFormatUtils';
 import { formatDegreeProperly } from '../utils/greetingUtils';
 import { generateContextualHomeroomNote } from '../components/pages/bintang/bintangConstants';
 import { violationList } from './violations.data';

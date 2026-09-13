@@ -1,6 +1,7 @@
 import { isAiEnabled, supabase } from './supabase';
 import { generateGeminiJson } from './geminiService';
 import { logger } from './logger';
+import { sanitizeAnalysisData } from '../utils/textSanitizer';
 
 export interface ChildDevelopmentData {
   student: {
@@ -320,10 +321,10 @@ export async function generateComprehensiveChildAnalysis(
     2.  **Sederhana & Mengalir**: JANGAN gunakan bahasa kaku/akademis sama sekali. Tulis seperti sedang MENGAJAK NGOBROL santai sambil ngopi.
     3.  **Visualisasi Teks**:
         *   Gunakan **EMOJI** 🌟😊🚀 untuk membuat suasana hidup dan ceria di setiap poin.
-        *   Gunakan **Huruf Tebal** untuk poin-poin penting agar mudah diskimming.
+        *   DILARANG menggunakan format/simbol markdown seperti tanda bintang (** atau *), tanda pagar (#), atau markup lainnya di dalam nilai JSON. Tulis teks langsung dalam kalimat bersih tanpa tanda bintang.
     4.  **Struktur Ulasan**:
         *   Mulai dengan apresiasi tulus.
-        *   Fokus pada *Kekuatan Unik* anak.
+        *   Fokus pada Kekuatan Unik anak.
         *   Sampaikan area perkembangan sebagai "Petualangan Baru" atau "Tantangan Seru".
     5.  **DILARANG**: Menggunakan kata "kurang", "lemah", "masalah". Ganti dengan "perlu sentuhan lebih", "bisa diasah lagi", "sedang berkembang".`;
 
@@ -350,7 +351,7 @@ Berikan analisis dalam format JSON dengan struktur:
     // Call AI via OpenRouter
     const analysis = await generateGeminiJson<ComprehensiveChildAnalysis>(prompt, systemInstruction, 'child-analysis');
 
-    return analysis;
+    return sanitizeAnalysisData(analysis);
 
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -370,7 +371,7 @@ Berikan analisis dalam format JSON dengan struktur:
       ? Math.round((validAttendanceRecords.filter(r => r.status === 'Hadir').length / validAttendanceRecords.length) * 100)
       : 100;
 
-    return generateFallbackAnalysis(data, averageScore, attendanceRate, validViolations.length);
+    return sanitizeAnalysisData(generateFallbackAnalysis(data, averageScore, attendanceRate, validViolations.length));
   }
 }
 
@@ -432,7 +433,7 @@ export async function getLatestAnalysisFromDb(
     if (error) throw error;
     if (!data) return null;
 
-    const analysis = data.analysis_data as unknown as ComprehensiveChildAnalysis;
+    const analysis = sanitizeAnalysisData(data.analysis_data as unknown as ComprehensiveChildAnalysis);
     return {
       ...analysis,
       generatedBy: data.generated_by as 'AI' | 'Offline Fallback'
@@ -553,7 +554,7 @@ export async function getAnalysisForSemesterFromDb(
     if (error) throw error;
     if (!data) return null;
 
-    const analysis = data.analysis_data as unknown as ComprehensiveChildAnalysis;
+    const analysis = sanitizeAnalysisData(data.analysis_data as unknown as ComprehensiveChildAnalysis);
     return {
       ...analysis,
       generatedBy: data.generated_by as 'AI' | 'Offline Fallback'
@@ -582,7 +583,7 @@ export async function getComparativeAnalysisFromDb(
     if (error) throw error;
     if (!data) return null;
 
-    const analysis = data.analysis_data as unknown as ComparativeChildAnalysis;
+    const analysis = sanitizeAnalysisData(data.analysis_data as unknown as ComparativeChildAnalysis);
     return {
       ...analysis,
       generatedBy: data.generated_by as 'AI' | 'Offline Fallback'
@@ -790,17 +791,18 @@ export async function generateComparativeChildAnalysis(
     // Check if AI is available
     if (!isAiEnabled) {
       logger.warn('AI service not available, using comparative fallback analysis');
-      return generateComparativeFallbackAnalysis(data1, data2, avgScore1, avgScore2, attRate1, attRate2, violationsCount1, violationsCount2);
+      return sanitizeAnalysisData(generateComparativeFallbackAnalysis(data1, data2, avgScore1, avgScore2, attRate1, attRate2, violationsCount1, violationsCount2));
     }
 
     const systemInstruction = `Anda adalah seorang psikolog anak dan mitra setia orang tua yang hangat, bijaksana, dan penuh empati.
     Tugas Anda adalah membandingkan perkembangan anak antara Semester 1 (Ganjil) dan Semester 2 (Genap) dari tahun ajaran aktif, lalu memberikan analisis komparatif yang "sangat hangat dan menyentuh hati orang tua" (delightful and heartwarming to read for parents).
     
     PANDUAN GAYA BAHASA & NADA:
-    1. **Nada Bicara**: Sangat personal, penuh kasih sayang, dan menenangkan. Sapalah dengan "Ayah/Bunda" dan panggil anak dengan panggilan sayang "Ananda" atau namanya langsung.
-    2. **Fokus pada Pertumbuhan**: Tonjolkan setiap kemajuan sekecil apa pun dari Semester 1 ke Semester 2. JANGAN menggunakan kata-kata kaku atau negatif seperti "menurun", "buruk", atau "gagal". Gantilah dengan ungkapan optimis dan penuh semangat (misal: "sedang berproses", "menyimpan energi untuk melompat lebih tinggi", "perjalanan belajar yang menantang namun seru").
-    3. **Pesan Emosional**: Buat tulisan yang menyentuh hati, mengapresiasi kerja keras ananda, dan memberikan motivasi yang manis kepada Ayah dan Bunda untuk terus membersamai ananda.
-    4. **Gunakan Emoji**: Selipkan emoji-emoji hangat dan penuh warna 🌟💖🌱🤗🏆 di setiap bagian agar ramah dibaca.`;
+    1. Nada Bicara: Sangat personal, penuh kasih sayang, dan menenangkan. Sapalah dengan "Ayah/Bunda" dan panggil anak dengan panggilan sayang "Ananda" atau namanya langsung.
+    2. Fokus pada Pertumbuhan: Tonjolkan setiap kemajuan sekecil apa pun dari Semester 1 ke Semester 2. JANGAN menggunakan kata-kata kaku atau negatif seperti "menurun", "buruk", atau "gagal". Gantilah dengan ungkapan optimis dan penuh semangat (misal: "sedang berproses", "menyimpan energi untuk melompat lebih tinggi", "perjalanan belajar yang menantang namun seru").
+    3. Pesan Emosional: Buat tulisan yang menyentuh hati, mengapresiasi kerja keras ananda, dan memberikan motivasi yang manis kepada Ayah dan Bunda untuk terus membersamai ananda.
+    4. Gunakan Emoji: Selipkan emoji-emoji hangat dan penuh warna 🌟💖🌱🤗🏆 di setiap bagian agar ramah dibaca.
+    5. FORMATTING PENTING: DILARANG menggunakan tanda formatting markdown seperti tanda bintang dobel (**) atau tanda bintang tunggal (*) untuk menebalkan kata dalam nilai string JSON. Tulis teks langsung dalam kalimat biasa yang rapi tanpa simbol markdown.`;
 
     const prompt = `Lakukan analisis perbandingan perkembangan anak berikut antara Semester 1 (Ganjil) dan Semester 2 (Genap):
     
@@ -854,7 +856,8 @@ export async function generateComparativeChildAnalysis(
       }
     }`;
 
-    const analysis = await generateGeminiJson<ComparativeChildAnalysis>(prompt, systemInstruction, 'child-analysis');
+    const rawAnalysis = await generateGeminiJson<ComparativeChildAnalysis>(prompt, systemInstruction, 'child-analysis');
+    const analysis = sanitizeAnalysisData(rawAnalysis);
     return {
       ...analysis,
       isComparative: true
@@ -882,7 +885,7 @@ export async function generateComparativeChildAnalysis(
       ? Math.round(((data2.attendanceRecords || []).filter(r => r.status === 'Hadir').length / (data2.attendanceRecords || []).length) * 100)
       : 100;
 
-    return generateComparativeFallbackAnalysis(
+    return sanitizeAnalysisData(generateComparativeFallbackAnalysis(
       data1,
       data2,
       avgScore1,
@@ -891,7 +894,7 @@ export async function generateComparativeChildAnalysis(
       attendRate2,
       (data1.violations || []).length,
       (data2.violations || []).length
-    );
+    ));
   }
 }
 

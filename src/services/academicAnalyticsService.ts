@@ -218,19 +218,84 @@ export function calculateAcademicKPI(
 }
 
 // =============================================================================
-// 3. TREND DATA (TIME SERIES)
+// 3. TREND DATA (TIME SERIES & ASSESSMENT)
 // =============================================================================
+
+export type AcademicTrendMode = 'weekly' | 'assessment' | 'monthly';
 
 export function calculateAcademicTrends(
     academicRecords: AnalyticsAcademicRecord[],
     subjects: string[],
+    mode: AcademicTrendMode = 'weekly',
 ): SubjectTrendData[] {
     return subjects.map((subject, idx) => {
         const records = academicRecords
             .filter((r) => (r.subject || 'Umum') === subject)
             .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
-        // Group by week
+        if (mode === 'monthly') {
+            // Group by calendar month (YYYY-MM)
+            const monthMap = new Map<string, { sum: number; count: number; earliest: number }>();
+            records.forEach((r) => {
+                const d = new Date(r.created_at);
+                const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                const existing = monthMap.get(monthKey) || { sum: 0, count: 0, earliest: d.getTime() };
+                existing.sum += Number(r.score) || 0;
+                existing.count += 1;
+                if (d.getTime() < existing.earliest) existing.earliest = d.getTime();
+                monthMap.set(monthKey, existing);
+            });
+
+            const data: TrendDataPoint[] = Array.from(monthMap.entries())
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([monthKey, { sum, count, earliest }]) => {
+                    const d = new Date(earliest);
+                    return {
+                        date: `${monthKey}-01`,
+                        label: d.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }),
+                        average: Math.round(sum / count),
+                        count,
+                    };
+                });
+
+            return {
+                subject,
+                data,
+                color: SUBJECT_COLORS[idx % SUBJECT_COLORS.length],
+            };
+        }
+
+        if (mode === 'assessment') {
+            // Group by assessment_name (e.g. PH 1, PH 2, STS, SAS)
+            const assessmentMap = new Map<string, { sum: number; count: number; earliest: number }>();
+            records.forEach((r) => {
+                const rawName = (r.assessment_name || '').trim();
+                const name = rawName || 'Penilaian';
+                const d = new Date(r.created_at);
+                const existing = assessmentMap.get(name) || { sum: 0, count: 0, earliest: d.getTime() };
+                existing.sum += Number(r.score) || 0;
+                existing.count += 1;
+                if (d.getTime() < existing.earliest) existing.earliest = d.getTime();
+                assessmentMap.set(name, existing);
+            });
+
+            const data: TrendDataPoint[] = Array.from(assessmentMap.entries())
+                .sort(([, a], [, b]) => a.earliest - b.earliest)
+                .map(([name, { sum, count, earliest }]) => ({
+                    date: new Date(earliest).toISOString().split('T')[0],
+                    label: name,
+                    average: Math.round(sum / count),
+                    count,
+                }));
+
+            return {
+                subject,
+                data,
+                color: SUBJECT_COLORS[idx % SUBJECT_COLORS.length],
+            };
+        }
+
+        // DEFAULT: Group by week (calendar timeline as shown in screenshot)
         const weekMap = new Map<string, { sum: number; count: number }>();
         records.forEach((r) => {
             const d = new Date(r.created_at);
@@ -259,6 +324,7 @@ export function calculateAcademicTrends(
         };
     });
 }
+
 
 // =============================================================================
 // 4. STUDENTS BELOW KKTP

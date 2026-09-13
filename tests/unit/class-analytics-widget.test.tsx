@@ -113,4 +113,28 @@ describe('ClassAnalyticsSection', () => {
         const attendanceLabels = screen.getAllByText('Kehadiran');
         expect(attendanceLabels.length).toBeGreaterThan(0);
     });
+
+    it('renders monthly attendance trend chart with points and viewBox when data exists', () => {
+        const attendanceOverMonths = [
+            { student_id: 's1', status: 'Hadir', date: '2026-01-15' },
+            { student_id: 's2', status: 'Hadir', date: '2026-01-16' },
+            { student_id: 's1', status: 'Hadir', date: '2026-02-10' },
+            { student_id: 's2', status: 'Sakit', date: '2026-02-11' },
+        ];
+
+        renderWithProviders(
+            <ClassAnalyticsSection
+                classes={mockClasses}
+                students={mockStudents}
+                academicRecords={mockAcademicRecords}
+                attendanceRecords={attendanceOverMonths}
+                defaultOpen={true}
+            />
+        );
+
+        expect(screen.getByText('Tren Kehadiran Bulanan')).toBeInTheDocument();
+        expect(screen.getByText('Jan')).toBeInTheDocument();
+        expect(screen.getByText('Feb')).toBeInTheDocument();
+    });
 });
+
