@@ -240,7 +240,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                         });
                     const { data, error } = await supabase
                         .from('academic_records')
-                        .upsert(records, { onConflict: 'student_id,subject,assessment_name,semester_id' })
+                        .upsert(records)
                         .select();
                     if (error) throw error;
                     await recordAction(user.id, 'create', 'academic_records', data.map(d => d.id));
@@ -354,7 +354,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                         }));
                         await supabase
                             .from('attitude_records')
-                            .upsert(attitudeRecords, { onConflict: 'student_id,subject,assessment_name,semester_id' });
+                            .insert(attitudeRecords);
                     } catch (attErr) {
                         console.warn('Silent sync to attitude_records skipped:', attErr);
                     }
