@@ -10,7 +10,7 @@ import {
 import { FormState, RubrikRow } from '../../types';
 import { LEARNING_MODELS, ModelCategory } from '../../constants/learningModels';
 import { AiButton } from '../AiButton';
-import { RefRubrikTemplate } from '../../../../../services/modulAjarContentService';
+import type { RefRubrikTemplate } from '../../../../../services/modulAjarContentService';
 
 interface Step5ModelWaktuProps {
   formState: FormState;
