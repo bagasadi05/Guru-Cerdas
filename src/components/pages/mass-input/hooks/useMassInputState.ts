@@ -43,7 +43,14 @@ export function useMassInputState() {
     const [selectedClass, setSelectedClass] = useState(() => initialDraft?.selectedClass || '');
     const [prevClass, setPrevClass] = useState(selectedClass);
     const [prevMode, setPrevMode] = useState(mode);
-    const [quizInfo, setQuizInfo] = useState({ name: '', subject: '', date: new Date().toISOString().slice(0, 10), points: 1, max_points: 1 });
+    const [quizInfo, setQuizInfo] = useState<{ name: string; category?: string; subject: string; date: string; points: number; max_points: number }>({
+        name: 'Aktif bertanya di kelas',
+        category: 'bertanya',
+        subject: '',
+        date: new Date().toISOString().slice(0, 10),
+        points: 1,
+        max_points: 1,
+    });
     const [subjectGradeInfo, setSubjectGradeInfo] = useState(() => initialDraft?.subjectGradeInfo || { subject: '', assessment_name: '', notes: '', semester: '' });
     const [kkm, setKkm] = useState(75);
     const [attitudeDate, setAttitudeDate] = useState(new Date().toISOString().slice(0, 10));
@@ -174,7 +181,7 @@ export function useMassInputState() {
     const handleBack = () => {
         clearSubjectGradeDraft();
         setStep(1); setMode(null); setSelectedClass('');
-        setQuizInfo({ name: '', subject: '', date: new Date().toISOString().slice(0, 10), points: 1, max_points: 1 });
+        setQuizInfo({ name: 'Aktif bertanya di kelas', category: 'bertanya', subject: '', date: new Date().toISOString().slice(0, 10), points: 1, max_points: 1 });
         setSubjectGradeInfo({ subject: '', assessment_name: '', notes: '', semester: activeSemester?.id || '' });
         setAttitudeDate(new Date().toISOString().slice(0, 10));
         setAttitudeCategory('Adab & Akhlak');

@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../../../services/supabase';
-import { ClassRow, StudentRow, AcademicRecordRow, ViolationRow, AttitudeRecordRow } from '../types';
+import { ClassRow, StudentRow, AcademicRecordRow, ViolationRow, AttitudeRecordRow, QuizPointRow } from '../types';
 import { useAuth } from '../../../../hooks/useAuth';
 import { getAssignedSubjects, TeacherClassAssignmentRow } from '../../../../services/teacherAssignments';
-import { dedupeAcademicRecords } from '../../../../utils/academicRecordUtils';
+import { dedupeAcademicRecords, dedupeQuizPoints } from '../../../../utils/academicRecordUtils';
 import { SUBJECTS, mergeSubjectLists } from '../../../../constants/subjects';
 
 // Dulu daftar ini disalin manual di sini. Salinannya sempat melenceng dari
@@ -217,6 +217,28 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
         enabled: mode === 'attitude' && !!selectedClass && !!studentsData && studentsData.length > 0,
     });
 
+    const { data: existingQuizPoints, isLoading: isLoadingQuizPoints } = useQuery({
+        queryKey: ['existingQuizPointsForMassInput', selectedClass, semesterId],
+        queryFn: async (): Promise<QuizPointRow[]> => {
+            if (!selectedClass || !studentsData || studentsData.length === 0) return [];
+
+            let query = supabase
+                .from('quiz_points')
+                .select('id, student_id, user_id, quiz_date, quiz_name, subject, points, max_points, category, is_used, semester_id, created_at')
+                .in('student_id', studentsData.map(s => s.id))
+                .is('deleted_at', null);
+
+            if (semesterId) {
+                query = query.eq('semester_id', semesterId);
+            }
+
+            const { data, error } = await query;
+            if (error) throw error;
+            return dedupeQuizPoints((data || []) as unknown as QuizPointRow[]);
+        },
+        enabled: mode === 'quiz' && !!selectedClass && !!studentsData && studentsData.length > 0,
+    });
+
     return {
         classes,
         isLoadingClasses,
@@ -230,5 +252,7 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
         isLoadingViolations,
         existingAttitudeRecords,
         isLoadingAttitude,
+        existingQuizPoints,
+        isLoadingQuizPoints,
     };
 };

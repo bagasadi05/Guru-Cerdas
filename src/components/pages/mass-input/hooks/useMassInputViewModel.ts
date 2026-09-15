@@ -331,6 +331,8 @@ export function useMassInputViewModel() {
         studentsData: data.studentsData,
         existingViolations: data.existingViolations,
         isLoadingViolations: data.isLoadingViolations,
+        existingQuizPoints: data.existingQuizPoints,
+        isLoadingQuizPoints: data.isLoadingQuizPoints,
         // chart modal
         showChartModal: state.showChartModal,
         setShowChartModal: state.setShowChartModal,

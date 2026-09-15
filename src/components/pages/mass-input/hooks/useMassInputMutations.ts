@@ -17,6 +17,7 @@ import { violationList } from '../../../../services/violations.data';
 import { sanitizeFilename } from '../../../../services/securityEnhanced';
 import { InputMode, ClassRow, StudentRow, AcademicRecordRow, ReviewDataItem } from '../types';
 import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../../../utils/academicRecordUtils';
+import { triggerStarsConfetti } from '../../../../utils/confetti';
 
 const DUPLICATE_GUARD_WINDOW_MINUTES = 10;
 
@@ -35,7 +36,7 @@ const getDuplicateGuardWindowIso = () => (
 export interface UseMassInputMutationsParams {
     mode: InputMode | null;
     selectedClass: string;
-    quizInfo: { name: string; subject: string; date: string; points: number; max_points: number };
+    quizInfo: { name: string; category?: string; subject: string; date: string; points: number; max_points: number };
     subjectGradeInfo: { subject: string; assessment_name: string; notes: string; semester: string };
     attitudeDate?: string;
     attitudeCategory?: string;
@@ -190,12 +191,13 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                         .filter((student_id) => !duplicateStudentIds.has(student_id))
                         .map((student_id: string) => ({
                             quiz_name: quizInfo.name,
+                            category: quizInfo.category || 'lainnya',
                             subject: quizInfo.subject,
                             quiz_date: quizInfo.date,
                             student_id,
                             user_id: user.id,
-                            points: quizInfo.points || 1,
-                            max_points: quizInfo.max_points || 1,
+                            points: 1, // STRICT CONSTRAINT: Poin keaktifan selalu 1 sesuai kesepakatan kelas
+                            max_points: 1,
                             semester_id: activeSemester?.id || null,
                         }));
 
@@ -207,8 +209,8 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                     if (error) throw error;
                     await recordAction(user.id, 'create', 'quiz_points', data.map(d => d.id));
                     return duplicateStudentIds.size > 0
-                        ? `Poin keaktifan untuk ${records.length} siswa berhasil disimpan. ${duplicateStudentIds.size} data duplikat terbaru dilewati.`
-                        : `Poin keaktifan untuk ${records.length} siswa berhasil disimpan.`;
+                        ? `Poin keaktifan (+1 ${quizInfo.name}) untuk ${records.length} siswa berhasil disimpan! ${duplicateStudentIds.size} data duplikat terbaru dilewati.`
+                        : `Poin keaktifan (+1 ${quizInfo.name}) untuk ${records.length} siswa berhasil disimpan! 🌟`;
                 }
                 case 'subject_grade': {
                     if (!subjectGradeInfo.subject || !subjectGradeInfo.assessment_name || gradedCount === 0)
@@ -367,12 +369,16 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         },
         onSuccess: async (message: string) => {
             toast.success(message || 'Data berhasil disimpan!');
+            if (mode === 'quiz') {
+                triggerStarsConfetti();
+            }
             queryClient.invalidateQueries({ queryKey: ['existingGrades'] });
             queryClient.invalidateQueries({ queryKey: ['existingAttitudeRecords'] });
             queryClient.invalidateQueries({ queryKey: ['studentDetails'] });
             queryClient.invalidateQueries({ queryKey: ['studentStats'] });
             queryClient.invalidateQueries({ queryKey: ['existingViolations'] });
             queryClient.invalidateQueries({ queryKey: ['quiz_points'] });
+            queryClient.invalidateQueries({ queryKey: ['existingQuizPointsForMassInput'] });
             queryClient.invalidateQueries({ queryKey: ['bintangEvaluations'] });
             queryClient.invalidateQueries({ queryKey: ['bintangDashboard'] });
             isScoresDirtyRef.current = false;

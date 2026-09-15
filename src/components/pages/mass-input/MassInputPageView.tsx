@@ -12,7 +12,7 @@ import { Step2_Configuration } from './components/Step2_Configuration';
 import { Step2_StudentList } from './components/Step2_StudentList';
 import { Step2_Footer } from './components/Step2_Footer';
 import { ViolationExportPanel } from './components/ViolationExportPanel';
-import { InputMode, Step, StudentFilter, StudentRow, AcademicRecordRow, ClassRow, ViolationRow, AttitudeRecordRow } from './types';
+import { InputMode, Step, StudentFilter, StudentRow, AcademicRecordRow, ClassRow, ViolationRow, AttitudeRecordRow, QuizPointRow } from './types';
 import { ImportPreviewModal } from '../bulk-grade-input/components/ImportPreviewModal';
 import { violationList } from '../../../services/violations.data';
 import { CheckCircle2, Loader2, AlertCircle, XIcon } from 'lucide-react';
@@ -30,8 +30,8 @@ export interface MassInputPageViewProps {
     setSelectedClass: (v: string) => void;
     classes: ClassRow[] | undefined;
     isLoadingClasses: boolean;
-    quizInfo: { name: string; subject: string; date: string; points: number; max_points: number };
-    setQuizInfo: React.Dispatch<React.SetStateAction<{ name: string; subject: string; date: string; points: number; max_points: number }>>;
+    quizInfo: { name: string; category?: string; subject: string; date: string; points: number; max_points: number };
+    setQuizInfo: React.Dispatch<React.SetStateAction<{ name: string; category?: string; subject: string; date: string; points: number; max_points: number }>>;
     subjectGradeInfo: { subject: string; assessment_name: string; notes: string; semester: string };
     setSubjectGradeInfo: React.Dispatch<React.SetStateAction<{ subject: string; assessment_name: string; notes: string; semester: string }>>;
     kkm: number;
@@ -52,6 +52,8 @@ export interface MassInputPageViewProps {
     handleQuickFillAttitude?: (studentIds: string[], predicate: string, target?: 'both' | 'spiritual' | 'social') => void;
     attitudeFilledCount?: number;
     existingAttitudeRecords?: AttitudeRecordRow[];
+    existingQuizPoints?: QuizPointRow[];
+    isLoadingQuizPoints?: boolean;
     isCustomSubject: boolean;
     setIsCustomSubject: (v: boolean) => void;
     uniqueSubjects: string[] | undefined;
@@ -142,6 +144,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         attitudePoints, setAttitudePoints,
         attitudeNotes, setAttitudeNotes,
         existingAttitudeRecords,
+        existingQuizPoints, isLoadingQuizPoints,
         isCustomSubject, setIsCustomSubject, uniqueSubjects,
         selectedViolationCode, setSelectedViolationCode, violationDate, setViolationDate,
         violationNotes, setViolationNotes, noteMethod, setNoteMethod, templateNote, setTemplateNote,
@@ -193,8 +196,8 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                 </span>
                             )}
                             {mode === 'quiz' && quizInfo.name && (
-                                <span className="inline-flex items-center gap-1.5 rounded-2xl bg-amber-550/10 px-3.5 py-1.5 font-extrabold text-amber-700 dark:text-amber-300 border border-amber-200/20 shadow-sm animate-scale-in">
-                                    ⚡ Kuis: {quizInfo.name} ({quizInfo.subject || 'Umum'})
+                                <span className="inline-flex items-center gap-1.5 rounded-2xl bg-amber-500/10 px-3.5 py-1.5 font-extrabold text-amber-700 dark:text-amber-300 border border-amber-200/20 shadow-sm animate-scale-in">
+                                    ⭐ Keaktifan: +1 Poin • {quizInfo.name} ({quizInfo.subject || 'Umum'})
                                 </span>
                             )}
                             {mode === 'violation' && selectedViolationCode && (
@@ -306,6 +309,8 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                     existingAttitudeRecords={existingAttitudeRecords}
                                     attitudePoints={attitudePoints}
                                     attitudeCategory={attitudeCategory}
+                                    existingQuizPoints={existingQuizPoints}
+                                    quizInfo={quizInfo}
                                     classes={classes}
                                     selectedClass={selectedClass}
                                     handleSubmit={onHandleSubmit}

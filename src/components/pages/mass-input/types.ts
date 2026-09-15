@@ -4,6 +4,7 @@ export type ClassRow = Database['public']['Tables']['classes']['Row'];
 export type StudentRow = Database['public']['Tables']['students']['Row'];
 export type AcademicRecordRow = Database['public']['Tables']['academic_records']['Row'];
 export type AttitudeRecordRow = Database['public']['Tables']['attitude_records']['Row'];
+export type QuizPointRow = Database['public']['Tables']['quiz_points']['Row'];
 
 type ViolationRowBase = Database['public']['Tables']['violations']['Row'];
 type ViolationRowRequiredKeys =
@@ -41,7 +42,7 @@ export interface MassInputState {
     step: Step;
     mode: InputMode | null;
     selectedClass: string;
-    quizInfo: { name: string; subject: string; date: string; points: number; max_points: number };
+    quizInfo: { name: string; category?: string; subject: string; date: string; points: number; max_points: number };
     subjectGradeInfo: { subject: string; assessment_name: string; notes: string; semester: string };
     attitudeDate: string;
     attitudeCategory: string;

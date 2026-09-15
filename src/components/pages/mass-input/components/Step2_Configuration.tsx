@@ -6,16 +6,8 @@ import { Modal } from '../../../ui/Modal';
 import { XCircleIcon, ChevronDownIcon, SparklesIcon, ClipboardPasteIcon, SearchIcon, CheckIcon, UploadIcon } from '../../../Icons';
 import { violationList } from '../../../../services/violations.data';
 import { InputMode, ClassRow } from '../types';
+import { QUIZ_ACTIVITY_CATEGORIES, QUIZ_CATEGORY_DEFAULT_NAMES, QUIZ_ACTIVITY_SUGGESTIONS } from '../constants';
 import { SemesterSelector } from '../../../ui/SemesterSelector';
-
-const CATEGORY_DEFAULT_NAMES: Record<string, string> = {
-    bertanya: 'Aktif bertanya di kelas',
-    menjawab: 'Menjawab pertanyaan guru',
-    presentasi: 'Presentasi tugas',
-    diskusi: 'Aktif dalam diskusi',
-    tugas: 'Mengerjakan tugas tambahan',
-    lainnya: 'Partisipasi aktif',
-};
 
 const BINTANG_ATTITUDE_ASPECTS = [
     { value: 'Adab & Akhlak', label: 'Adab & Akhlak', icon: '🌟', menunjang: 'Menunjang Aspek Adab', defaultActivity: 'Adab & Kesantunan' },
@@ -41,8 +33,8 @@ interface Step2_ConfigurationProps {
     setSelectedClass: (id: string) => void;
     classes: ClassRow[] | undefined;
     isLoadingClasses: boolean;
-    quizInfo: { name: string; subject: string; date: string; points: number; max_points: number };
-    setQuizInfo: React.Dispatch<React.SetStateAction<{ name: string; subject: string; date: string; points: number; max_points: number }>>;
+    quizInfo: { name: string; category?: string; subject: string; date: string; points: number; max_points: number };
+    setQuizInfo: React.Dispatch<React.SetStateAction<{ name: string; category?: string; subject: string; date: string; points: number; max_points: number }>>;
     subjectGradeInfo: { subject: string; assessment_name: string; notes: string; semester: string };
     setSubjectGradeInfo: React.Dispatch<React.SetStateAction<{ subject: string; assessment_name: string; notes: string; semester: string }>>;
     isCustomSubject: boolean;
@@ -160,21 +152,18 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                 <div className="space-y-2">
                                     <label className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Kategori Aktivitas</label>
                                     <div className="grid grid-cols-2 gap-2.5">
-                                        {[
-                                            { value: 'bertanya', label: 'Bertanya', icon: '❓' },
-                                            { value: 'menjawab', label: 'Menjawab', icon: '💡' },
-                                            { value: 'presentasi', label: 'Presentasi', icon: '🎤' },
-                                            { value: 'diskusi', label: 'Diskusi', icon: '💬' },
-                                            { value: 'tugas', label: 'Tugas Tambahan', icon: '📝' },
-                                            { value: 'lainnya', label: 'Lainnya', icon: '⭐' },
-                                        ].map((cat) => {
-                                            const isSelected = quizInfo.name === CATEGORY_DEFAULT_NAMES[cat.value] || quizInfo.name === cat.label;
+                                        {QUIZ_ACTIVITY_CATEGORIES.map((cat) => {
+                                            const isSelected = (quizInfo.category || 'bertanya') === cat.value;
                                             return (
                                                 <button
                                                     key={cat.value}
                                                     type="button"
                                                     onClick={() => {
-                                                        setQuizInfo(p => ({ ...p, name: CATEGORY_DEFAULT_NAMES[cat.value] || cat.label }));
+                                                        setQuizInfo(p => ({
+                                                            ...p,
+                                                            category: cat.value,
+                                                            name: QUIZ_CATEGORY_DEFAULT_NAMES[cat.value] || cat.label
+                                                        }));
                                                     }}
                                                     className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all text-left ${isSelected
                                                         ? 'border-brand-500 bg-brand-50/90 dark:bg-brand-900/30 ring-2 ring-brand-500/50 shadow-sm'
@@ -194,9 +183,9 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                 <div className="space-y-2">
                                     <label htmlFor="quiz-name" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Nama Aktivitas</label>
                                     <Input id="quiz-name" value={quizInfo.name} onChange={e => setQuizInfo(p => ({ ...p, name: e.target.value }))} placeholder="cth. Aktif Bertanya" className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30" />
-                                    {/* Quick suggestions */}
+                                    {/* Quick suggestions based on active category */}
                                     <div className="flex flex-wrap gap-1.5 pt-1">
-                                        {['Aktif bertanya', 'Menjawab benar', 'Presentasi bagus', 'Diskusi aktif', 'Tugas tambahan'].map((suggestion) => (
+                                        {(QUIZ_ACTIVITY_SUGGESTIONS[quizInfo.category || 'bertanya'] || QUIZ_ACTIVITY_SUGGESTIONS['bertanya']).map((suggestion) => (
                                             <button
                                                 key={suggestion}
                                                 type="button"

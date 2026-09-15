@@ -1,4 +1,4 @@
-import type { AcademicRecordRow, QuizPointRow, ViolationRow } from '../components/pages/student/types';
+import type { AcademicRecordRow, ViolationRow } from '../components/pages/student/types';
 
 type AcademicRecordIdentity = Pick<
     AcademicRecordRow,
@@ -37,10 +37,14 @@ export const dedupeAcademicRecords = (records: AcademicRecordRow[]) => {
     return Array.from(latestByKey.values());
 };
 
-type QuizPointIdentity = Pick<
-    QuizPointRow,
-    'student_id' | 'subject' | 'quiz_name' | 'quiz_date' | 'semester_id' | 'user_id'
->;
+type QuizPointIdentity = {
+    student_id: string;
+    subject?: string | null;
+    quiz_name?: string | null;
+    quiz_date?: string | null;
+    semester_id?: string | null;
+    user_id?: string | null;
+};
 
 export const buildQuizPointIdentityKey = (record: QuizPointIdentity) => (
     [
@@ -53,8 +57,8 @@ export const buildQuizPointIdentityKey = (record: QuizPointIdentity) => (
     ].join('::')
 );
 
-export const dedupeQuizPoints = (records: QuizPointRow[]) => {
-    const latestByKey = new Map<string, QuizPointRow>();
+export const dedupeQuizPoints = <T extends QuizPointIdentity & { created_at: string }>(records: T[]): T[] => {
+    const latestByKey = new Map<string, T>();
 
     records.forEach((record) => {
         const key = buildQuizPointIdentityKey(record);

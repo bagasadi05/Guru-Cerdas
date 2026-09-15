@@ -32,30 +32,49 @@ vi.mock('../../src/services/UndoManager', () => ({
     recordAction: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('../../src/services/supabase', () => ({
-    supabase: {
-        from: vi.fn((table: string) => ({
-            upsert: vi.fn((payload: unknown, options?: unknown) => {
-                upsertCalls.push({ table, payload, options });
-                return {
-                    select: vi.fn().mockResolvedValue({
-                        data: Array.isArray(payload) ? payload.map((p: any) => ({ id: p.id || 'id-generated' })) : [{ id: 'id-1' }],
-                        error: null,
-                    }),
-                };
-            }),
-            insert: vi.fn((payload: unknown) => {
-                insertCalls.push({ table, payload });
-                return {
-                    select: vi.fn().mockResolvedValue({
-                        data: Array.isArray(payload) ? payload.map((p: any, i: number) => ({ id: p.id || `id-${i}` })) : [{ id: 'id-1' }],
-                        error: null,
-                    }),
-                };
-            }),
-        })),
-    },
+vi.mock('../../src/utils/confetti', () => ({
+    triggerStarsConfetti: vi.fn(),
 }));
+
+vi.mock('../../src/services/supabase', () => {
+    const makeFilterChain = (data: unknown = []) => {
+        const chain: any = {
+            eq: vi.fn(() => chain),
+            gte: vi.fn(() => chain),
+            is: vi.fn(() => chain),
+            in: vi.fn(() => chain),
+            order: vi.fn(() => chain),
+            then: (resolve: (v: any) => void) => resolve({ data, error: null }),
+        };
+        return chain;
+    };
+
+    return {
+        supabase: {
+            from: vi.fn((table: string) => ({
+                select: vi.fn(() => makeFilterChain([])),
+                upsert: vi.fn((payload: unknown, options?: unknown) => {
+                    upsertCalls.push({ table, payload, options });
+                    return {
+                        select: vi.fn().mockResolvedValue({
+                            data: Array.isArray(payload) ? payload.map((p: any) => ({ id: p.id || 'id-generated' })) : [{ id: 'id-1' }],
+                            error: null,
+                        }),
+                    };
+                }),
+                insert: vi.fn((payload: unknown) => {
+                    insertCalls.push({ table, payload });
+                    return {
+                        select: vi.fn().mockResolvedValue({
+                            data: Array.isArray(payload) ? payload.map((p: any, i: number) => ({ id: p.id || `id-${i}` })) : [{ id: 'id-1' }],
+                            error: null,
+                        }),
+                    };
+                }),
+            })),
+        },
+    };
+});
 
 describe('useMassInputMutations - Grade & Attitude Upsert', () => {
     let queryClient: QueryClient;
@@ -207,5 +226,138 @@ describe('useMassInputMutations - Grade & Attitude Upsert', () => {
         expect(payload).toHaveLength(1);
         expect(payload[0].student_id).toBe('student-1');
         expect(payload[0].assessment_name).toBe('Sholat Dhuha');
+    });
+
+    it('inserts quiz_points with category and locked 1 point per student', async () => {
+        const defaultParams: UseMassInputMutationsParams = {
+            mode: 'quiz',
+            selectedClass: 'class-1',
+            quizInfo: {
+                name: 'Menjawab pertanyaan guru',
+                category: 'menjawab',
+                subject: 'Matematika',
+                date: '2026-09-15',
+                points: 1,
+                max_points: 1,
+            },
+            subjectGradeInfo: {
+                subject: '',
+                assessment_name: '',
+                notes: '',
+                semester: 'semester-1',
+            },
+            scores: {},
+            validationErrors: {},
+            existingGrades: [],
+            selectedStudentIds: new Set(['student-1', 'student-2']),
+            selectedViolationCode: '',
+            violationDate: '2026-09-15',
+            violationNotes: '',
+            studentsData: [],
+            noteMethod: 'template',
+            templateNote: '',
+            pasteData: '',
+            gradedCount: 0,
+            filteredExistingGrades: [],
+            classes: [{ id: 'class-1', name: 'Kelas 5A' } as any],
+            setScores: vi.fn(),
+            setSelectedStudentIds: vi.fn(),
+            bypassDuplicateGuard: true,
+            isScoresDirtyRef: { current: false },
+            clearSubjectGradeDraft: vi.fn(),
+        };
+
+        const { result } = renderHook(() => useMassInputMutations(defaultParams), {
+            wrapper: createWrapper(),
+        });
+
+        await act(async () => {
+            await result.current.submitData();
+        });
+
+        const quizInsert = insertCalls.find(c => c.table === 'quiz_points');
+        expect(quizInsert).toBeDefined();
+        const payload = quizInsert?.payload as Array<any>;
+        expect(payload).toHaveLength(2);
+
+        // Verify payload integrity: category is preserved and points are locked to 1
+        expect(payload[0]).toMatchObject({
+            student_id: 'student-1',
+            quiz_name: 'Menjawab pertanyaan guru',
+            category: 'menjawab',
+            subject: 'Matematika',
+            quiz_date: '2026-09-15',
+            points: 1,
+            max_points: 1,
+            semester_id: 'semester-1',
+            user_id: 'teacher-1',
+        });
+        expect(payload[1]).toMatchObject({
+            student_id: 'student-2',
+            quiz_name: 'Menjawab pertanyaan guru',
+            category: 'menjawab',
+            subject: 'Matematika',
+            quiz_date: '2026-09-15',
+            points: 1,
+            max_points: 1,
+            semester_id: 'semester-1',
+            user_id: 'teacher-1',
+        });
+    });
+
+    it('falls back to category lainnya and enforces strict 1 point rule', async () => {
+        const defaultParams: UseMassInputMutationsParams = {
+            mode: 'quiz',
+            selectedClass: 'class-1',
+            quizInfo: {
+                name: 'Tugas Tambahan Khusus',
+                // No category provided
+                subject: 'IPA',
+                date: '2026-09-15',
+                points: 99, // Attempts to set high points, must be locked to 1!
+                max_points: 99,
+            },
+            subjectGradeInfo: {
+                subject: '',
+                assessment_name: '',
+                notes: '',
+                semester: 'semester-1',
+            },
+            scores: {},
+            validationErrors: {},
+            existingGrades: [],
+            selectedStudentIds: new Set(['student-3']),
+            selectedViolationCode: '',
+            violationDate: '2026-09-15',
+            violationNotes: '',
+            studentsData: [],
+            noteMethod: 'template',
+            templateNote: '',
+            pasteData: '',
+            gradedCount: 0,
+            filteredExistingGrades: [],
+            classes: [{ id: 'class-1', name: 'Kelas 5A' } as any],
+            setScores: vi.fn(),
+            setSelectedStudentIds: vi.fn(),
+            bypassDuplicateGuard: true,
+            isScoresDirtyRef: { current: false },
+            clearSubjectGradeDraft: vi.fn(),
+        };
+
+        const { result } = renderHook(() => useMassInputMutations(defaultParams), {
+            wrapper: createWrapper(),
+        });
+
+        await act(async () => {
+            await result.current.submitData();
+        });
+
+        const quizInsert = insertCalls.find(c => c.table === 'quiz_points');
+        expect(quizInsert).toBeDefined();
+        const payload = quizInsert?.payload as Array<any>;
+        expect(payload).toHaveLength(1);
+        expect(payload[0].category).toBe('lainnya');
+        expect(payload[0].points).toBe(1);
+        expect(payload[0].max_points).toBe(1);
     });
 });

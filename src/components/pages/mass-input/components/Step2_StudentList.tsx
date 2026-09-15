@@ -3,7 +3,8 @@ import { Input } from '../../../ui/Input';
 import { Checkbox } from '../../../ui/Checkbox';
 import { SearchIcon, CheckSquareIcon, BarChartIcon, CheckIcon, SparklesIcon } from '../../../Icons';
 import { FilterPills } from './FilterPills';
-import { StudentRow, InputMode, StudentFilter, AcademicRecordRow, ClassRow, AttitudeRecordRow } from '../types';
+import { StudentRow, InputMode, StudentFilter, AcademicRecordRow, ClassRow, AttitudeRecordRow, QuizPointRow } from '../types';
+import { QUIZ_ACTIVITY_CATEGORIES } from '../constants';
 import { useGridNavigation } from '../../../../hooks/useGridNavigation';
 import { StudentSortControls, GroupHeader, sortStudents, groupStudents, SortField, SortDirection, GroupBy } from '../../../ui/StudentSortControls';
 import { GradeDistributionMini } from '../../../ui/GradeDistributionChart';
@@ -31,6 +32,8 @@ interface Step2_StudentListProps {
     existingAttitudeRecords?: AttitudeRecordRow[];
     attitudePoints?: number;
     attitudeCategory?: string;
+    existingQuizPoints?: QuizPointRow[];
+    quizInfo?: { name: string; category?: string; subject: string; date: string; points: number; max_points: number };
     classes?: ClassRow[];
     selectedClass?: string;
     handleSubmit?: () => void;
@@ -45,6 +48,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     selectedStudentIds, handleStudentSelect, scores, handleScoreChange, validationErrors = {}, existingGrades,
     existingAttitudeRecords,
     attitudePoints = 1, attitudeCategory = 'Adab & Akhlak',
+    existingQuizPoints, quizInfo,
     classes, selectedClass, handleSubmit, isSubmitDisabled, isSubmitting, onShowAdjustment
 }) => {
     // Sorting and Grouping State
@@ -99,7 +103,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     }, [classes]);
 
     const existingGradesMap = useMemo(() => {
-        const map = new Map<string, any>();
+        const map = new Map<string, AcademicRecordRow>();
         if (existingGrades) {
             existingGrades.forEach(g => map.set(g.student_id, g));
         }
@@ -113,6 +117,35 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
         }
         return map;
     }, [existingAttitudeRecords]);
+
+    const studentQuizPointsCountMap = useMemo(() => {
+        const map = new Map<string, number>();
+        if (!existingQuizPoints) return map;
+        for (const q of existingQuizPoints) {
+            map.set(q.student_id, (map.get(q.student_id) || 0) + (q.points || 1));
+        }
+        return map;
+    }, [existingQuizPoints]);
+
+    const quizDate = quizInfo?.date;
+    const studentQuizTodayMap = useMemo(() => {
+        const map = new Map<string, QuizPointRow[]>();
+        if (!existingQuizPoints || !quizDate) return map;
+        for (const q of existingQuizPoints) {
+            if (q.quiz_date === quizDate) {
+                const list = map.get(q.student_id) || [];
+                list.push(q);
+                map.set(q.student_id, list);
+            }
+        }
+        return map;
+    }, [existingQuizPoints, quizDate]);
+
+    const quizCategory = quizInfo?.category;
+    const activeQuizCategory = useMemo(() => {
+        const catKey = quizCategory || 'bertanya';
+        return QUIZ_ACTIVITY_CATEGORIES.find(c => c.value === catKey) || { value: catKey, label: 'Keaktifan', icon: '⭐' };
+    }, [quizCategory]);
 
     const globalIndexMap = useMemo(() => {
         const map = new Map<string, number>();
@@ -228,8 +261,8 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                             />
                                         </th>
                                         <th className="p-4 text-left font-bold tracking-wide uppercase text-xs">Nama Siswa</th>
-                                        <th className={`p-4 text-left font-bold tracking-wide uppercase text-xs ${mode === 'attitude' ? 'w-80 min-w-[280px]' : ''}`}>
-                                            {mode === 'subject_grade' ? 'Input Nilai' : mode === 'attitude' ? 'Apresiasi Sikap (BINTANG)' : mode === 'academic_print' ? 'Nilai Saat Ini' : 'Status'}
+                                        <th className={`p-4 text-left font-bold tracking-wide uppercase text-xs ${mode === 'attitude' || mode === 'quiz' ? 'w-80 min-w-[280px]' : ''}`}>
+                                            {mode === 'subject_grade' ? 'Input Nilai' : mode === 'attitude' ? 'Apresiasi Sikap (BINTANG)' : mode === 'quiz' ? 'Poin Keaktifan (BINTANG)' : mode === 'academic_print' ? 'Nilai Saat Ini' : 'Status'}
                                         </th>
                                     </tr>
                                 </thead>
@@ -251,6 +284,9 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                 const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
                                                 const attitudeRecord = existingAttitudeMap.get(s.id);
                                                 const hasAttitude = !!attitudeRecord;
+                                                const studentQuizPoints = studentQuizPointsCountMap.get(s.id) || 0;
+                                                const todayQuizRecords = studentQuizTodayMap.get(s.id) || [];
+                                                const hasQuizToday = todayQuizRecords.length > 0;
 
                                                 return (
                                                     <tr
@@ -306,10 +342,22 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                             ✓ Tersimpan di database
                                                                         </span>
                                                                     )}
+                                                                    {mode === 'quiz' && (
+                                                                        <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                                                            <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 flex items-center gap-1 w-fit">
+                                                                                ⭐ {studentQuizPoints} Poin Keaktifan
+                                                                            </span>
+                                                                            {hasQuizToday && (
+                                                                                <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1 w-fit" title={todayQuizRecords.map(r => r.quiz_name).join(', ')}>
+                                                                                    ✓ Ada poin hari ini ({todayQuizRecords.length}x)
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         </td>
-                                                        <td className={`p-4 rounded-r-xl border-y border-r border-slate-100 dark:border-white/5 group-hover:border-slate-200 dark:group-hover:border-white/10 ${mode === 'attitude' ? 'w-80 min-w-[280px]' : ''}`}>
+                                                        <td className={`p-4 rounded-r-xl border-y border-r border-slate-100 dark:border-white/5 group-hover:border-slate-200 dark:group-hover:border-white/10 ${mode === 'attitude' || mode === 'quiz' ? 'w-80 min-w-[280px]' : ''}`}>
                                                             {mode === 'subject_grade' ? (
                                                                 <div className="relative">
                                                                     <Input
@@ -350,6 +398,21 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                         Belum dipilih (klik baris untuk beri poin)
                                                                     </span>
                                                                 )
+                                                            ) : mode === 'quiz' ? (
+                                                                isSelected ? (
+                                                                    <div className="flex items-center">
+                                                                        <span className="inline-flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-200 bg-amber-100/90 dark:bg-amber-500/20 px-3.5 py-1.5 rounded-xl border border-amber-300/80 dark:border-amber-500/30 whitespace-nowrap shadow-sm">
+                                                                            <span className="text-sm">{activeQuizCategory.icon}</span>
+                                                                            <span className="font-bold text-amber-700 dark:text-amber-300">+1 Poin</span>
+                                                                            <span className="text-amber-400/60 dark:text-amber-500/60 font-normal">•</span>
+                                                                            <span className="font-medium text-amber-800 dark:text-amber-200">{activeQuizCategory.label}</span>
+                                                                        </span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="text-slate-400 dark:text-white/30 text-xs italic whitespace-nowrap">
+                                                                        Belum dipilih (klik baris untuk beri +1 poin)
+                                                                    </span>
+                                                                )
                                                             ) : mode === 'academic_print' ? (
                                                                 <span className={`font-bold px-4 py-2 rounded-lg text-sm ${hasGrade ? 'bg-brand-100 dark:bg-brand-500/30 text-brand-700 dark:text-brand-200 border border-brand-200 dark:border-brand-500/30' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-gray-500 border border-slate-200 dark:border-white/5'}`}>
                                                                     {hasGrade ? gradeRecord?.score : 'N/A'}
@@ -386,6 +449,9 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                         const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
                                         const attitudeRecord = existingAttitudeMap.get(s.id);
                                         const hasAttitude = !!attitudeRecord;
+                                        const studentQuizPoints = studentQuizPointsCountMap.get(s.id) || 0;
+                                        const todayQuizRecords = studentQuizTodayMap.get(s.id) || [];
+                                        const hasQuizToday = todayQuizRecords.length > 0;
 
                                         return (
                                             <div
@@ -438,6 +504,18 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                 <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1 w-fit">
                                                                     ✓ Tersimpan
                                                                 </span>
+                                                            )}
+                                                            {mode === 'quiz' && (
+                                                                <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                                                    <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 flex items-center gap-1 w-fit">
+                                                                        ⭐ {studentQuizPoints} Poin
+                                                                    </span>
+                                                                    {hasQuizToday && (
+                                                                        <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1 w-fit">
+                                                                            ✓ Hari ini ({todayQuizRecords.length}x)
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                             )}
                                                         </div>
                                                     </div>
@@ -492,6 +570,22 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                             </span>
                                                         )}
                                                         <span className="text-xxs text-slate-400 font-medium whitespace-nowrap flex-shrink-0">Rapot BINTANG</span>
+                                                    </div>
+                                                ) : mode === 'quiz' ? (
+                                                    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-between gap-2">
+                                                        {isSelected ? (
+                                                            <span className="text-xs font-semibold text-amber-800 dark:text-amber-200 bg-amber-100/90 dark:bg-amber-500/20 px-3 py-1.5 rounded-xl border border-amber-300/80 dark:border-amber-500/30 inline-flex items-center gap-1.5 whitespace-nowrap shadow-sm">
+                                                                <span className="text-sm">{activeQuizCategory.icon}</span>
+                                                                <span className="font-bold text-amber-700 dark:text-amber-300">+1 Poin</span>
+                                                                <span className="text-amber-400/60">•</span>
+                                                                <span className="font-medium text-amber-800 dark:text-amber-200">{activeQuizCategory.label}</span>
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-xs text-slate-400 dark:text-white/30 italic whitespace-nowrap">
+                                                                Belum dipilih (tap untuk beri +1 poin)
+                                                            </span>
+                                                        )}
+                                                        <span className="text-xxs text-slate-400 font-medium whitespace-nowrap flex-shrink-0">Poin Keaktifan</span>
                                                     </div>
                                                 ) : mode === 'academic_print' ? (
                                                     <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
