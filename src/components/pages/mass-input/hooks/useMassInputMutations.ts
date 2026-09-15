@@ -155,7 +155,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
     };
 
     const { mutate: submitData, isPending: isSubmitting } = useMutation({
-        mutationFn: async (overrideBypassGuard?: boolean) => {
+        mutationFn: async (overrideBypassGuard?: boolean | void) => {
             if (!mode || !user) throw new Error('Mode atau pengguna tidak diatur');
             const shouldBypassGuard = overrideBypassGuard ?? bypassDuplicateGuard;
             switch (mode) {
