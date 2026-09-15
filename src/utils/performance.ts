@@ -63,7 +63,7 @@ export function startAnimationMonitoring(): () => void {
     }
   } catch {
     // PerformanceObserver not supported or entry type not available
-    console.info('[Performance] Animation monitoring not supported in this browser.');
+    console.warn('[Performance] Animation monitoring not supported in this browser.');
   }
 
   return () => {

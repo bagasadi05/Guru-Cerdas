@@ -49,6 +49,13 @@ export default tseslint.config(
         },
     },
     {
+        files: ['src/utils/**/*.{ts,tsx}', 'src/contexts/**/*.{ts,tsx}'],
+        rules: {
+            // Utility and context modules legitimately export hooks, constants, and helper functions alongside providers
+            'react-refresh/only-export-components': 'off',
+        },
+    },
+    {
         files: ['tests/**/*.{ts,tsx}', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}', 'src/setupTests.ts'],
         rules: {
             // Test files frequently use 'any' for partial mocks, spies, and synthetic test payloads
