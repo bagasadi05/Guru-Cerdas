@@ -141,3 +141,10 @@ export const drawRadarChartInPDF = (
     doc.text(dataset.label, lx + 6, legendY);
   });
 };
+
+/**
+ * Read the finalY of the last autoTable render (plugin attaches it to the doc at runtime)
+ */
+export const getTableEndY = (doc: unknown): number =>
+  (doc as { lastAutoTable?: { finalY: number } } | null | undefined)?.lastAutoTable?.finalY ?? 0;
+
