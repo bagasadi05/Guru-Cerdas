@@ -31,23 +31,30 @@ export const useAttendance = () => {
     const yesterday = `${yesterdayDate.getFullYear()}-${String(yesterdayDate.getMonth() + 1).padStart(2, '0')}-${String(yesterdayDate.getDate()).padStart(2, '0')}`;
 
     const state = useAttendanceState(today);
+    const {
+        selectedSemesterId,
+        setSelectedSemesterId,
+        selectedDate,
+        setSelectedDate,
+        selectedClass,
+    } = state;
 
     useEffect(() => { 
-        if (activeSemester && !state.selectedSemesterId) {
-            state.setSelectedSemesterId(activeSemester.id); 
+        if (activeSemester && !selectedSemesterId) {
+            setSelectedSemesterId(activeSemester.id); 
         }
-    }, [activeSemester, state.selectedSemesterId, state.setSelectedSemesterId]);
+    }, [activeSemester, selectedSemesterId, setSelectedSemesterId]);
 
     const selectedSemester = useMemo(() => {
-        if (!state.selectedSemesterId) return null;
-        return semesters.find(s => s.id === state.selectedSemesterId) || null;
-    }, [semesters, state.selectedSemesterId]);
+        if (!selectedSemesterId) return null;
+        return semesters.find(s => s.id === selectedSemesterId) || null;
+    }, [semesters, selectedSemesterId]);
 
     useEffect(() => { 
-        if (selectedSemester && (state.selectedDate < selectedSemester.start_date || state.selectedDate > selectedSemester.end_date)) {
-            state.setSelectedDate(selectedSemester.start_date); 
+        if (selectedSemester && (selectedDate < selectedSemester.start_date || selectedDate > selectedSemester.end_date)) {
+            setSelectedDate(selectedSemester.start_date); 
         }
-    }, [state.selectedDate, selectedSemester, state.setSelectedDate]);
+    }, [selectedDate, selectedSemester, setSelectedDate]);
 
     const data = useAttendanceData({
         user,
@@ -139,19 +146,20 @@ export const useAttendance = () => {
     // Reset dismissed state if class changes
     useEffect(() => {
         setIsAssistantDismissed(false);
-    }, [state.selectedClass]);
+    }, [selectedClass]);
 
-    const studentIdsKey = useMemo(() => (data.students || []).map(s => s.id).sort().join(','), [data.students]);
+    const { students } = data;
+    const studentIdsKey = useMemo(() => (students || []).map(s => s.id).sort().join(','), [students]);
 
     const checkMissingWeekdays = useCallback(async () => {
-        if (!state.selectedClass || !data.students || data.students.length === 0) {
+        if (!selectedClass || !students || students.length === 0) {
             setMissingWeekdays(prev => (prev.length > 0 ? [] : prev));
             return;
         }
         try {
-            const studentIds = data.students.map(s => s.id);
+            const studentIds = students.map(s => s.id);
             const missing = await attendanceAutoFillService.getMissingWeekdaysForClass(
-                state.selectedClass,
+                selectedClass,
                 studentIds,
                 today
             );
@@ -159,18 +167,18 @@ export const useAttendance = () => {
         } catch (err) {
             console.warn('Failed to check missing weekdays:', err);
         }
-    }, [state.selectedClass, studentIdsKey, today]);
+    }, [selectedClass, students, today]);
 
     useEffect(() => {
-        if (!state.selectedClass || !data.students || data.students.length === 0) {
+        if (!selectedClass || !students || students.length === 0) {
             setMissingWeekdays(prev => (prev.length > 0 ? [] : prev));
             return;
         }
 
         let isMounted = true;
-        const studentIds = data.students.map(s => s.id);
+        const studentIds = students.map(s => s.id);
         attendanceAutoFillService.getMissingWeekdaysForClass(
-            state.selectedClass,
+            selectedClass,
             studentIds,
             today
         ).then(missing => {
@@ -184,7 +192,7 @@ export const useAttendance = () => {
         return () => {
             isMounted = false;
         };
-    }, [state.selectedClass, studentIdsKey, today]);
+    }, [selectedClass, studentIdsKey, students, today]);
 
     const handleAutoFillWeekdays = useCallback(async (targetDate?: string) => {
         if (!state.selectedClass) return;

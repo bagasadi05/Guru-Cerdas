@@ -136,7 +136,7 @@ const AdminPage: React.FC = () => {
     });
 
     // Check system health
-    const checkSystemHealth = async () => {
+    const checkSystemHealth = useCallback(async () => {
         try {
             const dbStart = Date.now();
             const { error: dbError } = await supabase.from('user_roles').select('user_id').limit(1);
@@ -163,7 +163,7 @@ const AdminPage: React.FC = () => {
                 apiLatencyMs: null
             }));
         }
-    };
+    }, []);
 
     // Check admin status
     const checkAdminStatus = useCallback(async () => {
@@ -194,7 +194,7 @@ const AdminPage: React.FC = () => {
 
 
     // Fetch system statistics
-    const fetchStats = async () => {
+    const fetchStats = useCallback(async () => {
         setStatsLoading(true);
         try {
             const [
@@ -236,7 +236,7 @@ const AdminPage: React.FC = () => {
         } finally {
             setStatsLoading(false);
         }
-    };
+    }, []);
 
     // Fetch users (active and deleted separately)
     const fetchUsers = useCallback(async () => {
@@ -296,7 +296,7 @@ const AdminPage: React.FC = () => {
     }, [debouncedSearchTerm, userPage, deletedPage, roleFilter]);
 
     // Fetch announcements
-    const fetchAnnouncements = async () => {
+    const fetchAnnouncements = useCallback(async () => {
         setAnnouncementsLoading(true);
         try {
             const { data, error } = await supabase
@@ -315,7 +315,7 @@ const AdminPage: React.FC = () => {
         } finally {
             setAnnouncementsLoading(false);
         }
-    };
+    }, [toast]);
 
     // Fetch activity logs
     const fetchActivityLogs = useCallback(async () => {
@@ -369,7 +369,7 @@ const AdminPage: React.FC = () => {
             fetchAnnouncements();
             checkSystemHealth();
         }
-    }, [isAdmin]);
+    }, [isAdmin, fetchStats, fetchAnnouncements, checkSystemHealth]);
 
     useEffect(() => {
         const handle = setTimeout(() => setDebouncedSearchTerm(searchTerm.trim()), 300);

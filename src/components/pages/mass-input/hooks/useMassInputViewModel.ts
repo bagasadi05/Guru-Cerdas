@@ -133,6 +133,7 @@ export function useMassInputViewModel() {
     }, [state.attitudePredicates]);
 
     // Pre-fill attitude predicates from existing records
+    const { setAttitudePredicates } = state;
     useEffect(() => {
         if (state.mode === 'attitude' && data.existingAttitudeRecords && data.existingAttitudeRecords.length > 0) {
             const map: Record<string, { spiritual: string; social: string }> = {};
@@ -142,14 +143,14 @@ export function useMassInputViewModel() {
                     social: rec.social_predicate || '',
                 };
             });
-            state.setAttitudePredicates(prev => {
+            setAttitudePredicates(prev => {
                 // If user has already made edits, keep them, otherwise use existing
                 const hasEdits = Object.values(prev).some(p => p.spiritual || p.social);
                 if (hasEdits) return { ...map, ...prev };
                 return map;
             });
         }
-    }, [state.mode, data.existingAttitudeRecords]);
+    }, [state.mode, data.existingAttitudeRecords, setAttitudePredicates]);
 
     const summaryText = useMemo(() => {
         const totalStudents = data.studentsData?.length || 0;

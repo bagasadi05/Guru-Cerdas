@@ -107,6 +107,7 @@ export async function preloadExportLibraries(): Promise<void> {
  */
 export function clearModuleCache(): void {
     xlsxModule = null;
+    exceljsModule = null;
     jspdfModule = null;
     autoTableModule = null;
     html2canvasModule = null;

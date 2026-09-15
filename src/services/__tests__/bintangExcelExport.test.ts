@@ -22,6 +22,7 @@ const { MockWorkbook } = vi.hoisted(() => {
 
 vi.mock('../../utils/dynamicImports', () => ({
     getExcelJS: vi.fn().mockResolvedValue({ Workbook: MockWorkbook }),
+    getXLSX: vi.fn().mockResolvedValue({}),
 }));
 
 describe('bintangExcelExport', () => {

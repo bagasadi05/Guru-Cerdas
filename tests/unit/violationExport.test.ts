@@ -46,6 +46,7 @@ vi.mock('../../src/utils/dynamicImports', () => ({
     getJsPDF: vi.fn(() => Promise.resolve({ default: MockJsPDF })),
     getAutoTable: vi.fn(() => Promise.resolve({ default: mockAutoTable })),
     getXLSX: vi.fn(() => Promise.resolve(mockXLSX)),
+    getExcelJS: vi.fn(() => Promise.resolve({ Workbook: class {} })),
 }));
 
 // Mock pdfHeaderUtils

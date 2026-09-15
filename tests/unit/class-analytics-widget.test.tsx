@@ -6,6 +6,7 @@ import ClassAnalyticsSection from '../../src/components/dashboard/ClassAnalytics
 
 // Mock supabase
 vi.mock('../../src/services/supabase', () => ({
+    clearStaleAuthTokens: vi.fn(),
     supabase: {
         from: vi.fn(() => ({
             select: vi.fn(() => ({
