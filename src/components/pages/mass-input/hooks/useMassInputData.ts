@@ -236,7 +236,7 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
             if (error) throw error;
             return dedupeQuizPoints((data || []) as unknown as QuizPointRow[]);
         },
-        enabled: mode === 'quiz' && !!selectedClass && !!studentsData && studentsData.length > 0,
+        enabled: (mode === 'quiz' || mode === 'attitude') && !!selectedClass && !!studentsData && studentsData.length > 0,
     });
 
     return {

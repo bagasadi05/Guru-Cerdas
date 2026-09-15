@@ -4,7 +4,7 @@ import { Checkbox } from '../../../ui/Checkbox';
 import { SearchIcon, CheckSquareIcon, BarChartIcon, CheckIcon, SparklesIcon } from '../../../Icons';
 import { FilterPills } from './FilterPills';
 import { StudentRow, InputMode, StudentFilter, AcademicRecordRow, ClassRow, AttitudeRecordRow, QuizPointRow } from '../types';
-import { QUIZ_ACTIVITY_CATEGORIES } from '../constants';
+import { QUIZ_ACTIVITY_CATEGORIES, BINTANG_ATTITUDE_ASPECTS } from '../constants';
 import { useGridNavigation } from '../../../../hooks/useGridNavigation';
 import { StudentSortControls, GroupHeader, sortStudents, groupStudents, SortField, SortDirection, GroupBy } from '../../../ui/StudentSortControls';
 import { GradeDistributionMini } from '../../../ui/GradeDistributionChart';
@@ -32,6 +32,7 @@ interface Step2_StudentListProps {
     existingAttitudeRecords?: AttitudeRecordRow[];
     attitudePoints?: number;
     attitudeCategory?: string;
+    attitudeDate?: string;
     existingQuizPoints?: QuizPointRow[];
     quizInfo?: { name: string; category?: string; subject: string; date: string; points: number; max_points: number };
     classes?: ClassRow[];
@@ -46,8 +47,8 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     mode, searchTerm, setSearchTerm, filterOptions, studentFilter, setStudentFilter,
     isLoadingStudents, students, isAllSelected, handleSelectAllStudents,
     selectedStudentIds, handleStudentSelect, scores, handleScoreChange, validationErrors = {}, existingGrades,
-    existingAttitudeRecords,
-    attitudePoints = 1, attitudeCategory = 'Adab & Akhlak',
+    existingAttitudeRecords: _existingAttitudeRecords,
+    attitudePoints: _attitudePoints = 1, attitudeCategory = 'Adab & Akhlak', attitudeDate,
     existingQuizPoints, quizInfo,
     classes, selectedClass, handleSubmit, isSubmitDisabled, isSubmitting, onShowAdjustment
 }) => {
@@ -110,14 +111,6 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
         return map;
     }, [existingGrades]);
 
-    const existingAttitudeMap = useMemo(() => {
-        const map = new Map<string, AttitudeRecordRow>();
-        if (existingAttitudeRecords) {
-            existingAttitudeRecords.forEach(r => map.set(r.student_id, r));
-        }
-        return map;
-    }, [existingAttitudeRecords]);
-
     const studentQuizPointsCountMap = useMemo(() => {
         const map = new Map<string, number>();
         if (!existingQuizPoints) return map;
@@ -146,6 +139,40 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
         const catKey = quizCategory || 'bertanya';
         return QUIZ_ACTIVITY_CATEGORIES.find(c => c.value === catKey) || { value: catKey, label: 'Keaktifan', icon: '⭐' };
     }, [quizCategory]);
+
+    const currentAttitudeDate = attitudeDate;
+    const currentAttitudeCategory = attitudeCategory;
+
+    const activeAttitudeCategory = useMemo(() => {
+        const catKey = currentAttitudeCategory || 'Adab & Akhlak';
+        return BINTANG_ATTITUDE_ASPECTS.find(c => c.value === catKey) || { value: catKey, label: 'Sikap', icon: '🌟', menunjang: 'Menunjang Aspek Sikap', defaultActivity: 'Adab & Kesantunan' };
+    }, [currentAttitudeCategory]);
+
+    const studentAttitudePointsCountMap = useMemo(() => {
+        const map = new Map<string, number>();
+        if (!existingQuizPoints) return map;
+        for (const q of existingQuizPoints) {
+            const isAttitude = !q.subject || BINTANG_ATTITUDE_ASPECTS.some(a => a.value === q.category);
+            if (isAttitude) {
+                map.set(q.student_id, (map.get(q.student_id) || 0) + (q.points || 1));
+            }
+        }
+        return map;
+    }, [existingQuizPoints]);
+
+    const studentAttitudeTodayMap = useMemo(() => {
+        const map = new Map<string, QuizPointRow[]>();
+        if (!existingQuizPoints || !currentAttitudeDate) return map;
+        for (const q of existingQuizPoints) {
+            const isAttitude = !q.subject || BINTANG_ATTITUDE_ASPECTS.some(a => a.value === q.category);
+            if (isAttitude && q.quiz_date === currentAttitudeDate) {
+                const list = map.get(q.student_id) || [];
+                list.push(q);
+                map.set(q.student_id, list);
+            }
+        }
+        return map;
+    }, [existingQuizPoints, currentAttitudeDate]);
 
     const globalIndexMap = useMemo(() => {
         const map = new Map<string, number>();
@@ -282,11 +309,12 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                 const gradeRecord = existingGradesMap.get(s.id);
                                                 const hasGrade = !!gradeRecord;
                                                 const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
-                                                const attitudeRecord = existingAttitudeMap.get(s.id);
-                                                const hasAttitude = !!attitudeRecord;
                                                 const studentQuizPoints = studentQuizPointsCountMap.get(s.id) || 0;
                                                 const todayQuizRecords = studentQuizTodayMap.get(s.id) || [];
                                                 const hasQuizToday = todayQuizRecords.length > 0;
+                                                const studentAttitudePoints = studentAttitudePointsCountMap.get(s.id) || 0;
+                                                const todayAttitudeRecords = studentAttitudeTodayMap.get(s.id) || [];
+                                                const hasAttitudeToday = todayAttitudeRecords.length > 0;
 
                                                 return (
                                                     <tr
@@ -337,10 +365,17 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                             ⚠️ Nilai Sudah Ada
                                                                         </span>
                                                                     )}
-                                                                    {mode === 'attitude' && hasAttitude && (
-                                                                        <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1 w-fit mt-1">
-                                                                            ✓ Tersimpan di database
-                                                                        </span>
+                                                                    {mode === 'attitude' && (
+                                                                        <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                                                            <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 flex items-center gap-1 w-fit">
+                                                                                🌟 {studentAttitudePoints} Poin Sikap
+                                                                            </span>
+                                                                            {hasAttitudeToday && (
+                                                                                <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1 w-fit" title={todayAttitudeRecords.map(r => r.quiz_name).join(', ')}>
+                                                                                    ✓ Ada poin sikap hari ini ({todayAttitudeRecords.length}x)
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
                                                                     )}
                                                                     {mode === 'quiz' && (
                                                                         <div className="flex flex-wrap items-center gap-1.5 mt-1">
@@ -387,15 +422,15 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                 isSelected ? (
                                                                     <div className="flex items-center">
                                                                         <span className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-200 bg-emerald-100/90 dark:bg-emerald-500/20 px-3.5 py-1.5 rounded-xl border border-emerald-300/80 dark:border-emerald-500/30 whitespace-nowrap shadow-sm">
-                                                                            <SparklesIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                                                                            <span className="font-bold text-emerald-700 dark:text-emerald-300">+{attitudePoints || 1} Poin</span>
+                                                                            <span className="text-sm">{activeAttitudeCategory.icon}</span>
+                                                                            <span className="font-bold text-emerald-700 dark:text-emerald-300">+1 Poin</span>
                                                                             <span className="text-emerald-400/60 dark:text-emerald-500/60 font-normal">•</span>
-                                                                            <span className="font-medium text-emerald-800 dark:text-emerald-200">{attitudeCategory || 'Sikap'}</span>
+                                                                            <span className="font-medium text-emerald-800 dark:text-emerald-200">{activeAttitudeCategory.label}</span>
                                                                         </span>
                                                                     </div>
                                                                 ) : (
                                                                     <span className="text-slate-400 dark:text-white/30 text-xs italic whitespace-nowrap">
-                                                                        Belum dipilih (klik baris untuk beri poin)
+                                                                        Belum dipilih (klik baris untuk beri +1 poin sikap)
                                                                     </span>
                                                                 )
                                                             ) : mode === 'quiz' ? (
@@ -447,11 +482,12 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                         const gradeRecord = existingGradesMap.get(s.id);
                                         const hasGrade = !!gradeRecord;
                                         const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
-                                        const attitudeRecord = existingAttitudeMap.get(s.id);
-                                        const hasAttitude = !!attitudeRecord;
                                         const studentQuizPoints = studentQuizPointsCountMap.get(s.id) || 0;
                                         const todayQuizRecords = studentQuizTodayMap.get(s.id) || [];
                                         const hasQuizToday = todayQuizRecords.length > 0;
+                                        const studentAttitudePoints = studentAttitudePointsCountMap.get(s.id) || 0;
+                                        const todayAttitudeRecords = studentAttitudeTodayMap.get(s.id) || [];
+                                        const hasAttitudeToday = todayAttitudeRecords.length > 0;
 
                                         return (
                                             <div
@@ -500,10 +536,17 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                     ⚠️ Nilai Sudah Ada
                                                                 </span>
                                                             )}
-                                                            {mode === 'attitude' && hasAttitude && (
-                                                                <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1 w-fit">
-                                                                    ✓ Tersimpan
-                                                                </span>
+                                                            {mode === 'attitude' && (
+                                                                <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                                                    <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 flex items-center gap-1 w-fit">
+                                                                        🌟 {studentAttitudePoints} Poin
+                                                                    </span>
+                                                                    {hasAttitudeToday && (
+                                                                        <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 flex items-center gap-1 w-fit" title={todayAttitudeRecords.map(r => r.quiz_name).join(', ')}>
+                                                                            ✓ Hari ini ({todayAttitudeRecords.length}x)
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                             )}
                                                             {mode === 'quiz' && (
                                                                 <div className="flex flex-wrap items-center gap-1.5 mt-1">
@@ -559,14 +602,14 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                     <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-between gap-2">
                                                         {isSelected ? (
                                                             <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-200 bg-emerald-100/90 dark:bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-300/80 dark:border-emerald-500/30 inline-flex items-center gap-1.5 whitespace-nowrap shadow-sm">
-                                                                <SparklesIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                                                                <span className="font-bold text-emerald-700 dark:text-emerald-300">+{attitudePoints || 1} Poin</span>
+                                                                <span className="text-sm">{activeAttitudeCategory.icon}</span>
+                                                                <span className="font-bold text-emerald-700 dark:text-emerald-300">+1 Poin</span>
                                                                 <span className="text-emerald-400/60">•</span>
-                                                                <span className="font-medium text-emerald-800 dark:text-emerald-200">{attitudeCategory || 'Sikap'}</span>
+                                                                <span className="font-medium text-emerald-800 dark:text-emerald-200">{activeAttitudeCategory.label}</span>
                                                             </span>
                                                         ) : (
                                                             <span className="text-xs text-slate-400 dark:text-white/30 italic whitespace-nowrap">
-                                                                Belum dipilih (tap untuk beri poin)
+                                                                Belum dipilih (tap untuk beri +1 poin)
                                                             </span>
                                                         )}
                                                         <span className="text-xxs text-slate-400 font-medium whitespace-nowrap flex-shrink-0">Rapot BINTANG</span>

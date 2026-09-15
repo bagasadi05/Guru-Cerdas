@@ -78,7 +78,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
     const {
         mode, selectedClass, quizInfo, subjectGradeInfo, scores, validationErrors,
         existingGrades, selectedStudentIds, selectedViolationCode, violationDate, violationNotes,
-        attitudeDate, attitudeCategory, attitudeName, attitudePoints, attitudeNotes,
+        attitudeDate, attitudeCategory, attitudeName, attitudePoints: _attitudePoints, attitudeNotes,
         studentsData, noteMethod, templateNote, pasteData,
         gradedCount, classes,
         setScores, setSelectedStudentIds, bypassDuplicateGuard, isScoresDirtyRef, clearSubjectGradeDraft,
@@ -312,21 +312,48 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                         throw new Error('Nama aktivitas sikap harus diisi.');
                     }
                     const resolvedCategory = (attitudeCategory || 'Adab & Akhlak').trim();
-                    const resolvedPoints = Math.max(1, attitudePoints || 1);
                     const resolvedDate = attitudeDate || new Date().toISOString().slice(0, 10);
                     const semesterId = (subjectGradeInfo.semester && subjectGradeInfo.semester.trim() !== '')
                         ? subjectGradeInfo.semester
                         : (activeSemester?.id || null);
 
+                    let duplicateStudentIds = new Set<string>();
+                    if (!shouldBypassGuard) {
+                        let existingAttitudeQuery = supabase
+                            .from('quiz_points')
+                            .select('id, student_id')
+                            .in('student_id', targetStudentIds)
+                            .eq('user_id', user.id)
+                            .eq('quiz_name', resolvedName)
+                            .eq('category', resolvedCategory)
+                            .eq('quiz_date', resolvedDate)
+                            .gte('created_at', getDuplicateGuardWindowIso())
+                            .is('deleted_at', null);
+
+                        existingAttitudeQuery = semesterId
+                            ? existingAttitudeQuery.eq('semester_id', semesterId)
+                            : existingAttitudeQuery.is('semester_id', null);
+
+                        const { data: existingRows, error: existingError } = await existingAttitudeQuery;
+                        if (existingError) throw existingError;
+                        duplicateStudentIds = new Set((existingRows || []).map((row) => row.student_id));
+                    }
+
+                    const finalStudentIds = targetStudentIds.filter((student_id) => !duplicateStudentIds.has(student_id));
+
+                    if (finalStudentIds.length === 0) {
+                        return 'Tidak ada poin sikap baru yang disimpan. Sistem mendeteksi input sikap yang sama sudah tersimpan beberapa menit terakhir.';
+                    }
+
                     // 1. Simpan ke quiz_points (Poin Keaktifan/Sikap Rapot BINTANG - Tabel C & Offset Aspek)
-                    const quizRecords = targetStudentIds.map(student_id => ({
+                    const quizRecords = finalStudentIds.map(student_id => ({
                         student_id,
                         user_id: user.id,
                         subject: null, // Poin sikap BINTANG tidak terikat mapel spesifik
                         quiz_name: resolvedName,
                         quiz_date: resolvedDate,
-                        points: resolvedPoints,
-                        max_points: resolvedPoints,
+                        points: 1, // STRICT CONSTRAINT: Poin sikap selalu 1 sesuai kesepakatan kelas
+                        max_points: 1,
                         category: resolvedCategory,
                         is_used: false,
                         semester_id: semesterId,
@@ -344,7 +371,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
 
                     // 2. Sinkronkan ke attitude_records untuk kompatibilitas data historis
                     try {
-                        const attitudeRecords: Database['public']['Tables']['attitude_records']['Insert'][] = targetStudentIds.map(student_id => ({
+                        const attitudeRecords: Database['public']['Tables']['attitude_records']['Insert'][] = finalStudentIds.map(student_id => ({
                             student_id,
                             subject: 'Sikap & Pembiasaan',
                             assessment_name: resolvedName,
@@ -361,7 +388,9 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                         console.warn('Silent sync to attitude_records skipped:', attErr);
                     }
 
-                    return `Poin sikap (+${resolvedPoints} ${resolvedName}) berhasil dicatat untuk ${targetStudentIds.length} siswa. Data otomatis terhubung ke Rapot BINTANG.`;
+                    return duplicateStudentIds.size > 0
+                        ? `Poin sikap (+1 ${resolvedName}) untuk ${finalStudentIds.length} siswa berhasil dicatat! ${duplicateStudentIds.size} data duplikat terbaru dilewati.`
+                        : `Poin sikap (+1 ${resolvedName}) untuk ${finalStudentIds.length} siswa berhasil dicatat! Terhubung ke Rapot BINTANG 🌟`;
                 }
                 default:
                     throw new Error(`Mode "${mode}" tidak mendukung penyimpanan data.`);
@@ -369,7 +398,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         },
         onSuccess: async (message: string) => {
             toast.success(message || 'Data berhasil disimpan!');
-            if (mode === 'quiz') {
+            if (mode === 'quiz' || mode === 'attitude') {
                 triggerStarsConfetti();
             }
             queryClient.invalidateQueries({ queryKey: ['existingGrades'] });

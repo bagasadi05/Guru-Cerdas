@@ -6,24 +6,9 @@ import { Modal } from '../../../ui/Modal';
 import { XCircleIcon, ChevronDownIcon, SparklesIcon, ClipboardPasteIcon, SearchIcon, CheckIcon, UploadIcon } from '../../../Icons';
 import { violationList } from '../../../../services/violations.data';
 import { InputMode, ClassRow } from '../types';
-import { QUIZ_ACTIVITY_CATEGORIES, QUIZ_CATEGORY_DEFAULT_NAMES, QUIZ_ACTIVITY_SUGGESTIONS } from '../constants';
+import { QUIZ_ACTIVITY_CATEGORIES, QUIZ_CATEGORY_DEFAULT_NAMES, QUIZ_ACTIVITY_SUGGESTIONS, BINTANG_ATTITUDE_ASPECTS, ATTITUDE_SUGGESTIONS } from '../constants';
 import { SemesterSelector } from '../../../ui/SemesterSelector';
 
-const BINTANG_ATTITUDE_ASPECTS = [
-    { value: 'Adab & Akhlak', label: 'Adab & Akhlak', icon: '🌟', menunjang: 'Menunjang Aspek Adab', defaultActivity: 'Adab & Kesantunan' },
-    { value: 'Kedisiplinan & Sikap', label: 'Kedisiplinan & Sikap', icon: '⚡', menunjang: 'Menunjang Aspek Sikap', defaultActivity: 'Tertib & Disiplin' },
-    { value: 'Kerapian & Kebersihan', label: 'Kerapian & Kebersihan', icon: '✨', menunjang: 'Menunjang Aspek Kerapian', defaultActivity: 'Menjaga Kebersihan Kelas' },
-    { value: 'Pembiasaan Ibadah', label: 'Pembiasaan Ibadah', icon: '🕌', menunjang: 'Menunjang Karakter Ibadah', defaultActivity: 'Shalat Dhuha / Berjamaah' },
-    { value: 'Keaktifan & Inisiatif', label: 'Keaktifan & Inisiatif', icon: '💡', menunjang: 'Menunjang Keaktifan', defaultActivity: 'Inisiatif Positif di Kelas' },
-];
-
-const ATTITUDE_SUGGESTIONS: Record<string, string[]> = {
-    'Adab & Akhlak': ['Adab & Kesantunan', 'Menghormati Guru & Teman', 'Berkata Santun & Jujur', 'Membantu Teman'],
-    'Kedisiplinan & Sikap': ['Tertib & Disiplin', 'Tepat Waktu Masuk Kelas', 'Patuh Tata Tertib', 'Tanggung Jawab Tugas'],
-    'Kerapian & Kebersihan': ['Menjaga Kebersihan Kelas', 'Piket Kebersihan', 'Kerapian Meja & Seragam', 'Merawat Sarana Kelas'],
-    'Pembiasaan Ibadah': ['Shalat Dhuha / Berjamaah', 'Tadarus Al-Qur\'an', 'Dzikir & Doa Bersama', 'Istiqamah Ibadah'],
-    'Keaktifan & Inisiatif': ['Inisiatif Positif di Kelas', 'Membantu Guru', 'Berani Memimpin Teman', 'Partisipasi Aktif'],
-};
 
 interface Step2_ConfigurationProps {
     mode: InputMode | null;

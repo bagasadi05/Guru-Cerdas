@@ -360,4 +360,180 @@ describe('useMassInputMutations - Grade & Attitude Upsert', () => {
         expect(payload[0].points).toBe(1);
         expect(payload[0].max_points).toBe(1);
     });
+
+    it('saves attitude points to quiz_points with strict 1 point lock, category, and syncs to attitude_records', async () => {
+        const defaultParams: UseMassInputMutationsParams = {
+            mode: 'attitude',
+            selectedClass: 'class-1',
+            quizInfo: {
+                name: '',
+                subject: '',
+                date: '2026-09-15',
+                points: 1,
+                max_points: 1,
+            },
+            subjectGradeInfo: {
+                subject: '',
+                assessment_name: '',
+                notes: '',
+                semester: 'semester-1',
+            },
+            attitudeDate: '2026-09-15',
+            attitudeCategory: 'Adab & Akhlak',
+            attitudeName: 'Adab & Kesantunan',
+            attitudePoints: 99, // Attempts to set custom points; must strictly lock to 1!
+            scores: {},
+            validationErrors: {},
+            existingGrades: [],
+            selectedStudentIds: new Set(['student-1', 'student-2']),
+            selectedViolationCode: '',
+            violationDate: '2026-09-15',
+            violationNotes: '',
+            studentsData: [],
+            noteMethod: 'template',
+            templateNote: '',
+            pasteData: '',
+            gradedCount: 0,
+            filteredExistingGrades: [],
+            classes: [{ id: 'class-1', name: 'Kelas 5A' } as any],
+            setScores: vi.fn(),
+            setSelectedStudentIds: vi.fn(),
+            bypassDuplicateGuard: true,
+            isScoresDirtyRef: { current: false },
+            clearSubjectGradeDraft: vi.fn(),
+        };
+
+        const { result } = renderHook(() => useMassInputMutations(defaultParams), {
+            wrapper: createWrapper(),
+        });
+
+        await act(async () => {
+            await result.current.submitData();
+        });
+
+        // 1. Verify quiz_points insert
+        const quizInsert = insertCalls.find(c => c.table === 'quiz_points');
+        expect(quizInsert).toBeDefined();
+        const qpPayload = quizInsert?.payload as Array<any>;
+        expect(qpPayload).toHaveLength(2);
+        expect(qpPayload[0]).toMatchObject({
+            student_id: 'student-1',
+            quiz_name: 'Adab & Kesantunan',
+            category: 'Adab & Akhlak',
+            subject: null,
+            quiz_date: '2026-09-15',
+            points: 1,
+            max_points: 1,
+            semester_id: 'semester-1',
+            user_id: 'teacher-1',
+        });
+        expect(qpPayload[1]).toMatchObject({
+            student_id: 'student-2',
+            quiz_name: 'Adab & Kesantunan',
+            category: 'Adab & Akhlak',
+            subject: null,
+            quiz_date: '2026-09-15',
+            points: 1,
+            max_points: 1,
+            semester_id: 'semester-1',
+            user_id: 'teacher-1',
+        });
+
+        // 2. Verify attitude_records sync
+        const attInsert = insertCalls.find(c => c.table === 'attitude_records');
+        expect(attInsert).toBeDefined();
+        const attPayload = attInsert?.payload as Array<any>;
+        expect(attPayload).toHaveLength(2);
+        expect(attPayload[0]).toMatchObject({
+            student_id: 'student-1',
+            subject: 'Sikap & Pembiasaan',
+            assessment_name: 'Adab & Kesantunan',
+            date: '2026-09-15',
+            spiritual_predicate: 'SB',
+            social_predicate: 'B',
+            semester_id: 'semester-1',
+            user_id: 'teacher-1',
+        });
+    });
+
+    it('skips duplicate students in attitude mode when duplicate guard detects existing records', async () => {
+        const { supabase } = await import('../../src/services/supabase');
+        vi.mocked(supabase.from).mockImplementationOnce((table: string) => {
+            if (table === 'quiz_points') {
+                return {
+                    select: vi.fn(() => ({
+                        in: vi.fn().mockReturnThis(),
+                        eq: vi.fn().mockReturnThis(),
+                        gte: vi.fn().mockReturnThis(),
+                        is: vi.fn().mockReturnThis(),
+                        then: (resolve: (v: any) => void) => resolve({
+                            data: [{ id: 'existing-qp-1', student_id: 'student-1' }],
+                            error: null,
+                        }),
+                    })),
+                    insert: vi.fn((payload: unknown) => {
+                        insertCalls.push({ table, payload });
+                        return {
+                            select: vi.fn().mockResolvedValue({
+                                data: Array.isArray(payload) ? payload.map((p: any, i: number) => ({ id: p.id || `id-${i}` })) : [{ id: 'id-1' }],
+                                error: null,
+                            }),
+                        };
+                    }),
+                } as any;
+            }
+            return {
+                insert: vi.fn((payload: unknown) => {
+                    insertCalls.push({ table, payload });
+                    return {
+                        select: vi.fn().mockResolvedValue({ data: [], error: null }),
+                    };
+                }),
+            } as any;
+        });
+
+        const defaultParams: UseMassInputMutationsParams = {
+            mode: 'attitude',
+            selectedClass: 'class-1',
+            quizInfo: { name: '', subject: '', date: '2026-09-15', points: 1, max_points: 1 },
+            subjectGradeInfo: { subject: '', assessment_name: '', notes: '', semester: 'semester-1' },
+            attitudeDate: '2026-09-15',
+            attitudeCategory: 'Kedisiplinan & Sikap',
+            attitudeName: 'Tertib & Disiplin',
+            scores: {},
+            validationErrors: {},
+            existingGrades: [],
+            selectedStudentIds: new Set(['student-1', 'student-2']),
+            selectedViolationCode: '',
+            violationDate: '2026-09-15',
+            violationNotes: '',
+            studentsData: [],
+            noteMethod: 'template',
+            templateNote: '',
+            pasteData: '',
+            gradedCount: 0,
+            filteredExistingGrades: [],
+            classes: [{ id: 'class-1', name: 'Kelas 5A' } as any],
+            setScores: vi.fn(),
+            setSelectedStudentIds: vi.fn(),
+            bypassDuplicateGuard: false,
+            isScoresDirtyRef: { current: false },
+            clearSubjectGradeDraft: vi.fn(),
+        };
+
+        const { result } = renderHook(() => useMassInputMutations(defaultParams), {
+            wrapper: createWrapper(),
+        });
+
+        await act(async () => {
+            await result.current.submitData();
+        });
+
+        const quizInsert = insertCalls.find(c => c.table === 'quiz_points');
+        expect(quizInsert).toBeDefined();
+        const qpPayload = quizInsert?.payload as Array<any>;
+        // student-1 was duplicate, so only student-2 is inserted!
+        expect(qpPayload).toHaveLength(1);
+        expect(qpPayload[0].student_id).toBe('student-2');
+    });
 });

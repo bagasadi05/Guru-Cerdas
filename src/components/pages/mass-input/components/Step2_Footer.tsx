@@ -216,7 +216,7 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                     Memproses...
                                 </span>
-                            ) : mode === 'attitude' ? 'Simpan Predikat Sikap' : (mode?.includes('print') || mode?.includes('report')) ? 'Cetak Laporan' : 'Simpan Data'}
+                            ) : mode === 'attitude' ? 'Simpan Poin Sikap' : (mode?.includes('print') || mode?.includes('report')) ? 'Cetak Laporan' : 'Simpan Data'}
                         </Button>
                     )}
                 </div>

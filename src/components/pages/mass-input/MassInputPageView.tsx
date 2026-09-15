@@ -144,7 +144,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         attitudePoints, setAttitudePoints,
         attitudeNotes, setAttitudeNotes,
         existingAttitudeRecords,
-        existingQuizPoints, isLoadingQuizPoints,
+        existingQuizPoints,
         isCustomSubject, setIsCustomSubject, uniqueSubjects,
         selectedViolationCode, setSelectedViolationCode, violationDate, setViolationDate,
         violationNotes, setViolationNotes, noteMethod, setNoteMethod, templateNote, setTemplateNote,
@@ -309,6 +309,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                     existingAttitudeRecords={existingAttitudeRecords}
                                     attitudePoints={attitudePoints}
                                     attitudeCategory={attitudeCategory}
+                                    attitudeDate={attitudeDate}
                                     existingQuizPoints={existingQuizPoints}
                                     quizInfo={quizInfo}
                                     classes={classes}
