@@ -6,6 +6,7 @@ import { ExcelImporter } from '../../ui/ExcelImporter';
 import { GradeDistributionChart } from '../../ui/GradeDistributionChart';
 import { ArrowLeftIcon } from '../../Icons';
 import { UnifiedGradeAdjustmentModal } from '../../ui/UnifiedGradeAdjustmentModal';
+import { ConfirmationDialog } from '../../ui/ConfirmationDialog';
 import { useSemester } from '../../../contexts/SemesterContext';
 import { Step1_ModeSelection } from './components/Step1_ModeSelection';
 import { Step2_Configuration } from './components/Step2_Configuration';
@@ -13,7 +14,7 @@ import { Step2_StudentList } from './components/Step2_StudentList';
 import { Step2_Footer } from './components/Step2_Footer';
 import { ViolationExportPanel } from './components/ViolationExportPanel';
 import { InputMode, Step, StudentFilter, StudentRow, AcademicRecordRow, ClassRow, ViolationRow, AttitudeRecordRow, QuizPointRow } from './types';
-import { ImportPreviewModal } from '../bulk-grade-input/components/ImportPreviewModal';
+import { ImportPreviewModal } from './components/ImportPreviewModal';
 import { violationList } from '../../../services/violations.data';
 import { CheckCircle2, Loader2, AlertCircle, XIcon } from 'lucide-react';
 
@@ -22,6 +23,14 @@ export interface MassInputPageViewProps {
     mode: InputMode | null;
     handleModeSelect: (mode: InputMode) => void;
     handleBack: () => void;
+    // Guard for destructive actions: every clear/back path asks first, and the
+    // discarded batch stays restorable for a few seconds.
+    pendingClearAction: { kind: 'scores' | 'selection' | 'back'; count: number } | null;
+    confirmPendingAction: () => void;
+    dismissPendingAction: () => void;
+    requestClear: () => void;
+    undoSnapshot: { kind: 'scores' | 'selection'; count: number } | null;
+    handleUndoClear: () => void;
     currentCard: { title: string; description: string } | undefined;
     // config panel
     isConfigOpen: boolean;
@@ -89,6 +98,7 @@ export interface MassInputPageViewProps {
     handleStudentSelect: (id: string) => void;
     scores: Record<string, string>;
     handleScoreChange: (studentId: string, value: string) => void;
+    onScoreFieldFocus: (studentId: string | null) => void;
     validationErrors: Record<string, string>;
     existingGrades: AcademicRecordRow[] | undefined;
     filteredExistingGrades: AcademicRecordRow[];
@@ -124,10 +134,10 @@ export interface MassInputPageViewProps {
     bypassDuplicateGuard: boolean;
     setBypassDuplicateGuard: (v: boolean) => void;
     onDeleteSelected?: () => void;
-    // violation duplicate detection
-    violationDuplicateList: { student_id: string; student_name: string; recorded_by_name: string | null; description: string; date: string; points: number }[];
-    showViolationDuplicateDialog: boolean;
-    setShowViolationDuplicateDialog: (v: boolean) => void;
+    // duplicate preview (violation / quiz / attitude)
+    duplicateList: { student_id: string; student_name: string; recorded_by_name: string | null; description: string; date: string; points: number }[];
+    showDuplicateDialog: boolean;
+    setShowDuplicateDialog: (v: boolean) => void;
     onHandleSubmit: () => void;
 }
 
@@ -136,6 +146,8 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
     const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
     const {
         step, mode, handleModeSelect, handleBack, currentCard,
+        pendingClearAction, confirmPendingAction, dismissPendingAction, requestClear,
+        undoSnapshot, handleUndoClear,
         isConfigOpen, setIsConfigOpen, selectedClass, setSelectedClass, classes, isLoadingClasses,
         quizInfo, setQuizInfo, subjectGradeInfo, setSubjectGradeInfo, kkm, setKkm,
         attitudeDate, setAttitudeDate,
@@ -152,9 +164,9 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         showImportModal, setShowImportModal,
         searchTerm, setSearchTerm, filterOptions, studentFilter, setStudentFilter,
         isLoadingStudents, students, isAllSelected, handleSelectAllStudents,
-        selectedStudentIds, handleStudentSelect, scores, handleScoreChange, validationErrors,
+        selectedStudentIds, handleStudentSelect, scores, handleScoreChange, onScoreFieldFocus, validationErrors,
         existingGrades,
-        summaryText, gradedCount, setScores, setSelectedStudentIds,
+        summaryText, gradedCount, setScores,
         isExporting, exportProgress, handleSubmit, isSubmitDisabled, submitButtonTooltip,
         isSubmitting, isDeleting, studentsData, existingViolations, isLoadingViolations,
         showChartModal, setShowChartModal,
@@ -162,8 +174,8 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         handleDeleteConfirmClick, handleImport, handleImportConfirm, pendingImportData, setPendingImportData,
         bypassDuplicateGuard, setBypassDuplicateGuard,
         onDeleteSelected,
-        violationDuplicateList, showViolationDuplicateDialog,
-        setShowViolationDuplicateDialog, onHandleSubmit,
+        duplicateList, showDuplicateDialog,
+        setShowDuplicateDialog, onHandleSubmit,
     } = props;
 
     if (step === 1) {
@@ -282,10 +294,6 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                     attitudeNotes={attitudeNotes}
                                     setAttitudeNotes={setAttitudeNotes}
                                     onOpenImport={mode === 'subject_grade' ? () => setShowImportModal(true) : undefined}
-                                    handleSubmit={onHandleSubmit}
-                                    isSubmitDisabled={isSubmitDisabled}
-                                    isSubmitting={isSubmitting}
-                                    submitButtonTooltip={submitButtonTooltip}
                                 />
                             </div>
                             <div className={`${isConfigOpen ? 'lg:col-span-2' : 'lg:col-span-3'} transition-all duration-300`}>
@@ -304,6 +312,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                     handleStudentSelect={handleStudentSelect}
                                     scores={scores}
                                     handleScoreChange={handleScoreChange}
+                                    onScoreFieldFocus={onScoreFieldFocus}
                                     validationErrors={validationErrors}
                                     existingGrades={existingGrades}
                                     existingAttitudeRecords={existingAttitudeRecords}
@@ -314,10 +323,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                     quizInfo={quizInfo}
                                     classes={classes}
                                     selectedClass={selectedClass}
-                                    handleSubmit={onHandleSubmit}
-                                    isSubmitDisabled={isSubmitDisabled}
-                                    isSubmitting={isSubmitting}
-                                    onShowAdjustment={() => setShowAdjustmentModal(true)}
+                                    kkm={kkm}
                                 />
                             </div>
                         </>
@@ -387,19 +393,14 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                         mode={mode}
                         selectedStudentIds={selectedStudentIds}
                         gradedCount={gradedCount}
-                        setScores={setScores}
-                        setSelectedStudentIds={setSelectedStudentIds}
+                        onClearRequest={requestClear}
                         isExporting={isExporting}
                         exportProgress={exportProgress}
-                        handleSubmit={onHandleSubmit}
-                        isSubmitDisabled={isSubmitDisabled}
-                        submitButtonTooltip={submitButtonTooltip}
-                        isSubmitting={isSubmitting}
-                        isDeleting={isDeleting}
                         scores={scores}
                         students={studentsData}
                         subjectGradeInfo={subjectGradeInfo}
                         className={classes?.find(c => c.id === selectedClass)?.name}
+                        kkm={kkm}
                         existingViolations={existingViolations}
                         onShowChart={() => setShowChartModal(true)}
                         onShowAdjustment={() => setShowAdjustmentModal(true)}
@@ -425,9 +426,6 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                         scores={scores}
                         onApply={(finalScores) => {
                             setScores(finalScores);
-                            if (props.setScores) {
-                                props.setScores(finalScores);
-                            }
                         }}
                         kkm={kkm}
                         subject={subjectGradeInfo.subject}
@@ -437,20 +435,22 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                     />
                 )}
 
-                {/* Violation Duplicate Dialog */}
+                {/* Duplicate preview dialog (violation / quiz / attitude) */}
                 <Modal
-                    isOpen={showViolationDuplicateDialog}
-                    onClose={() => setShowViolationDuplicateDialog(false)}
-                    title="Pelanggaran Sudah Tercatat Hari Ini"
+                    isOpen={showDuplicateDialog}
+                    onClose={() => setShowDuplicateDialog(false)}
+                    title={mode === 'violation' ? 'Pelanggaran Sudah Tercatat Hari Ini' : 'Data Sudah Tercatat Sebelumnya'}
                     maxWidth="max-w-lg"
                 >
                     <div className="space-y-4 pt-2">
                         <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
                             <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-3">
-                                Pelanggaran ini sudah pernah dicatat pada hari ini untuk {violationDuplicateList.length} siswa berikut:
+                                {mode === 'violation'
+                                    ? `Pelanggaran ini sudah pernah dicatat pada hari ini untuk ${duplicateList.length} siswa berikut:`
+                                    : `Poin ${mode === 'attitude' ? 'sikap' : 'keaktifan'} ini sudah tercatat beberapa menit terakhir untuk ${duplicateList.length} siswa berikut:`}
                             </p>
                             <div className="max-h-48 overflow-y-auto space-y-2">
-                                {violationDuplicateList.map((dup) => (
+                                {duplicateList.map((dup) => (
                                     <div key={dup.student_id} className="flex items-center justify-between p-2.5 rounded-lg bg-white/70 dark:bg-black/20 text-xs border border-amber-200/50 dark:border-amber-800/40">
                                         <span className="font-semibold text-slate-800 dark:text-slate-200">{dup.student_name}</span>
                                         <span className="text-amber-700 dark:text-amber-300 font-medium">
@@ -461,28 +461,30 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                             </div>
                         </div>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
-                            Apakah Anda ingin tetap mencatat pelanggaran ini? Anda dapat memilih untuk tetap menyimpan semua siswa (termasuk yang sudah dicatat) atau hanya menyimpan siswa yang belum tercatat hari ini.
+                            {mode === 'violation'
+                                ? 'Apakah Anda ingin tetap mencatat pelanggaran ini? Pilih simpan semua siswa (termasuk yang sudah dicatat) atau hanya siswa yang belum tercatat hari ini.'
+                                : 'Apakah Anda ingin tetap memberi poin ini? Pilih simpan semua siswa (termasuk yang baru saja tercatat) atau hanya siswa yang belum tercatat.'}
                         </p>
                         <div className="flex flex-wrap justify-end gap-2 pt-2">
-                            <Button type="button" variant="ghost" onClick={() => setShowViolationDuplicateDialog(false)}>
+                            <Button type="button" variant="ghost" onClick={() => setShowDuplicateDialog(false)}>
                                 Batal
                             </Button>
-                            {selectedStudentIds.size > violationDuplicateList.length && (
+                            {selectedStudentIds.size > duplicateList.length && (
                                 <Button
                                     type="button"
                                     variant="outline"
                                     onClick={() => {
-                                        setShowViolationDuplicateDialog(false);
+                                        setShowDuplicateDialog(false);
                                         handleSubmit(false);
                                     }}
                                 >
-                                    Lewati yang Duplikat ({violationDuplicateList.length})
+                                    Lewati yang Duplikat ({duplicateList.length})
                                 </Button>
                             )}
                             <Button
                                 type="button"
                                 onClick={() => {
-                                    setShowViolationDuplicateDialog(false);
+                                    setShowDuplicateDialog(false);
                                     setBypassDuplicateGuard(true);
                                     handleSubmit(true);
                                 }}
@@ -493,6 +495,51 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                         </div>
                     </div>
                 </Modal>
+
+                {/* Guard for every destructive clear/back action */}
+                <ConfirmationDialog
+                    isOpen={pendingClearAction !== null}
+                    onClose={dismissPendingAction}
+                    onConfirm={confirmPendingAction}
+                    variant="warning"
+                    title={pendingClearAction?.kind === 'back' ? 'Ada Nilai Belum Disimpan' : 'Bersihkan Input Belum Disimpan?'}
+                    confirmText={pendingClearAction?.kind === 'back' ? 'Ya, Tinggalkan' : 'Ya, Bersihkan'}
+                    cancelText="Batalkan"
+                    message={
+                        pendingClearAction?.kind === 'back'
+                            ? `${pendingClearAction.count} nilai yang sudah diketik belum tersimpan. Meninggalkan layar ini akan menghapusnya.`
+                            : pendingClearAction?.kind === 'scores'
+                            ? `${pendingClearAction.count} nilai yang sudah diketik akan dihapus dari formulir. Nilai yang sudah tersimpan di database tidak terpengaruh, dan Anda masih bisa mengurungkannya beberapa detik setelah ini.`
+                            : `${pendingClearAction?.count ?? 0} siswa akan dihapus dari pilihan. Anda masih bisa mengurungkannya beberapa detik setelah ini.`
+                    }
+                />
+
+                {/* Undo bar — restores the batch that was just cleared */}
+                {undoSnapshot && typeof document !== 'undefined' && createPortal(
+                    <div
+                        role="status"
+                        aria-live="polite"
+                        className="fixed bottom-32 lg:bottom-20 inset-x-0 z-50 pointer-events-none flex justify-center lg:pl-72 px-4 animate-in fade-in slide-in-from-bottom-5"
+                    >
+                        <div className="pointer-events-auto shadow-2xl bg-amber-50 dark:bg-amber-950/90 text-amber-900 dark:text-amber-100 px-4 py-2.5 rounded-2xl flex items-center gap-3 border border-amber-300 dark:border-amber-800 backdrop-blur-md max-w-[95vw]">
+                            <span className="text-xs sm:text-sm font-semibold whitespace-nowrap">
+                                {undoSnapshot.kind === 'scores'
+                                    ? `${undoSnapshot.count} nilai dibersihkan`
+                                    : `${undoSnapshot.count} pilihan dibersihkan`}
+                            </span>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleUndoClear}
+                                className="rounded-xl border-amber-400 dark:border-amber-700 bg-white dark:bg-amber-900/40 text-amber-800 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-xs font-bold h-8"
+                            >
+                                ↩ Urungkan
+                            </Button>
+                        </div>
+                    </div>,
+                    document.body
+                )}
 
                 {/* Floating Save Bar for Step 2 — rendered via portal to escape parent transform/overflow stacking contexts */}
                 {step === 2 && mode !== 'violation_export' && (mode === 'subject_grade' ? gradedCount > 0 : selectedStudentIds.size > 0) && typeof document !== 'undefined' && createPortal(
@@ -516,10 +563,10 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                 </span>
                                 <button
                                     type="button"
-                                    onClick={() => mode === 'subject_grade' ? setScores({}) : setSelectedStudentIds(new Set())}
+                                    onClick={requestClear}
                                     className="p-1 text-slate-400 hover:text-rose-400 hover:bg-white/10 rounded-lg transition-colors ml-1"
-                                    title="Batalkan pilihan"
-                                    aria-label="Batalkan pilihan"
+                                    title={mode === 'subject_grade' ? 'Bersihkan nilai yang diketik' : 'Batalkan pilihan'}
+                                    aria-label={mode === 'subject_grade' ? 'Bersihkan nilai yang diketik' : 'Batalkan pilihan'}
                                 >
                                     <XIcon size={14} />
                                 </button>
@@ -560,6 +607,10 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                             ? `Simpan Sikap (${selectedStudentIds.size})`
                                             : mode === 'subject_grade'
                                             ? `Simpan Nilai (${gradedCount})`
+                                            : mode === 'bulk_report'
+                                            ? `Cetak Rapor Massal (${selectedStudentIds.size})`
+                                            : mode === 'academic_print'
+                                            ? `Cetak Rekap Nilai (${selectedStudentIds.size})`
                                             : `Simpan Data (${selectedStudentIds.size})`}
                                     </>
                                 )}

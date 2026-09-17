@@ -14,20 +14,16 @@ interface Step2_FooterProps {
     mode: InputMode | null;
     selectedStudentIds: Set<string>;
     gradedCount: number;
-    setScores: (scores: Record<string, string>) => void;
-    setSelectedStudentIds: (ids: Set<string>) => void;
+    /** Opens the confirmation dialog for the destructive clear action. */
+    onClearRequest: () => void;
     isExporting: boolean;
     exportProgress: string;
-    handleSubmit: () => void;
-    isSubmitDisabled: boolean;
-    submitButtonTooltip: string;
-    isSubmitting: boolean;
-    isDeleting: boolean;
     // New props for export
     scores?: Record<string, string>;
     students?: { id: string; name: string }[];
     subjectGradeInfo?: { subject: string; assessment_name: string };
     className?: string;
+    kkm?: number;
     existingViolations?: any[];
     onShowChart?: () => void;
     onShowAdjustment?: () => void;
@@ -35,12 +31,14 @@ interface Step2_FooterProps {
 }
 
 export const Step2_Footer: React.FC<Step2_FooterProps> = ({
-    summaryText, mode, selectedStudentIds, gradedCount, setScores, setSelectedStudentIds,
-    isExporting, exportProgress, handleSubmit, isSubmitDisabled, submitButtonTooltip,
-    isSubmitting, isDeleting,
-    scores, students, subjectGradeInfo, className, existingViolations, onShowChart,
+    summaryText, mode, selectedStudentIds, gradedCount, onClearRequest,
+    isExporting, exportProgress,
+    scores, students, subjectGradeInfo, className, kkm, existingViolations, onShowChart,
     onShowAdjustment, onDeleteSelected
 }) => {
+    const { user } = useAuth();
+    const toast = useToast();
+
     const handleExportExcel = async () => {
         if (!scores || !students) return;
 
@@ -57,14 +55,13 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                 assessmentName: subjectGradeInfo?.assessment_name,
                 className: className,
                 includeStats: true,
+                // Otherwise the exported sheet silently grades against 75.
+                kkm,
             });
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Gagal export nilai.');
         }
     };
-
-    const { user } = useAuth();
-    const toast = useToast();
 
     const handleViolationExport = async (type: 'pdf' | 'excel') => {
         if (!existingViolations || !students) return;
@@ -97,7 +94,7 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                         <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => mode === 'subject_grade' ? setScores({}) : setSelectedStudentIds(new Set())}
+                            onClick={onClearRequest}
                             className="text-gray-400 hover:text-red-600 dark:hover:text-white hover:bg-red-50 dark:hover:bg-white/10 transition-colors"
                         >
                             <XCircleIcon className="w-4 h-4 mr-1" /> Bersihkan
@@ -204,21 +201,9 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                                 <p className="text-xs font-bold text-green-300 animate-pulse">{exportProgress} - Memproses...</p>
                             </div>
                         </div>
-                    ) : (
-                        <Button
-                            onClick={handleSubmit}
-                            disabled={isSubmitDisabled}
-                            title={submitButtonTooltip}
-                            className="w-full sm:w-auto font-bold tracking-wide shadow-lg transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-green-500 hover:to-emerald-500 shadow-green-900/20"
-                        >
-                            {isSubmitting || isDeleting ? (
-                                <span className="flex items-center gap-2">
-                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    Memproses...
-                                </span>
-                            ) : mode === 'attitude' ? 'Simpan Poin Sikap' : (mode?.includes('print') || mode?.includes('report')) ? 'Cetak Laporan' : 'Simpan Data'}
-                        </Button>
-                    )}
+                    ) : null}
+                    {/* Simpan hanya ada di floating save bar supaya tidak ada dua tombol utama
+                        dengan aksi yang sama di satu layar (PRD §5.3). */}
                 </div>
             </div>
         </footer>

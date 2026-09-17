@@ -95,7 +95,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
     const [exportProgress, setExportProgress] = useState('0%');
     const [confirmDeleteModal, setConfirmDeleteModal] = useState<{ isOpen: boolean; count: number }>({ isOpen: false, count: 0 });
     const [confirmDeleteText, setConfirmDeleteText] = useState('');
-    const [violationDuplicateList, setViolationDuplicateList] = useState<{
+    const [duplicateList, setDuplicateList] = useState<{
         student_id: string;
         student_name: string;
         recorded_by_name: string | null;
@@ -103,56 +103,122 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         date: string;
         points: number;
     }[]>([]);
-    const [showViolationDuplicateDialog, setShowViolationDuplicateDialog] = useState(false);
+    const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
 
     const selectedViolation = violationList.find(v => v.code === selectedViolationCode) || null;
 
-    const checkViolationDuplicates = async (onProceed: () => void) => {
-        if (!selectedViolation || selectedStudentIds.size === 0 || !user) {
+    /**
+     * Pratinjau data yang akan dilewati sebelum menyimpan.
+     *
+     * Dipakai oleh mode `violation`, `quiz`, dan `attitude`: ketiganya punya
+     * jalur skip duplikat saat menyimpan, tetapi sebelumnya hanya pelanggaran
+     * yang memberi tahu guru lebih dulu. Ambangnya sengaja disamakan dengan
+     * jalur simpan supaya dialog dan hasil simpan tidak pernah berbeda.
+     */
+    const checkDuplicates = async (onProceed: () => void) => {
+        if (!user || selectedStudentIds.size === 0) {
             onProceed();
             return;
         }
         const studentIds = Array.from(selectedStudentIds);
-        let query = supabase
-            .from('violations')
-            .select('id, student_id, user_id')
-            .in('student_id', studentIds)
-            .eq('date', violationDate)
-            .eq('description', selectedViolation.description)
-            .is('deleted_at', null);
 
-        query = activeSemester?.id
-            ? query.eq('semester_id', activeSemester.id)
-            : query.is('semester_id', null);
+        if (mode === 'violation') {
+            if (!selectedViolation) {
+                onProceed();
+                return;
+            }
+            let query = supabase
+                .from('violations')
+                .select('id, student_id, user_id')
+                .in('student_id', studentIds)
+                .eq('date', violationDate)
+                .eq('description', selectedViolation.description)
+                .is('deleted_at', null);
 
-        const { data: existingRows } = await query;
-        if (!existingRows || existingRows.length === 0) {
-            onProceed();
+            query = activeSemester?.id
+                ? query.eq('semester_id', activeSemester.id)
+                : query.is('semester_id', null);
+
+            const { data: existingRows } = await query;
+            if (!existingRows || existingRows.length === 0) {
+                onProceed();
+                return;
+            }
+
+            // Get recorder names for all user_ids (both current user and other teachers)
+            const allUserIds = Array.from(new Set(existingRows.map((r: any) => r.user_id).filter(Boolean)));
+            const nameMap: Record<string, string> = {};
+            if (allUserIds.length > 0) {
+                const { data: roleRows } = await supabase
+                    .from('user_roles')
+                    .select('user_id, full_name')
+                    .in('user_id', allUserIds);
+                (roleRows || []).forEach((r: any) => { if (r.user_id) nameMap[r.user_id] = r.full_name || ''; });
+            }
+
+            setDuplicateList(existingRows.map((r: any) => ({
+                student_id: r.student_id,
+                student_name: studentsData?.find(s => s.id === r.student_id)?.name || 'Unknown',
+                recorded_by_name: r.user_id === user.id ? 'Anda' : (nameMap[r.user_id] || 'Guru lain'),
+                description: selectedViolation.description,
+                date: violationDate,
+                points: selectedViolation.points,
+            })));
+            setShowDuplicateDialog(true);
             return;
         }
 
-        // Get recorder names for all user_ids (both current user and other teachers)
-        const allUserIds = Array.from(new Set(existingRows.map((r: any) => r.user_id).filter(Boolean)));
-        const nameMap: Record<string, string> = {};
-        if (allUserIds.length > 0) {
-            const { data: roleRows } = await supabase
-                .from('user_roles')
-                .select('user_id, full_name')
-                .in('user_id', allUserIds);
-            (roleRows || []).forEach((r: any) => { if (r.user_id) nameMap[r.user_id] = r.full_name || ''; });
+        if (mode === 'quiz' || mode === 'attitude') {
+            const activityName = mode === 'quiz' ? quizInfo.name : (attitudeName || '').trim();
+            const activityDate = mode === 'quiz'
+                ? quizInfo.date
+                : (attitudeDate || new Date().toISOString().slice(0, 10));
+            if (!activityName || (mode === 'quiz' && !quizInfo.subject)) {
+                onProceed();
+                return;
+            }
+
+            let query = supabase
+                .from('quiz_points')
+                .select('id, student_id, user_id')
+                .in('student_id', studentIds)
+                .eq('user_id', user.id)
+                .eq('quiz_name', activityName)
+                .eq('quiz_date', activityDate)
+                .gte('created_at', getDuplicateGuardWindowIso())
+                .is('deleted_at', null);
+
+            if (mode === 'quiz') {
+                query = query.eq('subject', quizInfo.subject);
+            } else {
+                query = query.eq('category', (attitudeCategory || 'Adab & Akhlak').trim());
+            }
+
+            const semesterId = mode === 'attitude'
+                ? ((subjectGradeInfo.semester && subjectGradeInfo.semester.trim() !== '') ? subjectGradeInfo.semester : (activeSemester?.id || null))
+                : (activeSemester?.id || null);
+            query = semesterId ? query.eq('semester_id', semesterId) : query.is('semester_id', null);
+
+            const { data: existingRows } = await query;
+            if (!existingRows || existingRows.length === 0) {
+                onProceed();
+                return;
+            }
+
+            setDuplicateList(existingRows.map((r) => ({
+                student_id: r.student_id,
+                student_name: studentsData?.find(s => s.id === r.student_id)?.name || 'Unknown',
+                // Poin keaktifan/sikap hanya dicek milik guru yang sedang login.
+                recorded_by_name: 'Anda',
+                description: activityName,
+                date: activityDate,
+                points: 1,
+            })));
+            setShowDuplicateDialog(true);
+            return;
         }
 
-        const duplicates = existingRows.map((r: any) => ({
-            student_id: r.student_id,
-            student_name: studentsData?.find(s => s.id === r.student_id)?.name || 'Unknown',
-            recorded_by_name: r.user_id === user.id ? 'Anda' : (nameMap[r.user_id] || 'Guru lain'),
-            description: selectedViolation.description,
-            date: violationDate,
-            points: selectedViolation.points,
-        }));
-
-        setViolationDuplicateList(duplicates);
-        setShowViolationDuplicateDialog(true);
+        onProceed();
     };
 
     const { mutate: submitData, isPending: isSubmitting } = useMutation({
@@ -166,7 +232,11 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                     const studentIds = Array.from(selectedStudentIds);
                     
                     let duplicateStudentIds = new Set<string>();
-                    if (!bypassDuplicateGuard) {
+                    // `shouldBypassGuard`, not the raw state: the "Tetap Simpan Semua"
+                    // button passes the override while the state update is still
+                    // pending, so reading `bypassDuplicateGuard` here kept skipping
+                    // the students the teacher had just confirmed.
+                    if (!shouldBypassGuard) {
                         let existingQuizQuery = supabase
                             .from('quiz_points')
                             .select('id, student_id')
@@ -217,29 +287,72 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                         throw new Error('Mata pelajaran, nama penilaian, dan setidaknya satu nilai harus diisi.');
                     if (Object.keys(validationErrors).length > 0)
                         throw new Error('Perbaiki nilai yang tidak valid sebelum menyimpan.');
-                    const records = Object.entries(scores)
+
+                    const pendingScores = Object.entries(scores)
                         .filter(([, score]: [string, string]) => score && score.trim() !== '')
                         .map(([student_id, score]: [string, string]) => {
                             const numScore = Number(score);
                             if (numScore < 0 || numScore > 100)
                                 throw new Error(`Nilai untuk siswa tidak valid: ${numScore}. Harus antara 0-100.`);
-                            // Ponytail: key by student_id+subject+assessment_name to prevent cross-assessment overwrite
-                            const existingRecord = dedupeAcademicRecords(existingGrades || []).find(
-                                g => g.student_id === student_id
-                                    && g.subject === subjectGradeInfo.subject
-                                    && g.assessment_name === subjectGradeInfo.assessment_name
-                            );
-                            return {
-                                id: existingRecord?.id || selfCryptoUUID(),
-                                subject: subjectGradeInfo.subject,
-                                assessment_name: subjectGradeInfo.assessment_name,
-                                notes: subjectGradeInfo.notes || '',
-                                score: numScore,
-                                student_id,
-                                user_id: user.id,
-                                semester_id: subjectGradeInfo.semester || null,
-                            };
+                            return { student_id, numScore };
                         });
+
+                    // Ponytail: key by student_id+subject+assessment_name to prevent
+                    // cross-assessment overwrite.
+                    const recordIdByStudent = new Map<string, string>();
+                    const existingNotesByStudent = new Map<string, string>();
+                    dedupeAcademicRecords(existingGrades || []).forEach(record => {
+                        recordIdByStudent.set(record.student_id, record.id);
+                        if (record.notes) existingNotesByStudent.set(record.student_id, record.notes);
+                    });
+
+                    // `uq_academic_records_student_subject_assessment_semester` is
+                    // table-wide, so a soft-deleted row still holds its key. Saving a
+                    // grade that was deleted earlier must reuse (and revive) that row,
+                    // otherwise the insert is rejected by the constraint and the
+                    // teacher can never re-enter a deleted value.
+                    const studentsWithoutKnownRecord = pendingScores
+                        .map(item => item.student_id)
+                        .filter(studentId => !recordIdByStudent.has(studentId));
+
+                    if (studentsWithoutKnownRecord.length > 0) {
+                        let keyQuery = supabase
+                            .from('academic_records')
+                            .select('id, student_id, deleted_at, notes')
+                            .eq('subject', subjectGradeInfo.subject)
+                            .eq('assessment_name', subjectGradeInfo.assessment_name)
+                            .in('student_id', studentsWithoutKnownRecord);
+
+                        keyQuery = subjectGradeInfo.semester
+                            ? keyQuery.eq('semester_id', subjectGradeInfo.semester)
+                            : keyQuery.is('semester_id', null);
+
+                        const { data: keyRows, error: keyError } = await keyQuery;
+                        if (keyError) throw keyError;
+
+                        (keyRows || []).forEach(row => {
+                            // A live row always wins over a soft-deleted one.
+                            if (!recordIdByStudent.has(row.student_id) || row.deleted_at === null) {
+                                recordIdByStudent.set(row.student_id, row.id);
+                            }
+                            if (row.notes) existingNotesByStudent.set(row.student_id, row.notes);
+                        });
+                    }
+
+                    const records: Database['public']['Tables']['academic_records']['Insert'][] = pendingScores.map(({ student_id, numScore }) => ({
+                        id: recordIdByStudent.get(student_id) || selfCryptoUUID(),
+                        subject: subjectGradeInfo.subject,
+                        assessment_name: subjectGradeInfo.assessment_name,
+                        // An empty "Catatan umum" field means "leave the existing note
+                        // alone" — saving must not wipe per-student notes.
+                        notes: subjectGradeInfo.notes || existingNotesByStudent.get(student_id) || '',
+                        score: numScore,
+                        student_id,
+                        user_id: user.id,
+                        semester_id: subjectGradeInfo.semester || null,
+                        // Reviving a reused row requires clearing the soft-delete flag.
+                        deleted_at: null,
+                    }));
                     const { data, error } = await supabase
                         .from('academic_records')
                         .upsert(records)
@@ -787,8 +900,8 @@ Format JSON yang diharapkan:
         confirmDeleteModal, setConfirmDeleteModal,
         confirmDeleteText, setConfirmDeleteText,
         handleConfirmDelete, handleDeleteSelected, handleSubmit,
-        violationDuplicateList, showViolationDuplicateDialog,
-        setShowViolationDuplicateDialog, checkViolationDuplicates,
+        duplicateList, showDuplicateDialog,
+        setShowDuplicateDialog, checkDuplicates,
         isOnline,
     };
 }

@@ -73,7 +73,9 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
                 return filteredData as unknown as StudentRow[];
             }
             
-            const { data, error } = await supabase.from('students').select('id, name, class_id, user_id, gender, avatar_url, access_code, parent_name, parent_phone').eq('class_id', selectedClass).is('deleted_at', null).order('name');
+            // Only the columns this screen renders. Access codes and parent
+            // contact details are not needed here, so they never leave the server.
+            const { data, error } = await supabase.from('students').select('id, name, class_id, user_id, gender, avatar_url').eq('class_id', selectedClass).is('deleted_at', null).order('name');
             if (error) throw error; return (data || []) as unknown as StudentRow[];
         },
         enabled: !!selectedClass

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useDeferredValue } from 'react';
+import { useEffect, useMemo, useDeferredValue, useRef, useState } from 'react';
 import { useToast } from '../../../../hooks/useToast';
 import { useMassInputData } from './useMassInputData';
 import { useMassInputState } from './useMassInputState';
@@ -6,11 +6,23 @@ import { useMassInputMutations } from './useMassInputMutations';
 import { AcademicRecordRow, StudentFilter, StudentRow } from '../types';
 import { actionCards } from '../constants';
 import { useWarnUnsavedChanges } from '../../../../hooks/useWarnUnsavedChanges';
+import { useUserSettings } from '../../../../hooks/useUserSettings';
+
+/** How long a cleared batch can still be restored from the undo bar. */
+const UNDO_CLEAR_WINDOW_MS = 8000;
+
+/** Debounce for persisting KKM so typing does not spam the settings row. */
+const KKM_SAVE_DEBOUNCE_MS = 1000;
 
 export function useMassInputViewModel() {
     const toast = useToast();
 
     const state = useMassInputState();
+    const {
+        settings: userSettings,
+        isLoading: isLoadingUserSettings,
+        updateSettings,
+    } = useUserSettings();
 
     const data = useMassInputData(
         state.selectedClass,
@@ -26,6 +38,69 @@ export function useMassInputViewModel() {
             state.setSelectedClass(data.classes[0].id);
         }
     }, [data.classes, state.selectedClass]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // KKM is a per-teacher setting edited on the Settings page. Seed the input
+    // screen from it once the settings query settles, otherwise every visit
+    // silently falls back to 75 and the pass/fail boundary shown here (grouping,
+    // mini chart, Excel export) disagrees with the teacher's own setting.
+    const hasSeededKkm = useRef(false);
+    const { kkm, setKkm } = state;
+    useEffect(() => {
+        // Wait for the settings query to actually resolve — `kkm` is the 75
+        // fallback until then, and seeding from it would be a no-op we could
+        // not retry.
+        if (hasSeededKkm.current || isLoadingUserSettings || !userSettings) return;
+        hasSeededKkm.current = true;
+        const savedKkm = userSettings.kkm;
+        if (typeof savedKkm === 'number' && savedKkm !== kkm) {
+            setKkm(savedKkm);
+        }
+    }, [isLoadingUserSettings, userSettings, kkm, setKkm]);
+
+    // KKM edits write back to the teacher's settings (debounced) so the value
+    // survives the next visit instead of silently resetting to 75.
+    const pendingKkmRef = useRef<number | null>(null);
+    const kkmSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const handleKkmChange = (value: number) => {
+        setKkm(value);
+        // Before the stored value finished loading, persisting would overwrite
+        // the teacher's own setting with this session's default.
+        if (!hasSeededKkm.current) return;
+        pendingKkmRef.current = value;
+        if (kkmSaveTimerRef.current) clearTimeout(kkmSaveTimerRef.current);
+        kkmSaveTimerRef.current = setTimeout(() => {
+            if (pendingKkmRef.current === null) return;
+            updateSettings({ kkm: pendingKkmRef.current });
+            pendingKkmRef.current = null;
+        }, KKM_SAVE_DEBOUNCE_MS);
+    };
+
+    // Flush a pending KKM edit when the page unmounts, otherwise the debounce
+    // would swallow the last change.
+    useEffect(() => () => {
+        if (kkmSaveTimerRef.current) clearTimeout(kkmSaveTimerRef.current);
+        if (pendingKkmRef.current !== null) {
+            updateSettings({ kkm: pendingKkmRef.current });
+            pendingKkmRef.current = null;
+        }
+    }, [updateSettings]);
+
+    // --- Guard for destructive actions ---
+    // Every path that throws away typed work goes through a confirmation, and
+    // the discarded batch can still be restored from an undo bar.
+    const [pendingClearAction, setPendingClearAction] = useState<{ kind: 'scores' | 'selection' | 'back'; count: number } | null>(null);
+    const [undoSnapshot, setUndoSnapshot] = useState<{
+        kind: 'scores' | 'selection';
+        count: number;
+        scores: Record<string, string>;
+        selectedStudentIds: string[];
+    } | null>(null);
+
+    useEffect(() => {
+        if (!undoSnapshot) return;
+        const timer = setTimeout(() => setUndoSnapshot(null), UNDO_CLEAR_WINDOW_MS);
+        return () => clearTimeout(timer);
+    }, [undoSnapshot]);
 
     // Warn before unload if there are unsaved score changes
     useWarnUnsavedChanges(
@@ -63,14 +138,20 @@ export function useMassInputViewModel() {
             .map(([studentId]) => studentId));
     }, [state.scores]);
 
+    // The "Sudah/Belum Dinilai" filter must not re-order the list while the
+    // teacher is still typing: the row would unmount mid-entry (losing focus and
+    // the digits already typed). The row that currently owns the cursor is
+    // pinned in place and only leaves the list once focus moves elsewhere.
+    const [focusedStudentId, setFocusedStudentId] = useState<string | null>(null);
+
     const deferredSearchTerm = useDeferredValue(state.searchTerm);
 
     const students = useMemo((): StudentRow[] => {
         if (!data.studentsData) return [];
         let filtered = data.studentsData;
         if (state.mode === 'subject_grade') {
-            if (state.studentFilter === 'graded') filtered = filtered.filter(s => studentsWithInputScores.has(s.id));
-            else if (state.studentFilter === 'ungraded') filtered = filtered.filter(s => !studentsWithInputScores.has(s.id));
+            if (state.studentFilter === 'graded') filtered = filtered.filter(s => studentsWithInputScores.has(s.id) || s.id === focusedStudentId);
+            else if (state.studentFilter === 'ungraded') filtered = filtered.filter(s => !studentsWithInputScores.has(s.id) || s.id === focusedStudentId);
         } else if (state.mode) {
             if (state.studentFilter === 'selected') filtered = filtered.filter(s => state.selectedStudentIds.has(s.id));
             else if (state.studentFilter === 'unselected') filtered = filtered.filter(s => !state.selectedStudentIds.has(s.id));
@@ -80,7 +161,7 @@ export function useMassInputViewModel() {
             filtered = filtered.filter(s => s.name.toLowerCase().includes(term));
         }
         return filtered;
-    }, [data.studentsData, deferredSearchTerm, state.studentFilter, studentsWithInputScores, state.selectedStudentIds, state.mode]);
+    }, [data.studentsData, deferredSearchTerm, state.studentFilter, studentsWithInputScores, state.selectedStudentIds, state.mode, focusedStudentId]);
 
     const gradedCount = useMemo(() => Object.values(state.scores).filter((s: string) => s && s.trim() !== '').length, [state.scores]);
 
@@ -164,9 +245,12 @@ export function useMassInputViewModel() {
         if (mutations.isSubmitting || mutations.isExporting || mutations.isDeleting) return 'Sedang memproses...';
         if (!state.selectedClass) return 'Pilih kelas terlebih dahulu.';
         switch (state.mode) {
-            case 'subject_grade':
+            case 'subject_grade': {
                 if (!state.subjectGradeInfo.subject || !state.subjectGradeInfo.assessment_name) return 'Lengkapi mata pelajaran dan nama penilaian.';
+                const invalidCount = Object.keys(state.validationErrors).length;
+                if (invalidCount > 0) return `Perbaiki ${invalidCount} nilai yang tidak valid (harus 0-100) sebelum menyimpan.`;
                 if (gradedCount === 0) return 'Masukkan setidaknya satu nilai siswa.'; break;
+            }
             case 'attitude':
                 if (!state.attitudeName?.trim()) return 'Isi nama aktivitas sikap terlebih dahulu.';
                 if (state.selectedStudentIds.size === 0) return 'Pilih setidaknya satu siswa untuk diberi poin sikap.'; break;
@@ -182,7 +266,7 @@ export function useMassInputViewModel() {
                 if (state.mode === 'academic_print' && !state.subjectGradeInfo.subject) return 'Pilih mata pelajaran untuk dicetak.'; break;
         }
         return '';
-    }, [mutations.isOnline, mutations.isSubmitting, mutations.isExporting, mutations.isDeleting, state.selectedClass, state.mode, state.subjectGradeInfo, gradedCount, state.attitudeName, state.selectedStudentIds, state.quizInfo, state.selectedViolationCode]);
+    }, [mutations.isOnline, mutations.isSubmitting, mutations.isExporting, mutations.isDeleting, state.selectedClass, state.mode, state.subjectGradeInfo, state.validationErrors, gradedCount, state.attitudeName, state.selectedStudentIds, state.quizInfo, state.selectedViolationCode]);
 
     const isSubmitDisabled = !!submitButtonTooltip;
 
@@ -197,6 +281,56 @@ export function useMassInputViewModel() {
             });
             return next;
         });
+    };
+
+    const requestClear = () => {
+        const kind = state.mode === 'subject_grade' ? 'scores' : 'selection';
+        const count = kind === 'scores' ? gradedCount : state.selectedStudentIds.size;
+        if (count === 0) return;
+        setPendingClearAction({ kind, count });
+    };
+
+    const handleBack = () => {
+        const hasUnsavedWork = state.mode === 'subject_grade'
+            && gradedCount > 0
+            && state.isScoresDirty.current;
+        if (hasUnsavedWork) {
+            setPendingClearAction({ kind: 'back', count: gradedCount });
+            return;
+        }
+        state.handleBack();
+    };
+
+    const dismissPendingAction = () => setPendingClearAction(null);
+
+    const confirmPendingAction = () => {
+        const action = pendingClearAction;
+        setPendingClearAction(null);
+        if (!action) return;
+
+        if (action.kind === 'back') {
+            state.handleBack();
+            return;
+        }
+
+        // Snapshot before clearing so the undo bar can put everything back.
+        setUndoSnapshot({
+            kind: action.kind,
+            count: action.count,
+            scores: { ...state.scores },
+            selectedStudentIds: Array.from(state.selectedStudentIds),
+        });
+
+        if (action.kind === 'scores') state.setScores({});
+        else state.setSelectedStudentIds(new Set());
+    };
+
+    const handleUndoClear = () => {
+        if (!undoSnapshot) return;
+        state.setScores(undoSnapshot.scores);
+        state.setSelectedStudentIds(new Set(undoSnapshot.selectedStudentIds));
+        setUndoSnapshot(null);
+        toast.info('Input dikembalikan. Jangan lupa simpan setelah selesai.');
     };
 
     const handleImport = (importedData: Record<string, unknown>[]) => {
@@ -246,7 +380,7 @@ export function useMassInputViewModel() {
         step: state.step,
         mode: state.mode,
         handleModeSelect: state.handleModeSelect,
-        handleBack: state.handleBack,
+        handleBack,
         currentCard,
         // config panel
         isConfigOpen: state.isConfigOpen,
@@ -260,7 +394,14 @@ export function useMassInputViewModel() {
         subjectGradeInfo: state.subjectGradeInfo,
         setSubjectGradeInfo: state.setSubjectGradeInfo,
         kkm: state.kkm,
-        setKkm: state.setKkm,
+        // Debounced setter that also persists KKM to the teacher's settings.
+        setKkm: handleKkmChange,
+        pendingClearAction,
+        confirmPendingAction,
+        dismissPendingAction,
+        requestClear,
+        undoSnapshot,
+        handleUndoClear,
         attitudeDate: state.attitudeDate,
         setAttitudeDate: state.setAttitudeDate,
         attitudeCategory: state.attitudeCategory,
@@ -313,6 +454,7 @@ export function useMassInputViewModel() {
         handleStudentSelect: state.handleStudentSelect,
         scores: state.scores,
         handleScoreChange: state.handleScoreChange,
+        onScoreFieldFocus: setFocusedStudentId,
         existingGrades: data.existingGrades,
         filteredExistingGrades,
         // footer
@@ -350,13 +492,20 @@ export function useMassInputViewModel() {
         validationErrors: state.validationErrors,
         bypassDuplicateGuard: state.bypassDuplicateGuard,
         setBypassDuplicateGuard: state.setBypassDuplicateGuard,
-        // violation duplicate detection
-        violationDuplicateList: mutations.violationDuplicateList,
-        showViolationDuplicateDialog: mutations.showViolationDuplicateDialog,
-        setShowViolationDuplicateDialog: mutations.setShowViolationDuplicateDialog,
+        // duplicate detection (violation / quiz / attitude)
+        duplicateList: mutations.duplicateList,
+        showDuplicateDialog: mutations.showDuplicateDialog,
+        setShowDuplicateDialog: mutations.setShowDuplicateDialog,
         onHandleSubmit: () => {
-            if (state.mode === 'violation' && state.selectedViolationCode) {
-                mutations.checkViolationDuplicates(() => mutations.handleSubmit());
+            // Ketiga mode ini punya jalur skip duplikat; semuanya memberi tahu guru
+            // lebih dulu lewat dialog pratinjau yang sama.
+            const needsDuplicatePreview =
+                (state.mode === 'violation' && !!state.selectedViolationCode) ||
+                (state.mode === 'quiz' && !!state.quizInfo.name && !!state.quizInfo.subject) ||
+                (state.mode === 'attitude' && !!state.attitudeName?.trim());
+
+            if (needsDuplicatePreview) {
+                mutations.checkDuplicates(() => mutations.handleSubmit());
             } else {
                 mutations.handleSubmit();
             }

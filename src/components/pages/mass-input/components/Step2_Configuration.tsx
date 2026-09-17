@@ -10,6 +10,25 @@ import { QUIZ_ACTIVITY_CATEGORIES, QUIZ_CATEGORY_DEFAULT_NAMES, QUIZ_ACTIVITY_SU
 import { SemesterSelector } from '../../../ui/SemesterSelector';
 
 
+/**
+ * Nama penilaian bawaan. Dipakai bersama nama yang sudah pernah tersimpan untuk
+ * mapel ini supaya guru bisa memakai ulang nama penilaian yang sama tanpa
+ * mengetiknya lagi dari awal.
+ */
+const DEFAULT_ASSESSMENT_NAMES = ['PH 1', 'PH 2', 'PH 3', 'PH 4', 'PH 5', 'PH 6', 'PH 7', 'PH 8', 'SAS', 'SAT'];
+
+const buildAssessmentOptions = (savedNames?: string[]) => {
+    const names = new Map<string, string>();
+    DEFAULT_ASSESSMENT_NAMES.forEach(name => names.set(name, name));
+    (savedNames || []).forEach(name => {
+        if (name && name.trim() !== '') names.set(name, name);
+    });
+    return [
+        ...Array.from(names, ([value, label]) => ({ value, label })),
+        { value: '__NEW__', label: '+ Ketik Penilaian Baru' },
+    ];
+};
+
 interface Step2_ConfigurationProps {
     mode: InputMode | null;
     isConfigOpen: boolean;
@@ -56,19 +75,15 @@ interface Step2_ConfigurationProps {
     setAttitudePoints?: (pts: number) => void;
     attitudeNotes?: string;
     setAttitudeNotes?: (notes: string) => void;
-    handleSubmit?: () => void;
-    isSubmitDisabled?: boolean;
-    isSubmitting?: boolean;
-    submitButtonTooltip?: string;
 }
 
 export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
     mode, isConfigOpen, setIsConfigOpen, selectedClass, setSelectedClass, classes, isLoadingClasses,
     quizInfo, setQuizInfo, subjectGradeInfo, setSubjectGradeInfo, isCustomSubject, setIsCustomSubject,
-    uniqueSubjects, selectedViolationCode, setSelectedViolationCode, violationDate, setViolationDate,
+    uniqueSubjects, assessmentNames, selectedViolationCode, setSelectedViolationCode, violationDate, setViolationDate,
     violationNotes, setViolationNotes, noteMethod, setNoteMethod, templateNote, setTemplateNote,
     pasteData, setPasteData, isParsing, handleAiParse, isOnline, onOpenImport,
-    handleSubmit, isSubmitDisabled, isSubmitting, submitButtonTooltip, kkm, setKkm,
+    kkm, setKkm,
     attitudeDate, setAttitudeDate,
     attitudeCategory = 'Adab & Akhlak', setAttitudeCategory,
     attitudeName = 'Adab & Kesantunan', setAttitudeName,
@@ -237,19 +252,6 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                     <span className="font-bold">+1 poin tetap</span> diberikan untuk setiap siswa yang dipilih.
                                 </div>
                                 
-                                {handleSubmit && selectedClass === 'all' && (
-                                    <div className="pt-2" title={submitButtonTooltip}>
-                                        <Button
-                                            type="button"
-                                            onClick={handleSubmit}
-                                            disabled={isSubmitDisabled || isSubmitting}
-                                            className="w-full h-12 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold tracking-wide shadow-md shadow-brand-600/30"
-                                        >
-                                            <CheckIcon className="w-5 h-5 mr-2" />
-                                            {isSubmitting ? 'Menyimpan...' : 'Simpan Keaktifan'}
-                                        </Button>
-                                    </div>
-                                )}
                             </>
                         )}
 
@@ -332,10 +334,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                                 }
                                             }}
                                             placeholder="-- Pilih Penilaian --"
-                                            options={[
-                                                ...['PH 1', 'PH 2', 'PH 3', 'PH 4', 'PH 5', 'PH 6', 'PH 7', 'PH 8', 'SAS', 'SAT'].map(s => ({ value: s, label: s })),
-                                                { value: '__NEW__', label: '+ Ketik Penilaian Baru' }
-                                            ]}
+                                            options={buildAssessmentOptions(assessmentNames)}
                                         />
                                     )}
                                 </div>
@@ -409,19 +408,6 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                     />
                                 </div>
                                 
-                                {handleSubmit && selectedClass === 'all' && (
-                                    <div className="pt-2" title={submitButtonTooltip}>
-                                        <Button
-                                            type="button"
-                                            onClick={handleSubmit}
-                                            disabled={isSubmitDisabled || isSubmitting}
-                                            className="w-full h-12 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold tracking-wide shadow-md shadow-brand-600/30"
-                                        >
-                                            <CheckIcon className="w-5 h-5 mr-2" />
-                                            {isSubmitting ? 'Menyimpan...' : 'Simpan Pelanggaran'}
-                                        </Button>
-                                    </div>
-                                )}
 
                                 {/* Violation Selection Modal */}
                                 <Modal
@@ -652,19 +638,6 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                     </p>
                                 </div>
 
-                                {handleSubmit && (
-                                    <div className="pt-2" title={submitButtonTooltip}>
-                                        <Button
-                                            type="button"
-                                            onClick={handleSubmit}
-                                            disabled={isSubmitDisabled || isSubmitting}
-                                            className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold tracking-wide shadow-md shadow-emerald-600/30"
-                                        >
-                                            <CheckIcon className="w-5 h-5 mr-2" />
-                                            {isSubmitting ? 'Menyimpan...' : 'Simpan Poin Sikap'}
-                                        </Button>
-                                    </div>
-                                )}
                             </>
                         )}
 

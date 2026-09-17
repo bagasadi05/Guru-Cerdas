@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Input } from '../../../ui/Input';
 import { Checkbox } from '../../../ui/Checkbox';
-import { SearchIcon, CheckSquareIcon, BarChartIcon, CheckIcon, SparklesIcon } from '../../../Icons';
+import { SearchIcon, CheckSquareIcon, BarChartIcon } from '../../../Icons';
 import { FilterPills } from './FilterPills';
 import { StudentRow, InputMode, StudentFilter, AcademicRecordRow, ClassRow, AttitudeRecordRow, QuizPointRow } from '../types';
 import { QUIZ_ACTIVITY_CATEGORIES, BINTANG_ATTITUDE_ASPECTS } from '../constants';
@@ -9,7 +9,6 @@ import { useGridNavigation } from '../../../../hooks/useGridNavigation';
 import { StudentSortControls, GroupHeader, sortStudents, groupStudents, SortField, SortDirection, GroupBy } from '../../../ui/StudentSortControls';
 import { GradeDistributionMini } from '../../../ui/GradeDistributionChart';
 import { getStudentAvatar } from '../../../../utils/avatarUtils';
-import { Button } from '../../../ui/Button';
 import { BatchFillInput } from '../../../ui/BatchFillInput';
 
 interface Step2_StudentListProps {
@@ -27,6 +26,7 @@ interface Step2_StudentListProps {
     handleStudentSelect: (id: string) => void;
     scores: Record<string, string>;
     handleScoreChange: (id: string, value: string) => void;
+    onScoreFieldFocus?: (studentId: string | null) => void;
     validationErrors?: Record<string, string>;
     existingGrades: AcademicRecordRow[] | undefined;
     existingAttitudeRecords?: AttitudeRecordRow[];
@@ -37,20 +37,17 @@ interface Step2_StudentListProps {
     quizInfo?: { name: string; category?: string; subject: string; date: string; points: number; max_points: number };
     classes?: ClassRow[];
     selectedClass?: string;
-    handleSubmit?: () => void;
-    isSubmitDisabled?: boolean;
-    isSubmitting?: boolean;
-    onShowAdjustment?: () => void;
+    kkm?: number;
 }
 
 export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     mode, searchTerm, setSearchTerm, filterOptions, studentFilter, setStudentFilter,
     isLoadingStudents, students, isAllSelected, handleSelectAllStudents,
-    selectedStudentIds, handleStudentSelect, scores, handleScoreChange, validationErrors = {}, existingGrades,
+    selectedStudentIds, handleStudentSelect, scores, handleScoreChange, onScoreFieldFocus, validationErrors = {}, existingGrades,
     existingAttitudeRecords: _existingAttitudeRecords,
     attitudePoints: _attitudePoints = 1, attitudeCategory = 'Adab & Akhlak', attitudeDate,
     existingQuizPoints, quizInfo,
-    classes, selectedClass, handleSubmit, isSubmitDisabled, isSubmitting, onShowAdjustment
+    classes, selectedClass, kkm = 75
 }) => {
     // Sorting and Grouping State
     const [sortConfig, setSortConfig] = useState<{ field: SortField; direction: SortDirection }>({
@@ -71,8 +68,10 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
         if (mode !== 'subject_grade') {
             return [{ title: 'Semua Siswa', students: sortedStudents, color: 'indigo' }];
         }
-        return groupStudents(sortedStudents, scores, groupBy);
-    }, [sortedStudents, scores, groupBy, mode]);
+        // Pass the teacher's KKM so the "Tuntas (≥x)" headers match the value
+        // configured in the panel instead of the helper's 75 default.
+        return groupStudents(sortedStudents, scores, groupBy, kkm);
+    }, [sortedStudents, scores, groupBy, mode, kkm]);
 
     // Navigation for inputs
     const flatStudentList = useMemo(() => {
@@ -87,13 +86,23 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
         }
     );
 
-    // Auto-focus first input when list changes
+    // Auto-focus the first input once per class/mode. It used to run on every
+    // change of the list length, so completing a row under the "Belum Dinilai"
+    // filter (or typing in the search box) yanked the cursor back to the top
+    // mid-entry.
+    const hasAutoFocusedRef = React.useRef(false);
     React.useEffect(() => {
-        if (mode === 'subject_grade' && flatStudentList.length > 0) {
-            // Small timeout to allow render
-            setTimeout(() => focusItem(0), 100);
-        }
-    }, [mode, flatStudentList.length, focusItem]);
+        hasAutoFocusedRef.current = false;
+    }, [selectedClass, mode]);
+
+    React.useEffect(() => {
+        if (mode !== 'subject_grade' || flatStudentList.length === 0) return;
+        if (hasAutoFocusedRef.current) return;
+        hasAutoFocusedRef.current = true;
+        // Small timeout to allow render
+        const timer = setTimeout(() => focusItem(0), 100);
+        return () => clearTimeout(timer);
+    }, [mode, selectedClass, flatStudentList.length, focusItem]);
 
     const classMap = useMemo(() => {
         const map = new Map<string, string>();
@@ -202,33 +211,6 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                     }} />
                 )}
 
-                {/* Top Action Buttons (Simpan & Katrol Nilai - 50/50 Symmetric Layout) */}
-                {mode === 'subject_grade' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
-                        {handleSubmit && (
-                            <Button
-                                type="button"
-                                onClick={handleSubmit}
-                                disabled={isSubmitDisabled || isSubmitting}
-                                className="w-full h-11 font-bold text-xs sm:text-sm bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl shadow-md shadow-emerald-500/15 flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.99]"
-                            >
-                                <CheckIcon className="w-4 h-4" />
-                                <span>{isSubmitting ? 'Memproses...' : 'Simpan Data Nilai'}</span>
-                            </Button>
-                        )}
-                        {onShowAdjustment && (
-                            <Button
-                                type="button"
-                                onClick={onShowAdjustment}
-                                className="w-full h-11 font-bold text-xs sm:text-sm bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 hover:from-brand-600 hover:to-brand-700 text-white rounded-xl shadow-md shadow-brand-600/15 flex items-center justify-center gap-2 transition-all duration-300 active:scale-[0.99]"
-                            >
-                                <SparklesIcon className="w-4 h-4 text-amber-300" />
-                                <span>Katrol & Pratinjau Nilai</span>
-                            </Button>
-                        )}
-                    </div>
-                )}
-
                 {/* Filter Pills - Horizontal scroll on mobile */}
                 <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
                     <FilterPills options={filterOptions} currentValue={studentFilter} onFilterChange={setStudentFilter} />
@@ -262,7 +244,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                 {/* Mini Stats Display */}
                 {showStats && mode === 'subject_grade' && (
                     <div className="pt-2">
-                        <GradeDistributionMini scores={scores} kkm={75} />
+                        <GradeDistributionMini scores={scores} kkm={kkm} />
                     </div>
                 )}
             </div>
@@ -407,10 +389,14 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                         onChange={e => handleScoreChange(s.id, e.target.value)}
                                                                         placeholder=""
                                                                         aria-label={`Nilai untuk ${s.name}`}
+                                                                        aria-invalid={Boolean(validationErrors[s.id])}
+                                                                        aria-describedby={validationErrors[s.id] ? `grade-error-${s.id}` : undefined}
+                                                                        onFocus={() => onScoreFieldFocus?.(s.id)}
+                                                                        onBlur={() => onScoreFieldFocus?.(null)}
                                                                         className={`w-24 text-center font-bold text-lg h-10 transition-all ${validationErrors[s.id] ? 'border-rose-500 focus:ring-rose-500 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300' : scores[s.id] ? 'bg-green-100 dark:bg-green-500/30 border-green-400 text-green-900 dark:text-white' : 'bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/70'}`}
                                                                     />
                                                                     {validationErrors[s.id] && (
-                                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-max max-w-[200px] z-20">
+                                                                        <div id={`grade-error-${s.id}`} role="alert" className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-max max-w-[200px] z-20">
                                                                             <div className="bg-rose-500 text-white text-xs py-1 px-2 rounded shadow-lg">
                                                                                 {validationErrors[s.id]}
                                                                                 <div className="absolute -top-1 left-1/2 -translate-x-1/2 border-x-4 border-b-4 border-x-transparent border-b-rose-500" />
@@ -583,17 +569,21 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                     onChange={e => handleScoreChange(s.id, e.target.value)}
                                                                     placeholder=""
                                                                     aria-label={`Nilai untuk ${s.name}`}
+                                                                    aria-invalid={Boolean(validationErrors[s.id])}
+                                                                    aria-describedby={validationErrors[s.id] ? `grade-error-mobile-${s.id}` : undefined}
+                                                                    onFocus={() => onScoreFieldFocus?.(s.id)}
+                                                                    onBlur={() => onScoreFieldFocus?.(null)}
                                                                     className={`w-full min-w-0 flex-1 text-xl font-bold text-center h-12 rounded-xl transition-all ${validationErrors[s.id] ? 'border-rose-500 focus:ring-rose-500 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300' : 'bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-brand-500'}`}
                                                                 />
                                                                 {scores[s.id] && !validationErrors[s.id] && (
-                                                                    <span className={`px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-md whitespace-nowrap flex-shrink-0 ${parseInt(scores[s.id]) >= 75 ? 'bg-emerald-500 text-white' : parseInt(scores[s.id]) >= 60 ? 'bg-amber-500 text-white' : 'bg-rose-500 text-white'}`}>
-                                                                        {parseInt(scores[s.id]) >= 75 ? 'Baik' : parseInt(scores[s.id]) >= 60 ? 'Cukup' : 'Kurang'}
+                                                                    <span className={`px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-md whitespace-nowrap flex-shrink-0 ${Number(scores[s.id]) >= kkm ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+                                                                        {Number(scores[s.id]) >= kkm ? 'Tuntas' : 'Belum Tuntas'}
                                                                     </span>
                                                                 )}
                                                             </div>
                                                         </div>
                                                         {validationErrors[s.id] && (
-                                                            <div className="text-xs text-rose-500 mt-2 font-medium">
+                                                            <div id={`grade-error-mobile-${s.id}`} role="alert" className="text-xs text-rose-500 mt-2 font-medium">
                                                                 * {validationErrors[s.id]}
                                                             </div>
                                                         )}
