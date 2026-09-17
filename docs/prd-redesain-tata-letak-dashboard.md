@@ -108,7 +108,7 @@ Berdasarkan audit visual dan pedoman heuristik UI/UX modern (Nielsen Norman Grou
 
 ### 4.5. Spesifikasi Khusus Tampilan Mobile (*Thumb-First & Layar Sentuh*)
 
-Mengacu pada pedoman desain repositori ([`MOBILE_AUDIT_THUMB_FIRST.md`](file:///d:/coding/Guru%20Cerdas/docs/MOBILE_AUDIT_THUMB_FIRST.md)), penataan di layar ponsel (< 640px / 375px) membutuhkan perlakuan khusus:
+Mengacu pada pedoman desain repositori ([`MOBILE_AUDIT_THUMB_FIRST.md`](./MOBILE_AUDIT_THUMB_FIRST.md)), penataan di layar ponsel (< 640px / 375px) membutuhkan perlakuan khusus:
 
 1. **Adaptasi Grid 4 Kartu Status Kehadiran:**
    * **Masalah:** Pada layar ponsel selebar 360–390px, membagi 4 kolom (`grid-cols-4`) membuat kartu terlalu sempit (~70px), sehingga angka besar dan label status rentan terpotong atau tertekan.
