@@ -132,6 +132,7 @@ const routeSkeletonMap: Record<string, React.ComponentType> = {
   '/siswa': StudentsPageSkeleton,
   '/absensi': AttendancePageSkeleton,
   '/jadwal': SchedulePageSkeleton,
+  '/jadwal-ph': SchedulePageSkeleton,
   '/tugas': TasksPageSkeleton,
   '/pengaturan': SettingsPageSkeleton,
   '/cetak-rapot': ReportPageSkeleton,
@@ -238,6 +239,7 @@ function AppContent() {
               <Route path="/brankas" element={<AsyncErrorBoundary context="BrankasPage"><BrankasPage /></AsyncErrorBoundary>} />
               <Route path="/siswa/:studentId" element={<AsyncErrorBoundary context="StudentDetailPage"><StudentDetailPage /></AsyncErrorBoundary>} />
               <Route path="/jadwal" element={<AsyncErrorBoundary context="SchedulePage"><SchedulePage /></AsyncErrorBoundary>} />
+              <Route path="/jadwal-ph" element={<Navigate to="/jadwal?tab=ph" replace />} />
               <Route path="/pengaturan" element={<AsyncErrorBoundary context="SettingsPage"><SettingsPage /></AsyncErrorBoundary>} />
               <Route path="/tugas" element={<AsyncErrorBoundary context="TasksPage"><TasksPage /></AsyncErrorBoundary>} />
               <Route path="/input-massal" element={<AsyncErrorBoundary context="MassInputPage"><MassInputPage /></AsyncErrorBoundary>} />

@@ -25,7 +25,7 @@ export interface MassInputPageViewProps {
     handleBack: () => void;
     // Guard for destructive actions: every clear/back path asks first, and the
     // discarded batch stays restorable for a few seconds.
-    pendingClearAction: { kind: 'scores' | 'selection' | 'back'; count: number } | null;
+    pendingClearAction: { kind: 'scores' | 'selection' | 'back' | 'switch_config'; count: number } | null;
     confirmPendingAction: () => void;
     dismissPendingAction: () => void;
     requestClear: () => void;
@@ -139,6 +139,9 @@ export interface MassInputPageViewProps {
     showDuplicateDialog: boolean;
     setShowDuplicateDialog: (v: boolean) => void;
     onHandleSubmit: () => void;
+    isScoresDirty?: boolean | React.MutableRefObject<boolean>;
+    setIsScoresDirty?: (v: boolean) => void;
+    saveSubjectGradeDraft?: (draft: any) => void;
 }
 
 export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
@@ -176,7 +179,12 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         onDeleteSelected,
         duplicateList, showDuplicateDialog,
         setShowDuplicateDialog, onHandleSubmit,
+        isScoresDirty, setIsScoresDirty, saveSubjectGradeDraft,
     } = props;
+
+    const isDirty = typeof isScoresDirty === 'object' && isScoresDirty !== null && 'current' in isScoresDirty
+        ? Boolean((isScoresDirty as React.MutableRefObject<boolean>).current)
+        : Boolean(isScoresDirty ?? true);
 
     if (step === 1) {
         return <Step1_ModeSelection handleModeSelect={handleModeSelect} />;
@@ -324,6 +332,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                     classes={classes}
                                     selectedClass={selectedClass}
                                     kkm={kkm}
+                                    onClearRequest={requestClear}
                                 />
                             </div>
                         </>
@@ -426,6 +435,13 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                         scores={scores}
                         onApply={(finalScores) => {
                             setScores(finalScores);
+                            setIsScoresDirty?.(true);
+                            saveSubjectGradeDraft?.({
+                                selectedClass,
+                                subjectGradeInfo,
+                                scores: finalScores,
+                                selectedStudentIds: Array.from(selectedStudentIds),
+                            });
                         }}
                         kkm={kkm}
                         subject={subjectGradeInfo.subject}
@@ -502,12 +518,26 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                     onClose={dismissPendingAction}
                     onConfirm={confirmPendingAction}
                     variant="warning"
-                    title={pendingClearAction?.kind === 'back' ? 'Ada Nilai Belum Disimpan' : 'Bersihkan Input Belum Disimpan?'}
-                    confirmText={pendingClearAction?.kind === 'back' ? 'Ya, Tinggalkan' : 'Ya, Bersihkan'}
-                    cancelText="Batalkan"
+                    title={
+                        pendingClearAction?.kind === 'back'
+                            ? 'Ada Nilai Belum Disimpan'
+                            : pendingClearAction?.kind === 'switch_config'
+                            ? 'Beralih Penilaian?'
+                            : 'Bersihkan Input Belum Disimpan?'
+                    }
+                    confirmText={
+                        pendingClearAction?.kind === 'back'
+                            ? 'Ya, Tinggalkan'
+                            : pendingClearAction?.kind === 'switch_config'
+                            ? 'Ya, Beralih'
+                            : 'Ya, Bersihkan'
+                    }
+                    cancelText={pendingClearAction?.kind === 'switch_config' ? 'Tetap di Sini' : 'Batalkan'}
                     message={
                         pendingClearAction?.kind === 'back'
                             ? `${pendingClearAction.count} nilai yang sudah diketik belum tersimpan. Meninggalkan layar ini akan menghapusnya.`
+                            : pendingClearAction?.kind === 'switch_config'
+                            ? `Ada ${pendingClearAction.count} nilai yang belum disimpan untuk ${subjectGradeInfo.subject || 'mapel ini'}. Beralih mapel atau penilaian akan membatalkan nilai yang belum disimpan ini.`
                             : pendingClearAction?.kind === 'scores'
                             ? `${pendingClearAction.count} nilai yang sudah diketik akan dihapus dari formulir. Nilai yang sudah tersimpan di database tidak terpengaruh, dan Anda masih bisa mengurungkannya beberapa detik setelah ini.`
                             : `${pendingClearAction?.count ?? 0} siswa akan dihapus dari pilihan. Anda masih bisa mengurungkannya beberapa detik setelah ini.`
@@ -551,12 +581,18 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                         <div className="pointer-events-auto shadow-2xl bg-slate-900/95 dark:bg-slate-800/95 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl flex items-center gap-3 sm:gap-4 backdrop-blur-md border border-slate-700/60 dark:border-slate-600 shadow-black/40 max-w-[95vw]">
                             <div className="flex items-center gap-2">
                                 <span className="relative flex h-2.5 w-2.5">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                                    {(mode !== 'subject_grade' || isDirty) ? (
+                                        <>
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                                        </>
+                                    ) : (
+                                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                                    )}
                                 </span>
                                 <span className="text-xs sm:text-sm font-semibold tracking-tight whitespace-nowrap">
                                     {mode === 'subject_grade'
-                                        ? `${gradedCount} siswa dinilai`
+                                        ? `${gradedCount} siswa dinilai${!isDirty ? ' (Tersimpan)' : ''}`
                                         : mode === 'attitude'
                                         ? `${selectedStudentIds.size} siswa terpilih (+${attitudePoints || 1} poin)`
                                         : `${selectedStudentIds.size} siswa terpilih`}
@@ -606,7 +642,9 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                             : mode === 'attitude'
                                             ? `Simpan Sikap (${selectedStudentIds.size})`
                                             : mode === 'subject_grade'
-                                            ? `Simpan Nilai (${gradedCount})`
+                                            ? isDirty
+                                                ? `Simpan Nilai (${gradedCount})`
+                                                : `Tersimpan (${gradedCount})`
                                             : mode === 'bulk_report'
                                             ? `Cetak Rapor Massal (${selectedStudentIds.size})`
                                             : mode === 'academic_print'

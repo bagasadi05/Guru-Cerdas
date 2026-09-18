@@ -20,6 +20,7 @@ export const preloadRoute = (path: string): void => {
       void import('@/components/pages/StudentDetailPage');
       break;
     case '/jadwal':
+    case '/jadwal-ph':
       void import('@/components/pages/SchedulePage');
       break;
     case '/pengaturan':

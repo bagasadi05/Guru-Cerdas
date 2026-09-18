@@ -61,7 +61,9 @@ export interface UseMassInputMutationsParams {
     setSelectedStudentIds: React.Dispatch<React.SetStateAction<Set<string>>>;
     bypassDuplicateGuard: boolean;
     isScoresDirtyRef: React.MutableRefObject<boolean>;
+    setIsScoresDirty?: (isDirty: boolean) => void;
     clearSubjectGradeDraft: () => void;
+    saveSubjectGradeDraft?: (draft: any) => void;
 }
 
 import { findStudentMatch as centralFindStudentMatch } from '../../../../utils/studentMatcher';
@@ -81,7 +83,8 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         attitudeDate, attitudeCategory, attitudeName, attitudePoints: _attitudePoints, attitudeNotes,
         studentsData, noteMethod, templateNote, pasteData,
         gradedCount, classes,
-        setScores, setSelectedStudentIds, bypassDuplicateGuard, isScoresDirtyRef, clearSubjectGradeDraft,
+        setScores, setSelectedStudentIds, bypassDuplicateGuard, isScoresDirtyRef, setIsScoresDirty, clearSubjectGradeDraft,
+        saveSubjectGradeDraft,
     } = params;
 
     const { user } = useAuth();
@@ -301,9 +304,11 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                     // cross-assessment overwrite.
                     const recordIdByStudent = new Map<string, string>();
                     const existingNotesByStudent = new Map<string, string>();
+                    const existingRecordMap = new Map<string, { id: string; score: number; notes: string | null }>();
                     dedupeAcademicRecords(existingGrades || []).forEach(record => {
                         recordIdByStudent.set(record.student_id, record.id);
                         if (record.notes) existingNotesByStudent.set(record.student_id, record.notes);
+                        existingRecordMap.set(record.student_id, { id: record.id, score: record.score, notes: record.notes });
                     });
 
                     // `uq_academic_records_student_subject_assessment_semester` is
@@ -318,7 +323,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                     if (studentsWithoutKnownRecord.length > 0) {
                         let keyQuery = supabase
                             .from('academic_records')
-                            .select('id, student_id, deleted_at, notes')
+                            .select('id, student_id, deleted_at, notes, score')
                             .eq('subject', subjectGradeInfo.subject)
                             .eq('assessment_name', subjectGradeInfo.assessment_name)
                             .in('student_id', studentsWithoutKnownRecord);
@@ -336,29 +341,60 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                                 recordIdByStudent.set(row.student_id, row.id);
                             }
                             if (row.notes) existingNotesByStudent.set(row.student_id, row.notes);
+                            if (row.deleted_at === null) {
+                                existingRecordMap.set(row.student_id, { id: row.id, score: (row as any).score, notes: row.notes });
+                            }
                         });
                     }
 
-                    const records: Database['public']['Tables']['academic_records']['Insert'][] = pendingScores.map(({ student_id, numScore }) => ({
-                        id: recordIdByStudent.get(student_id) || selfCryptoUUID(),
-                        subject: subjectGradeInfo.subject,
-                        assessment_name: subjectGradeInfo.assessment_name,
-                        // An empty "Catatan umum" field means "leave the existing note
-                        // alone" — saving must not wipe per-student notes.
-                        notes: subjectGradeInfo.notes || existingNotesByStudent.get(student_id) || '',
-                        score: numScore,
-                        student_id,
-                        user_id: user.id,
-                        semester_id: subjectGradeInfo.semester || null,
-                        // Reviving a reused row requires clearing the soft-delete flag.
-                        deleted_at: null,
-                    }));
-                    const { data, error } = await supabase
+                    const records: Database['public']['Tables']['academic_records']['Insert'][] = pendingScores.map(({ student_id, numScore }) => {
+                        let id = recordIdByStudent.get(student_id);
+                        if (!id) {
+                            id = selfCryptoUUID();
+                            recordIdByStudent.set(student_id, id);
+                        }
+                        return {
+                            id,
+                            subject: subjectGradeInfo.subject,
+                            assessment_name: subjectGradeInfo.assessment_name,
+                            // An empty "Catatan umum" field means "leave the existing note
+                            // alone" — saving must not wipe per-student notes.
+                            notes: subjectGradeInfo.notes || existingNotesByStudent.get(student_id) || '',
+                            score: numScore,
+                            student_id,
+                            user_id: user.id,
+                            semester_id: subjectGradeInfo.semester || null,
+                            // Reviving a reused row requires clearing the soft-delete flag.
+                            deleted_at: null,
+                        };
+                    });
+                    const { data: _data, error } = await supabase
                         .from('academic_records')
                         .upsert(records)
                         .select();
                     if (error) throw error;
-                    await recordAction(user.id, 'create', 'academic_records', data.map(d => d.id));
+
+                    const createdIds: string[] = [];
+                    const updatedIds: string[] = [];
+                    const previousStates: Record<string, unknown>[] = [];
+
+                    pendingScores.forEach(({ student_id }) => {
+                        const recId = recordIdByStudent.get(student_id);
+                        const existing = existingRecordMap.get(student_id);
+                        if (existing && recId) {
+                            updatedIds.push(recId);
+                            previousStates.push({ score: existing.score, notes: existing.notes });
+                        } else if (recId) {
+                            createdIds.push(recId);
+                        }
+                    });
+
+                    if (createdIds.length > 0) {
+                        await recordAction(user.id, 'create', 'academic_records', createdIds);
+                    }
+                    if (updatedIds.length > 0) {
+                        await recordAction(user.id, 'update', 'academic_records', updatedIds, previousStates);
+                    }
                     return `Nilai untuk ${records.length} siswa berhasil disimpan.`;
                 }
                 case 'violation': {
@@ -524,6 +560,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
             queryClient.invalidateQueries({ queryKey: ['bintangEvaluations'] });
             queryClient.invalidateQueries({ queryKey: ['bintangDashboard'] });
             isScoresDirtyRef.current = false;
+            setIsScoresDirty?.(false);
             clearSubjectGradeDraft();
 
             // Fire-and-forget: log input untuk laporan harian WhatsApp
@@ -538,6 +575,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                     } else if (mode === 'subject_grade') {
                         details.subject = subjectGradeInfo.subject;
                         details.assessmentName = subjectGradeInfo.assessment_name;
+                        studentCount = gradedCount;
                     } else if (mode === 'violation') {
                         details.violationDesc = selectedViolation?.description || '';
                     } else if (mode === 'attitude') {
@@ -564,12 +602,13 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         onError: (err: Error) => toast.error(`Gagal menyimpan: ${err.message}`),
     });
 
-    const { mutate: deleteGrades, isPending: isDeleting } = useMutation({
+    const { mutate: deleteGrades, mutateAsync: deleteGradesAsync, isPending: isDeleting } = useMutation({
         mutationFn: async ({ studentIds, recordIds }: { studentIds: string[]; recordIds: string[] }) => {
             if (studentIds.length === 0 && recordIds.length === 0) {
                 throw new Error('Pilih setidaknya satu siswa untuk dihapus.');
             }
 
+            let deletedRecords: any[] = [];
             let query = supabase
                 .from('academic_records')
                 .update({ deleted_at: new Date().toISOString() } as never);
@@ -590,28 +629,30 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
 
             const { data, error } = await query.select();
             if (error) throw error;
-
-            const deletedRecords = data || [];
-            if (deletedRecords.length === 0) {
-                throw new Error('Tidak ada data nilai tersimpan yang cocok untuk dihapus.');
-            }
+            deletedRecords = data || [];
 
             if (user && deletedRecords.length > 0) {
                 await recordAction(user.id, 'delete', 'academic_records', deletedRecords.map(d => d.id));
             }
-            return `${deletedRecords.length} data nilai berhasil dihapus.`;
+            return deletedRecords.length > 0
+                ? `${deletedRecords.length} data nilai berhasil dihapus.`
+                : 'Nilai yang dipilih berhasil dibersihkan dari daftar input.';
         },
         onSuccess: (message) => {
             toast.success(message);
-            // Clear local scores for deleted students
+            // Clear local scores for deleted students and update dirty state atomically from next scores
             setScores(prev => {
                 const next = { ...prev };
                 selectedStudentIds.forEach(id => {
                     delete next[id];
                 });
+                const hasRemaining = Object.values(next).some(v => typeof v === 'string' && v.trim() !== '');
+                if (isScoresDirtyRef) {
+                    isScoresDirtyRef.current = hasRemaining;
+                }
+                setIsScoresDirty?.(hasRemaining);
                 return next;
             });
-            isScoresDirtyRef.current = false;
             queryClient.invalidateQueries({ queryKey: ['existingGrades'] });
             queryClient.invalidateQueries({ queryKey: ['studentDetails'] });
             queryClient.invalidateQueries({ queryKey: ['studentStats'] });
@@ -656,7 +697,20 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
             if (unmatchedNames.length > 0) {
                 toast.warning(`Nama tidak dikenali: ${unmatchedNames.slice(0, 3).join(', ')}${unmatchedNames.length > 3 ? `, dan ${unmatchedNames.length - 3} lainnya` : ''}`);
             }
-            setScores(prev => ({ ...prev, ...newScores }));
+            if (isScoresDirtyRef) {
+                isScoresDirtyRef.current = true;
+            }
+            setIsScoresDirty?.(true);
+            setScores(prev => {
+                const merged = { ...prev, ...newScores };
+                saveSubjectGradeDraft?.({
+                    selectedClass,
+                    subjectGradeInfo,
+                    scores: merged,
+                    selectedStudentIds: Array.from(selectedStudentIds),
+                });
+                return merged;
+            });
             toast.success(`${matchedCount} dari ${parsedResults.length} nilai berhasil dicocokkan dan diisi.`);
         } catch (error) {
             console.error('AI Parsing Error:', error);
@@ -893,7 +947,7 @@ Format JSON yang diharapkan:
 
     return {
         submitData, isSubmitting,
-        deleteGrades, isDeleting,
+        deleteGrades, deleteGradesAsync, isDeleting,
         handleAiParse, isParsing,
         handlePrintBulkReports, handlePrintGrades,
         isExporting, exportProgress,

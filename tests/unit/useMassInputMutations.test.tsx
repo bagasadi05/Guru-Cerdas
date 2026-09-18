@@ -2,6 +2,7 @@ import React from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { recordAction } from '../../src/services/UndoManager';
 import { useMassInputMutations, UseMassInputMutationsParams } from '../../src/components/pages/mass-input/hooks/useMassInputMutations';
 
 const upsertCalls: Array<{ table: string; payload: unknown; options?: unknown }> = [];
@@ -53,6 +54,15 @@ vi.mock('../../src/services/supabase', () => {
         supabase: {
             from: vi.fn((table: string) => ({
                 select: vi.fn(() => makeFilterChain([])),
+                update: vi.fn(() => {
+                    const updateChain: any = {
+                        in: vi.fn(() => updateChain),
+                        eq: vi.fn(() => updateChain),
+                        is: vi.fn(() => updateChain),
+                        select: vi.fn().mockResolvedValue({ data: [], error: null }),
+                    };
+                    return updateChain;
+                }),
                 upsert: vi.fn((payload: unknown, options?: unknown) => {
                     upsertCalls.push({ table, payload, options });
                     return {
@@ -173,6 +183,26 @@ describe('useMassInputMutations - Grade & Attitude Upsert', () => {
         expect(student2Record.id).toBeTruthy();
         expect(student2Record.id).not.toBe('existing-grade-1');
         expect(student2Record.score).toBe(85);
+
+        // Verify UndoManager recorded 'update' for existing grade and 'create' for new grade
+        expect(recordAction).toHaveBeenCalledWith(
+            'teacher-1',
+            'update',
+            'academic_records',
+            ['existing-grade-1'],
+            [{ score: 80, notes: '' }]
+        );
+        expect(recordAction).toHaveBeenCalledWith(
+            'teacher-1',
+            'create',
+            'academic_records',
+            [student2Record.id]
+        );
+
+        // Verify daily_input_log recorded correct student_count (2)
+        const logCall = insertCalls.find(c => c.table === 'daily_input_log');
+        expect(logCall).toBeDefined();
+        expect((logCall?.payload as any).student_count).toBe(2);
     });
 
     it('inserts attitude_records cleanly without invalid onConflict option', async () => {
@@ -746,4 +776,52 @@ describe('useMassInputMutations - reviving a soft-deleted grade', () => {
             if (originalImplementation) fromMock.mockImplementation(originalImplementation);
         }
     });
+
+    it('handles deleteGrades gracefully when students only have local unsaved scores', async () => {
+        const setScoresMock = vi.fn();
+        const setSelectedStudentIdsMock = vi.fn();
+        const isScoresDirtyRef = { current: true };
+        const params: UseMassInputMutationsParams = {
+            mode: 'subject_grade',
+            selectedClass: 'class-1',
+            quizInfo: { name: '', subject: '', date: '', points: 0, max_points: 0 },
+            subjectGradeInfo: {
+                subject: 'Matematika',
+                assessment_name: 'UH 1',
+                notes: '',
+                semester: 'semester-1',
+            },
+            scores: { 'student-local': '85' },
+            validationErrors: {},
+            existingGrades: [],
+            selectedStudentIds: new Set(['student-local']),
+            selectedViolationCode: '',
+            violationDate: '2026-09-14',
+            violationNotes: '',
+            studentsData: [],
+            noteMethod: 'template',
+            templateNote: '',
+            pasteData: '',
+            gradedCount: 1,
+            filteredExistingGrades: [],
+            classes: [{ id: 'class-1', name: 'Kelas 5A' } as any],
+            setScores: setScoresMock,
+            setSelectedStudentIds: setSelectedStudentIdsMock,
+            bypassDuplicateGuard: false,
+            isScoresDirtyRef,
+            clearSubjectGradeDraft: vi.fn(),
+        };
+
+        const { result } = renderHook(() => useMassInputMutations(params), {
+            wrapper: createWrapper(),
+        });
+
+        await act(async () => {
+            await result.current.deleteGradesAsync({ studentIds: ['student-local'], recordIds: [] });
+        });
+
+        expect(setScoresMock).toHaveBeenCalled();
+        expect(setSelectedStudentIdsMock).toHaveBeenCalledWith(new Set());
+    });
 });
+

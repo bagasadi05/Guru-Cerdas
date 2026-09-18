@@ -1992,6 +1992,60 @@ export type Database = {
         }
         Relationships: []
       }
+      ph_schedules: {
+        Row: {
+          class_id: string
+          created_at: string
+          created_by: string
+          date: string
+          deleted_at: string | null
+          id: string
+          period_label: string
+          semester_id: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          created_by: string
+          date: string
+          deleted_at?: string | null
+          id?: string
+          period_label: string
+          semester_id: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          created_by?: string
+          date?: string
+          deleted_at?: string | null
+          id?: string
+          period_label?: string
+          semester_id?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_schedules_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ph_schedules_semester_id_fkey"
+            columns: ["semester_id"]
+            isOneToOne: false
+            referencedRelation: "semesters"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       school_info: {
         Row: {
           academic_year: string

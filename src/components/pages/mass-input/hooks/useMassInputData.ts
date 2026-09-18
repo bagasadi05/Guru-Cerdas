@@ -82,43 +82,44 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
     });
 
     const { data: uniqueSubjects } = useQuery({
-        queryKey: ['distinctSubjects', 'v2', user?.id, selectedClass, semesterId, teacherAssignments.length],
+        queryKey: ['distinctSubjects', 'v3', user?.id, selectedClass, semesterId, teacherAssignments.length],
         queryFn: async (): Promise<string[]> => {
             if (!user) return [];
             const assignedSubjects = getAssignedSubjects(teacherAssignments, selectedClass || null, semesterId || null);
             
-            // Mapel dari penugasan guru adalah teks bebas, jadi dikanonikkan
-            // dulu supaya tidak muncul dua kali dengan ejaan berbeda.
-            const combinedSubjects = mergeSubjectLists(assignedSubjects, DEFAULT_SUBJECT_OPTIONS);
-            
-            if (combinedSubjects.length > 0) {
-                return combinedSubjects;
+            let recordSubjects: string[] = [];
+            try {
+                let query = supabase
+                    .from('academic_records')
+                    .select('subject')
+                    .is('deleted_at', null);
+
+                if (selectedClass && studentsData && studentsData.length > 0) {
+                    query = query.in('student_id', studentsData.map((student) => student.id));
+                }
+
+                if (semesterId) {
+                    query = query.eq('semester_id', semesterId);
+                }
+
+                const { data, error } = await query;
+                if (!error && data) {
+                    recordSubjects = ((data as { subject: string }[]) || []).map((item) => item.subject);
+                }
+            } catch (err) {
+                console.error("Error fetching distinct subjects from academic_records:", err);
             }
 
-            let query = supabase
-                .from('academic_records')
-                .select('subject')
-                .is('deleted_at', null);
-
-            if (selectedClass && studentsData && studentsData.length > 0) {
-                query = query.in('student_id', studentsData.map((student) => student.id));
-            }
-
-            if (semesterId) {
-                query = query.eq('semester_id', semesterId);
-            }
-
-            const { data, error } = await query;
-            if (error) { console.error("Error fetching distinct subjects:", error); return []; }
-            const subjects = ((data as { subject: string }[]) || []).map((item) => item.subject);
-            const uniqueSubjectList = [...new Set(subjects)].sort();
-            return uniqueSubjectList.length > 0 ? uniqueSubjectList : DEFAULT_SUBJECT_OPTIONS;
+            // Mapel dari penugasan guru, catatan nilai tersimpan (termasuk mapel kustom), dan bawaan
+            // digabung dan dikanonikkan tanpa duplikat.
+            return mergeSubjectLists(assignedSubjects, recordSubjects, DEFAULT_SUBJECT_OPTIONS);
         },
-        enabled: !!user, staleTime: 1000 * 60 * 15,
+        enabled: Boolean(user && (!selectedClass || (studentsData && studentsData.length > 0))),
+        staleTime: 1000 * 60 * 15,
     });
 
     const { data: assessmentNames } = useQuery({
-        queryKey: ['assessmentNames', selectedClass, subject, studentsData?.length ?? 0, semesterId],
+        queryKey: ['assessmentNames', selectedClass, subject, semesterId],
         queryFn: async (): Promise<string[]> => {
             if (!selectedClass || !subject || !studentsData) return [];
             let query = supabase
@@ -137,7 +138,7 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
             const names = ((data as { assessment_name: string | null }[]) || []).map((item) => item.assessment_name).filter((name): name is string => name !== null);
             return [...new Set(names)].sort();
         },
-        enabled: !!selectedClass && !!subject && !!studentsData,
+        enabled: Boolean(selectedClass && subject && studentsData && studentsData.length > 0),
     });
 
     const { data: existingGrades, isLoading: isLoadingGrades } = useQuery({

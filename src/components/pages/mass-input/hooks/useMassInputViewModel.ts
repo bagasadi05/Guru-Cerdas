@@ -88,7 +88,11 @@ export function useMassInputViewModel() {
     // --- Guard for destructive actions ---
     // Every path that throws away typed work goes through a confirmation, and
     // the discarded batch can still be restored from an undo bar.
-    const [pendingClearAction, setPendingClearAction] = useState<{ kind: 'scores' | 'selection' | 'back'; count: number } | null>(null);
+    const [pendingClearAction, setPendingClearAction] = useState<{
+        kind: 'scores' | 'selection' | 'back' | 'switch_config';
+        count: number;
+        nextInfo?: { subject: string; assessment_name: string; notes: string; semester: string };
+    } | null>(null);
     const [undoSnapshot, setUndoSnapshot] = useState<{
         kind: 'scores' | 'selection';
         count: number;
@@ -104,14 +108,14 @@ export function useMassInputViewModel() {
 
     // Warn before unload if there are unsaved score changes
     useWarnUnsavedChanges(
-        state.mode === 'subject_grade' && state.isScoresDirty.current,
+        state.mode === 'subject_grade' && state.isScoresDirtyRef.current,
         'Ada nilai yang belum disimpan. Yakin ingin keluar?'
     );
 
     // Sync scores from existing grades (only when not dirty)
     useEffect(() => {
         if (state.mode === 'subject_grade' && data.existingGrades) {
-            if (!state.isScoresDirty.current) {
+            if (!state.isScoresDirtyRef.current) {
                 const initialScores = data.existingGrades.reduce((acc: Record<string, string>, record: AcademicRecordRow) => {
                     acc[record.student_id] = String(record.score);
                     return acc;
@@ -205,8 +209,10 @@ export function useMassInputViewModel() {
         setScores: state.setScores,
         setSelectedStudentIds: state.setSelectedStudentIds,
         bypassDuplicateGuard: state.bypassDuplicateGuard,
-        isScoresDirtyRef: state.isScoresDirty,
+        isScoresDirtyRef: state.isScoresDirtyRef,
+        setIsScoresDirty: state.setIsScoresDirty,
         clearSubjectGradeDraft: state.clearSubjectGradeDraft,
+        saveSubjectGradeDraft: state.saveSubjectGradeDraft,
     });
 
     const attitudeFilledCount = useMemo(() => {
@@ -293,12 +299,52 @@ export function useMassInputViewModel() {
     const handleBack = () => {
         const hasUnsavedWork = state.mode === 'subject_grade'
             && gradedCount > 0
-            && state.isScoresDirty.current;
+            && state.isScoresDirtyRef.current;
         if (hasUnsavedWork) {
             setPendingClearAction({ kind: 'back', count: gradedCount });
             return;
         }
         state.handleBack();
+    };
+
+    const handleSubjectGradeInfoChange = (
+        updater: React.SetStateAction<{ subject: string; assessment_name: string; notes: string; semester: string }>
+    ) => {
+        const next = typeof updater === 'function' ? updater(state.subjectGradeInfo) : updater;
+        const isTypingSubject =
+            Boolean(state.subjectGradeInfo.subject) &&
+            Boolean(next.subject) &&
+            (next.subject.startsWith(state.subjectGradeInfo.subject) ||
+             state.subjectGradeInfo.subject.startsWith(next.subject));
+
+        const isSubjectChanged = Boolean(state.subjectGradeInfo.subject) &&
+            Boolean(next.subject) &&
+            !isTypingSubject &&
+            next.subject !== state.subjectGradeInfo.subject;
+
+        const isTypingAssessment =
+            Boolean(state.subjectGradeInfo.assessment_name) &&
+            Boolean(next.assessment_name) &&
+            (next.assessment_name.startsWith(state.subjectGradeInfo.assessment_name) ||
+             state.subjectGradeInfo.assessment_name.startsWith(next.assessment_name));
+
+        const isAssessmentChanged = Boolean(state.subjectGradeInfo.assessment_name) &&
+            Boolean(next.assessment_name) &&
+            !isTypingAssessment &&
+            next.assessment_name !== state.subjectGradeInfo.assessment_name;
+
+        const isSubjectOrAssessmentChanged = isSubjectChanged || isAssessmentChanged;
+
+        if (isSubjectOrAssessmentChanged && state.mode === 'subject_grade' && state.isScoresDirtyRef.current && gradedCount > 0) {
+            setPendingClearAction({
+                kind: 'switch_config',
+                count: gradedCount,
+                nextInfo: next,
+            });
+            return;
+        }
+
+        state.setSubjectGradeInfo(next);
     };
 
     const dismissPendingAction = () => setPendingClearAction(null);
@@ -310,6 +356,16 @@ export function useMassInputViewModel() {
 
         if (action.kind === 'back') {
             state.handleBack();
+            return;
+        }
+
+        if (action.kind === 'switch_config') {
+            if (action.nextInfo) {
+                state.clearSubjectGradeDraft();
+                state.setIsScoresDirty(false);
+                state.setScores({});
+                state.setSubjectGradeInfo(action.nextInfo);
+            }
             return;
         }
 
@@ -343,10 +399,6 @@ export function useMassInputViewModel() {
 
     const handleImportConfirm = (mappedScores: Record<string, string>) => {
         const importedScores = { ...state.scores, ...mappedScores };
-        const importedStudentIds = Array.from(new Set([
-            ...state.selectedStudentIds,
-            ...Object.keys(mappedScores),
-        ]));
 
         // Persist synchronously before React updates state. A service-worker
         // controller change can remount this page immediately after this click.
@@ -354,10 +406,9 @@ export function useMassInputViewModel() {
             selectedClass: state.selectedClass,
             subjectGradeInfo: state.subjectGradeInfo,
             scores: importedScores,
-            selectedStudentIds: importedStudentIds,
+            selectedStudentIds: Array.from(state.selectedStudentIds),
         });
         state.setScores(importedScores);
-        state.setSelectedStudentIds(new Set(importedStudentIds));
         state.setPendingImportData(null);
         // Do not let an in-flight existing-grades query overwrite imported
         // values before the teacher explicitly saves them.
@@ -392,7 +443,7 @@ export function useMassInputViewModel() {
         quizInfo: state.quizInfo,
         setQuizInfo: state.setQuizInfo,
         subjectGradeInfo: state.subjectGradeInfo,
-        setSubjectGradeInfo: state.setSubjectGradeInfo,
+        setSubjectGradeInfo: handleSubjectGradeInfoChange,
         kkm: state.kkm,
         // Debounced setter that also persists KKM to the teacher's settings.
         setKkm: handleKkmChange,
@@ -510,5 +561,9 @@ export function useMassInputViewModel() {
                 mutations.handleSubmit();
             }
         },
+        isScoresDirty: state.isScoresDirty,
+        setIsScoresDirty: state.setIsScoresDirty,
+        saveSubjectGradeDraft: state.saveSubjectGradeDraft,
+        clearSubjectGradeDraft: state.clearSubjectGradeDraft,
     };
 }

@@ -239,6 +239,21 @@ export type BintangMentoringUpdate = Database['public']['Tables']['bintang_mento
 export type BintangDailyObservationUpdate = Database['public']['Tables']['bintang_daily_observations']['Update'];
 export type BintangEvaluationUpdate = Database['public']['Tables']['bintang_monthly_evaluations']['Update'];
 
+/**
+ * Represents a PH (Penilaian Harian) schedule record from the database.
+ */
+export type PhScheduleRow = Database['public']['Tables']['ph_schedules']['Row'];
+
+/**
+ * Type for inserting a new PH schedule record.
+ */
+export type PhScheduleInsert = Database['public']['Tables']['ph_schedules']['Insert'];
+
+/**
+ * Type for updating an existing PH schedule record.
+ */
+export type PhScheduleUpdate = Database['public']['Tables']['ph_schedules']['Update'];
+
 // =============================================================================
 // COMPOSITE/DERIVED TYPES
 // =============================================================================

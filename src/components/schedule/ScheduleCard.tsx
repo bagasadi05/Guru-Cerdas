@@ -10,6 +10,7 @@ export interface ScheduleCardProps {
     classNameLabel?: string;
     isOngoing: boolean;
     isPast: boolean;
+    hasPhToday?: boolean;
     onEdit: (item: ScheduleRow) => void;
     onDuplicate: (item: ScheduleRow) => void;
     onDelete: (item: ScheduleRow) => void;
@@ -17,7 +18,7 @@ export interface ScheduleCardProps {
     onIsiJurnal?: (item: ScheduleRow) => void;
 }
 
-export const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, classNameLabel, isOngoing, isPast, onEdit, onDuplicate, onDelete, getDuration, onIsiJurnal }) => {
+export const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, classNameLabel, isOngoing, isPast, hasPhToday, onEdit, onDuplicate, onDelete, getDuration, onIsiJurnal }) => {
     const colorClass = useMemo(() => getColorForSubject(item.subject), [item.subject]);
 
     return (
@@ -30,13 +31,20 @@ export const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, classNameLabel
         `}
         >
             <div className="p-3 sm:p-4 flex flex-col h-full gap-3">
-                {/* Top Row: Time & Menu */}
+                {/* Top Row: Time, PH Badge & Menu */}
                 <div className="flex justify-between items-start">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                        <ClockIcon className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-                        <span className="text-xs font-semibold font-mono text-slate-600 dark:text-slate-300">
-                            {formatTimeRange(item.start_time, item.end_time)}
-                        </span>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                            <ClockIcon className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                            <span className="text-xs font-semibold font-mono text-slate-600 dark:text-slate-300">
+                                {formatTimeRange(item.start_time, item.end_time)}
+                            </span>
+                        </div>
+                        {hasPhToday && (
+                            <span className="inline-flex items-center gap-1 text-xxs font-extrabold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 animate-pulse">
+                                📝 PH Hari Ini
+                            </span>
+                        )}
                     </div>
 
                     <DropdownMenu>

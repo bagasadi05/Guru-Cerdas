@@ -13,7 +13,7 @@ export type SoftDeleteEntity = 'students' | 'classes' | 'attendance' | 'violatio
     | 'reports' | 'schedules' | 'communications' | 'homework' | 'extracurriculars'
     | 'student_extracurriculars' | 'extracurricular_attendance' | 'extracurricular_grades'
     | 'extracurricular_students' | 'student_achievements' | 'student_development_analyses'
-    | 'attitude_records' | 'school_info' | 'announcements' | 'academic_years' | 'semesters' | 'user_settings';
+| 'attitude_records' | 'school_info' | 'announcements' | 'academic_years' | 'semesters' | 'user_settings' | 'ph_schedules';
 
 export interface SoftDeleteResult {
     success: boolean;
@@ -251,8 +251,9 @@ export const ENTITY_OWNER_COLUMN: Readonly<Record<SoftDeleteEntity, string | nul
     school_info: 'user_id',
     announcements: null,
     academic_years: 'user_id',
-    semesters: 'user_id',
+semesters: 'user_id',
     user_settings: 'user_id',
+    ph_schedules: 'created_by',
 };
 
 /**
@@ -314,6 +315,7 @@ export const ALL_SOFT_DELETE_ENTITIES: SoftDeleteEntity[] = [
     'extracurricular_students', 'student_achievements',
     'student_development_analyses', 'attitude_records', 'school_info',
     'announcements', 'academic_years', 'semesters', 'user_settings',
+    'ph_schedules',
 ];
 
 export async function getAllDeletedItems(userId: string): Promise<DeletedItem[]> {
@@ -373,6 +375,7 @@ export const ENTITY_KEY_COLUMN: Readonly<Record<SoftDeleteEntity, string>> = {
     semesters: 'id',
     // user_settings: primary key-nya `user_id` (bukan `id`)
     user_settings: 'user_id',
+    ph_schedules: 'id',
 };
 
 export async function cleanupExpired(): Promise<{

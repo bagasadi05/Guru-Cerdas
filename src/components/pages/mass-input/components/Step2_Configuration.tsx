@@ -93,6 +93,8 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
     const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
     const [violationSearchTerm, setViolationSearchTerm] = useState('');
     const [isCustomAssessment, setIsCustomAssessment] = useState(false);
+    const [customAssessmentInput, setCustomAssessmentInput] = useState('');
+
 
     // Find selected violation
     const selectedViolation = violationList.find(v => v.code === selectedViolationCode);
@@ -305,8 +307,11 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                         <div className="flex gap-2">
                                             <Input
                                                 id="assessment-name"
-                                                value={subjectGradeInfo.assessment_name}
-                                                onChange={e => setSubjectGradeInfo(p => ({ ...p, assessment_name: e.target.value }))}
+                                                value={customAssessmentInput}
+                                                onChange={e => {
+                                                    setCustomAssessmentInput(e.target.value);
+                                                    setSubjectGradeInfo(p => ({ ...p, assessment_name: e.target.value }));
+                                                }}
                                                 placeholder="Ketik nama penilaian baru..."
                                                 autoFocus
                                                 required
@@ -314,7 +319,11 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                             />
                                             <Button
                                                 variant="outline"
-                                                onClick={() => { setIsCustomAssessment(false); setSubjectGradeInfo(p => ({ ...p, assessment_name: '' })); }}
+                                                onClick={() => {
+                                                    setIsCustomAssessment(false);
+                                                    setCustomAssessmentInput('');
+                                                    setSubjectGradeInfo(p => ({ ...p, assessment_name: '' }));
+                                                }}
                                                 title="Kembali ke daftar"
                                                 className="px-3 border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-white"
                                             >
@@ -328,6 +337,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                             onChange={val => {
                                                 if (val === '__NEW__') {
                                                     setIsCustomAssessment(true);
+                                                    setCustomAssessmentInput('');
                                                     setSubjectGradeInfo(p => ({ ...p, assessment_name: '' }));
                                                 } else {
                                                     setSubjectGradeInfo(p => ({ ...p, assessment_name: val }));
@@ -344,7 +354,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                         value={subjectGradeInfo.semester}
                                         onChange={(val) => setSubjectGradeInfo(p => ({ ...p, semester: val }))}
                                         includeAllOption={false}
-                                        activeOnly={true}
+                                        activeOnly={false}
                                         showIcon={true}
                                         className="w-full"
                                     />

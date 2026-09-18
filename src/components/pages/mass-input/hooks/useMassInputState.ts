@@ -9,7 +9,9 @@ export interface SubjectGradeDraft {
     selectedClass: string;
     subjectGradeInfo: { subject: string; assessment_name: string; notes: string; semester: string };
     scores: Record<string, string>;
-    selectedStudentIds: string[];
+    selectedStudentIds?: string[];
+    kkm?: number;
+    validationErrors?: Record<string, string>;
 }
 
 const SUBJECT_GRADE_DRAFT_KEY = 'guru_cerdas_subject_grade_draft';
@@ -36,7 +38,8 @@ export function useMassInputState() {
     const location = useLocation();
     const navigate = useNavigate();
     const [initialDraft] = useState<SubjectGradeDraft | null>(() => readSubjectGradeDraft());
-    const isScoresDirty = useRef(Boolean(initialDraft && Object.keys(initialDraft.scores).length > 0));
+    const [isScoresDirty, setIsScoresDirtyState] = useState<boolean>(() => Boolean(initialDraft && Object.keys(initialDraft.scores).length > 0));
+    const isScoresDirtyRef = useRef(isScoresDirty);
 
     const [step, setStep] = useState<Step>(() => initialDraft?.step || 1);
     const [mode, setMode] = useState<InputMode | null>(() => initialDraft?.mode || null);
@@ -80,7 +83,7 @@ export function useMassInputState() {
     // Warn before unload if there are unsaved changes
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            if (isScoresDirty.current) {
+            if (isScoresDirtyRef.current) {
                 e.preventDefault();
                 e.returnValue = 'Anda memiliki nilai yang belum disimpan. Apakah Anda yakin ingin keluar?';
                 return e.returnValue;
@@ -132,6 +135,7 @@ export function useMassInputState() {
         setSearchTerm('');
         setStudentFilter('all');
         setBypassDuplicateGuard(false);
+        setIsScoresDirtyState(false);
     }
 
     // Reset filter when mode changes
@@ -142,33 +146,9 @@ export function useMassInputState() {
         setBypassDuplicateGuard(false);
     }
 
-    // The dirty flag is a ref, so it cannot be written during render. Clearing
-    // it here keeps it in step with the score reset above, and still runs
-    // before the autosave effect below reads it.
     useEffect(() => {
-        isScoresDirty.current = false;
+        isScoresDirtyRef.current = false;
     }, [selectedClass]);
-
-    // Auto-save draft when values change
-    useEffect(() => {
-        if (mode !== 'subject_grade' || !isScoresDirty.current || Object.keys(scores).length === 0) return;
-
-        const draft: SubjectGradeDraft = {
-            step: 2,
-            mode,
-            selectedClass,
-            subjectGradeInfo,
-            scores,
-            selectedStudentIds: Array.from(selectedStudentIds),
-        };
-        writeSubjectGradeDraft(draft);
-    }, [mode, selectedClass, selectedStudentIds, scores, subjectGradeInfo]);
-
-    const handleModeSelect = (selectedMode: InputMode) => {
-        setMode(selectedMode);
-        setStep(2);
-        setIsCustomSubject(false);
-    };
 
     const clearSubjectGradeDraft = () => {
         sessionStorage.removeItem(SUBJECT_GRADE_DRAFT_KEY);
@@ -178,29 +158,75 @@ export function useMassInputState() {
         writeSubjectGradeDraft({ step: 2, mode: 'subject_grade', ...draft });
     };
 
+    // Auto-save draft when values change
+    useEffect(() => {
+        if (mode !== 'subject_grade' || !isScoresDirtyRef.current || Object.keys(scores).length === 0) return;
+
+        const draft: SubjectGradeDraft = {
+            step: 2,
+            mode,
+            selectedClass,
+            subjectGradeInfo,
+            kkm,
+            scores,
+            selectedStudentIds: Array.from(selectedStudentIds),
+            validationErrors,
+        };
+        saveSubjectGradeDraft(draft);
+    }, [mode, selectedClass, subjectGradeInfo, kkm, scores, selectedStudentIds, validationErrors]);
+
+    const handleModeSelect = (selectedMode: InputMode) => {
+        if (selectedMode === 'subject_grade') {
+            const draft = readSubjectGradeDraft();
+            if (draft && draft.step === 2 && draft.mode === 'subject_grade') {
+                setSelectedClass(draft.selectedClass);
+                setSubjectGradeInfo(draft.subjectGradeInfo);
+                setKkm(draft.kkm || 75);
+                setScores(draft.scores);
+                setValidationErrors(draft.validationErrors || {});
+                setMode('subject_grade');
+                setStep(2);
+                isScoresDirtyRef.current = Boolean(draft.scores && Object.keys(draft.scores).length > 0);
+                setIsScoresDirtyState(isScoresDirtyRef.current);
+                return;
+            }
+        }
+        setMode(selectedMode);
+        setStep(2);
+        setIsCustomSubject(false);
+    };
+
     const handleBack = () => {
         clearSubjectGradeDraft();
-        setStep(1); setMode(null); setSelectedClass('');
+        setStep(1);
+        setMode(null);
+        setSelectedClass('');
+        setScores({});
         setQuizInfo({ name: 'Aktif bertanya di kelas', category: 'bertanya', subject: '', date: new Date().toISOString().slice(0, 10), points: 1, max_points: 1 });
-        setSubjectGradeInfo({ subject: '', assessment_name: '', notes: '', semester: activeSemester?.id || '' });
+        setSubjectGradeInfo({ subject: '', assessment_name: '', notes: '', semester: '' });
+        setKkm(75);
         setAttitudeDate(new Date().toISOString().slice(0, 10));
         setAttitudeCategory('Adab & Akhlak');
         setAttitudeName('Adab & Kesantunan');
         setAttitudePoints(1);
         setAttitudeNotes('');
         setAttitudePredicates({});
-        setScores({}); setPasteData(''); setSelectedViolationCode('');
+        setPasteData('');
+        setSelectedViolationCode('');
         setViolationDate(new Date().toISOString().slice(0, 10));
+        setViolationNotes('');
         setSelectedStudentIds(new Set()); setSearchTerm(''); setStudentFilter('all');
         setValidationErrors({}); setNoteMethod('ai');
         setTemplateNote('Ananda [Nama Siswa] menunjukkan perkembangan yang baik semester ini. Terus tingkatkan semangat belajar dan jangan ragu bertanya jika ada kesulitan.');
         setShowImportModal(false); setShowChartModal(false);
         setBypassDuplicateGuard(false);
-        isScoresDirty.current = false;
+        isScoresDirtyRef.current = false;
+        setIsScoresDirtyState(false);
     };
 
     const handleScoreChange = (studentId: string, value: string) => {
-        isScoresDirty.current = true;
+        isScoresDirtyRef.current = true;
+        setIsScoresDirtyState(true);
         const numValue = Number(value);
         const errors = { ...validationErrors };
         if (value && (isNaN(numValue) || numValue < 0 || numValue > 100)) {
@@ -217,7 +243,8 @@ export function useMassInputState() {
         field: 'spiritual' | 'social',
         value: string
     ) => {
-        isScoresDirty.current = true;
+        isScoresDirtyRef.current = true;
+        setIsScoresDirtyState(true);
         setAttitudePredicates(prev => {
             const current = prev[studentId] || { spiritual: '', social: '' };
             const nextVal = current[field] === value ? '' : value;
@@ -237,7 +264,8 @@ export function useMassInputState() {
         target: 'both' | 'spiritual' | 'social' = 'both'
     ) => {
         if (!studentIds.length || !predicate) return;
-        isScoresDirty.current = true;
+        isScoresDirtyRef.current = true;
+        setIsScoresDirtyState(true);
         setAttitudePredicates(prev => {
             const next = { ...prev };
             studentIds.forEach(id => {
@@ -260,7 +288,8 @@ export function useMassInputState() {
     };
 
     const setIsScoresDirty = (val: boolean) => {
-        isScoresDirty.current = val;
+        isScoresDirtyRef.current = val;
+        setIsScoresDirtyState(val);
     };
 
     return {
@@ -295,6 +324,7 @@ export function useMassInputState() {
         showImportModal, setShowImportModal,
         showChartModal, setShowChartModal,
         isScoresDirty,
+        isScoresDirtyRef,
         setIsScoresDirty,
         clearSubjectGradeDraft,
         saveSubjectGradeDraft,

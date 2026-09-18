@@ -1,7 +1,8 @@
 import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
 import { getJsPDF, getAutoTable } from '../utils/dynamicImports';
+import type { RowInput } from 'jspdf-autotable';
 import { daysOfWeek, resolveClassName } from '../utils/scheduleUtils';
-import { ScheduleRow } from '../types';
+import { ScheduleRow, PhScheduleRow } from '../types';
 import { formatExportDate } from '../utils/exportUtils';
 
 // ─── PDF Export ──────────────────────────────────────────────────────────────
@@ -53,7 +54,7 @@ export async function exportSchedulePdf(
     };
 
     // Prepare table data
-    const tableBody: any[] = [];
+    const tableBody: RowInput[] = [];
 
     daysOfWeek.forEach((day) => {
         const itemsForDay = scheduleByDay[day] || [];
@@ -218,3 +219,81 @@ export function exportScheduleIcs(
     URL.revokeObjectURL(link.href);
     toast.success("File kalender (.ics) berhasil diunduh!");
 }
+
+export function exportPhScheduleIcs(
+    schedules: PhScheduleRow[],
+    className: string,
+    toast: { success: (msg: string) => void; warning: (msg: string) => void }
+) {
+    if (!schedules || schedules.length === 0) {
+        toast.warning("Tidak ada jadwal PH untuk diekspor.");
+        return;
+    }
+
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const now = new Date();
+    const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}T${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+    const lines: string[] = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Guru Cerdas//Jadwal PH//ID',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
+        `X-WR-CALNAME:Jadwal PH ${className}`,
+        'X-WR-TIMEZONE:Asia/Jakarta',
+    ];
+
+    schedules.forEach(item => {
+        const [year, month, day] = item.date.split('-').map(Number);
+        if (!year || !month || !day) return;
+
+        let startH = 7, startM = 30, endH = 9, endM = 0;
+        const p = item.period_label.trim();
+        if (p === '3-4') {
+            startH = 9; startM = 15; endH = 10; endM = 45;
+        } else if (p === '5-6') {
+            startH = 11; startM = 0; endH = 12; endM = 30;
+        } else if (p === '7-8') {
+            startH = 13; startM = 0; endH = 14; endM = 30;
+        }
+
+        const dtStart = `${year}${pad(month)}${pad(day)}T${pad(startH)}${pad(startM)}00`;
+        const dtEnd = `${year}${pad(month)}${pad(day)}T${pad(endH)}${pad(endM)}00`;
+        const uid = `guru-cerdas-ph-${item.id}@gurucerdas.app`;
+
+        lines.push('BEGIN:VEVENT');
+        lines.push(`UID:${uid}`);
+        lines.push(`DTSTAMP:${stamp}`);
+        lines.push(`DTSTART;TZID=Asia/Jakarta:${dtStart}`);
+        lines.push(`DTEND;TZID=Asia/Jakarta:${dtEnd}`);
+        lines.push(`SUMMARY:PH ${item.subject} (${className})`);
+        lines.push(`DESCRIPTION:Penilaian Harian (PH) ${item.subject} untuk ${className}, Jam Ke-${item.period_label}`);
+        lines.push(`LOCATION:Sekolah`);
+        lines.push('BEGIN:VALARM');
+        lines.push('TRIGGER:-P1D');
+        lines.push('ACTION:DISPLAY');
+        lines.push(`DESCRIPTION:Pengingat: Besok Penilaian Harian (PH) ${item.subject}`);
+        lines.push('END:VALARM');
+        lines.push('BEGIN:VALARM');
+        lines.push('TRIGGER:-PT1H');
+        lines.push('ACTION:DISPLAY');
+        lines.push(`DESCRIPTION:Pengingat: 1 jam lagi PH ${item.subject}`);
+        lines.push('END:VALARM');
+        lines.push('END:VEVENT');
+    });
+
+    lines.push('END:VCALENDAR');
+
+    const icsContent = lines.join('\r\n');
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Jadwal_PH_${className.replace(/\s+/g, '_')}_${formatExportDate()}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+    toast.success("File kalender PH (.ics) berhasil diunduh!");
+}
+

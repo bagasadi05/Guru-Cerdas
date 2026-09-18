@@ -5,7 +5,7 @@ import { staggerContainerVariants, staggerItemVariants } from '../../utils/anima
 import { triggerSubtleConfetti } from '../../utils/confetti';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { PlusIcon, ClockIcon, CalendarIcon, BookOpenIcon, GraduationCapIcon, BrainCircuitIcon, DownloadCloudIcon, AlertCircleIcon, CheckCircleIcon } from '../Icons';
+import { PlusIcon, ClockIcon, CalendarIcon, BookOpenIcon, GraduationCapIcon, BrainCircuitIcon, DownloadCloudIcon, AlertCircleIcon, CheckCircleIcon, ClipboardPenIcon, Share2Icon, PrinterIcon } from '../Icons';
 import { Modal } from '../ui/Modal';
 import { MarkdownText } from '../ui/MarkdownText';
 import { generateGeminiJson } from '../../services/geminiService';
@@ -14,6 +14,7 @@ import { softDelete } from '../../services/SoftDeleteService';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import JurnalMengajarPage from './JurnalMengajarPage';
+import PhScheduleTab from '../schedule/PhScheduleTab';
 import { useToast } from '../../hooks/useToast';
 import { Database } from '../../services/database.types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -32,7 +33,7 @@ import { NotificationPrompt } from '../schedule/NotificationPrompt';
 import { daysOfWeek, formatTimeRange } from '../../utils/scheduleUtils';
 import { exportSchedulePdf, exportScheduleIcs } from '../../services/scheduleExportService';
 import { type ScheduleViewMode } from '../schedule/scheduleMenuConfig';
-import { ScheduleRow } from '../../types';
+import { ScheduleRow, PhScheduleRow } from '../../types';
 
 const scheduleRules: ValidationRules = {
     subject: [ValidationService.validators.required("Mata pelajaran harus diisi")],
@@ -99,6 +100,11 @@ const SchedulePage: React.FC = () => {
     const [notificationsEnabled, setNotificationsEnabled] = useState(isNotificationsEnabled);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [confirmModalState, setConfirmModalState] = useState<{ isOpen: boolean; data: ScheduleRow | null }>({ isOpen: false, data: null });
+    const [isPhAddOpen, setIsPhAddOpen] = useState(false);
+    const [canManagePh, setCanManagePh] = useState(false);
+    const [isPhWaOpen, setIsPhWaOpen] = useState(false);
+    const [isPhPrintOpen, setIsPhPrintOpen] = useState(false);
+    const [isPhIcsTrigger, setIsPhIcsTrigger] = useState(false);
     const lastScheduleErrorRef = useRef<string | null>(null);
 
     useEffect(() => {
@@ -175,6 +181,25 @@ const SchedulePage: React.FC = () => {
             c.user_id === user?.id || assignedClassIds.has(c.id)
         );
     }, [classes, user, teacherAssignments]);
+
+    const todayStr = useMemo(() => new Date().toLocaleDateString('sv-SE'), []);
+    const { data: todayPhSchedules = [] } = useQuery({
+        queryKey: ['today-ph-schedules', user?.id, todayStr],
+        queryFn: async (): Promise<PhScheduleRow[]> => {
+            if (!user) return [];
+            const { data, error } = await supabase
+                .from('ph_schedules')
+                .select('*')
+                .eq('date', todayStr)
+                .is('deleted_at', null);
+            if (error) {
+                console.error('Error fetching today PH schedules:', error);
+                return [];
+            }
+            return (data || []) as PhScheduleRow[];
+        },
+        enabled: !!user,
+    });
 
     const selectableClasses = useMemo(() => {
         if (classes && classes.length > 0) return classes;
@@ -404,7 +429,8 @@ const SchedulePage: React.FC = () => {
     };
 
     const [searchParams, setSearchParams] = useSearchParams();
-    const activeMainTab = searchParams.get('tab') === 'jurnal' ? 'jurnal' : 'jadwal';
+    const rawTab = searchParams.get('tab');
+    const activeMainTab = rawTab === 'jurnal' ? 'jurnal' : rawTab === 'ph' ? 'ph' : 'jadwal';
 
     if (authLoading || pageLoading) return <SchedulePageSkeleton />;
 
@@ -417,8 +443,34 @@ const SchedulePage: React.FC = () => {
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight text-slate-800 dark:text-white font-serif">Jadwal & Jurnal Mengajar</h1>
-                        <p className="mt-1 text-slate-500 dark:text-slate-400">Kelola jadwal pelajaran dan catat jurnal harian mengajar dalam satu tempat.</p>
+                        <p className="mt-1 text-slate-500 dark:text-slate-400">Kelola jadwal pelajaran, penilaian harian (PH), dan catat jurnal harian mengajar dalam satu tempat.</p>
                     </div>
+                    {activeMainTab === 'ph' && (
+                        <div className="flex flex-wrap gap-2 self-end md:self-center">
+                            {canManagePh && (
+                                <Button onClick={() => setIsPhAddOpen(true)} variant="primary" size="sm"
+                                    className="h-10 px-3 sm:px-4 rounded-lg">
+                                    <PlusIcon className="w-4 h-4 sm:mr-2" />
+                                    <span className="hidden sm:inline">Tambah Jadwal PH</span>
+                                </Button>
+                            )}
+                            <Button onClick={() => setIsPhWaOpen(true)} variant="outline" size="sm"
+                                className="h-10 px-3 sm:px-4 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white">
+                                <Share2Icon className="w-4 h-4 sm:mr-2 text-emerald-500 dark:text-emerald-400" />
+                                <span className="hidden sm:inline">Salin WA</span>
+                            </Button>
+                            <Button onClick={() => setIsPhPrintOpen(true)} variant="outline" size="sm"
+                                className="h-10 px-3 sm:px-4 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white">
+                                <PrinterIcon className="w-4 h-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Cetak</span>
+                            </Button>
+                            <Button onClick={() => setIsPhIcsTrigger(true)} variant="outline" size="sm"
+                                className="h-10 px-3 sm:px-4 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white">
+                                <CalendarIcon className="w-4 h-4 sm:mr-2" />
+                                <span className="hidden sm:inline">ICS</span>
+                            </Button>
+                        </div>
+                    )}
                     {activeMainTab === 'jadwal' && (
                         <div className="flex flex-wrap gap-2 self-end md:self-center">
                             <Button onClick={() => handleOpenAddModal()} variant="primary" size="sm"
@@ -446,33 +498,61 @@ const SchedulePage: React.FC = () => {
                 </header>
 
                 {/* Tab Navigation Pill */}
-                <div className="flex items-center gap-2 p-1 bg-slate-200/70 dark:bg-slate-800/70 backdrop-blur-md rounded-2xl w-fit border border-slate-300/40 dark:border-slate-700/40">
+                <div className="flex items-center gap-1.5 sm:gap-2 p-1 bg-slate-200/70 dark:bg-slate-800/70 backdrop-blur-md rounded-2xl w-full sm:w-fit border border-slate-300/40 dark:border-slate-700/40 overflow-x-auto scrollbar-hide">
                     <button
                         onClick={() => setSearchParams({})}
-                        className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+                        className={`flex-1 sm:flex-initial px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap ${
                             activeMainTab === 'jadwal'
                                 ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-md'
                                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         }`}
                     >
-                        <CalendarIcon className="w-4 h-4" />
-                        <span>Jadwal Mengajar</span>
+                        <CalendarIcon className="w-4 h-4 shrink-0" />
+                        <span className="hidden sm:inline">Jadwal Mengajar</span>
+                        <span className="sm:hidden">Jadwal</span>
+                    </button>
+                    <button
+                        onClick={() => setSearchParams({ tab: 'ph' })}
+                        className={`flex-1 sm:flex-initial px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap ${
+                            activeMainTab === 'ph'
+                                ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-md'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                    >
+                        <ClipboardPenIcon className="w-4 h-4 shrink-0" />
+                        <span className="hidden sm:inline">Jadwal Penilaian Harian (PH)</span>
+                        <span className="sm:hidden">Jadwal PH</span>
                     </button>
                     <button
                         onClick={() => setSearchParams({ tab: 'jurnal' })}
-                        className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+                        className={`flex-1 sm:flex-initial px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap ${
                             activeMainTab === 'jurnal'
                                 ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-md'
                                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         }`}
                     >
-                        <BookOpenIcon className="w-4 h-4" />
-                        <span>Jurnal Harian Mengajar</span>
+                        <BookOpenIcon className="w-4 h-4 shrink-0" />
+                        <span className="hidden sm:inline">Jurnal Harian Mengajar</span>
+                        <span className="sm:hidden">Jurnal</span>
                     </button>
                 </div>
 
                 {activeMainTab === 'jurnal' ? (
                     <JurnalMengajarPage />
+                ) : activeMainTab === 'ph' ? (
+                    <PhScheduleTab
+                        externalOpenAdd={isPhAddOpen}
+                        onResetExternalOpenAdd={() => setIsPhAddOpen(false)}
+                        externalTriggerWa={isPhWaOpen}
+                        onResetExternalTriggerWa={() => setIsPhWaOpen(false)}
+                        externalTriggerPrint={isPhPrintOpen}
+                        onResetExternalTriggerPrint={() => setIsPhPrintOpen(false)}
+                        externalTriggerIcs={isPhIcsTrigger}
+                        onResetExternalTriggerIcs={() => setIsPhIcsTrigger(false)}
+                        selectedClassId={selectedClassId}
+                        onSelectClassId={setSelectedClassId}
+                        onCanManageChange={setCanManagePh}
+                    />
                 ) : (
                     <>
 
@@ -537,6 +617,10 @@ const SchedulePage: React.FC = () => {
                                     variants={staggerContainerVariants} initial="initial" animate="animate">
                                     {currentDaySchedule.map((item, index) => {
                                         const status = getScheduleStatus(item, currentTime);
+                                        const isToday = selectedDay === DAY_NAMES[new Date().getDay()];
+                                        const hasPhToday = isToday && todayPhSchedules.some(
+                                            ph => ph.class_id === item.class_id && (!ph.subject || ph.subject.trim().toLowerCase() === item.subject.trim().toLowerCase())
+                                        );
                                         return (
                                             <MotionDiv key={item.id} variants={staggerItemVariants} custom={index}>
                                                 <ScheduleCard
@@ -544,6 +628,7 @@ const SchedulePage: React.FC = () => {
                                                     classNameLabel={item.class_id ? classNameMap.get(item.class_id) : undefined}
                                                     isOngoing={status === 'ongoing'}
                                                     isPast={status === 'past'}
+                                                    hasPhToday={hasPhToday}
                                                     onEdit={handleOpenEditModal}
                                                     onDuplicate={(item) => {
                                                         setFormData({ day: item.day, start_time: item.start_time, end_time: item.end_time, subject: `${item.subject} (Copy)`, class_id: item.class_id });

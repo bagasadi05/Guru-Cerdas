@@ -18,7 +18,7 @@
 // =============================================================================
 
 export type {
-    // Row types
+// Row types
     StudentRow,
     ClassRow,
     AttendanceRow,
@@ -31,6 +31,7 @@ export type {
     CommunicationRow,
     AcademicYearRow,
     SemesterRow,
+    PhScheduleRow,
 
     // Insert types
     AttendanceInsert,
@@ -45,6 +46,7 @@ export type {
     CommunicationInsert,
     AcademicYearInsert,
     SemesterInsert,
+    PhScheduleInsert,
 
     // Update types
     StudentUpdate,
@@ -59,6 +61,7 @@ export type {
     CommunicationUpdate,
     AcademicYearUpdate,
     SemesterUpdate,
+    PhScheduleUpdate,
 
     // Composite types
     StudentWithClass,

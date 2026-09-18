@@ -10,6 +10,8 @@ import { StudentSortControls, GroupHeader, sortStudents, groupStudents, SortFiel
 import { GradeDistributionMini } from '../../../ui/GradeDistributionChart';
 import { getStudentAvatar } from '../../../../utils/avatarUtils';
 import { BatchFillInput } from '../../../ui/BatchFillInput';
+import { VoiceGradeModal } from './VoiceGradeModal';
+import { Mic } from 'lucide-react';
 
 interface Step2_StudentListProps {
     mode: InputMode | null;
@@ -38,6 +40,7 @@ interface Step2_StudentListProps {
     classes?: ClassRow[];
     selectedClass?: string;
     kkm?: number;
+    onClearRequest?: () => void;
 }
 
 export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
@@ -47,7 +50,8 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     existingAttitudeRecords: _existingAttitudeRecords,
     attitudePoints: _attitudePoints = 1, attitudeCategory = 'Adab & Akhlak', attitudeDate,
     existingQuizPoints, quizInfo,
-    classes, selectedClass, kkm = 75
+    classes, selectedClass, kkm = 75,
+    onClearRequest,
 }) => {
     // Sorting and Grouping State
     const [sortConfig, setSortConfig] = useState<{ field: SortField; direction: SortDirection }>({
@@ -56,6 +60,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     });
     const [groupBy, setGroupBy] = useState<GroupBy>('none');
     const [showStats, setShowStats] = useState(false);
+    const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
 
     // Apply sorting
     const sortedStudents = useMemo(() => {
@@ -78,7 +83,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
         return groupedStudents.flatMap(group => group.students);
     }, [groupedStudents]);
 
-    const { registerRef, handleKeyDown, focusItem } = useGridNavigation<HTMLInputElement>(
+    const gridNav = useGridNavigation<HTMLInputElement>(
         flatStudentList.length,
         {
             columnsPerRow: 1,
@@ -86,10 +91,15 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
         }
     );
 
-    // Auto-focus the first input once per class/mode. It used to run on every
-    // change of the list length, so completing a row under the "Belum Dinilai"
-    // filter (or typing in the search box) yanked the cursor back to the top
-    // mid-entry.
+    const registerInputRef = React.useCallback((index: number, el: HTMLInputElement | null) => {
+        if (el && el.offsetParent !== null) {
+            gridNav.registerRef(index, el);
+        } else if (!el) {
+            gridNav.registerRef(index, null);
+        }
+    }, [gridNav]);
+
+    // Auto-focus the first input once per class/mode.
     const hasAutoFocusedRef = React.useRef(false);
     React.useEffect(() => {
         hasAutoFocusedRef.current = false;
@@ -99,10 +109,11 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
         if (mode !== 'subject_grade' || flatStudentList.length === 0) return;
         if (hasAutoFocusedRef.current) return;
         hasAutoFocusedRef.current = true;
-        // Small timeout to allow render
-        const timer = setTimeout(() => focusItem(0), 100);
+        const timer = setTimeout(() => {
+            gridNav.focusItem(0);
+        }, 100);
         return () => clearTimeout(timer);
-    }, [mode, selectedClass, flatStudentList.length, focusItem]);
+    }, [mode, selectedClass, flatStudentList.length, gridNav]);
 
     const classMap = useMemo(() => {
         const map = new Map<string, string>();
@@ -206,9 +217,14 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
 
                 {/* Quick-fill batch edit for subject_grade */}
                 {mode === 'subject_grade' && (
-                    <BatchFillInput students={students} scores={scores} onApply={(score) => {
-                        students.forEach(s => handleScoreChange(s.id, score));
-                    }} />
+                    <BatchFillInput
+                        students={students}
+                        scores={scores}
+                        onApply={(score) => {
+                            students.forEach(s => handleScoreChange(s.id, score));
+                        }}
+                        onClearRequest={onClearRequest}
+                    />
                 )}
 
                 {/* Filter Pills - Horizontal scroll on mobile */}
@@ -227,17 +243,29 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                             showGrouping={true}
                         />
 
-                        {/* Quick Stats Toggle - Aligned on right side of control bar */}
-                        <button type="button"
-                            onClick={() => setShowStats(!showStats)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${showStats
-                                ? 'bg-brand-600 text-white shadow-md shadow-brand-600/20'
-                                : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/20 border border-slate-200 dark:border-white/10'
-                                }`}
-                        >
-                            <BarChartIcon className="w-3.5 h-3.5" />
-                            <span>Grafik Statistik</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setIsVoiceModalOpen(true)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all bg-gradient-to-r from-rose-500 to-brand-600 hover:from-rose-600 hover:to-brand-700 text-white shadow-sm shadow-rose-500/20 active:scale-95"
+                                title="Input nilai menggunakan suara (Dikte)"
+                            >
+                                <Mic className="w-3.5 h-3.5 animate-pulse" />
+                                <span>Dikte Suara</span>
+                            </button>
+
+                            {/* Quick Stats Toggle - Aligned on right side of control bar */}
+                            <button type="button"
+                                onClick={() => setShowStats(!showStats)}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${showStats
+                                    ? 'bg-brand-600 text-white shadow-md shadow-brand-600/20'
+                                    : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/20 border border-slate-200 dark:border-white/10'
+                                    }`}
+                            >
+                                <BarChartIcon className="w-3.5 h-3.5" />
+                                <span>Grafik Statistik</span>
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -269,8 +297,9 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                 className="border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                                             />
                                         </th>
+                                        <th className="p-4 text-center w-12 font-bold tracking-wide uppercase text-xs">No.</th>
                                         <th className="p-4 text-left font-bold tracking-wide uppercase text-xs">Nama Siswa</th>
-                                        <th className={`p-4 text-left font-bold tracking-wide uppercase text-xs ${mode === 'attitude' || mode === 'quiz' ? 'w-80 min-w-[280px]' : ''}`}>
+                                        <th className={`p-4 text-left font-bold tracking-wide uppercase text-xs ${mode === 'subject_grade' ? 'w-80 min-w-[280px]' : mode === 'attitude' || mode === 'quiz' ? 'w-80 min-w-[280px]' : ''}`}>
                                             {mode === 'subject_grade' ? 'Input Nilai' : mode === 'attitude' ? 'Apresiasi Sikap (BINTANG)' : mode === 'quiz' ? 'Poin Keaktifan (BINTANG)' : mode === 'academic_print' ? 'Nilai Saat Ini' : 'Status'}
                                         </th>
                                     </tr>
@@ -280,7 +309,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                         <React.Fragment key={group.title}>
                                             {groupBy !== 'none' && (
                                                 <tr>
-                                                    <td colSpan={3} className="pt-4 pb-2">
+                                                    <td colSpan={4} className="pt-4 pb-2">
                                                         <GroupHeader title={group.title} count={group.students.length} color={group.color} />
                                                     </td>
                                                 </tr>
@@ -291,6 +320,10 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                 const gradeRecord = existingGradesMap.get(s.id);
                                                 const hasGrade = !!gradeRecord;
                                                 const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
+                                                const scoreNum = Number(scores[s.id]);
+                                                const hasValidScore = Boolean(scores[s.id] && !isNaN(scoreNum) && scores[s.id].trim() !== '');
+                                                const isPassing = hasValidScore && scoreNum >= kkm;
+                                                const isFailing = hasValidScore && scoreNum < kkm;
                                                 const studentQuizPoints = studentQuizPointsCountMap.get(s.id) || 0;
                                                 const todayQuizRecords = studentQuizTodayMap.get(s.id) || [];
                                                 const hasQuizToday = todayQuizRecords.length > 0;
@@ -305,7 +338,15 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                         className={`
                                                             group transition-all duration-300 rounded-xl
                                                             focus-within:bg-brand-50/70 focus-within:dark:bg-brand-950/20 focus-within:shadow-md transition-all
-                                                            ${(isSelected || hasScore)
+                                                            ${isSelected
+                                                                ? 'bg-brand-50/80 dark:bg-brand-500/20 shadow-md border-brand-200 dark:border-brand-500/30'
+                                                                : mode === 'subject_grade'
+                                                                ? (isPassing
+                                                                    ? 'bg-emerald-50/40 dark:bg-emerald-500/10 border-transparent hover:bg-emerald-50/60 dark:hover:bg-emerald-500/15'
+                                                                    : isFailing
+                                                                    ? 'bg-rose-50/40 dark:bg-rose-500/10 border-transparent hover:bg-rose-50/60 dark:hover:bg-rose-500/15'
+                                                                    : 'bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 hover:shadow-md border-transparent')
+                                                                : (isSelected || hasScore)
                                                                 ? 'bg-green-100 dark:bg-green-500/20 shadow-lg shadow-green-500/10 border-transparent'
                                                                 : 'bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 hover:shadow-md border-transparent'
                                                             }
@@ -322,6 +363,9 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                 onClick={(e) => e.stopPropagation()}
                                                                 className="border-slate-300 dark:border-white/30 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                                                             />
+                                                        </td>
+                                                        <td className="p-4 text-center border-y border-slate-100 dark:border-white/5 font-semibold text-xs text-slate-400 dark:text-slate-500">
+                                                            {globalIndex + 1}
                                                         </td>
                                                         <td className="p-4 border-y border-slate-100 dark:border-white/5 group-hover:border-slate-200 dark:group-hover:border-white/10">
                                                             <div className="flex items-center gap-4">
@@ -376,32 +420,51 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                         </td>
                                                         <td className={`p-4 rounded-r-xl border-y border-r border-slate-100 dark:border-white/5 group-hover:border-slate-200 dark:group-hover:border-white/10 ${mode === 'attitude' || mode === 'quiz' ? 'w-80 min-w-[280px]' : ''}`}>
                                                             {mode === 'subject_grade' ? (
-                                                                <div className="relative">
-                                                                    <Input
-                                                                        ref={(el) => registerRef(globalIndex, el)}
-                                                                        onKeyDown={(e) => handleKeyDown(e, globalIndex)}
-                                                                        type="number"
-                                                                        inputMode="numeric"
-                                                                        min="0"
-                                                                        max="100"
-                                                                        step="any"
-                                                                        value={scores[s.id] || ''}
-                                                                        onChange={e => handleScoreChange(s.id, e.target.value)}
-                                                                        placeholder=""
-                                                                        aria-label={`Nilai untuk ${s.name}`}
-                                                                        aria-invalid={Boolean(validationErrors[s.id])}
-                                                                        aria-describedby={validationErrors[s.id] ? `grade-error-${s.id}` : undefined}
-                                                                        onFocus={() => onScoreFieldFocus?.(s.id)}
-                                                                        onBlur={() => onScoreFieldFocus?.(null)}
-                                                                        className={`w-24 text-center font-bold text-lg h-10 transition-all ${validationErrors[s.id] ? 'border-rose-500 focus:ring-rose-500 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300' : scores[s.id] ? 'bg-green-100 dark:bg-green-500/30 border-green-400 text-green-900 dark:text-white' : 'bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/70'}`}
-                                                                    />
-                                                                    {validationErrors[s.id] && (
-                                                                        <div id={`grade-error-${s.id}`} role="alert" className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-max max-w-[200px] z-20">
-                                                                            <div className="bg-rose-500 text-white text-xs py-1 px-2 rounded shadow-lg">
-                                                                                {validationErrors[s.id]}
-                                                                                <div className="absolute -top-1 left-1/2 -translate-x-1/2 border-x-4 border-b-4 border-x-transparent border-b-rose-500" />
+                                                                <div className="flex items-center gap-2.5">
+                                                                    <div className="relative">
+                                                                        <Input
+                                                                            ref={(el) => registerInputRef(globalIndex, el)}
+                                                                            onKeyDown={(e) => gridNav.handleKeyDown(e, globalIndex)}
+                                                                            type="number"
+                                                                            inputMode="numeric"
+                                                                            min="0"
+                                                                            max="100"
+                                                                            step="any"
+                                                                            value={scores[s.id] || ''}
+                                                                            onChange={e => handleScoreChange(s.id, e.target.value)}
+                                                                            placeholder=""
+                                                                            aria-label={`Nilai untuk ${s.name}`}
+                                                                            aria-invalid={Boolean(validationErrors[s.id])}
+                                                                            aria-describedby={validationErrors[s.id] ? `grade-error-${s.id}` : undefined}
+                                                                            onFocus={() => onScoreFieldFocus?.(s.id)}
+                                                                            onBlur={() => onScoreFieldFocus?.(null)}
+                                                                            className={`w-24 text-center font-bold text-lg h-10 rounded-xl transition-all ${
+                                                                                validationErrors[s.id]
+                                                                                    ? 'border-rose-500 focus:ring-rose-500 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300'
+                                                                                    : isPassing
+                                                                                    ? 'bg-emerald-50 dark:bg-emerald-500/20 border-emerald-400 text-emerald-900 dark:text-emerald-100 focus:ring-emerald-500'
+                                                                                    : isFailing
+                                                                                    ? 'bg-rose-50 dark:bg-rose-500/15 border-rose-300 dark:border-rose-700 text-rose-800 dark:text-rose-200 focus:ring-rose-500'
+                                                                                    : 'bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/70 focus:ring-brand-500'
+                                                                            }`}
+                                                                        />
+                                                                        {validationErrors[s.id] && (
+                                                                            <div id={`grade-error-${s.id}`} role="alert" className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-max max-w-[200px] z-20">
+                                                                                <div className="bg-rose-500 text-white text-xs py-1 px-2 rounded shadow-lg">
+                                                                                    {validationErrors[s.id]}
+                                                                                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 border-x-4 border-b-4 border-x-transparent border-b-rose-500" />
+                                                                                </div>
                                                                             </div>
-                                                                        </div>
+                                                                        )}
+                                                                    </div>
+                                                                    {hasValidScore && !validationErrors[s.id] && (
+                                                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap shadow-sm ${
+                                                                            isPassing
+                                                                                ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                                                                                : 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
+                                                                        }`}>
+                                                                            {isPassing ? 'Tuntas' : 'Belum Tuntas'}
+                                                                        </span>
                                                                     )}
                                                                 </div>
                                                             ) : mode === 'attitude' ? (
@@ -468,6 +531,10 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                         const gradeRecord = existingGradesMap.get(s.id);
                                         const hasGrade = !!gradeRecord;
                                         const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
+                                        const scoreNum = Number(scores[s.id]);
+                                        const hasValidScore = Boolean(scores[s.id] && !isNaN(scoreNum) && scores[s.id].trim() !== '');
+                                        const isPassing = hasValidScore && scoreNum >= kkm;
+                                        const isFailing = hasValidScore && scoreNum < kkm;
                                         const studentQuizPoints = studentQuizPointsCountMap.get(s.id) || 0;
                                         const todayQuizRecords = studentQuizTodayMap.get(s.id) || [];
                                         const hasQuizToday = todayQuizRecords.length > 0;
@@ -480,27 +547,34 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                 key={s.id}
                                                 onClick={mode !== 'subject_grade' ? () => handleStudentSelect(s.id) : undefined}
                                                 className={`
-                                            bg-white dark:bg-slate-800 rounded-2xl p-4 border transition-all duration-300
-                                            focus-within:bg-brand-50/70 focus-within:dark:bg-brand-950/20 focus-within:shadow-md transition-all
-                                            ${(isSelected || hasScore)
-                                                        ? 'bg-green-50 dark:bg-green-500/20 border-green-300 dark:border-green-500/30 shadow-lg shadow-green-500/10'
-                                                        : 'border-slate-200 dark:border-white/10'
-                                                    } 
+                                            rounded-2xl p-4 border transition-all duration-300
+                                            focus-within:bg-brand-50/70 focus-within:dark:bg-brand-950/20 focus-within:shadow-md
+                                            ${isSelected
+                                                ? 'bg-brand-50/80 dark:bg-brand-500/20 border-brand-300 dark:border-brand-500/30 shadow-md'
+                                                : mode === 'subject_grade'
+                                                ? (isPassing
+                                                    ? 'bg-emerald-50/60 dark:bg-emerald-500/15 border-emerald-300 dark:border-emerald-500/30 shadow-sm'
+                                                    : isFailing
+                                                    ? 'bg-rose-50/60 dark:bg-rose-500/15 border-rose-300 dark:border-rose-500/30 shadow-sm'
+                                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10')
+                                                : (isSelected || hasScore)
+                                                ? 'bg-green-50 dark:bg-green-500/20 border-green-300 dark:border-green-500/30 shadow-lg shadow-green-500/10'
+                                                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10'
+                                            } 
                                             ${mode !== 'subject_grade' ? 'cursor-pointer active:scale-95' : ''}
                                         `}
                                             >
                                                 <div className="flex items-start gap-3 mb-3">
-                                                    {mode !== 'subject_grade' && (
-                                                        <Checkbox
-                                                            checked={isSelected}
-                                                            onChange={(e) => {
-                                                                e.stopPropagation();
-                                                                handleStudentSelect(s.id);
-                                                            }}
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            className="w-5 h-5 mt-1 border-white/30 data-[state=checked]:bg-brand-600 data-[state=checked]:border-brand-500"
-                                                        />
-                                                    )}
+                                                    <Checkbox
+                                                        checked={isSelected}
+                                                        onChange={(e) => {
+                                                            e.stopPropagation();
+                                                            handleStudentSelect(s.id);
+                                                        }}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        aria-label={`Pilih ${s.name}`}
+                                                        className="w-5 h-5 mt-1 border-white/30 data-[state=checked]:bg-brand-600 data-[state=checked]:border-brand-500"
+                                                    />
                                                     <img
                                                         src={getStudentAvatar(s.avatar_url, s.gender, s.id, s.name, 'sm')}
                                                         alt={s.name}
@@ -558,8 +632,8 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                             </label>
                                                             <div className="flex-1 min-w-0 flex items-center gap-2">
                                                                 <Input
-                                                                    ref={(el) => registerRef(globalIndex, el)}
-                                                                    onKeyDown={(e) => handleKeyDown(e, globalIndex)}
+                                                                    ref={(el) => registerInputRef(globalIndex, el)}
+                                                                    onKeyDown={(e) => gridNav.handleKeyDown(e, globalIndex)}
                                                                     type="number"
                                                                     inputMode="numeric"
                                                                     min="0"
@@ -653,6 +727,18 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                     </div>
                 )}
             </div>
+
+            {/* Voice Grade Input Modal */}
+            {mode === 'subject_grade' && (
+                <VoiceGradeModal
+                    isOpen={isVoiceModalOpen}
+                    onClose={() => setIsVoiceModalOpen(false)}
+                    students={flatStudentList}
+                    scores={scores}
+                    onScoreChange={handleScoreChange}
+                    kkm={kkm}
+                />
+            )}
         </div>
     );
 };
