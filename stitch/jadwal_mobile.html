@@ -1,0 +1,345 @@
+<!DOCTYPE html><html class="dark" lang="id" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>Jadwal &amp; Jurnal Mengajar</title>
+<!-- Tailwind CSS v3 with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            app: {
+              base: '#080d16',
+              surface: '#0d1524',
+              card: '#111c2e',
+              cardBorder: '#1c2b44',
+              input: '#0f1828',
+              inputBorder: '#1f314d',
+              accent: '#00d284',
+              accentHover: '#00ba74',
+              accentDark: '#053828',
+              textPrimary: '#f8fafc',
+              textSecondary: '#94a3b8',
+              textMuted: '#64748b'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            serif: ['Georgia', 'Cambria', 'Times New Roman', 'serif']
+          }
+        }
+      }
+    }
+  </script>
+<!-- Custom Styles for Scrollbars & Refinements -->
+<style data-purpose="base-layout">
+    body {
+      background-color: #080d16;
+      color: #f8fafc;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Hide horizontal scrollbar for filter pills */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style data-purpose="custom-shadows">
+    .card-border-glow {
+      box-shadow: 0 0 0 1px rgba(28, 43, 68, 0.8), 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+    }
+    .accent-glow {
+      box-shadow: 0 4px 14px 0 rgba(0, 210, 132, 0.25);
+    }
+    .sparkle-box-glow {
+      box-shadow: 0 0 24px -2px rgba(6, 182, 212, 0.2);
+    }
+  </style>
+</head>
+<body class="bg-app-base min-h-screen flex justify-center selection:bg-emerald-500 selection:text-white">
+<!-- Mobile Viewport Container (~390px - 412px standard iOS/Android width) -->
+<div class="w-full max-w-[420px] min-h-screen bg-app-base flex flex-col relative pb-24 shadow-2xl border-x border-app-cardBorder/30" data-purpose="mobile-viewport">
+<!-- BEGIN: TopHeaderBar -->
+<header class="sticky top-0 z-30 bg-app-base/95 backdrop-blur-md px-3.5 py-2.5 border-b border-app-cardBorder/70 flex items-center justify-between" data-purpose="top-navigation-bar">
+  <!-- Left: Sleek Brand / Search Action -->
+  <div class="flex items-center gap-2.5">
+    <button aria-label="Pencarian Cepat" class="w-9 h-9 rounded-xl bg-app-card/80 border border-app-cardBorder flex items-center justify-center text-app-textSecondary hover:text-white hover:border-emerald-500/40 transition-all active:scale-95 shadow-sm" type="button">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="7.5"></circle>
+        <path d="m20 20-4.2-4.2"></path>
+      </svg>
+    </button>
+    <div class="flex items-center gap-1.5">
+      <span class="w-2 h-2 rounded-full bg-app-accent shadow-[0_0_8px_rgba(0,210,132,0.8)]"></span>
+      <span class="text-[12px] font-semibold tracking-wide text-slate-300 font-sans uppercase">E-Jurnal</span>
+    </div>
+  </div>
+
+  <!-- Right: Unified Action Buttons Group -->
+  <div class="flex items-center gap-1">
+    <!-- Preview/Eye button -->
+    <button aria-label="Pratinjau" class="w-8 h-8 rounded-lg bg-app-card/60 border border-app-cardBorder/70 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-600 transition-all active:scale-95" type="button">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+    </button>
+
+    <!-- Help/FAQ button -->
+    <button aria-label="Bantuan" class="w-8 h-8 rounded-lg bg-app-card/60 border border-app-cardBorder/70 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-600 transition-all active:scale-95" type="button">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+        <path d="M12 17h.01"></path>
+      </svg>
+    </button>
+
+    <!-- Theme toggle button -->
+    <button aria-label="Mode Gelap" class="w-8 h-8 rounded-lg bg-app-card/60 border border-app-cardBorder/70 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-600 transition-all active:scale-95" type="button">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+      </svg>
+    </button>
+
+    <!-- Status pill/badge -->
+    <button aria-label="Status Terverifikasi" class="w-8 h-8 rounded-lg bg-emerald-950/50 border border-emerald-500/40 flex items-center justify-center text-emerald-400 transition-all active:scale-95 shadow-[0_0_10px_rgba(16,185,129,0.15)]" type="button">
+      <svg class="w-4 h-4 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </button>
+
+    <!-- Notification with indicator dot -->
+    <button aria-label="Notifikasi" class="relative w-8 h-8 rounded-lg bg-app-card/60 border border-app-cardBorder/70 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-600 transition-all active:scale-95" type="button">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+      </svg>
+      <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-app-accent rounded-full ring-2 ring-app-surface"></span>
+    </button>
+  </div>
+</header>
+<!-- END: TopHeaderBar -->
+<!-- BEGIN: MainContent -->
+<main class="flex-1 px-4 pt-4 pb-2 space-y-4">
+<!-- BEGIN: PageTitleSection -->
+<section class="pt-1 pb-1" data-purpose="page-intro"><div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-[11px] font-semibold text-emerald-400 mb-2 whitespace-nowrap"><span class="w-1.5 h-1.5 rounded-full bg-app-accent animate-pulse flex-shrink-0"></span><span class="">Menu Utama</span></div><h1 class="text-[24px] font-bold text-white tracking-normal leading-tight font-serif" style="font-family: Merriweather, Georgia, serif;"><span class="relative inline-block"><span class="relative z-10 bg-gradient-to-r from-white via-emerald-100 to-emerald-400 bg-clip-text text-transparent">Jadwal &amp; Jurnal Mengajar</span><span class="absolute left-0 bottom-1 w-full h-[6px] bg-emerald-500/25 rounded-full -z-0 blur-[1px]"></span></span></h1><p class="text-[13px] text-slate-400 leading-relaxed mt-2 pr-1 font-sans">Kelola jadwal pelajaran, penilaian harian (PH), dan catat jurnal harian mengajar dalam satu tempat.</p></section>
+<!-- END: PageTitleSection -->
+<!-- BEGIN: SegmentedNavTabs -->
+<nav class="grid grid-cols-3 gap-1 p-1 bg-app-surface border border-app-cardBorder rounded-xl text-[12px] font-medium" data-purpose="segmented-tabs"><button class="flex items-center justify-center gap-1 py-2 px-1 rounded-lg text-app-textSecondary hover:text-white transition-colors whitespace-nowrap" type="button"><svg class="w-4 h-4 text-app-textMuted flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg><span class="">Jadwal</span></button><button class="flex items-center justify-center gap-1 py-2 px-1 rounded-lg bg-app-card border border-app-cardBorder/80 text-app-accent font-semibold shadow-sm transition-colors whitespace-nowrap" type="button"><svg class="w-4 h-4 text-app-accent flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" x2="8" y1="13" y2="13"></line><line x1="16" x2="8" y1="17" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg><span class="">Jadwal PH</span></button><button class="flex items-center justify-center gap-1 py-2 px-1 rounded-lg text-app-textSecondary hover:text-white transition-colors whitespace-nowrap" type="button"><svg class="w-4 h-4 text-app-textMuted flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg><span class="">Jurnal</span></button></nav>
+<!-- END: SegmentedNavTabs -->
+<!-- BEGIN: FilterAndActionCard -->
+<section class="bg-app-card/70 border border-app-cardBorder/90 rounded-2xl p-3.5 space-y-3.5 card-border-glow" data-purpose="filter-and-actions">
+<!-- Selectors Row: Kelas & Semester -->
+<div class="grid grid-cols-2 gap-2.5">
+<!-- Dropdown: Kelas -->
+<div class="space-y-1">
+<label class="block text-[10px] font-bold tracking-wider text-app-textMuted uppercase">
+              KELAS
+            </label>
+<div class="relative">
+<select class="w-full appearance-none bg-app-input border border-app-inputBorder text-white text-[13px] font-medium rounded-xl py-2.5 pl-3 pr-8 focus:outline-none focus:border-app-accent transition-colors">
+<option selected="">Kelas 1A</option>
+<option>Kelas 1B</option>
+<option>Kelas 2A</option>
+<option>Kelas 2B</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-app-textMuted">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<polyline points="6 9 12 15 18 9"></polyline>
+</svg>
+</div>
+</div>
+</div>
+<!-- Dropdown: Semester -->
+<div class="space-y-1">
+<label class="block text-[10px] font-bold tracking-wider text-app-textMuted uppercase">
+              SEMESTER
+            </label>
+<div class="relative">
+<select class="w-full appearance-none bg-app-input border border-app-inputBorder text-white text-[12px] font-medium rounded-xl py-2.5 pl-2.5 pr-7 focus:outline-none focus:border-app-accent transition-colors"><option selected="">Ganjil 24/25</option><option>Genap 24/25</option><option>Ganjil 23/24</option></select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-app-textMuted">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<polyline points="6 9 12 15 18 9"></polyline>
+</svg>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Buttons Row: Quick tools + Primary Button -->
+<div class="flex items-center gap-2">
+<!-- Quick actions group -->
+<div class="flex items-center border border-app-cardBorder rounded-xl bg-app-input/60 p-0.5">
+<!-- Share button -->
+<button aria-label="Bagikan" class="w-9 h-9 rounded-lg flex items-center justify-center text-app-textSecondary hover:text-white hover:bg-app-card transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<circle cx="18" cy="5" r="3"></circle>
+<circle cx="6" cy="12" r="3"></circle>
+<circle cx="18" cy="19" r="3"></circle>
+<line x1="8.59" x2="15.42" y1="13.51" y2="17.49"></line>
+<line x1="15.41" x2="8.59" y1="6.51" y2="10.49"></line>
+</svg>
+</button>
+<!-- Print button -->
+<button aria-label="Cetak" class="w-9 h-9 rounded-lg flex items-center justify-center text-app-textSecondary hover:text-white hover:bg-app-card transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<polyline points="6 9 6 2 18 2 18 9"></polyline>
+<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+<rect height="8" width="12" x="6" y="14"></rect>
+</svg>
+</button>
+<!-- Calendar filter button -->
+<button aria-label="Kalender" class="w-9 h-9 rounded-lg flex items-center justify-center text-app-textSecondary hover:text-white hover:bg-app-card transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect>
+<line x1="16" x2="16" y1="2" y2="6"></line>
+<line x1="8" x2="8" y1="2" y2="6"></line>
+<line x1="3" x2="21" y1="10" y2="10"></line>
+</svg>
+</button>
+</div>
+<!-- Primary Button: + Tambah PH -->
+<button class="flex-1 h-10 bg-app-accent hover:bg-app-accentHover text-slate-950 font-bold text-[13px] rounded-xl flex items-center justify-center gap-1.5 transition-all accent-glow active:scale-[0.98] whitespace-nowrap px-3" type="button"><svg class="w-4 h-4 stroke-[2.5] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" x2="12" y1="5" y2="19"></line><line x1="5" x2="19" y1="12" y2="12"></line></svg><span class="whitespace-nowrap">Tambah PH</span></button>
+</div>
+<!-- Search Input Bar -->
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-app-textMuted">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+<circle cx="11" cy="11" r="8"></circle>
+<line x1="21" x2="16.65" y1="21" y2="16.65"></line>
+</svg>
+</div>
+<input class="w-full bg-app-input border border-app-inputBorder text-white placeholder-app-textMuted text-[13px] rounded-xl py-2.5 pl-10 pr-3 focus:outline-none focus:border-app-accent/80 transition-colors" placeholder="Cari mata pelajaran PH..." type="text">
+</div>
+<!-- Filter Chips & Sort Controls Row -->
+<div class="flex items-center justify-between pt-0.5">
+<!-- Horizontal scrollable filter pills -->
+<div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5"><button class="px-2.5 py-1.5 rounded-lg bg-slate-700/80 text-white font-semibold text-[11px] border border-slate-600 whitespace-nowrap shadow-sm flex-shrink-0" type="button">Semua (0)</button><button class="px-2.5 py-1.5 rounded-lg text-emerald-400 font-medium text-[11px] hover:bg-app-input whitespace-nowrap transition-colors flex-shrink-0" type="button">Hari Ini (0)</button><button class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-blue-400 font-medium text-[11px] hover:bg-app-input whitespace-nowrap transition-colors flex-shrink-0" type="button"><span class="whitespace-nowrap">Mendatang (0)</span><svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" x2="12" y1="19" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg></button></div>
+<!-- View toggles: Grid & List -->
+<div class="flex items-center bg-app-input border border-app-cardBorder/80 rounded-lg p-0.5 ml-2 flex-shrink-0">
+<!-- Grid toggle (active) -->
+<button aria-label="Tampilan Grid" class="w-7 h-7 rounded bg-slate-700 text-cyan-300 flex items-center justify-center shadow-sm" type="button">
+<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16">
+<rect height="5.5" rx="1.2" width="5.5" x="1" y="1"></rect>
+<rect height="5.5" rx="1.2" width="5.5" x="9.5" y="1"></rect>
+<rect height="5.5" rx="1.2" width="5.5" x="1" y="9.5"></rect>
+<rect height="5.5" rx="1.2" width="5.5" x="9.5" y="9.5"></rect>
+</svg>
+</button>
+<!-- List toggle -->
+<button aria-label="Tampilan Daftar" class="w-7 h-7 rounded text-app-textMuted hover:text-white flex items-center justify-center transition-colors" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+<line x1="8" x2="21" y1="6" y2="6"></line>
+<line x1="8" x2="21" y1="12" y2="12"></line>
+<line x1="8" x2="21" y1="18" y2="18"></line>
+<line x1="3" x2="3.01" y1="6" y2="6"></line>
+<line x1="3" x2="3.01" y1="12" y2="12"></line>
+<line x1="3" x2="3.01" y1="18" y2="18"></line>
+</svg>
+</button>
+</div>
+</div>
+</section>
+<!-- END: FilterAndActionCard -->
+<!-- BEGIN: EmptyStateSection -->
+<section class="bg-app-card/70 border border-app-cardBorder/90 rounded-2xl p-8 flex flex-col items-center text-center space-y-4 card-border-glow my-2" data-purpose="empty-state-card">
+<!-- Sparkle / Star Icon Container -->
+<div class="w-16 h-16 rounded-2xl bg-gradient-to-b from-cyan-950/60 to-slate-900 border border-cyan-500/30 flex items-center justify-center sparkle-box-glow">
+<svg class="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+<!-- Main sparkle star -->
+<path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z" stroke-linejoin="round"></path>
+<!-- Secondary tiny sparkle -->
+<circle cx="19" cy="5" fill="currentColor" r="1"></circle>
+</svg>
+</div>
+<!-- Heading & Copy -->
+<div class="space-y-2 max-w-[280px]">
+<h2 class="text-base font-bold text-white tracking-tight">
+            Belum Ada Jadwal PH
+          </h2>
+<p class="text-[13px] text-app-textSecondary leading-relaxed">
+            Belum ada agenda penilaian harian yang dijadwalkan untuk Kelas 1A pada semester ini.
+          </p>
+</div>
+<!-- Primary Action: + Tambah Jadwal PH -->
+<button class="w-full max-w-[280px] py-3 px-3 bg-app-accent hover:bg-app-accentHover text-slate-950 font-bold text-[13px] rounded-xl flex items-center justify-center gap-1.5 transition-all accent-glow active:scale-[0.98] mt-2 whitespace-nowrap" type="button"><svg class="w-4 h-4 stroke-[2.5] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" x2="12" y1="5" y2="19"></line><line x1="5" x2="19" y1="12" y2="12"></line></svg><span class="whitespace-nowrap">Tambah Jadwal PH</span></button>
+</section>
+<!-- END: EmptyStateSection -->
+</main>
+<!-- END: MainContent -->
+<!-- BEGIN: BottomNavigationBar -->
+<nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[420px] bg-slate-950/90 backdrop-blur-lg border-t border-app-cardBorder/80 px-2 pt-2.5 pb-5 grid grid-cols-5 z-40 shadow-[0_-8px_24px_rgba(0,0,0,0.5)]" data-purpose="bottom-navigation-bar">
+  <!-- Item 1: Beranda -->
+  <a class="flex flex-col items-center justify-center gap-1 py-0.5 text-slate-400 hover:text-white transition-colors group" href="#beranda">
+    <div class="flex items-center justify-center w-8 h-7 rounded-full transition-colors group-hover:bg-app-card/60">
+      <svg class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+      </svg>
+    </div>
+    <span class="text-[11px] font-medium tracking-tight whitespace-nowrap text-slate-400 group-hover:text-white transition-colors">Beranda</span>
+  </a>
+
+  <!-- Item 2: Penilaian -->
+  <a class="flex flex-col items-center justify-center gap-1 py-0.5 text-slate-400 hover:text-white transition-colors group" href="#penilaian">
+    <div class="flex items-center justify-center w-8 h-7 rounded-full transition-colors group-hover:bg-app-card/60">
+      <svg class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+        <rect height="4" rx="1" width="8" x="8" y="2"></rect>
+        <path d="m9 14 2 2 4-4"></path>
+      </svg>
+    </div>
+    <span class="text-[11px] font-medium tracking-tight whitespace-nowrap text-slate-400 group-hover:text-white transition-colors">Penilaian</span>
+  </a>
+
+  <!-- Item 3: Siswa -->
+  <a class="flex flex-col items-center justify-center gap-1 py-0.5 text-slate-400 hover:text-white transition-colors group" href="#siswa">
+    <div class="flex items-center justify-center w-8 h-7 rounded-full transition-colors group-hover:bg-app-card/60">
+      <svg class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+    </div>
+    <span class="text-[11px] font-medium tracking-tight whitespace-nowrap text-slate-400 group-hover:text-white transition-colors">Siswa</span>
+  </a>
+
+  <!-- Item 4: Absensi -->
+  <a class="flex flex-col items-center justify-center gap-1 py-0.5 text-slate-400 hover:text-white transition-colors group" href="#absensi">
+    <div class="flex items-center justify-center w-8 h-7 rounded-full transition-colors group-hover:bg-app-card/60">
+      <svg class="w-5 h-5 flex-shrink-0 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect>
+        <line x1="16" x2="16" y1="2" y2="6"></line>
+        <line x1="8" x2="8" y1="2" y2="6"></line>
+        <line x1="3" x2="21" y1="10" y2="10"></line>
+        <path d="m9 16 2 2 4-4"></path>
+      </svg>
+    </div>
+    <span class="text-[11px] font-medium tracking-tight whitespace-nowrap text-slate-400 group-hover:text-white transition-colors">Absensi</span>
+  </a>
+
+  <!-- Item 5: Lainnya (Active Tab) -->
+  <a class="flex flex-col items-center justify-center gap-1 py-0.5 text-app-accent group" href="#lainnya">
+    <div class="flex items-center justify-center px-3 py-1 rounded-full bg-emerald-950/70 border border-emerald-500/40 text-app-accent shadow-[0_0_12px_rgba(0,210,132,0.2)]">
+      <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+        <circle cx="5" cy="12" r="2"></circle>
+        <circle cx="12" cy="12" r="2"></circle>
+        <circle cx="19" cy="12" r="2"></circle>
+      </svg>
+    </div>
+    <span class="text-[11px] font-semibold tracking-tight text-app-accent whitespace-nowrap">Lainnya</span>
+  </a>
+</nav>
+<!-- END: BottomNavigationBar -->
+</div>
+
+
+</body></html>

@@ -130,18 +130,20 @@ export const QuizForm: React.FC<QuizFormProps> = ({ defaultValues, onSubmit, onC
 
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-sm font-medium mb-1">Tanggal</label>
-                    <Input type="date" {...register('quiz_date')} error={errors.quiz_date?.message} />
+                    <label htmlFor="quiz-date" className="block text-sm font-medium mb-1">Tanggal</label>
+                    <Input id="quiz-date" aria-label="Tanggal" type="date" {...register('quiz_date')} error={errors.quiz_date?.message} />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium mb-1">Mata Pelajaran</label>
-                    <Input {...register('subject')} placeholder="cth. IPA" error={errors.subject?.message} />
+                    <label htmlFor="quiz-subject" className="block text-sm font-medium mb-1">Mata Pelajaran</label>
+                    <Input id="quiz-subject" aria-label="Mata Pelajaran" {...register('subject')} placeholder="cth. IPA" error={errors.subject?.message} />
                 </div>
             </div>
 
             <div>
-                <label className="block text-sm font-medium mb-1">Deskripsi Aktivitas</label>
+                <label htmlFor="quiz-activity-desc" className="block text-sm font-medium mb-1">Deskripsi Aktivitas</label>
                 <Input
+                    id="quiz-activity-desc"
+                    aria-label="Deskripsi Aktivitas"
                     {...register('quiz_name')}
                     placeholder="cth. Aktif bertanya di kelas"
                     error={errors.quiz_name?.message}

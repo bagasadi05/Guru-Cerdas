@@ -221,7 +221,7 @@ const ToastItem: React.FC<{ toast: Toast; onDismiss: () => void }> = ({ toast, o
 
     return (
         <div
-            role="alert"
+            role="alert" aria-live="assertive"
             className={`
                 pointer-events-auto relative overflow-hidden rounded-2xl border p-4 shadow-lg
                 transform transition-all duration-200

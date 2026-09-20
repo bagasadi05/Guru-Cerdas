@@ -47,7 +47,11 @@ const formatIdDate = (dateStr: string): string => {
   }
 };
 
-const JurnalMengajarPage: React.FC = () => {
+export interface JurnalMengajarPageProps {
+  embedded?: boolean;
+}
+
+const JurnalMengajarPage: React.FC<JurnalMengajarPageProps> = ({ embedded = true }) => {
   const { userRole } = useAuth();
   const [filters, setFilters] = useState<TeachingJournalFilters>({});
   const [searchParams, setSearchParams] = useSearchParams();
@@ -197,26 +201,28 @@ const JurnalMengajarPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-24 lg:pb-8">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 relative z-10">
-        <div className="relative">
-          <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 blur-xl opacity-50 dark:opacity-20 rounded-full" />
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400 bg-gradient-to-r from-emerald-500 to-emerald-600 bg-clip-text text-transparent font-serif relative">
-            Jurnal Mengajar
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400 relative">
-            Catat dan tinjau agenda KBM harian per kelas dan mata pelajaran.
-          </p>
-        </div>
-        {!backendMissing && (
-          <Button
-            onClick={handleOpenAdd}
-            className="rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:-translate-y-0.5 transition-all duration-300"
-          >
-            <Plus className="w-4 h-4 mr-2" /> Tambah Jurnal
-          </Button>
-        )}
-      </header>
+    <div className={embedded ? "w-full flex flex-col space-y-4 sm:space-y-6 animate-fade-in" : "w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-24 lg:pb-8"}>
+      {!embedded && (
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 relative z-10">
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 blur-xl opacity-50 dark:opacity-20 rounded-full" />
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400 bg-gradient-to-r from-emerald-500 to-emerald-600 bg-clip-text text-transparent font-serif relative">
+              Jurnal Mengajar
+            </h1>
+            <p className="mt-2 text-gray-600 dark:text-gray-400 relative">
+              Catat dan tinjau agenda KBM harian per kelas dan mata pelajaran.
+            </p>
+          </div>
+          {!backendMissing && (
+            <Button
+              onClick={handleOpenAdd}
+              className="rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:-translate-y-0.5 transition-all duration-300"
+            >
+              <Plus className="w-4 h-4 mr-2" /> Tambah Jurnal
+            </Button>
+          )}
+        </header>
+      )}
 
       {backendMissing ? (
         <div className="p-6 rounded-2xl bg-amber-50/80 dark:bg-brand-950/20 border border-amber-200 dark:border-brand-800/30 flex items-start gap-4 animate-fade-in">
@@ -234,10 +240,23 @@ const JurnalMengajarPage: React.FC = () => {
         </div>
       ) : (
         <Tabs defaultValue="jurnal-harian" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="jurnal-harian">Jurnal Harian</TabsTrigger>
-          <TabsTrigger value="rekap">Rekapitulasi</TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <TabsList>
+            <TabsTrigger value="jurnal-harian">Jurnal Harian</TabsTrigger>
+            <TabsTrigger value="rekap">Rekapitulasi</TabsTrigger>
+          </TabsList>
+          {embedded && !backendMissing && (
+            <Button
+              onClick={handleOpenAdd}
+              size="sm"
+              className="rounded-xl shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/40 text-xs sm:text-sm font-semibold h-9 sm:h-10 px-3 sm:px-4 cursor-pointer"
+            >
+              <Plus className="w-4 h-4 sm:mr-1.5 shrink-0" />
+              <span className="hidden sm:inline">Tambah Jurnal</span>
+              <span className="sm:hidden">Tambah</span>
+            </Button>
+          )}
+        </div>
 
         <TabsContent value="jurnal-harian" className="space-y-6">
           <MotionDiv initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="space-y-6">
@@ -480,13 +499,13 @@ const JurnalMengajarPage: React.FC = () => {
                               </div>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                             {j.attachment_url && (
                               <a
                                 href={j.attachment_url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-emerald-600 bg-emerald-50 hover:bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 transition-colors"
+                                className="inline-flex items-center justify-center w-9 h-9 rounded-xl text-emerald-600 bg-emerald-50 hover:bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 transition-colors cursor-pointer"
                                 aria-label="Buka lampiran"
                                 title="Buka lampiran"
                               >
@@ -497,7 +516,7 @@ const JurnalMengajarPage: React.FC = () => {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg"
+                              className="h-9 w-9 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                               onClick={() => handleOpenEdit(j)}
                               aria-label="Edit Jurnal"
                             >
@@ -507,7 +526,7 @@ const JurnalMengajarPage: React.FC = () => {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg"
+                              className="h-9 w-9 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl cursor-pointer"
                               onClick={() => handleDelete(j.id)}
                               disabled={deleteJournal.isPending && deletingId === j.id}
                               aria-label="Hapus Jurnal"

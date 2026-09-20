@@ -151,7 +151,7 @@ const DashboardPage: React.FC = () => {
             <p className="text-sm font-semibold text-red-700 dark:text-red-300">
               {dashboardErrorMessage}
             </p>
-            <Button onClick={() => refetch()} disabled={isFetching} variant="destructive" size="sm">
+            <Button onClick={() => refetch()} disabled={isFetching} variant="destructive" size="sm" className="rounded-xl cursor-pointer active:scale-95 duration-150">
               {isFetching ? 'Memuat...' : 'Coba Lagi'}
             </Button>
           </div>
@@ -221,7 +221,7 @@ const DashboardPage: React.FC = () => {
                     tasks.slice(0, 5).map((task) => (
                       <div
                         key={task.id}
-                        className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/60 rounded-xl hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 group cursor-pointer"
+                        className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/60 rounded-xl hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] transition-all duration-200 group cursor-pointer"
                       >
                         <div className="flex items-start justify-between">
                           <div>
@@ -246,7 +246,7 @@ const DashboardPage: React.FC = () => {
                 </div>
                 {tasks.length > 0 && (
                   <div className="p-2.5 border-t border-slate-200/60 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/40">
-                    <Button variant="outline" size="sm" onClick={() => navigate('/tugas')} className="w-full">
+                    <Button variant="outline" size="sm" onClick={() => navigate('/tugas')} className="w-full rounded-xl cursor-pointer active:scale-95 duration-150">
                       Lihat Semua Tugas
                     </Button>
                   </div>
@@ -367,19 +367,19 @@ const DashboardPage: React.FC = () => {
           aria-hidden={!isFabOpen}
           className={`flex flex-col gap-3 transition-all duration-300 ${isFabOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-10 pointer-events-none'}`}
         >
-          <Link to="/jadwal" role="menuitem" aria-label="Buka jadwal" className="flex items-center gap-3 pr-1 group">
+          <Link to="/jadwal" role="menuitem" aria-label="Buka jadwal" className="flex items-center gap-3 pr-1 group cursor-pointer active:scale-95 duration-150">
             <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0">
               Jadwal
             </span>
-            <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-brand-500 shadow-lg flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
+            <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-brand-500 shadow-lg flex items-center justify-center hover:scale-110 active:scale-90 transition-transform border border-slate-100 dark:border-slate-700">
               <CalendarIcon className="w-6 h-6" />
             </div>
           </Link>
-          <button type="button" onClick={openSearch} role="menuitem" aria-label="Cari" className="flex items-center gap-3 pr-1 group">
+          <button type="button" onClick={openSearch} role="menuitem" aria-label="Cari" className="flex items-center gap-3 pr-1 group cursor-pointer active:scale-95 duration-150">
             <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0">
               Cari
             </span>
-            <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-slate-500 shadow-lg flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
+            <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-slate-500 shadow-lg flex items-center justify-center hover:scale-110 active:scale-90 transition-transform border border-slate-100 dark:border-slate-700">
               <SearchIcon className="w-6 h-6" />
             </div>
           </button>
@@ -387,20 +387,20 @@ const DashboardPage: React.FC = () => {
             onClick={() => document.dispatchEvent(new CustomEvent('open-ai-chat'))}
             role="menuitem"
             aria-label="Buka AI Chat"
-            className="flex items-center gap-3 pr-1 group"
+            className="flex items-center gap-3 pr-1 group cursor-pointer active:scale-95 duration-150"
           >
             <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0">
               AI Chat
             </span>
-            <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-brand-500 shadow-lg flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
+            <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-brand-500 shadow-lg flex items-center justify-center hover:scale-110 active:scale-90 transition-transform border border-slate-100 dark:border-slate-700">
               <BrainCircuitIcon className="w-6 h-6" />
             </div>
           </button>
-          <Link to="/pengaturan" role="menuitem" aria-label="Buka pengaturan" className="flex items-center gap-3 pr-1 group">
+          <Link to="/pengaturan" role="menuitem" aria-label="Buka pengaturan" className="flex items-center gap-3 pr-1 group cursor-pointer active:scale-95 duration-150">
             <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl shadow-lg text-sm font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all transform translate-x-0 sm:translate-x-4 sm:group-hover:translate-x-0">
               Pengaturan
             </span>
-            <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-slate-400 shadow-lg flex items-center justify-center hover:scale-110 transition-transform border border-slate-100 dark:border-slate-700">
+            <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-slate-400 shadow-lg flex items-center justify-center hover:scale-110 active:scale-90 transition-transform border border-slate-100 dark:border-slate-700">
               <SettingsIcon className="w-6 h-6" />
             </div>
           </Link>

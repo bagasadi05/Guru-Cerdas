@@ -29,21 +29,23 @@ export const AcademicForm: React.FC<AcademicFormProps> = ({ defaultValues, onSub
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-sm font-medium mb-1">Mata Pelajaran</label>
-                    <Input {...register('subject')} placeholder="cth. Matematika" error={errors.subject?.message} />
+                    <label htmlFor="academic-subject" className="block text-sm font-medium mb-1">Mata Pelajaran</label>
+                    <Input id="academic-subject" aria-label="Mata Pelajaran" {...register('subject')} placeholder="cth. Matematika" error={errors.subject?.message} />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium mb-1">Nama Penilaian</label>
-                    <Input {...register('assessment_name')} placeholder="cth. PH 1, UTS" error={errors.assessment_name?.message} />
+                    <label htmlFor="academic-assessment-name" className="block text-sm font-medium mb-1">Nama Penilaian</label>
+                    <Input id="academic-assessment-name" aria-label="Nama Penilaian" {...register('assessment_name')} placeholder="cth. PH 1, UTS" error={errors.assessment_name?.message} />
                 </div>
             </div>
             <div>
-                <label className="block text-sm font-medium mb-1">Nilai (0-100)</label>
-                <Input type="number" {...register('score', { valueAsNumber: true })} min="0" max="100" error={errors.score?.message} />
+                <label htmlFor="academic-score" className="block text-sm font-medium mb-1">Nilai (0-100)</label>
+                <Input id="academic-score" aria-label="Nilai" type="number" {...register('score', { valueAsNumber: true })} min="0" max="100" error={errors.score?.message} />
             </div>
             <div>
-                <label className="block text-sm font-medium mb-1">Catatan (Opsional)</label>
+                <label htmlFor="academic-notes" className="block text-sm font-medium mb-1">Catatan (Opsional)</label>
                 <Textarea
+                    id="academic-notes"
+                    aria-label="Catatan"
                     {...register('notes')}
                     rows={3}
                     placeholder="cth. Sangat baik dalam materi aljabar."

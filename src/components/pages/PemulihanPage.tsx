@@ -265,10 +265,10 @@ const PemulihanPage: React.FC = () => {
                 </div>
 
                 {/* Tab Navigation Pill */}
-                <div className="flex flex-wrap items-center gap-2 p-1 bg-slate-200/70 dark:bg-slate-800/70 backdrop-blur-md rounded-2xl w-fit border border-slate-300/40 dark:border-slate-700/40">
+                <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-200/70 dark:bg-slate-800/70 backdrop-blur-md rounded-2xl w-fit border border-slate-300/40 dark:border-slate-700/40">
                     <button
                         onClick={() => setSearchParams({ tab: 'trash' })}
-                        className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+                        className={`px-3.5 sm:px-4 py-2 min-h-[40px] rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 flex items-center gap-2 cursor-pointer active:scale-95 ${
                             activeTab === 'trash'
                                 ? 'bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 shadow-md'
                                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -279,7 +279,7 @@ const PemulihanPage: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setSearchParams({ tab: 'history' })}
-                        className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+                        className={`px-3.5 sm:px-4 py-2 min-h-[40px] rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 flex items-center gap-2 cursor-pointer active:scale-95 ${
                             activeTab === 'history'
                                 ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-md'
                                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -290,7 +290,7 @@ const PemulihanPage: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setSearchParams({ tab: 'backup' })}
-                        className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+                        className={`px-3.5 sm:px-4 py-2 min-h-[40px] rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 flex items-center gap-2 cursor-pointer active:scale-95 ${
                             activeTab === 'backup'
                                 ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-md'
                                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -329,7 +329,7 @@ const PemulihanPage: React.FC = () => {
                     <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                                <RotateCcw className="w-5 h-5 text-emerald-500" />
+                                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                             </div>
                             <div>
                                 {statsLoading ? (
@@ -337,7 +337,7 @@ const PemulihanPage: React.FC = () => {
                                 ) : (
                                     <p className="text-2xl font-bold text-slate-900 dark:text-white">{totalRestored}</p>
                                 )}
-                                <p className="text-xs text-slate-500 dark:text-slate-400">Berhasil Dipulihkan</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Dipulihkan</p>
                             </div>
                         </div>
                     </div>
@@ -353,7 +353,7 @@ const PemulihanPage: React.FC = () => {
                                 ) : (
                                     <p className="text-2xl font-bold text-slate-900 dark:text-white">{pendingRestore}</p>
                                 )}
-                                <p className="text-xs text-slate-500 dark:text-slate-400">Menunggu Pemulihan</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Di Tempat Sampah</p>
                             </div>
                         </div>
                     </div>
@@ -364,22 +364,20 @@ const PemulihanPage: React.FC = () => {
                                 <HardDrive className="w-5 h-5 text-blue-500" />
                             </div>
                             <div>
-                                {statsLoading ? (
-                                    <div className="h-8 w-12 bg-slate-200 dark:bg-slate-700 rounded animate-pulse" />
-                                ) : (
-                                    <p className="text-2xl font-bold text-slate-900 dark:text-white">{perTableEntries.length}</p>
-                                )}
+                                <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                                    {perTableEntries.length}
+                                </p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">Tabel Terdampak</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Quick Links */}
+                {/* Quick Navigation Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <button type="button"
                         onClick={() => navigate('/sampah')}
-                        className="flex items-center gap-4 p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all group text-left"
+                        className="flex items-center gap-4 p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all group text-left cursor-pointer active:scale-[0.98]"
                     >
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <Trash2 className="w-6 h-6 text-white" />
@@ -395,7 +393,7 @@ const PemulihanPage: React.FC = () => {
 
                     <button type="button"
                         onClick={() => navigate('/riwayat')}
-                        className="flex items-center gap-4 p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all group text-left"
+                        className="flex items-center gap-4 p-5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all group text-left cursor-pointer active:scale-[0.98]"
                     >
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-600 to-brand-700 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <History className="w-6 h-6 text-white" />
@@ -420,7 +418,7 @@ const PemulihanPage: React.FC = () => {
                         <Button
                             onClick={() => downloadBackupMutation.mutate()}
                             disabled={downloadBackupMutation.isPending}
-                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                            className="min-h-[44px] px-6 rounded-xl flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium cursor-pointer active:scale-95 transition-all duration-150"
                         >
                             {downloadBackupMutation.isPending ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -432,7 +430,7 @@ const PemulihanPage: React.FC = () => {
                         <Button
                             onClick={() => setShowImportModal(true)}
                             variant="outline"
-                            className="flex items-center gap-2"
+                            className="min-h-[44px] px-6 rounded-xl flex items-center justify-center gap-2 font-medium cursor-pointer active:scale-95 transition-all duration-150"
                         >
                             <Upload className="w-4 h-4" />
                             Import Backup
@@ -448,7 +446,7 @@ const PemulihanPage: React.FC = () => {
                             Breakdown per Tabel
                         </h2>
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
+                            <table className="w-full text-sm" aria-label="Tabel rincian pemulihan data per tabel">
                                 <thead>
                                     <tr className="border-b border-slate-200 dark:border-slate-700">
                                         <th className="text-left py-3 px-4 font-semibold text-slate-600 dark:text-slate-400">Tabel</th>

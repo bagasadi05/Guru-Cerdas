@@ -201,7 +201,7 @@ export const ViolationForm: React.FC<ViolationFormProps> = ({ defaultValues, onS
 
             {/* Date */}
             <div className={conflictFields.includes('date') ? 'p-3 rounded-lg border-2 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20' : ''}>
-                <label className="block text-sm font-medium mb-1">
+                <label htmlFor="violation-date" className="block text-sm font-medium mb-1">
                     Tanggal Kejadian
                     {conflictFields.includes('date') && (
                         <span className="ml-2 text-xs text-amber-600 dark:text-amber-400 font-medium">
@@ -209,7 +209,7 @@ export const ViolationForm: React.FC<ViolationFormProps> = ({ defaultValues, onS
                         </span>
                     )}
                 </label>
-                <Input type="date" {...register('date')} error={errors.date?.message} className={conflictFields.includes('date') ? 'border-amber-300 dark:border-amber-600' : ''} />
+                <Input id="violation-date" aria-label="Tanggal Kejadian" type="date" {...register('date')} error={errors.date?.message} className={conflictFields.includes('date') ? 'border-amber-300 dark:border-amber-600' : ''} />
             </div>
 
             {/* Violation Type Selection (Searchable Dropdown) */}

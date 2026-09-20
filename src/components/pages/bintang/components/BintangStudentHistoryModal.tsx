@@ -210,7 +210,7 @@ export const BintangStudentHistoryModal: React.FC<BintangStudentHistoryModalProp
             )}
           </div>
           <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm" aria-label="Tabel Riwayat Poin Keaktifan Siswa">
               <thead className="bg-slate-50 dark:bg-slate-800">
                 <tr>
                   <th className="py-2 px-3 font-medium text-slate-600 dark:text-slate-300">Tanggal</th>
@@ -265,7 +265,7 @@ export const BintangStudentHistoryModal: React.FC<BintangStudentHistoryModalProp
             Observasi Harian
           </h3>
           <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm" aria-label="Tabel Riwayat Observasi Harian Siswa">
               <thead className="bg-slate-50 dark:bg-slate-800">
                 <tr>
                   <th className="py-2 px-3 font-medium text-slate-600 dark:text-slate-300">Tanggal</th>

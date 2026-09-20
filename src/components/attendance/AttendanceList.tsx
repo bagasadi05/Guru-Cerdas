@@ -76,7 +76,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                             {/* Checkbox */}
                             <button type="button"
                                 onClick={() => onToggleSelect(student.id)}
-                                className={`shrink-0 w-6 h-6 rounded-md flex items-center justify-center transition-all
+                                className={`shrink-0 w-7 h-7 sm:w-6 sm:h-6 rounded-lg flex items-center justify-center cursor-pointer active:scale-90 transition-all
                                     ${isSelected
                                         ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
                                         : 'bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-600'
@@ -155,8 +155,8 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                         </div>
 
                         {/* 2. Attendance Buttons (Middle Row) */}
-                        <div className="mt-4 sm:mt-5 mb-4 bg-slate-100/50 dark:bg-slate-800/40 backdrop-blur-sm p-2 sm:p-3 rounded-2xl border border-white/60 dark:border-slate-700/50 shadow-inner overflow-x-auto hide-scrollbar">
-                            <div className="flex sm:grid sm:grid-cols-5 gap-1.5 lg:gap-2 min-w-max sm:min-w-0 w-full" data-tutorial="attendance-status-group">
+                        <div className="mt-4 sm:mt-5 mb-4 bg-slate-100/50 dark:bg-slate-800/40 backdrop-blur-sm p-2 sm:p-3 rounded-2xl border border-white/60 dark:border-slate-700/50 shadow-inner">
+                            <div className="grid grid-cols-5 gap-1 sm:gap-2 w-full" data-tutorial="attendance-status-group">
                                 {statusOptions.map((opt) => {
                                     const isActive = record?.status === opt.value;
                                     const initial = opt.value.charAt(0).toUpperCase();
@@ -186,15 +186,15 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                         <button type="button"
                                             key={opt.value}
                                             onClick={() => onStatusChange(student.id, opt.value)}
-                                            className="group/btn flex-1 sm:flex-none flex flex-col items-center justify-center gap-1.5 p-1 rounded-xl outline-none min-w-[48px] min-h-[44px]"
+                                            className="group/btn flex flex-col items-center justify-center gap-1 sm:gap-1.5 py-1.5 px-0.5 rounded-xl outline-none min-h-[44px] cursor-pointer active:scale-90 transition-all duration-150 select-none"
                                             title={opt.label}
                                             aria-label={opt.label}
                                             aria-pressed={isActive}
                                         >
-                                            <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full border flex items-center justify-center transition-all duration-200 ${circleClass}`}>
+                                            <div className={`w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-full border flex items-center justify-center transition-all duration-200 ${circleClass}`}>
                                                 <span className="text-xs lg:text-sm font-bold">{initial}</span>
                                             </div>
-                                            <span className={`text-[10px] lg:text-xs transition-colors ${textClass}`}>
+                                            <span className={`text-[9px] sm:text-[10px] lg:text-xs transition-colors truncate w-full text-center ${textClass}`}>
                                                 {opt.label}
                                             </span>
                                         </button>
@@ -214,7 +214,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                     <button type="button"
                                         onClick={() => onNoteClick(student.id, customNote)}
                                         className={`
-                                            w-10 h-10 flex items-center justify-center rounded-xl transition-all
+                                            w-10 h-10 flex items-center justify-center rounded-xl transition-all cursor-pointer active:scale-90 duration-150
                                             ${hasCustomNote
                                                 ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 font-bold'
                                                 : 'text-slate-400 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -235,7 +235,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                         href={createWhatsAppLink(student.parent_phone!, generateAttendanceMessage(student.name, record?.status || 'Belum Diabsen', formattedDate))}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="w-10 h-10 flex items-center justify-center rounded-xl transition-all text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                                        className="w-10 h-10 flex items-center justify-center rounded-xl transition-all text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 cursor-pointer active:scale-90 duration-150"
                                         title="Kirim notifikasi via WhatsApp"
                                         aria-label={`Kirim notifikasi kehadiran ${student.name} via WhatsApp`}
                                     >

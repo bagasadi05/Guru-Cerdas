@@ -220,7 +220,7 @@
   padding: 14px;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, #047857, #065f46);
   color: white;
   font-size: 16px;
   font-weight: 600;
@@ -228,12 +228,12 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 5px 15px rgba(4, 120, 87, 0.25);
 }
 
 .dark .form-btn {
-  background: linear-gradient(135deg, #10b981, #059669);
-  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.2);
+  background: linear-gradient(135deg, #047857, #065f46);
+  box-shadow: 0 5px 15px rgba(4, 120, 87, 0.3);
 }
 
 .form-btn:hover:not(:disabled) {

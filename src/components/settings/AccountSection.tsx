@@ -69,15 +69,15 @@ const AccountSection: React.FC<AccountSectionProps> = ({ onLogout }) => {
                     <CardContent className="pt-8">
                         <form onSubmit={handlePasswordChange} className="space-y-6 max-w-xl">
                             <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Password Baru</label>
-                                <Input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="h-12 rounded-xl border-slate-200 dark:border-slate-700" placeholder="Minimal 6 karakter" />
+                                <label htmlFor="account-new-password" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Password Baru</label>
+                                <Input id="account-new-password" aria-label="Password Baru" type="password" value={password} onChange={e => setPassword(e.target.value)} required className="h-12 rounded-xl border-slate-200 dark:border-slate-700" placeholder="Minimal 6 karakter" />
                             </div>
                             <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Konfirmasi Password Baru</label>
-                                <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="h-12 rounded-xl border-slate-200 dark:border-slate-700" placeholder="Ulangi password baru" />
+                                <label htmlFor="account-confirm-password" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">Konfirmasi Password Baru</label>
+                                <Input id="account-confirm-password" aria-label="Konfirmasi Password Baru" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="h-12 rounded-xl border-slate-200 dark:border-slate-700" placeholder="Ulangi password baru" />
                             </div>
                             <div className="flex justify-end pt-4">
-                                <Button type="submit" disabled={!isOnline} className="px-8 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors">
+                                <Button type="submit" disabled={!isOnline} className="px-6 sm:px-8 min-h-[44px] rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 font-medium cursor-pointer active:scale-95 transition-all duration-150">
                                     Perbarui Password
                                 </Button>
                             </div>
@@ -95,12 +95,12 @@ const AccountSection: React.FC<AccountSectionProps> = ({ onLogout }) => {
                         <CardDescription className="text-red-600/70 dark:text-red-400/70 text-base">Tindakan di area ini berisiko tinggi dan tidak dapat dibatalkan.</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-8">
-                        <div className="flex items-center justify-between p-6 bg-white/50 dark:bg-red-950/20 rounded-2xl border border-red-100 dark:border-red-900/30">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 sm:p-6 bg-white/50 dark:bg-red-950/20 rounded-2xl border border-red-100 dark:border-red-900/30">
                             <div>
-                                <p className="font-bold text-lg text-red-700 dark:text-red-300">Hapus Akun Permanen</p>
-                                <p className="text-sm text-red-600/80 dark:text-red-400/80 mt-1">Menghapus seluruh data siswa, nilai, dan laporan Anda dari sistem.</p>
+                                <p className="font-bold text-base sm:text-lg text-red-700 dark:text-red-300">Hapus Akun Permanen</p>
+                                <p className="text-xs sm:text-sm text-red-600/80 dark:text-red-400/80 mt-1">Menghapus seluruh data siswa, nilai, dan laporan Anda dari sistem.</p>
                             </div>
-                            <Button variant="destructive" onClick={() => setDeleteModalOpen(true)} disabled={!isOnline} className="px-8 rounded-xl bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/20">
+                            <Button variant="destructive" onClick={() => setDeleteModalOpen(true)} disabled={!isOnline} className="w-full sm:w-auto px-6 sm:px-8 min-h-[44px] rounded-xl bg-red-600 hover:bg-red-700 shadow-lg shadow-red-500/20 font-medium cursor-pointer active:scale-95 transition-all duration-150 flex-shrink-0">
                                 Hapus Akun Saya
                             </Button>
                         </div>
@@ -110,7 +110,7 @@ const AccountSection: React.FC<AccountSectionProps> = ({ onLogout }) => {
             <Modal isOpen={isDeleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Konfirmasi Penghapusan Akun">
                 <div className="space-y-4">
                     <p>Ini adalah tindakan permanen. Semua data siswa, laporan, dan jadwal Anda akan hilang. Untuk melanjutkan, ketik <strong className="text-red-500">HAPUS</strong> di bawah ini.</p>
-                    <Input value={deleteConfirmText} onChange={e => setDeleteConfirmText(e.target.value)} placeholder="HAPUS" />
+                    <Input aria-label="Ketik HAPUS untuk konfirmasi" value={deleteConfirmText} onChange={e => setDeleteConfirmText(e.target.value)} placeholder="HAPUS" />
                     <div className="flex justify-end gap-2">
                         <Button variant="ghost" onClick={() => setDeleteModalOpen(false)} className="px-6">Batal</Button>
                         <Button variant="destructive" onClick={handleDeleteAccount} disabled={deleteConfirmText !== 'HAPUS' || !isOnline}>

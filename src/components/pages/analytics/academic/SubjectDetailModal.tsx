@@ -111,7 +111,7 @@ export const SubjectDetailModal: React.FC<SubjectDetailModalProps> = ({ subject,
                             Siswa Di Bawah KKTP ({subjectStudents.length})
                         </h4>
                         <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden max-h-48 overflow-y-auto">
-                            <table className="w-full text-xs">
+                            <table className="w-full text-xs" aria-label="Tabel Siswa di Bawah KKTP">
                                 <thead>
                                     <tr className="bg-slate-50 dark:bg-slate-800/60">
                                         <th className="px-3 py-2 text-left font-semibold text-slate-500">Siswa</th>

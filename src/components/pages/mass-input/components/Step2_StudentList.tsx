@@ -11,7 +11,7 @@ import { GradeDistributionMini } from '../../../ui/GradeDistributionChart';
 import { getStudentAvatar } from '../../../../utils/avatarUtils';
 import { BatchFillInput } from '../../../ui/BatchFillInput';
 import { VoiceGradeModal } from './VoiceGradeModal';
-import { Mic } from 'lucide-react';
+import { Mic, ChevronDown, ChevronUp, Zap } from 'lucide-react';
 
 interface Step2_StudentListProps {
     mode: InputMode | null;
@@ -60,6 +60,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     });
     const [groupBy, setGroupBy] = useState<GroupBy>('none');
     const [showStats, setShowStats] = useState(false);
+    const [showBatchFill, setShowBatchFill] = useState(false);
     const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
 
     // Apply sorting
@@ -202,39 +203,88 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
 
     return (
         <div className="lg:col-span-2 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden shadow-xl shadow-brand-600/10 animate-fade-in-right">
-            {/* Header with Search and Filters */}
-            <div className="p-4 sm:p-5 lg:p-6 border-b border-slate-200 dark:border-slate-700 flex-shrink-0 space-y-3 sm:space-y-4 bg-slate-50 dark:bg-slate-800/50 backdrop-blur-md">
-                {/* Search */}
-                <div className="relative w-full group">
-                    <SearchIcon className="w-4 h-4 sm:w-5 sm:h-5 text-brand-600 dark:text-brand-300 absolute top-1/2 left-3 sm:left-4 -translate-y-1/2 transition-colors group-focus-within:text-brand-500 dark:group-focus-within:text-brand-400" />
-                    <Input
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        placeholder="Cari nama siswa..."
-                        className="pl-10 sm:pl-12 w-full h-10 sm:h-12 bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30 focus:ring-brand-500 focus:border-brand-500 transition-all text-sm sm:text-base"
-                    />
+            {/* Header with Search, Filters, and Tools */}
+            <div className="p-3.5 sm:p-5 lg:p-6 border-b border-slate-200 dark:border-slate-700 flex-shrink-0 space-y-2.5 sm:space-y-3 bg-slate-50/80 dark:bg-slate-800/50 backdrop-blur-md">
+                {/* Row 1: Search + Voice Dictation + Quick Stats */}
+                <div className="flex items-center gap-2">
+                    <div className="relative flex-1 min-w-0 group">
+                        <SearchIcon className="w-4 h-4 text-brand-600 dark:text-brand-300 absolute top-1/2 left-3 -translate-y-1/2 transition-colors group-focus-within:text-brand-500" />
+                        <Input
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            placeholder="Cari nama siswa..."
+                            className="pl-9 sm:pl-10 pr-3 w-full h-9 sm:h-10 bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30 focus:ring-brand-500 focus:border-brand-500 transition-all text-xs sm:text-sm"
+                        />
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => setIsVoiceModalOpen(true)}
+                        className="flex items-center gap-1.5 h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl text-xs font-semibold transition-all bg-gradient-to-r from-rose-500 to-brand-600 hover:from-rose-600 hover:to-brand-700 text-white shadow-sm shadow-rose-500/20 active:scale-95 flex-shrink-0"
+                        title="Input nilai menggunakan suara (Dikte)"
+                    >
+                        <Mic className="w-3.5 h-3.5 animate-pulse text-rose-100" />
+                        <span className="whitespace-nowrap">Dikte</span>
+                        <span className="hidden md:inline whitespace-nowrap">Suara</span>
+                    </button>
+
+                    {mode === 'subject_grade' && (
+                        <button
+                            type="button"
+                            onClick={() => setShowStats(!showStats)}
+                            className={`flex items-center justify-center gap-1.5 h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl text-xs font-semibold transition-all flex-shrink-0 ${
+                                showStats
+                                    ? 'bg-brand-600 text-white shadow-md shadow-brand-600/20'
+                                    : 'bg-white dark:bg-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/20 border border-slate-200 dark:border-white/10'
+                            }`}
+                            title="Grafik Statistik Nilai"
+                        >
+                            <BarChartIcon className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline whitespace-nowrap">Statistik</span>
+                        </button>
+                    )}
                 </div>
 
-                {/* Quick-fill batch edit for subject_grade */}
-                {mode === 'subject_grade' && (
-                    <BatchFillInput
-                        students={students}
-                        scores={scores}
-                        onApply={(score) => {
-                            students.forEach(s => handleScoreChange(s.id, score));
-                        }}
-                        onClearRequest={onClearRequest}
-                    />
+                {/* Row 2: Filter Pills + Quick-fill Batch Edit Toggle */}
+                <div className="flex items-center justify-between gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1 py-0.5">
+                    <FilterPills options={filterOptions} currentValue={studentFilter} onFilterChange={setStudentFilter} />
+
+                    {mode === 'subject_grade' && students && students.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => setShowBatchFill(prev => !prev)}
+                            className={`flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full transition-all flex-shrink-0 ${
+                                showBatchFill
+                                    ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/20'
+                                    : 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 hover:bg-amber-100 dark:hover:bg-amber-500/20'
+                            }`}
+                            title="Isi nilai massal sekaligus"
+                        >
+                            <Zap className="w-3.5 h-3.5 shrink-0 text-amber-500 group-hover:scale-110 transition-transform" />
+                            <span className="whitespace-nowrap">Isi Massal</span>
+                            {showBatchFill ? <ChevronUp className="w-3 h-3 ml-0.5" /> : <ChevronDown className="w-3 h-3 ml-0.5" />}
+                        </button>
+                    )}
+                </div>
+
+                {/* Collapsible Batch Fill Bar */}
+                {showBatchFill && mode === 'subject_grade' && (
+                    <div className="animate-fade-in-down">
+                        <BatchFillInput
+                            students={students}
+                            scores={scores}
+                            onApply={(score) => {
+                                students.forEach(s => handleScoreChange(s.id, score));
+                            }}
+                            onClearRequest={onClearRequest}
+                            onClose={() => setShowBatchFill(false)}
+                        />
+                    </div>
                 )}
 
-                {/* Filter Pills - Horizontal scroll on mobile */}
-                <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
-                    <FilterPills options={filterOptions} currentValue={studentFilter} onFilterChange={setStudentFilter} />
-                </div>
-
-                {/* Sorting, Grouping & Quick Stats Controls */}
+                {/* Row 3: Sorting & Grouping Controls */}
                 {mode === 'subject_grade' && students && students.length > 0 && (
-                    <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-white/10">
+                    <div className="pt-2 border-t border-slate-200/80 dark:border-white/10">
                         <StudentSortControls
                             sortConfig={sortConfig}
                             onSortChange={setSortConfig}
@@ -242,36 +292,12 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                             onGroupByChange={setGroupBy}
                             showGrouping={true}
                         />
-
-                        <div className="flex items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={() => setIsVoiceModalOpen(true)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all bg-gradient-to-r from-rose-500 to-brand-600 hover:from-rose-600 hover:to-brand-700 text-white shadow-sm shadow-rose-500/20 active:scale-95"
-                                title="Input nilai menggunakan suara (Dikte)"
-                            >
-                                <Mic className="w-3.5 h-3.5 animate-pulse" />
-                                <span>Dikte Suara</span>
-                            </button>
-
-                            {/* Quick Stats Toggle - Aligned on right side of control bar */}
-                            <button type="button"
-                                onClick={() => setShowStats(!showStats)}
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${showStats
-                                    ? 'bg-brand-600 text-white shadow-md shadow-brand-600/20'
-                                    : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/20 border border-slate-200 dark:border-white/10'
-                                    }`}
-                            >
-                                <BarChartIcon className="w-3.5 h-3.5" />
-                                <span>Grafik Statistik</span>
-                            </button>
-                        </div>
                     </div>
                 )}
 
                 {/* Mini Stats Display */}
                 {showStats && mode === 'subject_grade' && (
-                    <div className="pt-2">
+                    <div className="pt-2 border-t border-slate-200/80 dark:border-white/10 animate-fade-in-down">
                         <GradeDistributionMini scores={scores} kkm={kkm} />
                     </div>
                 )}
@@ -286,7 +312,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                 ) : students && students.length > 0 ? (
                     <>
                         <div className="hidden md:block overflow-x-auto">
-                            <table className="w-full text-sm border-separate border-spacing-y-2">
+                            <table className="w-full text-sm border-separate border-spacing-y-2" aria-label="Tabel Input Nilai Siswa">
                                 <thead>
                                     <tr className="text-green-600 dark:text-green-200">
                                         <th className="p-4 text-left w-14 font-bold tracking-wide uppercase text-xs">
@@ -449,7 +475,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                             }`}
                                                                         />
                                                                         {validationErrors[s.id] && (
-                                                                            <div id={`grade-error-${s.id}`} role="alert" className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-max max-w-[200px] z-20">
+                                                                            <div id={`grade-error-${s.id}`} role="alert" aria-live="assertive" className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-max max-w-[200px] z-20">
                                                                                 <div className="bg-rose-500 text-white text-xs py-1 px-2 rounded shadow-lg">
                                                                                     {validationErrors[s.id]}
                                                                                     <div className="absolute -top-1 left-1/2 -translate-x-1/2 border-x-4 border-b-4 border-x-transparent border-b-rose-500" />
@@ -657,7 +683,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                             </div>
                                                         </div>
                                                         {validationErrors[s.id] && (
-                                                            <div id={`grade-error-mobile-${s.id}`} role="alert" className="text-xs text-rose-500 mt-2 font-medium">
+                                                            <div id={`grade-error-mobile-${s.id}`} role="alert" aria-live="assertive" className="text-xs text-rose-500 mt-2 font-medium">
                                                                 * {validationErrors[s.id]}
                                                             </div>
                                                         )}

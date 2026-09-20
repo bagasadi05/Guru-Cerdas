@@ -287,7 +287,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 
             {/* Data Preview Table */}
             <div className="max-h-64 overflow-auto border border-slate-200 dark:border-slate-700 rounded-xl">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm" aria-label="Tabel Pratinjau Validasi Data Impor">
                     <thead className="bg-slate-100 dark:bg-slate-800 sticky top-0">
                         <tr>
                             <th className="px-3 py-2 text-left font-medium text-slate-600 dark:text-slate-300">Status</th>

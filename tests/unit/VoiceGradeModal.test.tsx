@@ -381,4 +381,69 @@ describe('VoiceGradeModal Component', () => {
             vi.runOnlyPendingTimers();
         });
     });
+
+    it('shows actionable permission error banner with Chrome Android instructions and retry button on mic denial', () => {
+        render(
+            <VoiceGradeModal
+                isOpen={true}
+                onClose={vi.fn()}
+                students={mockStudents as any}
+                scores={{}}
+                onScoreChange={vi.fn()}
+                kkm={75}
+            />
+        );
+
+        // Click mic to start
+        act(() => {
+            fireEvent.click(screen.getByTitle(/Mulai Mendengar/i));
+        });
+
+        expect(activeRecognitionInstance).not.toBeNull();
+
+        // Simulate not-allowed error from browser (e.g. Chrome Android)
+        act(() => {
+            if (activeRecognitionInstance && activeRecognitionInstance.onerror) {
+                activeRecognitionInstance.onerror({ error: 'not-allowed' });
+            }
+        });
+
+        // Banner should appear with specific error message and Chrome Android instructions
+        expect(screen.getByText(/Akses mikrofon ditolak/i)).toBeInTheDocument();
+        expect(screen.getByText(/Cara mengizinkan di Chrome Android/i)).toBeInTheDocument();
+
+        // Retry / Request Permission button should be present
+        const retryBtn = screen.getByRole('button', { name: /coba lagi/i });
+        expect(retryBtn).toBeInTheDocument();
+
+        // Clicking retry button restarts listening
+        act(() => {
+            fireEvent.click(retryBtn);
+        });
+
+        expect(activeRecognitionInstance!.start).toHaveBeenCalled();
+    });
+
+    it('renders responsive navigation toolbar and allows closing with Selesai button', () => {
+        const onClose = vi.fn();
+        render(
+            <VoiceGradeModal
+                isOpen={true}
+                onClose={onClose}
+                students={mockStudents as any}
+                scores={{}}
+                onScoreChange={vi.fn()}
+                kkm={75}
+            />
+        );
+
+        const selesaiBtn = screen.getByRole('button', { name: /selesai/i });
+        expect(selesaiBtn).toBeInTheDocument();
+
+        act(() => {
+            fireEvent.click(selesaiBtn);
+        });
+
+        expect(onClose).toHaveBeenCalled();
+    });
 });

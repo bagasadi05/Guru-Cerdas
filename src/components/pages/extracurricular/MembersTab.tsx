@@ -95,7 +95,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({
             {/* Table */}
             <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden bg-white dark:bg-slate-800 shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full block lg:table">
+                    <table className="w-full block lg:table" aria-label="Tabel Anggota Ekstrakurikuler">
                         <thead className="bg-slate-50 dark:bg-slate-900/50 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-700 hidden lg:table-header-group">
                             <tr>
                                 <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider min-w-[200px] whitespace-nowrap">Nama Siswa</th>

@@ -31,14 +31,14 @@ export const StudentGrid: React.FC<StudentViewProps> = ({ students, isSelected, 
                                     type="checkbox"
                                     checked={isSelected(student.id)}
                                     onChange={(e) => { e.stopPropagation(); toggleItem(student.id); }}
-                                    className="w-4 h-4 sm:w-5 sm:h-5 rounded border-white/50 bg-white/20 text-emerald-600 focus:ring-emerald-500 checked:bg-emerald-600 checked:border-transparent transition-all cursor-pointer"
+                                    className="w-5 h-5 rounded-md border-white/60 bg-white/30 text-emerald-600 focus:ring-emerald-500 checked:bg-emerald-600 checked:border-transparent transition-all cursor-pointer"
                                 />
                             </div>
-                            <div className="absolute top-3 right-3">
+                            <div className="absolute top-2.5 right-2.5">
                                 <button type="button"
                                     onClick={() => onAction(student, 'menu')}
                                     aria-label={`Menu aksi siswa ${student.name}`}
-                                    className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                                    className="min-w-[36px] min-h-[36px] sm:min-w-[40px] sm:min-h-[40px] p-2 rounded-full bg-black/20 hover:bg-black/35 text-white backdrop-blur-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 cursor-pointer active:scale-90 flex items-center justify-center"
                                 >
                                     <MoreVerticalIcon className="w-5 h-5" aria-hidden="true" />
                                 </button>
@@ -79,7 +79,7 @@ export const StudentGrid: React.FC<StudentViewProps> = ({ students, isSelected, 
                             <div className="mt-3 sm:mt-5 w-full">
                                 <Link
                                     to={`/siswa/${student.id}`}
-                                    className="flex w-full items-center justify-center gap-1.5 sm:gap-2 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
+                                    className="flex w-full items-center justify-center gap-1.5 sm:gap-2 py-2.5 text-xs sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/40 cursor-pointer active:scale-95 transition-all duration-200 min-h-[40px] shadow-sm"
                                 >
                                     <EyeIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                     Lihat Detail
@@ -93,7 +93,7 @@ export const StudentGrid: React.FC<StudentViewProps> = ({ students, isSelected, 
                 <div className="flex justify-center py-2">
                     <button type="button"
                         onClick={handleLoadMore}
-                        className="px-4 py-2 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                        className="min-h-[44px] px-6 py-2.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/40 rounded-xl cursor-pointer active:scale-95 transition-all shadow-sm"
                     >
                         Tampilkan Lebih Banyak ({students.length - clampedCount} tersisa)
                     </button>

@@ -263,8 +263,8 @@ export const BintangMentoringModal: React.FC<MentoringModalProps> = ({
     >
       <form onSubmit={onSubmit} className="space-y-4 pt-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tanggal</label>
-          <Input type="date" value={date} onChange={(e) => onDateChange(e.target.value)} required />
+          <label htmlFor="pembinaan-date" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tanggal</label>
+          <Input id="pembinaan-date" aria-label="Tanggal pembinaan" type="date" value={date} onChange={(e) => onDateChange(e.target.value)} required />
         </div>
 
         <div>
@@ -409,8 +409,8 @@ export const BintangMentoringEditModal: React.FC<MentoringEditModalProps> = ({
     >
       <form onSubmit={onSubmit} className="space-y-4 pt-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tanggal</label>
-          <Input type="date" value={date} onChange={(e) => onDateChange(e.target.value)} required />
+          <label htmlFor="pembinaan-edit-date" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tanggal</label>
+          <Input id="pembinaan-edit-date" aria-label="Tanggal pembinaan" type="date" value={date} onChange={(e) => onDateChange(e.target.value)} required />
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Peran Mentor</label>

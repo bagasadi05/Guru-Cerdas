@@ -428,7 +428,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+            <div className="absolute inset-0 bg-black/50" onClick={onClose} onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} role="presentation" aria-hidden="true" />
 
             <div className="relative w-full max-w-3xl max-h-[80vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-scale-in">
                 {/* Header */}

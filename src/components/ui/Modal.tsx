@@ -12,9 +12,18 @@ interface ModalProps {
   children: React.ReactNode;
   icon?: React.ReactNode;
   maxWidth?: string;
+  placement?: 'center' | 'bottom';
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, icon, maxWidth = 'max-w-lg' }) => {
+export const Modal: React.FC<ModalProps> = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  icon,
+  maxWidth = 'max-w-lg',
+  placement = 'center',
+}) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
   const isClient = typeof document !== 'undefined';
@@ -101,7 +110,11 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
-          className="fixed inset-0 z-max flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm"
+          className={`fixed inset-0 z-max flex justify-center bg-black/50 backdrop-blur-sm ${
+            placement === 'bottom'
+              ? 'items-end sm:items-center'
+              : 'items-center p-2 sm:p-4'
+          }`}
           aria-labelledby="modal-title"
           role="dialog"
           aria-modal="true"
@@ -113,42 +126,75 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
             animate={shouldReduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1, y: 0 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { scale: 0.95, opacity: 0, y: 20 }}
             transition={shouldReduceMotion ? { duration: 0 } : easing.spring}
-            className={`relative w-full ${maxWidth} mx-1 sm:mx-3 mb-2 sm:mb-0 max-h-[95vh] flex flex-col`}
+            className={`relative w-full ${maxWidth} flex flex-col ${
+              placement === 'bottom'
+                ? 'mx-0 sm:mx-3 mb-0 max-h-[95vh]'
+                : 'max-h-[94vh] sm:max-h-[90vh] my-auto'
+            }`}
             style={{
-              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+              paddingBottom: placement === 'bottom' ? 'env(safe-area-inset-bottom, 0px)' : undefined,
             }}
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
             id="modal-container"
           >
-        <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200/70 dark:border-slate-700/60 flex flex-col h-full max-h-[95vh]">
-          <div className="relative p-6 border-b border-slate-200/70 dark:border-slate-700/60">
-            <div className="flex justify-between items-center gap-4">
-              <div className="flex items-center gap-3">
-                {icon && (
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20" aria-hidden="true">
-                    {icon}
+            <div
+              className={`relative overflow-hidden bg-white dark:bg-slate-900 shadow-2xl border border-slate-200/70 dark:border-slate-700/60 flex flex-col h-full ${
+                placement === 'bottom'
+                  ? 'rounded-t-2xl sm:rounded-2xl max-h-[95vh]'
+                  : 'rounded-2xl max-h-[94vh] sm:max-h-[90vh]'
+              }`}
+            >
+              <div className="relative p-3.5 sm:p-5 sm:p-6 border-b border-slate-200/70 dark:border-slate-700/60">
+                <div className="flex justify-between items-center gap-3 sm:gap-4">
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    {icon && (
+                      <div
+                        className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shrink-0"
+                        aria-hidden="true"
+                      >
+                        {icon}
+                      </div>
+                    )}
+                    <h2
+                      id="modal-title"
+                      className="text-base sm:text-xl font-bold text-slate-900 dark:text-slate-100 leading-tight truncate"
+                    >
+                      {title}
+                    </h2>
                   </div>
-                )}
-                <h2 id="modal-title" className="text-2xl font-bold text-slate-900 dark:text-slate-100 leading-tight">{title}</h2>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onClose}
+                    aria-label="Close modal"
+                    className="rounded-full text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white shrink-0 h-8 w-8 sm:h-9 sm:w-9"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-4 w-4 sm:h-5 sm:w-5"
+                      aria-hidden="true"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </Button>
+                </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onClose}
-                aria-label="Close modal"
-                className="rounded-full text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              </Button>
-            </div>
-          </div>
 
-          <div className="flex-1 overflow-y-auto p-6" role="document">
-            {children}
-          </div>
-        </div>
-      </MotionDiv>
-    </MotionDiv>
+              <div className="flex-1 overflow-y-auto p-3 sm:p-5 sm:p-6" role="document">
+                {children}
+              </div>
+            </div>
+          </MotionDiv>
+        </MotionDiv>
   )}
 </AnimatePresence>,
     document.body

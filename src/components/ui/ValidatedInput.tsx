@@ -112,7 +112,7 @@ export const ValidatedInput = React.forwardRef<HTMLInputElement, ValidatedInputP
                     <p
                         id={`${inputId}-error`}
                         className="flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400 animate-fade-in"
-                        role="alert"
+                        role="alert" aria-live="assertive"
                     >
                         <AlertCircleIcon className="w-3 h-3 flex-shrink-0" />
                         {error}
@@ -231,7 +231,7 @@ export const ValidatedTextarea = React.forwardRef<HTMLTextAreaElement, Validated
                     <p
                         id={`${inputId}-error`}
                         className="flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400 animate-fade-in"
-                        role="alert"
+                        role="alert" aria-live="assertive"
                     >
                         <AlertCircleIcon className="w-3 h-3 flex-shrink-0" />
                         {error}
@@ -336,7 +336,7 @@ export const ValidatedSelect = React.forwardRef<HTMLSelectElement, ValidatedSele
                     <p
                         id={`${inputId}-error`}
                         className="flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400 animate-fade-in"
-                        role="alert"
+                        role="alert" aria-live="assertive"
                     >
                         <AlertCircleIcon className="w-3 h-3 flex-shrink-0" />
                         {error}

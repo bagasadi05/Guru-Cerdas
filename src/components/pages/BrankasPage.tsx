@@ -366,10 +366,10 @@ const BrankasPage: React.FC = () => {
 
       {/* Tabs and Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6">
-        <div className="flex p-1 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200/50 dark:border-white/5 w-full sm:w-fit">
+        <div className="flex p-1 bg-slate-100 dark:bg-white/5 rounded-2xl border border-slate-200/50 dark:border-white/5 w-full sm:w-fit">
           <button type="button"
             onClick={() => handleTabSwitch('active')}
-            className={`flex-1 sm:flex-none flex justify-center items-center gap-2 px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all duration-200 ${
+            className={`flex-1 sm:flex-none flex justify-center items-center gap-2 px-3.5 sm:px-4 py-2 min-h-[40px] text-xs font-semibold rounded-xl transition-all duration-150 cursor-pointer active:scale-95 ${
               activeTab === 'active'
                 ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-white shadow-md shadow-slate-200/40 dark:shadow-none'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -380,7 +380,7 @@ const BrankasPage: React.FC = () => {
           </button>
           <button type="button"
             onClick={() => handleTabSwitch('archived')}
-            className={`flex-1 sm:flex-none flex justify-center items-center gap-2 px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all duration-200 ${
+            className={`flex-1 sm:flex-none flex justify-center items-center gap-2 px-3.5 sm:px-4 py-2 min-h-[40px] text-xs font-semibold rounded-xl transition-all duration-150 cursor-pointer active:scale-95 ${
               activeTab === 'archived'
                 ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-white shadow-md shadow-slate-200/40 dark:shadow-none'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -392,13 +392,14 @@ const BrankasPage: React.FC = () => {
         </div>
 
         <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari kelas..."
-            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
+            aria-label="Cari kelas di brankas"
+            className="w-full h-10 pl-9 pr-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
           />
         </div>
       </div>
@@ -760,7 +761,7 @@ const BrankasPage: React.FC = () => {
                               }}
                               variant="outline"
                               size="sm"
-                              className="flex-1 bg-white dark:bg-slate-800"
+                              className="flex-1 min-h-[44px] rounded-xl font-medium bg-white dark:bg-slate-800 cursor-pointer active:scale-95 transition-all duration-150"
                             >
                               <FolderLock className="w-4 h-4 mr-1.5" />
                               Buka Arsip
@@ -769,7 +770,7 @@ const BrankasPage: React.FC = () => {
                               onClick={() => setConfirmRestoreClass(cls)}
                               variant="outline"
                               size="sm"
-                              className="px-3 bg-white dark:bg-slate-800"
+                              className="w-11 h-11 min-h-[44px] min-w-[44px] p-0 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 cursor-pointer active:scale-90 transition-transform"
                               title="Pulihkan Kelas ke Dashboard"
                               aria-label="Pulihkan kelas ke dashboard"
                             >
@@ -780,7 +781,7 @@ const BrankasPage: React.FC = () => {
                           <Button
                             onClick={() => setConfirmArchiveClass(cls)}
                             variant="secondary"
-                            className="w-full"
+                            className="w-full min-h-[44px] rounded-xl font-medium cursor-pointer active:scale-95 transition-all duration-150"
                           >
                             <Archive className="w-4 h-4 mr-1.5" />
                             Simpan di Brankas

@@ -76,7 +76,7 @@ const AnalyticsExportModal: React.FC<AnalyticsExportModalProps> = ({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="absolute top-4 right-4 p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                        className="absolute top-4 right-4 p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer active:scale-90"
                         aria-label="Tutup"
                     >
                         <X className="w-5 h-5" />
@@ -184,13 +184,13 @@ const AnalyticsExportModal: React.FC<AnalyticsExportModalProps> = ({
                     <Button
                         variant="outline"
                         onClick={onClose}
-                        className="flex-1 rounded-xl"
+                        className="flex-1 rounded-xl cursor-pointer active:scale-95 duration-150"
                     >
                         Batal
                     </Button>
                     <Button
                         onClick={handleExportClick}
-                        className="flex-1 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white rounded-xl shadow-lg shadow-brand-600/20"
+                        className="flex-1 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white rounded-xl shadow-lg shadow-brand-600/20 cursor-pointer active:scale-95 duration-150"
                         disabled={!Object.values(options).some(Boolean) || isExporting}
                     >
                         {isExporting ? (
@@ -223,7 +223,7 @@ interface OptionItemProps {
 const OptionItem: React.FC<OptionItemProps> = ({ label, desc, checked, onChange, icon: Icon, color }) => (
     <div
         onClick={onChange}
-        className={`flex items-center p-2.5 sm:p-3 rounded-2xl border cursor-pointer transition-all duration-200 ${checked
+        className={`flex items-center p-2.5 sm:p-3 rounded-2xl border cursor-pointer active:scale-[0.98] transition-all duration-150 ${checked
             ? 'bg-brand-50/40 dark:bg-brand-950/30 border-brand-300 dark:border-brand-800/60 shadow-sm'
             : 'bg-white dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/60 hover:border-slate-300 dark:hover:border-slate-600'
             }`}

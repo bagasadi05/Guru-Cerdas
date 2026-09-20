@@ -50,7 +50,7 @@ export const PembinaanTab: React.FC<PembinaanTabProps> = ({
                 {isWalas && (
                     <Button
                         onClick={onOpenMentoringModal}
-                        className="bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white flex items-center gap-1.5 text-sm h-10 px-4 font-medium rounded-xl shadow-sm shadow-brand-600/20"
+                        className="bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white flex items-center gap-1.5 text-sm h-10 px-4 font-medium rounded-xl shadow-sm shadow-brand-600/20 cursor-pointer active:scale-95 duration-150"
                     >
                         <Plus size={16} /> Catat Pembinaan
                     </Button>
@@ -80,7 +80,7 @@ export const PembinaanTab: React.FC<PembinaanTabProps> = ({
                             <Button
                                 onClick={onOpenMentoringModal}
                                 variant="outline"
-                                className="mt-4 text-brand-600 dark:text-brand-400 border-brand-200 dark:border-brand-800/60"
+                                className="mt-4 text-brand-600 dark:text-brand-400 border-brand-200 dark:border-brand-800/60 rounded-xl cursor-pointer active:scale-95 duration-150"
                             >
                                 <Plus size={14} className="mr-1.5" /> Catat Pembinaan Pertama
                             </Button>
@@ -88,7 +88,7 @@ export const PembinaanTab: React.FC<PembinaanTabProps> = ({
                     </div>
                 ) : (
                     <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
-                        <table className="w-full text-left border-collapse">
+                        <table className="w-full text-left border-collapse" aria-label="Tabel Riwayat Pembinaan Karakter">
                             <thead className="sticky top-0 bg-slate-50 dark:bg-slate-800/80">
                                 <tr className="border-b border-slate-200 dark:border-slate-700">
                                     <th className="py-2.5 px-4 font-semibold text-xs text-slate-600 dark:text-slate-300">Tanggal</th>
@@ -123,18 +123,18 @@ export const PembinaanTab: React.FC<PembinaanTabProps> = ({
                                                     <button
                                                         type="button"
                                                         onClick={() => onOpenEditMentoring(log)}
-                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30"
+                                                        className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl text-slate-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30 cursor-pointer active:scale-90 transition-all"
                                                         title="Edit"
                                                     >
-                                                        <Pencil size={13} />
+                                                        <Pencil size={14} />
                                                     </button>
                                                     <button
                                                         type="button"
                                                         onClick={() => onDeleteMentoring(log)}
-                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30"
+                                                        className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 cursor-pointer active:scale-90 transition-all"
                                                         title="Hapus"
                                                     >
-                                                        <Trash2 size={13} />
+                                                        <Trash2 size={14} />
                                                     </button>
                                                 </div>
                                             </td>

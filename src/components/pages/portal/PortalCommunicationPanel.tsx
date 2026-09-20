@@ -286,7 +286,7 @@ export const PortalCommunicationPanel: React.FC<PortalCommunicationPanelProps> =
                         const message = formData.get('message') as string;
                         updateMessage({ messageId: modalState.data!.id, newMessageText: message });
                     }}>
-                        <textarea name="message" defaultValue={modalState.data.message} rows={5} className="w-full mt-1 p-3 border rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"></textarea>
+                        <textarea name="message" aria-label="Isi pesan" defaultValue={modalState.data.message} rows={5} className="w-full mt-1 p-3 border rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"></textarea>
                         <div className="flex justify-end gap-2 pt-4">
                             <Button type="button" variant="ghost" onClick={() => setModalState({ type: 'closed', data: null })}>Batal</Button>
                             <Button type="submit" disabled={isUpdating} className="bg-emerald-600 text-white hover:bg-emerald-700">{isUpdating ? 'Menyimpan...' : 'Simpan'}</Button>

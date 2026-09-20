@@ -121,7 +121,7 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
 
     return (
         <div role="dialog" aria-modal="true" aria-labelledby="shortcuts-title" className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} role="presentation" aria-hidden="true" />
             <div
                 ref={containerRef}
                 className="relative max-h-[80vh] w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900"
@@ -201,7 +201,7 @@ export const AccessibilitySettingsPanel: React.FC<{
 
     return (
         <div role="dialog" aria-modal="true" aria-labelledby="a11y-settings-title" className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
+            <div className="absolute inset-0 bg-black/50" onClick={onClose} onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} role="presentation" aria-hidden="true" />
             <div ref={containerRef} className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
                 <div className="p-6">
                     <div className="mb-6 flex items-center justify-between">

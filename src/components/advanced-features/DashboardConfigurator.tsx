@@ -13,7 +13,7 @@ export const DashboardConfigurator: React.FC<{
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+            <div className="absolute inset-0 bg-black/50" onClick={onClose} onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} role="presentation" aria-hidden="true" />
 
             <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
                 <div className="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-800">

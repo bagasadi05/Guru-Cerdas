@@ -289,7 +289,7 @@ export const GlobalSearchModal: React.FC<{
     return (
         <div className="fixed inset-0 z-modal flex items-start justify-center pt-[10vh] px-4">
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={close} />
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={close} onKeyDown={(e) => { if (e.key === 'Escape') close(); }} role="presentation" aria-hidden="true" />
 
             {/* Modal */}
             <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden animate-scale-in">

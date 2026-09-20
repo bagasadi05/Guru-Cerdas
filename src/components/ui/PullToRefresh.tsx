@@ -160,8 +160,7 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({
                         transition: shouldReduceMotion ? 'none' : 'opacity 0.2s ease-in-out',
                         animation: shouldReduceMotion ? 'none' : 'slideDown 0.3s ease-out',
                     }}
-                    role="alert"
-                    aria-live="polite"
+                    role="alert" aria-live="polite"
                 >
                     {showToast === 'success' ? (
                         <>

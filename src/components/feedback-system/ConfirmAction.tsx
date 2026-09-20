@@ -64,7 +64,7 @@ export const ConfirmAction: React.FC<ConfirmActionProps> = ({
 
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/50" onClick={handleCancel} />
+                    <div className="absolute inset-0 bg-black/50" onClick={handleCancel} onKeyDown={(e) => { if (e.key === 'Escape') handleCancel(); }} role="presentation" aria-hidden="true" />
                     <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl animate-scale-in dark:bg-slate-900">
                         <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">{title}</h3>
                         <p className="mb-6 text-slate-600 dark:text-slate-400">{message}</p>

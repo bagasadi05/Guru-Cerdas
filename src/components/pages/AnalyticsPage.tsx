@@ -143,11 +143,11 @@ const AnalyticsPage: React.FC = () => {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setIsExportModalOpen(true)} className="px-4 gap-2 min-h-[44px] sm:min-h-0">
+                        <Button variant="outline" size="sm" onClick={() => setIsExportModalOpen(true)} className="px-4 gap-2 min-h-[44px] sm:min-h-0 rounded-xl cursor-pointer active:scale-95 duration-150">
                             <Download className="w-4 h-4" />
                             <span className="hidden sm:inline">Export PDF</span>
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => refetch()} className="px-4 gap-2 min-h-[44px] sm:min-h-0">
+                        <Button variant="outline" size="sm" onClick={() => refetch()} className="px-4 gap-2 min-h-[44px] sm:min-h-0 rounded-xl cursor-pointer active:scale-95 duration-150">
                             <RefreshCwIcon className="w-4 h-4" />
                         </Button>
                     </div>
@@ -183,7 +183,7 @@ const AnalyticsPage: React.FC = () => {
                     <button type="button"
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`snap-start relative flex-shrink-0 sm:flex-1 min-w-[110px] min-h-[44px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-300 focus:outline-none
+                        className={`snap-start relative flex-shrink-0 sm:flex-1 min-w-[110px] min-h-[44px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-150 cursor-pointer active:scale-95 focus:outline-none
                             ${activeTab === tab.id 
                                 ? 'text-brand-600 dark:text-brand-400 scale-100' 
                                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 scale-95 hover:scale-100'}`}

@@ -39,7 +39,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
         <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             {/* Desktop Table View */}
             <div className="hidden lg:block table-responsive">
-                <table className="w-full text-left text-sm">
+                <table className="w-full text-left text-sm" aria-label="Daftar Siswa">
                     <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
                         <tr>
                             <th className="px-6 py-4 w-12">
@@ -47,6 +47,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                     type="checkbox"
                                     checked={isAllSelected}
                                     onChange={toggleAll}
+                                    aria-label="Pilih semua siswa"
                                     className="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                                 />
                             </th>
@@ -115,8 +116,8 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                     )}
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2">
-                                        <Link to={`/siswa/${student.id}`} className="p-2 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors">
+                                    <div className="flex items-center justify-end gap-1.5">
+                                        <Link to={`/siswa/${student.id}`} className="p-2 rounded-xl text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 cursor-pointer active:scale-90 transition-all" title="Lihat Detail">
                                             <EyeIcon className="w-4 h-4" />
                                         </Link>
                                         {(isAdmin || canManageActiveClass) && (
@@ -125,7 +126,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                                     onClick={() => onAction(student, 'edit')}
                                                     aria-label={`Edit siswa ${student.name}`}
                                                     title="Edit Siswa"
-                                                    className="p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-emerald-900/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                                                    className="p-2 rounded-xl text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer active:scale-90 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                                                 >
                                                     <PencilIcon className="w-4 h-4" aria-hidden="true" />
                                                 </button>
@@ -133,7 +134,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                                                     onClick={() => onAction(student, 'delete')}
                                                     aria-label={`Hapus siswa ${student.name}`}
                                                     title="Hapus Siswa"
-                                                    className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                                                    className="p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer active:scale-90 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                                                 >
                                                     <TrashIcon className="w-4 h-4" aria-hidden="true" />
                                                 </button>
@@ -151,7 +152,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
             <div className="lg:hidden divide-y divide-gray-200 dark:divide-gray-700">
                 {visibleStudents.map((student) => (
                     <div key={student.id}
-                        className="p-4 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
+                        className="p-3.5 sm:p-4 flex items-center gap-3 sm:gap-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer active:bg-gray-100 dark:active:bg-gray-700/50 transition-colors"
                         onClick={() => onAction(student, 'menu')}
                         role="button"
                         tabIndex={0}
@@ -170,16 +171,16 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                             </div>
                         </div>
                         <div className="flex-grow min-w-0">
-                            <h4 className="font-bold text-gray-900 dark:text-white truncate">{student.name}</h4>
+                            <h4 className="font-bold text-gray-900 dark:text-white truncate text-sm sm:text-base">{student.name}</h4>
                             <div className="flex items-center gap-2 mt-1">
                                 {student.access_code ? (
-                                    <span className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300">{student.access_code}</span>
+                                    <span className="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300 font-semibold">{student.access_code}</span>
                                 ) : (
-                                    <span className="text-xs text-amber-600 dark:text-amber-400">Butuh Kode</span>
+                                    <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">Butuh Kode</span>
                                 )}
                             </div>
                         </div>
-                        <Button variant="ghost" size="icon" className="text-gray-400" aria-label="Menu aksi siswa">
+                        <Button variant="ghost" size="icon" className="text-gray-400 min-h-[44px] min-w-[44px] rounded-xl cursor-pointer active:scale-90 flex items-center justify-center" aria-label={`Menu aksi ${student.name}`}>
                             <MoreVerticalIcon className="w-5 h-5" />
                         </Button>
                     </div>
@@ -189,7 +190,7 @@ export const StudentTable: React.FC<StudentTableProps> = ({
                 <div className="flex justify-center py-4">
                     <button type="button"
                         onClick={handleLoadMore}
-                        className="px-4 py-2 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                        className="min-h-[44px] px-6 py-2.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/40 rounded-xl cursor-pointer active:scale-95 transition-all shadow-sm"
                     >
                         Tampilkan Lebih Banyak ({students.length - clampedCount} tersisa)
                     </button>

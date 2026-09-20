@@ -92,7 +92,11 @@ const GradeAuditWidget: React.FC<GradeAuditWidgetProps> = ({ data, classes }) =>
 
       <div className="p-4 flex-1 flex flex-col">
         <div className="space-y-4 mb-4">
-          <Select value={selectedClassForCheck} onChange={(e) => setSelectedClassForCheck(e.target.value)}>
+          <Select
+            aria-label="Pilih kelas untuk audit nilai"
+            value={selectedClassForCheck}
+            onChange={(e) => setSelectedClassForCheck(e.target.value)}
+          >
             <option value="">{t.dashboard.allClasses}</option>
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
@@ -102,6 +106,7 @@ const GradeAuditWidget: React.FC<GradeAuditWidgetProps> = ({ data, classes }) =>
           </Select>
           <div className="flex gap-3">
             <Select
+              aria-label="Pilih mata pelajaran untuk kelengkapan nilai"
               value={subjectForCompletionCheck}
               onChange={handleSubjectChange}
               className="flex-1"

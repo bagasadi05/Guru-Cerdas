@@ -472,7 +472,7 @@ export const BintangTrendChart: React.FC<BintangTrendChartProps> = ({ selectedCl
                             </h3>
                         </div>
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                            <table className="w-full text-left border-collapse text-xs sm:text-sm" aria-label="Tabel Tren Bintang Per Bulan">
                                 <thead>
                                     <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
                                         <th className="py-2 px-3 sm:px-4 font-semibold text-slate-600 dark:text-slate-300">Bulan</th>

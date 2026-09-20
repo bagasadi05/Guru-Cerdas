@@ -65,7 +65,7 @@ const ToastItem: React.FC<{ toast: Toast; onDismiss: (id: number) => void }> = (
   return (
     <div
       className="flex items-center w-full max-w-[calc(100vw-32px)] p-4 text-white bg-gray-800 rounded-lg shadow-2xl backdrop-blur-sm bg-opacity-80 border border-gray-700/50 transform transition-all duration-300 animate-fade-in-up"
-      role="alert"
+      role="alert" aria-live="assertive"
     >
       <div className={`inline-flex items-center justify-center flex-shrink-0 w-8 h-8 ${COLORS[toast.type]} rounded-lg`}>
         <Icon className="w-5 h-5" />

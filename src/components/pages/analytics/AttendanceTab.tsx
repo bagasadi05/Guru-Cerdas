@@ -545,7 +545,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                         <>
                             {/* Desktop Table View */}
                             <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-                                <table className="w-full text-left border-collapse text-sm">
+                                <table className="w-full text-left border-collapse text-sm" aria-label="Tabel Rekap Kehadiran Siswa">
                                     <thead>
                                         <tr className="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
                                             <th className="py-3 px-4 w-12 text-center">No</th>
@@ -648,7 +648,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                                                                 )}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
-                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-all hover:scale-105 active:scale-95"
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-all duration-150 cursor-pointer hover:scale-105 active:scale-95"
                                                                 title={`Kirim rekap absensi via WA ke wali murid (${item.student.parent_phone})`}
                                                             >
                                                                 <MessageCircle className="w-3.5 h-3.5" />
@@ -770,7 +770,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                                                         )}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold shadow-xs"
+                                                        className="shrink-0 inline-flex items-center justify-center gap-1 px-3 py-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 rounded-xl bg-emerald-600 text-white text-xs font-semibold shadow-xs transition-all duration-150 cursor-pointer active:scale-90"
                                                     >
                                                         <MessageCircle className="w-3.5 h-3.5" />
                                                         <span>WA Ortu</span>
@@ -799,7 +799,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                                             size="sm"
                                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                             disabled={currentPage === 1}
-                                            className="h-8 px-3 text-xs gap-1"
+                                            className="min-h-[44px] sm:min-h-[32px] px-3 text-xs gap-1 rounded-xl cursor-pointer active:scale-95 duration-150"
                                         >
                                             <ChevronLeft className="w-3.5 h-3.5" />
                                             <span>Sebelumnya</span>
@@ -812,7 +812,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                                             size="sm"
                                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                             disabled={currentPage === totalPages}
-                                            className="h-8 px-3 text-xs gap-1"
+                                            className="min-h-[44px] sm:min-h-[32px] px-3 text-xs gap-1 rounded-xl cursor-pointer active:scale-95 duration-150"
                                         >
                                             <span>Berikutnya</span>
                                             <ChevronRight className="w-3.5 h-3.5" />

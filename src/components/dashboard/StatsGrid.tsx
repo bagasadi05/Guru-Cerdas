@@ -189,7 +189,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
                     whileHover="hover"
                     custom={index}
                 >
-                    <Link to={stat.link} className="group block h-full">
+                    <Link to={stat.link} className="group block h-full cursor-pointer active:scale-[0.98] transition-transform duration-150">
                         <div className={`bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 h-full flex flex-col justify-between relative overflow-hidden border transition-all duration-300 group-hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] group-hover:-translate-y-1 border-slate-200/80 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] group-hover:border-indigo-500/20`}>
                             {/* Hover overlay effect */}
                             <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent dark:from-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

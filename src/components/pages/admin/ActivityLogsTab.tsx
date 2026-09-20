@@ -79,7 +79,7 @@ export const ActivityLogsTab: React.FC<ActivityLogsTabProps> = ({
                 </div>
             ) : (
                 <div className="overflow-x-auto">
-                    <table className="w-full">
+                    <table className="w-full" aria-label="Tabel Log Aktivitas">
                         <thead className="bg-gray-50 dark:bg-gray-900/50">
                             <tr className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                 <th className="px-6 py-3 text-left">Waktu</th>

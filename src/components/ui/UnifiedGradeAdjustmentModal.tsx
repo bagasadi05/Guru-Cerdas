@@ -497,7 +497,7 @@ export const UnifiedGradeAdjustmentModal: React.FC<UnifiedGradeAdjustmentModalPr
 
                             {/* Core Grading Table */}
                             <div className="overflow-x-auto">
-                                <table className="w-full text-xs text-left border-collapse border border-slate-300">
+                                <table className="w-full text-xs text-left border-collapse border border-slate-300" aria-label="Tabel Penyesuaian Nilai Siswa">
                                     <thead>
                                         <tr className="bg-slate-100 text-slate-800 uppercase text-xxs tracking-wider border-b border-slate-300">
                                             <th className="border border-slate-300 p-2 text-center w-8">No</th>

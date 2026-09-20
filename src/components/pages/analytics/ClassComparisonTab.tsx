@@ -156,7 +156,7 @@ const ClassComparisonTab: React.FC = () => {
                         Ranking seluruh kelas madrasah {semesterId ? 'untuk semester aktif' : '(semua waktu)'}. Klik judul kolom untuk mengurutkan, klik baris untuk rincian.
                     </p>
                 </div>
-                <table className="w-full text-sm">
+                <table className="w-full text-sm" aria-label="Tabel Peringkat dan Perbandingan Kelas">
                     <thead>
                         <tr className="border-b border-gray-200 dark:border-gray-700">
                             <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 dark:text-gray-400">#</th>

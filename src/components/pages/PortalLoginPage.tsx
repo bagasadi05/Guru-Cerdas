@@ -240,13 +240,13 @@ const PortalLoginPage: React.FC = () => {
                             </div>
 
                             {error && (
-                                <p className="flex items-center justify-center gap-1 text-xs text-rose-600 dark:text-rose-400 animate-fade-in mt-4 mb-2" role="alert">
+                                <p className="flex items-center justify-center gap-1 text-xs text-rose-600 dark:text-rose-400 animate-fade-in mt-4 mb-2" role="alert" aria-live="assertive">
                                     <AlertCircleIcon className="w-3.5 h-3.5 flex-shrink-0" />
                                     <span className="text-center">{error}</span>
                                 </p>
                             )}
 
-                            <button type="submit" className="w-full bg-primary-600 hover:bg-primary-500 text-white font-medium py-2.5 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 mt-6" disabled={loading || lockedOut}>
+                            <button type="submit" className="w-full bg-primary-600 hover:bg-primary-500 text-white font-semibold py-2.5 px-4 min-h-[44px] rounded-xl transition-all duration-150 flex items-center justify-center gap-2 mt-6 cursor-pointer active:scale-95 shadow-md shadow-primary-600/20" disabled={loading || lockedOut}>
                                 {loading ? 'Memverifikasi...' : (
                                     <>
                                         Masuk <ArrowRightIcon className="w-4 h-4" />
@@ -255,17 +255,17 @@ const PortalLoginPage: React.FC = () => {
                             </button>
                         </form>
                         
-                        <div className="relative flex py-6 items-center z-10">
+                        <div className="relative flex py-5 sm:py-6 items-center z-10">
                             <div className="flex-grow border-t border-gray-800"></div>
                         </div>
 
-                        <div className="flex items-center justify-center gap-1.5 text-gray-500 text-xs mt-2 mb-4 z-10 relative">
+                        <div className="flex items-center justify-center gap-1.5 text-gray-500 text-xs mt-1 mb-3 sm:mb-4 z-10 relative">
                             <ShieldIcon className="w-3.5 h-3.5" />
                             <span>Aman & terpercaya. Data Anda terlindungi.</span>
                         </div>
 
                         <div className="text-center border-t border-gray-800/60 pt-4 z-10 relative">
-                            <Link to="/" className="text-sm text-gray-400 hover:text-primary-400 transition-colors font-medium">
+                            <Link to="/" className="inline-flex items-center justify-center min-h-[44px] px-3 py-2 text-sm text-gray-400 hover:text-primary-400 transition-colors font-medium">
                                 Kembali ke pemilihan peran
                             </Link>
                         </div>

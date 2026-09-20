@@ -114,19 +114,21 @@ export const ReportForm: React.FC<ReportFormProps> = ({ defaultValues, onSubmit,
             {/* Date & Title */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-sm font-medium mb-1">Tanggal</label>
-                    <Input type="date" {...register('date')} error={errors.date?.message} />
+                    <label htmlFor="report-date" className="block text-sm font-medium mb-1">Tanggal</label>
+                    <Input id="report-date" aria-label="Tanggal" type="date" {...register('date')} error={errors.date?.message} />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium mb-1">Judul</label>
-                    <Input {...register('title')} placeholder="cth. Insiden di kelas" error={errors.title?.message} />
+                    <label htmlFor="report-title" className="block text-sm font-medium mb-1">Judul</label>
+                    <Input id="report-title" aria-label="Judul" {...register('title')} placeholder="cth. Insiden di kelas" error={errors.title?.message} />
                 </div>
             </div>
 
             {/* Notes */}
             <div>
-                <label className="block text-sm font-medium mb-1">Catatan Detail</label>
+                <label htmlFor="report-notes" className="block text-sm font-medium mb-1">Catatan Detail</label>
                 <Textarea
+                    id="report-notes"
+                    aria-label="Catatan Detail"
                     {...register('notes')}
                     rows={4}
                     placeholder="Tuliskan catatan lengkap..."

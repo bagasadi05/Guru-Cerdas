@@ -139,8 +139,17 @@ export const ExtracurricularMasterView: React.FC<ExtracurricularMasterViewProps>
                     filteredExtracurriculars.map((extracurricular) => (
                         <div
                             key={extracurricular.id}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Pilih ekstrakurikuler ${extracurricular.name}`}
                             onClick={() => onSelectExtracurricular(extracurricular.id)}
-                            className="group relative flex flex-col p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl hover:border-amber-300 dark:hover:border-amber-700/50 hover:-translate-y-1 transition-all cursor-pointer overflow-hidden"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    onSelectExtracurricular(extracurricular.id);
+                                }
+                            }}
+                            className="group relative flex flex-col p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl hover:border-amber-300 dark:hover:border-amber-700/50 hover:-translate-y-1 transition-all cursor-pointer overflow-hidden focus:outline-none focus:ring-2 focus:ring-amber-500"
                         >
                             {/* Decorative background glow */}
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-orange-600 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -186,15 +195,15 @@ export const ExtracurricularMasterView: React.FC<ExtracurricularMasterViewProps>
                             </div>
 
                             {/* Actions Overlay */}
-                            <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700 flex gap-2 relative z-10" onClick={(e) => e.stopPropagation()}>
+                            <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700 flex gap-2 relative z-10">
                                 <button type="button"
-                                    onClick={() => onOpenModal(extracurricular)}
+                                    onClick={(e) => { e.stopPropagation(); onOpenModal(extracurricular); }}
                                     className="flex-1 px-3 py-1.5 text-xs font-semibold bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/30 dark:hover:text-amber-400 transition-colors"
                                 >
                                     Edit
                                 </button>
                                 <button type="button"
-                                    onClick={() => onDeleteExtracurricular(extracurricular)}
+                                    onClick={(e) => { e.stopPropagation(); onDeleteExtracurricular(extracurricular); }}
                                     className="px-3 py-1.5 text-xs font-semibold bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors"
                                 >
                                     Hapus

@@ -43,7 +43,7 @@ export const StudentFilters: React.FC<StudentFiltersProps> = ({
                     <button
                         type="button"
                         onClick={() => onSearchChange('')}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer active:scale-90 transition-all"
                         title="Hapus pencarian"
                         aria-label="Hapus kata kunci pencarian"
                     >
@@ -59,35 +59,37 @@ export const StudentFilters: React.FC<StudentFiltersProps> = ({
                     <button
                         type="button"
                         onClick={() => onViewModeChange('grid')}
-                        className={`min-h-[44px] px-2.5 rounded-lg flex items-center justify-center transition-all ${
+                        className={`min-h-[44px] min-w-[40px] px-2.5 rounded-lg flex items-center justify-center cursor-pointer active:scale-95 transition-all duration-150 ${
                             viewMode === 'grid'
                                 ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm font-semibold'
                                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                         }`}
                         title="Tampilan Grid"
+                        aria-label="Tampilan Grid"
                     >
                         <LayoutGridIcon className="h-4 w-4" />
                     </button>
                     <button
                         type="button"
                         onClick={() => onViewModeChange('list')}
-                        className={`min-h-[44px] px-2.5 rounded-lg flex items-center justify-center transition-all ${
+                        className={`min-h-[44px] min-w-[40px] px-2.5 rounded-lg flex items-center justify-center cursor-pointer active:scale-95 transition-all duration-150 ${
                             viewMode === 'list'
                                 ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm font-semibold'
                                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                         }`}
                         title="Tampilan List/Tabel"
+                        aria-label="Tampilan List"
                     >
                         <ListIcon className="h-4 w-4" />
                     </button>
                 </div>
 
                 {/* Gender Select */}
-                <div className="flex-1 sm:flex-none min-w-[145px]">
+                <div className="flex-1 sm:flex-none min-w-[130px] sm:min-w-[145px]">
                     <Select
                         value={genderFilter}
                         onChange={(e) => onGenderFilterChange(e.target.value as 'all' | 'Laki-laki' | 'Perempuan')}
-                        className="h-11 !text-xs sm:!text-sm font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 !px-3 shadow-sm cursor-pointer"
+                        className="h-11 !text-xs sm:!text-sm font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 !px-3 shadow-sm cursor-pointer active:scale-[0.98] transition-all"
                     >
                         <option value="all">Semua Gender</option>
                         <option value="Laki-laki">Laki-laki</option>
@@ -96,11 +98,11 @@ export const StudentFilters: React.FC<StudentFiltersProps> = ({
                 </div>
 
                 {/* Status Select */}
-                <div className="flex-1 sm:flex-none min-w-[155px]">
+                <div className="flex-1 sm:flex-none min-w-[140px] sm:min-w-[155px]">
                     <Select
                         value={accessCodeFilter}
                         onChange={(e) => onAccessCodeFilterChange(e.target.value as 'all' | 'has_code' | 'no_code')}
-                        className="h-11 !text-xs sm:!text-sm font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 !px-3 shadow-sm cursor-pointer"
+                        className="h-11 !text-xs sm:!text-sm font-medium rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 !px-3 shadow-sm cursor-pointer active:scale-[0.98] transition-all"
                     >
                         <option value="all">Semua Status</option>
                         <option value="has_code">Sudah Ada Kode</option>

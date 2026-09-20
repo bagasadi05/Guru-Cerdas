@@ -5,7 +5,7 @@ import { staggerContainerVariants, staggerItemVariants } from '../../utils/anima
 import { triggerSubtleConfetti } from '../../utils/confetti';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { PlusIcon, ClockIcon, CalendarIcon, BookOpenIcon, GraduationCapIcon, BrainCircuitIcon, DownloadCloudIcon, AlertCircleIcon, CheckCircleIcon, ClipboardPenIcon, Share2Icon, PrinterIcon } from '../Icons';
+import { PlusIcon, ClockIcon, CalendarIcon, BookOpenIcon, GraduationCapIcon, BrainCircuitIcon, DownloadCloudIcon, AlertCircleIcon, CheckCircleIcon, ClipboardPenIcon } from '../Icons';
 import { Modal } from '../ui/Modal';
 import { MarkdownText } from '../ui/MarkdownText';
 import { generateGeminiJson } from '../../services/geminiService';
@@ -100,11 +100,6 @@ const SchedulePage: React.FC = () => {
     const [notificationsEnabled, setNotificationsEnabled] = useState(isNotificationsEnabled);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [confirmModalState, setConfirmModalState] = useState<{ isOpen: boolean; data: ScheduleRow | null }>({ isOpen: false, data: null });
-    const [isPhAddOpen, setIsPhAddOpen] = useState(false);
-    const [canManagePh, setCanManagePh] = useState(false);
-    const [isPhWaOpen, setIsPhWaOpen] = useState(false);
-    const [isPhPrintOpen, setIsPhPrintOpen] = useState(false);
-    const [isPhIcsTrigger, setIsPhIcsTrigger] = useState(false);
     const lastScheduleErrorRef = useRef<string | null>(null);
 
     useEffect(() => {
@@ -437,121 +432,110 @@ const SchedulePage: React.FC = () => {
     const currentDaySchedule = scheduleByDay[selectedDay] || [];
 
     return (
-        <div className="w-full min-h-full bg-slate-50 dark:bg-[#0B1120] text-slate-800 dark:text-white pb-24">
+        <div className="w-full min-h-full bg-slate-50 dark:bg-[#080d16] text-slate-800 dark:text-white pb-24">
             <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
                 {/* Main Section Header */}
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-slate-800 dark:text-white font-serif">Jadwal & Jurnal Mengajar</h1>
-                        <p className="mt-1 text-slate-500 dark:text-slate-400">Kelola jadwal pelajaran, penilaian harian (PH), dan catat jurnal harian mengajar dalam satu tempat.</p>
-                    </div>
-                    {activeMainTab === 'ph' && (
-                        <div className="flex flex-wrap gap-2 self-end md:self-center">
-                            {canManagePh && (
-                                <Button onClick={() => setIsPhAddOpen(true)} variant="primary" size="sm"
-                                    className="h-10 px-3 sm:px-4 rounded-lg">
-                                    <PlusIcon className="w-4 h-4 sm:mr-2" />
-                                    <span className="hidden sm:inline">Tambah Jadwal PH</span>
-                                </Button>
-                            )}
-                            <Button onClick={() => setIsPhWaOpen(true)} variant="outline" size="sm"
-                                className="h-10 px-3 sm:px-4 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white">
-                                <Share2Icon className="w-4 h-4 sm:mr-2 text-emerald-500 dark:text-emerald-400" />
-                                <span className="hidden sm:inline">Salin WA</span>
-                            </Button>
-                            <Button onClick={() => setIsPhPrintOpen(true)} variant="outline" size="sm"
-                                className="h-10 px-3 sm:px-4 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white">
-                                <PrinterIcon className="w-4 h-4 sm:mr-2" />
-                                <span className="hidden sm:inline">Cetak</span>
-                            </Button>
-                            <Button onClick={() => setIsPhIcsTrigger(true)} variant="outline" size="sm"
-                                className="h-10 px-3 sm:px-4 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white">
-                                <CalendarIcon className="w-4 h-4 sm:mr-2" />
-                                <span className="hidden sm:inline">ICS</span>
-                            </Button>
+                        {/* Stitch Intro Badge */}
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-950/60 border border-emerald-500/30 dark:border-emerald-500/40 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mb-1.5 sm:mb-2 whitespace-nowrap">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-[#00d284] animate-pulse shrink-0" />
+                            <span>Menu Utama</span>
                         </div>
-                    )}
+                        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight font-serif">
+                            <span className="relative inline-block">
+                                <span className="relative z-10 bg-gradient-to-r from-slate-900 via-emerald-800 to-emerald-600 dark:from-white dark:via-emerald-100 dark:to-[#00d284] bg-clip-text text-transparent">
+                                    Jadwal & Jurnal Mengajar
+                                </span>
+                                <span className="absolute left-0 bottom-0.5 sm:bottom-1 w-full h-[5px] sm:h-[6px] bg-emerald-500/20 dark:bg-emerald-500/30 rounded-full -z-0 blur-[1px]" />
+                            </span>
+                        </h1>
+                        <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-2xl font-sans">
+                            Kelola jadwal pelajaran, penilaian harian (PH), dan catat jurnal harian mengajar dalam satu tempat.
+                        </p>
+                    </div>
+
                     {activeMainTab === 'jadwal' && (
-                        <div className="flex flex-wrap gap-2 self-end md:self-center">
+                        <div className="flex items-center gap-1.5 sm:gap-2 self-start sm:self-auto flex-wrap sm:flex-nowrap">
                             <Button onClick={() => handleOpenAddModal()} variant="primary" size="sm"
-                                className="h-10 px-3 sm:px-4 rounded-lg">
-                                <PlusIcon className="w-4 h-4 sm:mr-2" />
+                                className="h-9 sm:h-10 px-3 sm:px-4 rounded-xl shadow-sm text-xs sm:text-sm font-semibold cursor-pointer active:scale-95 transition-all"
+                                title="Tambah Jadwal Mengajar Baru"
+                                aria-label="Tambah Jadwal">
+                                <PlusIcon className="w-4 h-4 sm:mr-1.5 shrink-0" />
                                 <span className="hidden sm:inline">Tambah Jadwal</span>
+                                <span className="sm:hidden">Tambah</span>
                             </Button>
                             <Button onClick={handleAnalyzeSchedule} variant="outline" size="sm" disabled={!isOnline || schedule.length === 0}
-                                className="h-10 px-3 sm:px-4 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white">
-                                <BrainCircuitIcon className="w-4 h-4 sm:mr-2 text-emerald-500 dark:text-emerald-400" />
-                                <span className="hidden sm:inline">Analisis AI</span>
+                                className="h-9 sm:h-10 px-2.5 sm:px-3.5 rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white text-xs sm:text-sm font-medium cursor-pointer active:scale-95 transition-all"
+                                title="Analisis Beban Mengajar dengan AI"
+                                aria-label="Analisis AI">
+                                <BrainCircuitIcon className="w-4 h-4 sm:mr-1.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                                <span className="hidden md:inline">Analisis AI</span>
                             </Button>
                             <Button onClick={handleExportPdf} variant="outline" size="sm"
-                                className="h-10 px-3 sm:px-4 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white">
-                                <DownloadCloudIcon className="w-4 h-4 sm:mr-2" />
-                                <span className="hidden sm:inline">PDF</span>
+                                className="h-9 sm:h-10 px-2.5 sm:px-3.5 rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white text-xs font-medium cursor-pointer active:scale-95 transition-all"
+                                title="Ekspor Jadwal ke PDF"
+                                aria-label="Ekspor PDF">
+                                <DownloadCloudIcon className="w-4 h-4 sm:mr-1.5 shrink-0" />
+                                <span className="hidden md:inline">PDF</span>
                             </Button>
                             <Button onClick={handleExportToIcs} variant="outline" size="sm"
-                                className="h-10 px-3 sm:px-4 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white">
-                                <CalendarIcon className="w-4 h-4 sm:mr-2" />
-                                <span className="hidden sm:inline">ICS</span>
+                                className="h-9 sm:h-10 px-2.5 sm:px-3.5 rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white text-xs font-medium cursor-pointer active:scale-95 transition-all"
+                                title="Ekspor ke Kalender (ICS)"
+                                aria-label="Ekspor Kalender ICS">
+                                <CalendarIcon className="w-4 h-4 sm:mr-1.5 shrink-0" />
+                                <span className="hidden md:inline">ICS</span>
                             </Button>
                         </div>
                     )}
                 </header>
 
-                {/* Tab Navigation Pill */}
-                <div className="flex items-center gap-1.5 sm:gap-2 p-1 bg-slate-200/70 dark:bg-slate-800/70 backdrop-blur-md rounded-2xl w-full sm:w-fit border border-slate-300/40 dark:border-slate-700/40 overflow-x-auto scrollbar-hide">
+                {/* Segmented Navigation Tabs (Stitch Style) */}
+                <nav aria-label="Navigasi Jadwal dan Jurnal" className="grid grid-cols-3 gap-1 p-1 bg-slate-100 dark:bg-[#0d1524] border border-slate-200/80 dark:border-[#1c2b44] rounded-2xl w-full sm:w-fit text-[12px] font-medium shadow-sm">
                     <button
+                        type="button"
                         onClick={() => setSearchParams({})}
-                        className={`flex-1 sm:flex-initial px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap ${
+                        className={`py-2 px-1.5 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
                             activeMainTab === 'jadwal'
-                                ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-md'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                ? 'bg-white dark:bg-[#111c2e] border border-slate-300/80 dark:border-[#1c2b44] text-emerald-600 dark:text-[#00d284] font-bold shadow-sm'
+                                : 'text-slate-600 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white'
                         }`}
                     >
-                        <CalendarIcon className="w-4 h-4 shrink-0" />
-                        <span className="hidden sm:inline">Jadwal Mengajar</span>
-                        <span className="sm:hidden">Jadwal</span>
+                        <CalendarIcon className={`w-4 h-4 shrink-0 ${activeMainTab === 'jadwal' ? 'text-emerald-500 dark:text-[#00d284]' : 'text-slate-400 dark:text-[#64748b]'}`} />
+                        <span>Jadwal</span>
                     </button>
                     <button
+                        type="button"
                         onClick={() => setSearchParams({ tab: 'ph' })}
-                        className={`flex-1 sm:flex-initial px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap ${
+                        className={`py-2 px-1.5 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
                             activeMainTab === 'ph'
-                                ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-md'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                ? 'bg-white dark:bg-[#111c2e] border border-slate-300/80 dark:border-[#1c2b44] text-emerald-600 dark:text-[#00d284] font-bold shadow-sm'
+                                : 'text-slate-600 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white'
                         }`}
                     >
-                        <ClipboardPenIcon className="w-4 h-4 shrink-0" />
-                        <span className="hidden sm:inline">Jadwal Penilaian Harian (PH)</span>
-                        <span className="sm:hidden">Jadwal PH</span>
+                        <ClipboardPenIcon className={`w-4 h-4 shrink-0 ${activeMainTab === 'ph' ? 'text-emerald-500 dark:text-[#00d284]' : 'text-slate-400 dark:text-[#64748b]'}`} />
+                        <span>Jadwal PH</span>
                     </button>
                     <button
+                        type="button"
                         onClick={() => setSearchParams({ tab: 'jurnal' })}
-                        className={`flex-1 sm:flex-initial px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap ${
+                        className={`py-2 px-1.5 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
                             activeMainTab === 'jurnal'
-                                ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-md'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                ? 'bg-white dark:bg-[#111c2e] border border-slate-300/80 dark:border-[#1c2b44] text-emerald-600 dark:text-[#00d284] font-bold shadow-sm'
+                                : 'text-slate-600 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white'
                         }`}
                     >
-                        <BookOpenIcon className="w-4 h-4 shrink-0" />
-                        <span className="hidden sm:inline">Jurnal Harian Mengajar</span>
-                        <span className="sm:hidden">Jurnal</span>
+                        <BookOpenIcon className={`w-4 h-4 shrink-0 ${activeMainTab === 'jurnal' ? 'text-emerald-500 dark:text-[#00d284]' : 'text-slate-400 dark:text-[#64748b]'}`} />
+                        <span>Jurnal</span>
                     </button>
-                </div>
+                </nav>
 
                 {activeMainTab === 'jurnal' ? (
-                    <JurnalMengajarPage />
+                    <JurnalMengajarPage embedded={true} />
                 ) : activeMainTab === 'ph' ? (
                     <PhScheduleTab
-                        externalOpenAdd={isPhAddOpen}
-                        onResetExternalOpenAdd={() => setIsPhAddOpen(false)}
-                        externalTriggerWa={isPhWaOpen}
-                        onResetExternalTriggerWa={() => setIsPhWaOpen(false)}
-                        externalTriggerPrint={isPhPrintOpen}
-                        onResetExternalTriggerPrint={() => setIsPhPrintOpen(false)}
-                        externalTriggerIcs={isPhIcsTrigger}
-                        onResetExternalTriggerIcs={() => setIsPhIcsTrigger(false)}
                         selectedClassId={selectedClassId}
                         onSelectClassId={setSelectedClassId}
-                        onCanManageChange={setCanManagePh}
                     />
                 ) : (
                     <>
@@ -660,10 +644,10 @@ const SchedulePage: React.FC = () => {
                         />
                     </FormInputWrapper>
                     <div className="grid grid-cols-2 gap-4">
-                        <FormInputWrapper label="Waktu Mulai" icon={ClockIcon}><Input type="time" value={formData.start_time} onChange={e => setFormData({ ...formData, start_time: e.target.value })} className={inputStyles} error={errors.start_time} /></FormInputWrapper>
-                        <FormInputWrapper label="Waktu Selesai" icon={ClockIcon}><Input type="time" value={formData.end_time} onChange={e => setFormData({ ...formData, end_time: e.target.value })} className={inputStyles} error={errors.end_time} /></FormInputWrapper>
+                        <FormInputWrapper label="Waktu Mulai" icon={ClockIcon}><Input aria-label="Waktu Mulai" type="time" value={formData.start_time} onChange={e => setFormData({ ...formData, start_time: e.target.value })} className={inputStyles} error={errors.start_time} /></FormInputWrapper>
+                        <FormInputWrapper label="Waktu Selesai" icon={ClockIcon}><Input aria-label="Waktu Selesai" type="time" value={formData.end_time} onChange={e => setFormData({ ...formData, end_time: e.target.value })} className={inputStyles} error={errors.end_time} /></FormInputWrapper>
                     </div>
-                    <FormInputWrapper label="Mata Pelajaran" icon={BookOpenIcon}><Input value={formData.subject} onChange={e => setFormData({ ...formData, subject: e.target.value })} className={inputStyles} placeholder="cth. Matematika" error={errors.subject} /></FormInputWrapper>
+                    <FormInputWrapper label="Mata Pelajaran" icon={BookOpenIcon}><Input aria-label="Mata Pelajaran" value={formData.subject} onChange={e => setFormData({ ...formData, subject: e.target.value })} className={inputStyles} placeholder="cth. Matematika" error={errors.subject} /></FormInputWrapper>
                     <FormInputWrapper label="Kelas" icon={GraduationCapIcon}>
                         {isLoadingClasses ? (
                             <div className="h-11 rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse" aria-label="Memuat kelas" />

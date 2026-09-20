@@ -224,7 +224,7 @@ const LoginPage: React.FC = () => {
                                         </button>
                                     </div>
 
-                                    <button type="submit" className="w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 mt-4" disabled={loading}>
+                                    <button type="submit" className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 min-h-[44px] rounded-xl transition-all duration-150 flex items-center justify-center gap-2 mt-4 cursor-pointer active:scale-95 shadow-md shadow-brand-600/20" disabled={loading}>
                                         {loading ? 'Memproses...' : (
                                             <>
                                                 Masuk <ArrowRightIcon className="w-4 h-4" />
@@ -286,7 +286,7 @@ const LoginPage: React.FC = () => {
                                         />
                                     </div>
 
-                                    <button type="submit" className="w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 mt-4" disabled={loading}>
+                                    <button type="submit" className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 min-h-[44px] rounded-xl transition-all duration-150 flex items-center justify-center gap-2 mt-4 cursor-pointer active:scale-95 shadow-md shadow-brand-600/20" disabled={loading}>
                                         {loading ? 'Memproses...' : (
                                             <>
                                                 Daftar <ArrowRightIcon className="w-4 h-4" />
@@ -296,7 +296,7 @@ const LoginPage: React.FC = () => {
                                 </form>
                             )}
                             
-                            <div className="relative flex py-6 items-center">
+                            <div className="relative flex py-5 sm:py-6 items-center">
                                 <div className="flex-grow border-t border-gray-800"></div>
                                 <span className="flex-shrink-0 mx-4 text-gray-500 text-xs">atau</span>
                                 <div className="flex-grow border-t border-gray-800"></div>
@@ -305,23 +305,23 @@ const LoginPage: React.FC = () => {
                             <button 
                                 type="button" 
                                 onClick={toggleMode}
-                                className="w-full bg-transparent border border-gray-700 hover:border-gray-500 text-gray-300 hover:text-white font-medium py-2.5 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 mb-6"
+                                className="w-full bg-transparent border border-gray-700 hover:border-gray-500 text-gray-300 hover:text-white font-medium py-2.5 px-4 min-h-[44px] rounded-xl transition-all duration-150 flex items-center justify-center gap-2 mb-4 sm:mb-6 cursor-pointer active:scale-95"
                             >
                                 <UserCircleIcon className="w-4 h-4 text-gray-400" />
                                 {isLoginMode ? (
-                                    <>Belum punya akun? <span className="text-brand-300">Daftar di sini</span></>
+                                    <>Belum punya akun? <span className="text-brand-300 font-semibold">Daftar di sini</span></>
                                 ) : (
-                                    <>Sudah punya akun? <span className="text-brand-300">Masuk di sini</span></>
+                                    <>Sudah punya akun? <span className="text-brand-300 font-semibold">Masuk di sini</span></>
                                 )}
                             </button>
 
-                            <div className="flex items-center justify-center gap-1.5 text-gray-500 text-xs mt-6 mb-4">
+                            <div className="flex items-center justify-center gap-1.5 text-gray-500 text-xs mt-4 sm:mt-6 mb-3 sm:mb-4">
                                 <ShieldIcon className="w-3.5 h-3.5" />
                                 <span>Aman & terpercaya. Data Anda terlindungi.</span>
                             </div>
 
                             <div className="text-center border-t border-gray-800/60 pt-4">
-                                <Link to="/" className="text-sm text-gray-400 hover:text-brand-300 transition-colors font-medium">
+                                <Link to="/" className="inline-flex items-center justify-center min-h-[44px] px-3 py-2 text-sm text-gray-400 hover:text-brand-300 transition-colors font-medium">
                                     Kembali ke pemilihan peran
                                 </Link>
                             </div>
@@ -334,7 +334,10 @@ const LoginPage: React.FC = () => {
                 <form onSubmit={handleForgotPassword} className="space-y-4">
                     <p className="text-sm text-gray-600 dark:text-gray-400">Masukkan alamat email Anda. Kami akan mengirimkan tautan untuk mengatur ulang password Anda.</p>
                     <div><label htmlFor="forgot-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label><Input type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" id="forgot-email" placeholder="Email terdaftar Anda" required value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} /></div>
-                    <div className="flex justify-end gap-2 pt-4"><Button type="button" variant="ghost" onClick={() => setIsForgotModalOpen(false)} disabled={forgotLoading}>Batal</Button><Button type="submit" disabled={forgotLoading}>{forgotLoading ? 'Mengirim...' : 'Kirim Tautan'}</Button></div>
+                    <div className="flex justify-end gap-2 pt-4">
+                        <Button type="button" variant="ghost" onClick={() => setIsForgotModalOpen(false)} disabled={forgotLoading} className="min-h-[44px] px-5 rounded-xl cursor-pointer active:scale-95 transition-all duration-150">Batal</Button>
+                        <Button type="submit" disabled={forgotLoading} className="min-h-[44px] px-6 rounded-xl cursor-pointer active:scale-95 transition-all duration-150">{forgotLoading ? 'Mengirim...' : 'Kirim Tautan'}</Button>
+                    </div>
                 </form>
             </Modal>
         </>

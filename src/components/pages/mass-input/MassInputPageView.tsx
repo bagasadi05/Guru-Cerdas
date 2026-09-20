@@ -547,8 +547,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                 {/* Undo bar — restores the batch that was just cleared */}
                 {undoSnapshot && typeof document !== 'undefined' && createPortal(
                     <div
-                        role="status"
-                        aria-live="polite"
+                        role="status" aria-live="polite"
                         className="fixed bottom-32 lg:bottom-20 inset-x-0 z-50 pointer-events-none flex justify-center lg:pl-72 px-4 animate-in fade-in slide-in-from-bottom-5"
                     >
                         <div className="pointer-events-auto shadow-2xl bg-amber-50 dark:bg-amber-950/90 text-amber-900 dark:text-amber-100 px-4 py-2.5 rounded-2xl flex items-center gap-3 border border-amber-300 dark:border-amber-800 backdrop-blur-md max-w-[95vw]">
@@ -574,8 +573,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                 {/* Floating Save Bar for Step 2 — rendered via portal to escape parent transform/overflow stacking contexts */}
                 {step === 2 && mode !== 'violation_export' && (mode === 'subject_grade' ? gradedCount > 0 : selectedStudentIds.size > 0) && typeof document !== 'undefined' && createPortal(
                     <div
-                        role="status"
-                        aria-live="polite"
+                        role="status" aria-live="polite"
                         className="fixed bottom-20 lg:bottom-6 inset-x-0 z-50 pointer-events-none flex justify-center lg:pl-72 px-4 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5"
                     >
                         <div className="pointer-events-auto shadow-2xl bg-slate-900/95 dark:bg-slate-800/95 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl flex items-center gap-3 sm:gap-4 backdrop-blur-md border border-slate-700/60 dark:border-slate-600 shadow-black/40 max-w-[95vw]">

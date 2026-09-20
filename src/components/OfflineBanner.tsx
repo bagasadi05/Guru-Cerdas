@@ -18,7 +18,7 @@ const OfflineBanner: React.FC = () => {
           ? 'bg-brand-600 text-white'
           : 'bg-yellow-400 dark:bg-yellow-500 text-gray-900 dark:text-black'
         }`}
-      role="status"
+      role="status" aria-live="polite"
     >
       {isOnline ? (
         <>

@@ -26,8 +26,8 @@ export const ScheduleDaySelector: React.FC<ScheduleDaySelectorProps> = ({
             key={day}
             onClick={() => onSelectDay(day)}
             className={`
-              relative flex flex-col items-center justify-center gap-1.5
-              min-w-0 flex-1 sm:flex-none sm:min-w-0 h-16 flex-shrink-0 snap-center rounded-2xl transition-all duration-300
+              relative flex flex-col items-center justify-center gap-1.5 cursor-pointer active:scale-95
+              min-w-0 flex-1 sm:flex-none sm:min-w-0 h-16 flex-shrink-0 snap-center rounded-2xl transition-all duration-200
               sm:min-w-0 sm:w-full sm:h-[72px] lg:h-[80px]
               ${
                 isSelected

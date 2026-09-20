@@ -22,6 +22,8 @@ import {
     AlertCircle,
     Users,
     RotateCcw,
+    Zap,
+    ShieldCheck,
 } from 'lucide-react';
 
 export interface VoiceGradeModalProps {
@@ -504,8 +506,8 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
         handleNameMatchSpeechRef.current = handleNameMatchSpeech;
     }, [activeTab, currentIndex, handleNameMatchSpeech, handleSequentialSpeech, inputSafetyMode, scores, students]);
 
-    // Start recognition helper with auto-restart resilience
-    const startListening = useCallback(() => {
+    // Start recognition helper with auto-restart resilience and Android Chrome permission handling
+    const startListening = useCallback(async () => {
         if (!isSupported) {
             setErrorMessage('Browser Anda tidak mendukung Web Speech API. Disarankan menggunakan Google Chrome atau Microsoft Edge.');
             return;
@@ -514,6 +516,32 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
         if (isBrave) {
             setErrorMessage('Browser Brave memblokir layanan Speech Recognition bawaan Google demi privasi. Silakan buka aplikasi ini di Google Chrome atau Microsoft Edge untuk menggunakan Dikte Suara.');
             return;
+        }
+
+        if (typeof window !== 'undefined' && window.isSecureContext === false && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            setErrorMessage('Akses mikrofon pada Chrome Android memerlukan koneksi aman (HTTPS). Harap akses aplikasi melalui HTTPS.');
+            return;
+        }
+
+        // Explicitly trigger getUserMedia permission check to guarantee browser permission prompt on Chrome Android
+        if (typeof navigator !== 'undefined' && navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                // Immediately stop all audio tracks to free the mic hardware for SpeechRecognition
+                stream.getTracks().forEach(track => track.stop());
+            } catch (micErr: unknown) {
+                console.warn('Microphone permission / getUserMedia error:', micErr);
+                const err = micErr as { name?: string };
+                if (err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError') {
+                    setErrorMessage('Akses mikrofon ditolak. Izinkan izin mikrofon di pengaturan browser Anda.');
+                    stopListening();
+                    return;
+                } else if (err?.name === 'NotFoundError' || err?.name === 'DevicesNotFoundError') {
+                    setErrorMessage('Mikrofon tidak terdeteksi pada perangkat ini.');
+                    stopListening();
+                    return;
+                }
+            }
         }
 
         const win = typeof window !== 'undefined' ? (window as unknown as WindowWithSpeech) : null;
@@ -542,6 +570,9 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
             };
 
             recognition.onresult = (event: SpeechRecognitionEvent) => {
+                // Reset consecutive crash counter when speech results are actively received
+                restartCountRef.current = 0;
+
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const res = event.results[i];
                     const fullTranscript = res[0]?.transcript || '';
@@ -600,7 +631,7 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                     setErrorMessage('Akses mikrofon ditolak. Izinkan izin mikrofon di pengaturan browser Anda.');
                     stopListening();
                 } else if (event.error === 'network') {
-                    setErrorMessage('Gagal terhubung ke layanan speech recognition (Network Error). Browser Brave memblokir layanan speech Google secara bawaan. Harap gunakan Google Chrome atau Microsoft Edge.');
+                    setErrorMessage('Gagal terhubung ke layanan speech recognition (Network Error). Harap periksa koneksi internet Anda atau gunakan Google Chrome.');
                     stopListening();
                 } else if (event.error === 'audio-capture') {
                     setErrorMessage('Mikrofon tidak terdeteksi atau sedang digunakan oleh aplikasi lain.');
@@ -615,14 +646,15 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
             recognition.onend = () => {
                 if (isListeningRef.current) {
                     const now = Date.now();
-                    if (now - lastRestartTimeRef.current < 5000) {
+                    // In Android Chrome, onend fires after single utterances. Only count rapid failures (<1200ms) as crash loop
+                    if (now - lastRestartTimeRef.current < 1200) {
                         restartCountRef.current += 1;
                     } else {
                         restartCountRef.current = 1;
                     }
                     lastRestartTimeRef.current = now;
 
-                    if (restartCountRef.current > 4) {
+                    if (restartCountRef.current > 5) {
                         isListeningRef.current = false;
                         setIsListening(false);
                         setErrorMessage('Pengenal suara terhenti berulang kali. Silakan periksa koneksi mikrofon Anda atau klik tombol mikrofon untuk menyambung ulang.');
@@ -793,30 +825,63 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                     </div>
                 )}
 
-                {/* Error Banner if mic denied */}
+                {/* Error Banner if mic denied or other error with Android Chrome helper */}
                 {errorMessage && (
-                    <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-200 text-sm flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-                        <span>{errorMessage}</span>
+                    <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-200 text-xs sm:text-sm animate-in fade-in">
+                        <div className="flex items-start gap-2.5">
+                            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                                <p className="font-bold text-rose-900 dark:text-rose-100">{errorMessage}</p>
+                                {errorMessage.toLowerCase().includes('ditolak') && (
+                                    <div className="mt-2 text-xs text-rose-700 dark:text-rose-300 space-y-1 bg-white/60 dark:bg-black/20 p-2 sm:p-2.5 rounded-lg border border-rose-200/60 dark:border-rose-800/40">
+                                        <p className="font-semibold text-rose-900 dark:text-rose-200">Cara mengizinkan di Chrome Android:</p>
+                                        <ol className="list-decimal list-inside space-y-0.5 text-[11px] sm:text-xs">
+                                            <li>Ketuk ikon setelan / gembok 🔒 di sebelah kiri address bar URL Chrome.</li>
+                                            <li>Pilih <strong>Izin situs</strong> &gt; aktifkan <strong>Mikrofon</strong>.</li>
+                                            <li>Bila masih diblokir, buka Pengaturan HP &gt; Aplikasi &gt; Chrome &gt; Izin &gt; aktifkan Mikrofon.</li>
+                                        </ol>
+                                    </div>
+                                )}
+                                <div className="mt-2 flex items-center gap-2">
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        onClick={startListening}
+                                        className="h-7 sm:h-8 text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg sm:rounded-xl flex items-center gap-1.5 shadow-sm px-2.5 sm:px-3"
+                                    >
+                                        <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Coba Lagi / Minta Izin
+                                    </Button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setErrorMessage(null)}
+                                        className="text-xs text-rose-600 hover:text-rose-800 dark:text-rose-300 font-medium px-2 py-1"
+                                    >
+                                        Tutup
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
 
                 {/* Mode Tabs & Sound Toggle */}
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
-                    <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-2.5 sm:pb-3">
+                    <div className="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl sm:rounded-2xl w-full sm:w-auto">
                         <button
                             type="button"
                             onClick={() => {
                                 stopListening();
                                 setActiveTab('sequential');
                             }}
-                            className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                            className={`flex items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all text-center cursor-pointer ${
                                 activeTab === 'sequential'
-                                    ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-300 shadow-sm'
+                                    ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-300 shadow-sm font-bold'
                                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                             }`}
                         >
-                            ⚡ Mode Berurutan (Hands-Free)
+                            <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                            <span className="hidden sm:inline">Mode Berurutan (Hands-Free)</span>
+                            <span className="sm:hidden">Berurutan</span>
                         </button>
                         <button
                             type="button"
@@ -824,43 +889,47 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                 stopListening();
                                 setActiveTab('name_match');
                             }}
-                            className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                            className={`flex items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all text-center cursor-pointer ${
                                 activeTab === 'name_match'
-                                    ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-300 shadow-sm'
+                                    ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-300 shadow-sm font-bold'
                                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                             }`}
                         >
-                            🧠 Mode Bebas (Absen / Nama + Nilai)
+                            <Sparkles className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+                            <span className="hidden sm:inline">Mode Bebas (Absen / Nama + Nilai)</span>
+                            <span className="sm:hidden">Mode Bebas</span>
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
                         {/* Safety Mode Toggle */}
                         {activeTab === 'sequential' && (
                             <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-xl text-xs border border-slate-200/80 dark:border-slate-700">
                                 <button
                                     type="button"
                                     onClick={() => setInputSafetyMode('accurate')}
-                                    className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                                    className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-all text-[11px] sm:text-xs cursor-pointer ${
                                         inputSafetyMode === 'accurate'
                                             ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-300 shadow-xs font-bold'
                                             : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
                                     }`}
                                     title="Hanya simpan setelah selesai bicara (Mencegah salah dengar angka parsial)"
                                 >
-                                    🛡️ Akurat
+                                    <ShieldCheck className="w-3 h-3 text-emerald-500 shrink-0" />
+                                    <span>Akurat</span>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setInputSafetyMode('fast')}
-                                    className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                                    className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-all text-[11px] sm:text-xs cursor-pointer ${
                                         inputSafetyMode === 'fast'
                                             ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-300 shadow-xs font-bold'
                                             : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
                                     }`}
                                     title="Langsung simpan saat jeda hening singkat"
                                 >
-                                    ⚡ Cepat
+                                    <Zap className="w-3 h-3 text-amber-500 shrink-0" />
+                                    <span>Cepat</span>
                                 </button>
                             </div>
                         )}
@@ -868,7 +937,7 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                         <button
                             type="button"
                             onClick={() => setSoundEnabled(prev => !prev)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold border transition-all ${
                                 soundEnabled
                                     ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/50'
                                     : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'
@@ -917,40 +986,40 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
 
                         {/* Active Student Card */}
                         {activeStudent ? (
-                            <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-brand-50/70 via-white to-brand-50/30 dark:from-slate-800 dark:via-slate-900 dark:to-brand-950/30 border border-brand-200/80 dark:border-brand-900/40 shadow-lg shadow-brand-600/5 relative overflow-hidden">
-                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                                    <div className="flex items-center gap-4 text-center sm:text-left">
-                                        <div className="w-14 h-14 rounded-2xl bg-brand-600 text-white font-bold text-xl flex items-center justify-center shadow-md shadow-brand-600/20 shrink-0">
+                            <div className="p-3.5 sm:p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-brand-50/70 via-white to-brand-50/30 dark:from-slate-800 dark:via-slate-900 dark:to-brand-950/30 border border-brand-200/80 dark:border-brand-900/40 shadow-lg shadow-brand-600/5 relative overflow-hidden">
+                                <div className="flex items-center justify-between gap-2.5 sm:gap-4">
+                                    <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
+                                        <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-brand-600 text-white font-bold text-base sm:text-xl flex items-center justify-center shadow-md shadow-brand-600/20 shrink-0">
                                             {currentIndex + 1}
                                         </div>
-                                        <div>
-                                            <div className="flex items-center justify-center sm:justify-start gap-2">
-                                                <span className="text-xs font-bold text-brand-600 dark:text-brand-300 uppercase tracking-wider">
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                <span className="text-[10px] sm:text-xs font-bold text-brand-600 dark:text-brand-300 uppercase tracking-wider">
                                                     Siswa {currentIndex + 1} dari {students.length}
                                                 </span>
                                                 {recentlySavedId === activeStudent.id ? (
-                                                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-700 px-2 py-0.5 rounded-full animate-bounce">
-                                                        <Check className="w-3 h-3" /> Baru Saja Disimpan
+                                                    <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-700 px-1.5 sm:px-2 py-0.5 rounded-full animate-bounce">
+                                                        <Check className="w-3 h-3" /> Disimpan
                                                     </span>
                                                 ) : scores[activeStudent.id] ? (
-                                                    <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full">
+                                                    <span className="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/50 px-1.5 sm:px-2 py-0.5 rounded-full">
                                                         <Check className="w-3 h-3" /> Terisi
                                                     </span>
                                                 ) : null}
                                             </div>
-                                            <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-0.5 tracking-tight">
+                                            <h3 className="text-base sm:text-xl md:text-2xl font-black text-slate-900 dark:text-white mt-0.5 tracking-tight truncate">
                                                 {activeStudent.name}
                                             </h3>
                                         </div>
                                     </div>
 
                                     {/* Score Display Box */}
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                                         <div className="text-right hidden sm:block">
-                                            <span className="text-[11px] uppercase tracking-wider text-slate-500 font-bold block">Nilai Saat Ini</span>
-                                            <span className="text-xs text-slate-400">KKM: {effectiveKkm}</span>
+                                            <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-500 font-bold block">Nilai Saat Ini</span>
+                                            <span className="text-[11px] sm:text-xs text-slate-400">KKM: {effectiveKkm}</span>
                                         </div>
-                                        <div className={`w-20 h-16 rounded-2xl flex items-center justify-center font-black text-2xl border transition-all duration-300 ${
+                                        <div className={`w-14 h-12 sm:w-20 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center font-black text-xl sm:text-2xl border transition-all duration-300 ${
                                             recentlySavedId === activeStudent.id
                                                 ? 'bg-emerald-500 text-white border-emerald-300 ring-4 ring-emerald-400/80 scale-105 shadow-lg shadow-emerald-500/40'
                                                 : scores[activeStudent.id]
@@ -965,13 +1034,13 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                 </div>
 
                                 {/* Microphone & Live Listener Status */}
-                                <div className="mt-5 pt-4 border-t border-brand-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-                                    <div className="flex items-center gap-3">
+                                <div className="mt-3 pt-3 sm:mt-5 sm:pt-4 border-t border-brand-100 dark:border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
+                                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                                         <button
                                             type="button"
                                             onClick={isListening ? stopListening : startListening}
                                             disabled={!isSupported}
-                                            className={`relative flex items-center justify-center w-12 h-12 rounded-2xl shadow-md transition-all active:scale-95 ${
+                                            className={`relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl shadow-md transition-all active:scale-95 shrink-0 ${
                                                 isListening
                                                     ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse ring-4 ring-rose-500/30'
                                                     : 'bg-brand-600 hover:bg-brand-700 text-white ring-2 ring-brand-500/20'
@@ -980,22 +1049,22 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                         >
                                             {isListening ? (
                                                 <>
-                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-2xl bg-rose-400 opacity-75"></span>
-                                                    <MicOff className="w-5 h-5 relative z-10" />
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-xl sm:rounded-2xl bg-rose-400 opacity-75"></span>
+                                                    <MicOff className="w-4 h-4 sm:w-5 sm:h-5 relative z-10" />
                                                 </>
                                             ) : (
-                                                <Mic className="w-5 h-5" />
+                                                <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
                                             )}
                                         </button>
 
-                                        <div>
+                                        <div className="min-w-0">
                                             <div className="flex items-center gap-1.5">
-                                                <span className={`w-2 h-2 rounded-full ${isListening ? 'bg-emerald-500 animate-ping' : 'bg-slate-400'}`}></span>
-                                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                                <span className={`w-2 h-2 rounded-full shrink-0 ${isListening ? 'bg-emerald-500 animate-ping' : 'bg-slate-400'}`}></span>
+                                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
                                                     {isListening ? 'Mikrofon Aktif — Silakan sebutkan nilainya' : 'Mikrofon Nonaktif — Klik tombol untuk mulai'}
                                                 </span>
                                             </div>
-                                            <p className="text-xs text-slate-500 mt-0.5 truncate max-w-sm">
+                                            <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 truncate max-w-sm">
                                                 {interimText ? (
                                                     <span className="font-semibold text-brand-600 dark:text-brand-400">
                                                         Mendengar: "{interimText}..."
@@ -1011,15 +1080,15 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
 
                                     {/* Action Feedback Badge */}
                                     {lastActionFeedback && (
-                                        <div className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1 ${
+                                        <div className={`px-2.5 sm:px-3 py-1 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1 shrink-0 self-start sm:self-auto ${
                                             lastActionFeedback.type === 'success'
                                                 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
                                                 : lastActionFeedback.type === 'command'
                                                 ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300'
                                                 : 'bg-rose-100 text-rose-800'
                                         }`}>
-                                            <Sparkles className="w-3.5 h-3.5" />
-                                            <span>{lastActionFeedback.text}</span>
+                                            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                                            <span className="truncate max-w-[200px]">{lastActionFeedback.text}</span>
                                         </div>
                                     )}
                                 </div>
@@ -1030,13 +1099,13 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
 
                         {/* Interactive Student Class Roster with Progress */}
                         {students.length > 0 && (
-                            <div className="p-3 sm:p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 space-y-2.5">
+                            <div className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 space-y-2 sm:space-y-2.5">
                                 <div className="flex items-center justify-between text-xs">
                                     <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                                         <Users className="w-4 h-4 text-brand-600 dark:text-brand-400" />
                                         Daftar Siswa ({students.length} Siswa)
                                     </span>
-                                    <span className="text-slate-500 font-semibold">
+                                    <span className="text-slate-500 font-semibold text-[11px] sm:text-xs">
                                         <strong className="text-emerald-600 dark:text-emerald-400">{filledCount}</strong> dari {students.length} terisi ({progressPercentage}%)
                                     </span>
                                 </div>
@@ -1066,7 +1135,7 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                                     currentIndexRef.current = idx;
                                                     setCurrentIndex(idx);
                                                 }}
-                                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold shrink-0 transition-all border ${
+                                                className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-semibold shrink-0 transition-all border ${
                                                     isActive
                                                         ? 'bg-brand-600 text-white border-brand-500 ring-2 ring-brand-400/80 shadow-md shadow-brand-600/20 scale-105'
                                                         : isJustSaved
@@ -1080,9 +1149,9 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                                 <span className={`text-[10px] font-bold ${isActive || isJustSaved ? 'text-white/80' : 'text-slate-400'}`}>
                                                     #{idx + 1}
                                                 </span>
-                                                <span className="max-w-[110px] truncate">{st.name}</span>
+                                                <span className="max-w-[90px] sm:max-w-[110px] truncate">{st.name}</span>
                                                 {hasScore && (
-                                                    <span className={`px-1.5 py-0.5 rounded-md font-black text-[10px] ${
+                                                    <span className={`px-1 sm:px-1.5 py-0.5 rounded-md font-black text-[10px] ${
                                                         isActive || isJustSaved
                                                             ? 'bg-white/20 text-white'
                                                             : Number(scores[st.id]) >= effectiveKkm
@@ -1101,9 +1170,9 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
 
                         {/* Riwayat Nilai Terekam */}
                         {recentHistory.length > 0 && (
-                            <div className="flex items-center gap-2 overflow-x-auto py-2 px-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/70 dark:border-slate-700/60 text-xs">
-                                <span className="font-bold text-slate-500 dark:text-slate-400 shrink-0 flex items-center gap-1">
-                                    <Check className="w-3.5 h-3.5 text-emerald-500" /> Baru Disimpan:
+                            <div className="flex items-center gap-2 overflow-x-auto py-1.5 px-2.5 sm:py-2 sm:px-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl sm:rounded-2xl border border-slate-200/70 dark:border-slate-700/60 text-xs">
+                                <span className="font-bold text-slate-500 dark:text-slate-400 shrink-0 flex items-center gap-1 text-[11px] sm:text-xs">
+                                    <Check className="w-3.5 h-3.5 text-emerald-500" /> Baru:
                                 </span>
                                 <div className="flex items-center gap-1.5 overflow-x-auto">
                                     {recentHistory.map((item) => (
@@ -1117,12 +1186,12 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                                 currentIndexRef.current = targetIdx;
                                                 setCurrentIndex(targetIdx);
                                             }}
-                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/70 text-emerald-800 dark:text-emerald-200 font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors shrink-0 cursor-pointer shadow-sm"
+                                            className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg sm:rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/70 text-emerald-800 dark:text-emerald-200 font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors shrink-0 cursor-pointer shadow-sm text-[11px] sm:text-xs"
                                             title="Klik untuk melihat atau mengoreksi nilai siswa ini"
                                         >
                                             <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">#{item.index}</span>
-                                            <span className="max-w-[130px] truncate">{item.name}</span>
-                                            <span className="font-black bg-emerald-600 text-white px-1.5 py-0.5 rounded-lg text-[11px]">{item.score}</span>
+                                            <span className="max-w-[90px] sm:max-w-[130px] truncate">{item.name}</span>
+                                            <span className="font-black bg-emerald-600 text-white px-1.5 py-0.2 rounded text-[10px] sm:text-[11px]">{item.score}</span>
                                         </button>
                                     ))}
                                 </div>
@@ -1130,8 +1199,8 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                         )}
 
                         {/* Navigation and Action Toolbar */}
-                        <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
-                            <div className="flex items-center gap-1.5">
+                        <div className="flex items-center justify-between gap-1.5 sm:gap-2 p-2 sm:p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-700">
+                            <div className="flex items-center gap-1 sm:gap-1.5">
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -1144,9 +1213,10 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                         setCurrentIndex(prev);
                                     }}
                                     disabled={currentIndex === 0}
-                                    className="rounded-xl h-9 text-xs"
+                                    className="rounded-lg sm:rounded-xl h-8 sm:h-9 px-2 sm:px-3 text-xs"
                                 >
-                                    <SkipBack className="w-3.5 h-3.5 mr-1" /> Sebelumnya
+                                    <SkipBack className="w-3.5 h-3.5 sm:mr-1" />
+                                    <span className="hidden xs:inline">Sebelumnya</span>
                                 </Button>
                                 <Button
                                     type="button"
@@ -1160,9 +1230,10 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                         setCurrentIndex(next);
                                     }}
                                     disabled={currentIndex >= students.length - 1}
-                                    className="rounded-xl h-9 text-xs"
+                                    className="rounded-lg sm:rounded-xl h-8 sm:h-9 px-2 sm:px-3 text-xs"
                                 >
-                                    Berikutnya <SkipForward className="w-3.5 h-3.5 ml-1" />
+                                    <span className="hidden xs:inline">Berikutnya</span>
+                                    <SkipForward className="w-3.5 h-3.5 sm:ml-1" />
                                 </Button>
                                 {activeStudent && scores[activeStudent.id] && (
                                     <Button
@@ -1176,16 +1247,18 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                             setRecentHistory(prev => prev.filter(h => h.id !== activeStudent.id));
                                             showFeedback(`Nilai ${activeStudent.name} dikosongkan`, 'command');
                                         }}
-                                        className="rounded-xl h-9 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                                        className="rounded-lg sm:rounded-xl h-8 sm:h-9 px-1.5 sm:px-2 text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                                        title="Hapus nilai siswa ini"
                                     >
-                                        <Trash2 className="w-3.5 h-3.5 mr-1" /> Hapus
+                                        <Trash2 className="w-3.5 h-3.5 sm:mr-1" />
+                                        <span className="hidden sm:inline">Hapus</span>
                                     </Button>
                                 )}
                             </div>
 
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs text-slate-500 font-medium">
-                                    {filledCount} dari {students.length} terisi
+                            <div className="flex items-center gap-1.5 sm:gap-2">
+                                <span className="text-[11px] sm:text-xs text-slate-500 font-medium whitespace-nowrap">
+                                    <strong className="text-emerald-600 dark:text-emerald-400">{filledCount}</strong>/{students.length}
                                 </span>
                                 <Button
                                     type="button"
@@ -1195,23 +1268,28 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                         stopListening();
                                         onClose();
                                     }}
-                                    className="rounded-xl h-9 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                                    className="rounded-lg sm:rounded-xl h-8 sm:h-9 px-2.5 sm:px-4 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm"
                                 >
-                                    <CheckCircle2 className="w-4 h-4 mr-1" /> Selesai
+                                    <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Selesai
                                 </Button>
                             </div>
                         </div>
 
-                        {/* Cheatsheet Voice Commands */}
-                        <div className="p-3.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 space-y-1.5">
-                            <span className="font-bold text-slate-900 dark:text-slate-200">💡 Contoh Perintah Suara Pintar (Respons Cepat ~0.2 detik):</span>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-0.5">
+                        {/* Cheatsheet Voice Commands - Collapsible on Mobile */}
+                        <details className="group p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-slate-100/80 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400">
+                            <summary className="cursor-pointer font-bold text-slate-900 dark:text-slate-200 flex items-center justify-between list-none select-none">
+                                <span className="flex items-center gap-1.5">
+                                    💡 Contoh Perintah Suara Pintar (Respons Cepat ~0.2 detik):
+                                </span>
+                                <span className="text-slate-400 group-open:rotate-180 transition-transform text-[10px]">▼</span>
+                            </summary>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-2.5 mt-2 border-t border-slate-200/60 dark:border-slate-700/60">
                                 <div><code className="text-brand-600 dark:text-brand-300 font-mono font-bold">"85" / "delapan lima"</code>: Nilai siswa aktif</div>
                                 <div><code className="text-brand-600 dark:text-brand-300 font-mono font-bold">"absen 5" / "nomor 5"</code>: Lompat nomor absen</div>
-                                <div><code className="text-brand-600 dark:text-brand-300 font-mono font-bold">"absen 2 85" / "nomor 2 85"</code>: Nilai via no absen</div>
+                                <div><code className="text-brand-600 dark:text-brand-300 font-mono font-bold">"absen 2 85"</code>: Nilai via no absen</div>
                                 <div><code className="text-brand-600 dark:text-brand-300 font-mono font-bold">"ralat 90" / "urungkan"</code>: Koreksi & batal</div>
                             </div>
-                        </div>
+                        </details>
                     </div>
                 )}
 
@@ -1220,14 +1298,14 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                 {/* ========================================================================= */}
                 {activeTab === 'name_match' && (
                     <div className="space-y-4">
-                        <div className="p-4 rounded-2xl bg-brand-50/60 dark:bg-slate-800/60 border border-brand-200/60 dark:border-slate-700">
+                        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-brand-50/60 dark:bg-slate-800/60 border border-brand-200/60 dark:border-slate-700">
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                     <button
                                         type="button"
                                         onClick={isListening ? stopListening : startListening}
                                         disabled={!isSupported}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                                        className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs font-bold transition-all ${
                                             isListening
                                                 ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse'
                                                 : 'bg-brand-600 hover:bg-brand-700 text-white'
@@ -1236,8 +1314,8 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                         {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                                         <span>{isListening ? 'Hentikan Rekam' : 'Mulai Rekam Suara'}</span>
                                     </button>
-                                    <span className="text-xs text-slate-500">
-                                        {isListening ? 'Sedang mendengarkan ucapan Anda...' : 'Klik untuk mulai berbicara'}
+                                    <span className="text-[11px] sm:text-xs text-slate-500 hidden xs:inline truncate">
+                                        {isListening ? 'Mendengarkan ucapan...' : 'Klik untuk mulai'}
                                     </span>
                                 </div>
                                 {transcript && (
@@ -1261,22 +1339,22 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                     );
                                     setRecognizedPairs(parsed);
                                 }}
-                                rows={3}
+                                rows={2}
                                 placeholder="Katakan: 'absen 1 85, absen 2 sembilan puluh, absen 3 75' ATAU 'Ahmad Fauzi 85, Siti Rahma 90'..."
-                                className="w-full text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                className="w-full text-xs sm:text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 sm:p-3 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
                             />
                         </div>
 
                         {/* Batch Applied Undo Notification Banner */}
                         {lastBatchAppliedRecords && lastBatchAppliedRecords.length > 0 && (
-                            <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs animate-in fade-in slide-in-from-top-1">
+                            <div className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 text-xs animate-in fade-in slide-in-from-top-1">
                                 <div className="flex items-center gap-2">
                                     <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                                     <span>
                                         <strong>{lastBatchAppliedRecords.length} nilai</strong> telah diterapkan ke tabel.
                                         {lastBatchAppliedRecords.filter(r => r.previousScore && r.previousScore !== r.appliedScore).length > 0 && (
                                             <span className="font-semibold text-amber-800 dark:text-amber-300 ml-1">
-                                                ({lastBatchAppliedRecords.filter(r => r.previousScore && r.previousScore !== r.appliedScore).length} nilai menimpa data sebelumnya)
+                                                ({lastBatchAppliedRecords.filter(r => r.previousScore && r.previousScore !== r.appliedScore).length} menimpa nilai lama)
                                             </span>
                                         )}
                                     </span>
@@ -1285,9 +1363,10 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                     <button
                                         type="button"
                                         onClick={handleUndoBatchApply}
-                                        className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5"
+                                        aria-label="Urungkan Penerapan"
+                                        className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1"
                                     >
-                                        <RotateCcw className="w-3.5 h-3.5" /> Urungkan Penerapan
+                                        <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Urungkan Penerapan
                                     </button>
                                     <button
                                         type="button"
@@ -1302,11 +1381,11 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                         )}
 
                         {/* Matched Results Preview Table */}
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                                    <Sparkles className="w-4 h-4 text-brand-500" />
-                                    Hasil Deteksi Nilai Siswa ({recognizedPairs.length})
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-500" />
+                                    Hasil Deteksi ({recognizedPairs.length})
                                 </h4>
                                 {recognizedPairs.length > 0 && (
                                     <Button
@@ -1314,7 +1393,7 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                         variant="primary"
                                         size="sm"
                                         onClick={handleApplyNameMatch}
-                                        className="rounded-xl text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                                        className="rounded-lg sm:rounded-xl text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-8 px-2.5 sm:px-3"
                                     >
                                         <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Terapkan ke Tabel ({recognizedPairs.length})
                                     </Button>
@@ -1322,27 +1401,27 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                             </div>
 
                             {recognizedPairs.length > 0 ? (
-                                <div className="max-h-60 overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-800">
+                                <div className="max-h-56 sm:max-h-60 overflow-y-auto rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-800">
                                     {recognizedPairs.map((pair, idx) => {
                                         const currentVal = pair.studentId ? scores[pair.studentId] : undefined;
                                         const willOverwrite = Boolean(currentVal && currentVal.trim() !== '' && currentVal !== String(pair.score));
 
                                         return (
-                                            <div key={`${pair.studentId || 'unknown'}-${idx}`} className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 text-sm hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                                                <div className="flex items-start sm:items-center gap-3">
-                                                    <span className="w-7 text-center text-xs font-bold text-slate-400 mt-1 sm:mt-0">
+                                            <div key={`${pair.studentId || 'unknown'}-${idx}`} className="p-2.5 sm:p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white dark:bg-slate-900 text-sm hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                                                <div className="flex items-start sm:items-center gap-2.5 sm:gap-3 min-w-0">
+                                                    <span className="w-6 sm:w-7 text-center text-xs font-bold text-slate-400 mt-0.5 sm:mt-0 shrink-0">
                                                         #{pair.rollNumber ?? (pair.studentIndex !== undefined ? pair.studentIndex + 1 : idx + 1)}
                                                     </span>
-                                                    <div>
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                            <p className="font-bold text-slate-900 dark:text-white">{pair.studentName}</p>
+                                                    <div className="min-w-0">
+                                                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                                            <p className="font-bold text-slate-900 dark:text-white truncate">{pair.studentName}</p>
                                                             {pair.matchType === 'roll_number' ? (
                                                                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
                                                                     Absen #{pair.rollNumber}
                                                                 </span>
                                                             ) : (
                                                                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                                                                    Nama Cocok ({pair.confidence}%)
+                                                                    Cocok ({pair.confidence}%)
                                                                 </span>
                                                             )}
                                                             {pair.isAmbiguous && (
@@ -1352,21 +1431,21 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                                             )}
                                                             {willOverwrite && (
                                                                 <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
-                                                                    Menimpa nilai: {currentVal}
+                                                                    Menimpa: {currentVal}
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <p className="text-[11px] text-slate-400">Dari ucapan: "{pair.rawText}"</p>
+                                                        <p className="text-[11px] text-slate-400 truncate">Dari: "{pair.rawText}"</p>
 
                                                         {/* Candidate Selector if Ambiguous */}
                                                         {pair.isAmbiguous && pair.possibleCandidates && pair.possibleCandidates.length > 1 && (
-                                                            <div className="mt-1.5 flex items-center gap-1.5">
-                                                                <span className="text-[11px] text-amber-700 dark:text-amber-400 font-medium">Pilih siswa yang tepat:</span>
+                                                            <div className="mt-1 flex items-center gap-1.5">
+                                                                <span className="text-[10px] sm:text-[11px] text-amber-700 dark:text-amber-400 font-medium">Pilih:</span>
                                                                 <select
                                                                     value={pair.studentId}
                                                                     onChange={(e) => handleUpdatePairStudent(idx, e.target.value)}
                                                                     aria-label={`Pilih nama siswa untuk ucapan ${pair.rawText}`}
-                                                                    className="text-xs bg-amber-50/50 dark:bg-slate-800 border border-amber-300 dark:border-slate-700 rounded-lg px-2 py-0.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                                                    className="text-xs bg-amber-50/50 dark:bg-slate-800 border border-amber-300 dark:border-slate-700 rounded-lg px-2 py-0.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-amber-500 max-w-[200px]"
                                                                 >
                                                                     {pair.possibleCandidates.map(cand => (
                                                                         <option key={cand.id} value={cand.id}>
@@ -1380,7 +1459,7 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                                 </div>
 
                                                 {/* Editable Score Box & Delete Button */}
-                                                <div className="flex items-center self-end sm:self-auto gap-2">
+                                                <div className="flex items-center self-end sm:self-auto gap-2 shrink-0">
                                                     <div className="flex items-center gap-1.5">
                                                         <span className="text-xs text-slate-400 font-semibold hidden sm:inline">Nilai:</span>
                                                         <input
@@ -1393,7 +1472,7 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                                                 handleUpdatePairScore(idx, isNaN(val) ? 0 : val);
                                                             }}
                                                             aria-label={`Nilai untuk ${pair.studentName}`}
-                                                            className={`w-16 text-center font-black py-1 px-1.5 rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 ${
+                                                            className={`w-14 text-center font-black py-1 px-1 rounded-lg sm:rounded-xl border text-sm transition-all focus:outline-none focus:ring-2 ${
                                                                 pair.score >= effectiveKkm
                                                                     ? 'bg-emerald-50 text-emerald-800 border-emerald-300 focus:ring-emerald-400 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-700'
                                                                     : 'bg-rose-50 text-rose-800 border-rose-300 focus:ring-rose-400 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-700'
@@ -1415,10 +1494,29 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                     })}
                                 </div>
                             ) : (
-                                <div className="p-6 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-400">
+                                <div className="p-4 sm:p-6 text-center rounded-xl sm:rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-400">
                                     Belum ada nomor absen atau nama siswa yang terdeteksi. Silakan mulai bicara dengan menyebut nomor absen (misal: "absen 1 85, absen 2 90") atau nama siswa dan nilainya.
                                 </div>
                             )}
+                        </div>
+
+                        {/* Tab 2 Bottom Action Toolbar */}
+                        <div className="flex items-center justify-between gap-2 p-2 sm:p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-700">
+                            <span className="text-[11px] sm:text-xs text-slate-500 font-medium">
+                                <strong className="text-emerald-600 dark:text-emerald-400">{filledCount}</strong>/{students.length} terisi
+                            </span>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                    stopListening();
+                                    onClose();
+                                }}
+                                className="rounded-lg sm:rounded-xl h-8 sm:h-9 px-3 sm:px-4 text-xs font-semibold"
+                            >
+                                Selesai
+                            </Button>
                         </div>
                     </div>
                 )}

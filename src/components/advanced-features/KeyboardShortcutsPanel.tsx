@@ -20,7 +20,7 @@ export const KeyboardShortcutsPanel: React.FC<{
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} role="presentation" aria-hidden="true" />
       <div className="relative flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl animate-scale-in dark:bg-slate-900">
         <div className="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-800">
           <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">

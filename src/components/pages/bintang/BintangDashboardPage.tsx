@@ -928,7 +928,7 @@ const BintangDashboardPage: React.FC = () => {
                             {/* Tombol utama selalu terlihat */}
                             <Button
                                 onClick={() => setIsKeaktifanModalOpen(true)}
-                                className="flex items-center gap-1.5 text-sm h-10 px-4 font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm shadow-emerald-600/20"
+                                className="flex items-center gap-1.5 text-sm h-10 px-4 font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm shadow-emerald-600/20 cursor-pointer active:scale-95 duration-150"
                             >
                                 <Sparkles size={15} />
                                 <span>+ Poin Keaktifan</span>
@@ -940,7 +940,7 @@ const BintangDashboardPage: React.FC = () => {
                                     setViolationStudentSearch('');
                                     setIsAddViolationModalOpen(true);
                                 }}
-                                className="flex items-center gap-1.5 text-sm h-10 px-4 font-medium bg-rose-600 hover:bg-rose-700 text-white rounded-xl shadow-sm shadow-rose-600/20"
+                                className="flex items-center gap-1.5 text-sm h-10 px-4 font-medium bg-rose-600 hover:bg-rose-700 text-white rounded-xl shadow-sm shadow-rose-600/20 cursor-pointer active:scale-95 duration-150"
                             >
                                 <ShieldAlert size={15} />
                                 <span>+ Pelanggaran</span>
@@ -951,7 +951,7 @@ const BintangDashboardPage: React.FC = () => {
                                 <Button
                                     variant="outline"
                                     onClick={() => setShowMoreActions(v => !v)}
-                                    className="flex items-center gap-1.5 text-sm h-10 px-3 font-medium rounded-xl border-slate-200 dark:border-slate-700"
+                                    className="flex items-center gap-1.5 text-sm h-10 px-3 font-medium rounded-xl border-slate-200 dark:border-slate-700 cursor-pointer active:scale-95 duration-150"
                                     title="Aksi lainnya"
                                 >
                                     <span className="text-slate-600 dark:text-slate-300">Lainnya</span>
@@ -962,7 +962,7 @@ const BintangDashboardPage: React.FC = () => {
                                         <button
                                             type="button"
                                             onClick={() => { setIsObservationModalOpen(true); setShowMoreActions(false); }}
-                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer active:scale-[0.98] transition-transform"
                                         >
                                             <Eye size={15} className="text-slate-400" /> Observasi Harian
                                         </button>
@@ -970,7 +970,7 @@ const BintangDashboardPage: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => { openMentoringModal(); setShowMoreActions(false); }}
-                                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer active:scale-[0.98] transition-transform"
                                             >
                                                 <PlusCircle size={15} className="text-slate-400" /> Catat Pembinaan
                                             </button>
@@ -982,7 +982,7 @@ const BintangDashboardPage: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => { setIsBulkExportModalOpen(true); setShowMoreActions(false); }}
-                                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-brand-600 dark:text-brand-400 font-medium hover:bg-brand-50 dark:hover:bg-brand-900/20"
+                                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-brand-600 dark:text-brand-400 font-medium hover:bg-brand-50 dark:hover:bg-brand-900/20 cursor-pointer active:scale-[0.98] transition-transform"
                                             >
                                                 <Download size={15} /> Export Bulk...
                                             </button>
@@ -992,7 +992,7 @@ const BintangDashboardPage: React.FC = () => {
                                                 type="button"
                                                 onClick={() => { evalHook.handleDownloadClassPdf(); setShowMoreActions(false); }}
                                                 disabled={evalHook.isDownloadingClass || evalHook.isDownloadingBulk}
-                                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+                                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 cursor-pointer active:scale-[0.98] transition-transform"
                                             >
                                                 <Printer size={15} className="text-slate-400" /> {evalHook.isDownloadingClass ? 'Proses...' : 'Cetak Rapor Kelas'}
                                             </button>
@@ -1002,7 +1002,7 @@ const BintangDashboardPage: React.FC = () => {
                                                 type="button"
                                                 onClick={() => { evalHook.handleExportExcel(); setShowMoreActions(false); }}
                                                 disabled={evalHook.isExportingExcel || students.length === 0}
-                                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+                                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 cursor-pointer active:scale-[0.98] transition-transform"
                                             >
                                                 <FileSpreadsheet size={15} className="text-slate-400" /> {evalHook.isExportingExcel ? 'Proses...' : 'Export Rekap Excel'}
                                             </button>
@@ -1019,7 +1019,7 @@ const BintangDashboardPage: React.FC = () => {
                                     onClick={() => evalHook.handleGenerateAll(getAspectSummary)}
                                     disabled={evalHook.isGenerating || students.length === 0}
                                     variant="outline"
-                                    className="flex items-center gap-1.5 text-sm h-10 px-4 font-medium border-brand-200 dark:border-brand-800/60 text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-900/20 hover:bg-brand-100 dark:hover:bg-brand-900/40 rounded-xl"
+                                    className="flex items-center gap-1.5 text-sm h-10 px-4 font-medium border-brand-200 dark:border-brand-800/60 text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-900/20 hover:bg-brand-100 dark:hover:bg-brand-900/40 rounded-xl cursor-pointer active:scale-95 duration-150"
                                 >
                                     <Zap size={16} />
                                     <span className="hidden sm:inline">{evalHook.isGenerating ? 'Proses...' : 'Generate'}</span>
@@ -1029,7 +1029,7 @@ const BintangDashboardPage: React.FC = () => {
                                         onClick={evalHook.handleUnpublish}
                                         disabled={evalHook.isUnpublishing}
                                         variant="outline"
-                                        className="flex items-center gap-1.5 text-sm h-10 px-3.5 font-medium border-amber-300 dark:border-amber-700/60 text-amber-700 dark:text-amber-400 bg-amber-50/70 dark:bg-amber-950/20 hover:bg-amber-100 dark:hover:bg-amber-950/40 rounded-xl shadow-sm"
+                                        className="flex items-center gap-1.5 text-sm h-10 px-3.5 font-medium border-amber-300 dark:border-amber-700/60 text-amber-700 dark:text-amber-400 bg-amber-50/70 dark:bg-amber-950/20 hover:bg-amber-100 dark:hover:bg-amber-950/40 rounded-xl shadow-sm cursor-pointer active:scale-95 duration-150"
                                         title="Kembalikan semua rapor terbit ke status Draft agar bisa diedit kembali"
                                     >
                                         <RotateCcw size={15} />
@@ -1040,7 +1040,7 @@ const BintangDashboardPage: React.FC = () => {
                                 <Button
                                     onClick={evalHook.handlePublish}
                                     disabled={evaluations.length === 0 || evalHook.isPublishing}
-                                    className="bg-brand-600 hover:bg-brand-700 text-white flex items-center gap-1.5 text-sm h-10 px-4 font-medium rounded-xl shadow-sm shadow-brand-600/20"
+                                    className="bg-brand-600 hover:bg-brand-700 text-white flex items-center gap-1.5 text-sm h-10 px-4 font-medium rounded-xl shadow-sm shadow-brand-600/20 cursor-pointer active:scale-95 duration-150"
                                 >
                                     <Send size={16} />
                                     <span>Publikasi</span>
@@ -1070,7 +1070,7 @@ const BintangDashboardPage: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => setShowTrendChart(!showTrendChart)}
-                            className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                            className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer active:scale-[0.99] duration-150"
                         >
                             <div className="flex items-center gap-3">
                                 <TrendingUp size={20} className="text-brand-500" />

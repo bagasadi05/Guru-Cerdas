@@ -72,7 +72,7 @@ export const QuickTemplateIcons: React.FC<QuickTemplateIconsProps> = ({
                     className={`
                         group flex flex-col items-center justify-center gap-1
                         w-16 sm:w-20 min-h-[64px] px-2 py-2 rounded-xl
-                        transition-all duration-200 active:scale-95
+                        transition-all duration-200 active:scale-95 cursor-pointer
                         hover:bg-slate-100/70 dark:hover:bg-slate-800/60
                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900
                     `}

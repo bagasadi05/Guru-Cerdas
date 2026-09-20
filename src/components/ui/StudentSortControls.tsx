@@ -32,10 +32,10 @@ const SortButton: React.FC<SortButtonProps> = ({ field, label, isActive, directi
         <button type="button"
             onClick={() => onClick(field)}
             className={`
-                flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
+                flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap
                 ${isActive
-                    ? 'bg-brand-600 text-white'
-                    : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                    ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/20'
+                    : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/20'
                 }
             `}
         >
@@ -72,68 +72,69 @@ export const StudentSortControls: React.FC<StudentSortControlsProps> = ({
     };
 
     return (
-        <div className={`flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-2 sm:gap-3 ${className}`}>
+        <div className={`flex items-center gap-2 overflow-x-auto scrollbar-hide py-0.5 ${className}`}>
             {/* Sort Controls */}
-            <div className="flex items-center gap-1 flex-wrap">
-                <span className="text-xs text-gray-400 mr-1 whitespace-nowrap">Urutkan:</span>
-                <div className="flex items-center gap-1">
-                    <SortButton
-                        field="index"
-                        label="No"
-                        isActive={sortConfig.field === 'index'}
-                        direction={sortConfig.direction}
-                        onClick={handleSortClick}
-                    />
-                    <SortButton
-                        field="name"
-                        label="Nama"
-                        isActive={sortConfig.field === 'name'}
-                        direction={sortConfig.direction}
-                        onClick={handleSortClick}
-                    />
-                    <SortButton
-                        field="score"
-                        label="Nilai"
-                        isActive={sortConfig.field === 'score'}
-                        direction={sortConfig.direction}
-                        onClick={handleSortClick}
-                    />
-                </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+                <span className="text-[11px] sm:text-xs text-slate-500 dark:text-gray-400 mr-0.5 whitespace-nowrap font-medium">Urut:</span>
+                <SortButton
+                    field="index"
+                    label="No"
+                    isActive={sortConfig.field === 'index'}
+                    direction={sortConfig.direction}
+                    onClick={handleSortClick}
+                />
+                <SortButton
+                    field="name"
+                    label="Nama"
+                    isActive={sortConfig.field === 'name'}
+                    direction={sortConfig.direction}
+                    onClick={handleSortClick}
+                />
+                <SortButton
+                    field="score"
+                    label="Nilai"
+                    isActive={sortConfig.field === 'score'}
+                    direction={sortConfig.direction}
+                    onClick={handleSortClick}
+                />
             </div>
+
+            {/* Separator */}
+            {showGrouping && (
+                <div className="w-px h-3.5 bg-slate-200 dark:bg-white/10 flex-shrink-0 mx-0.5" />
+            )}
 
             {/* Grouping Controls */}
             {showGrouping && (
-                <div className="flex items-center gap-1 flex-wrap">
-                    <span className="text-xs text-gray-400 mr-1 whitespace-nowrap">Kelompok:</span>
-                    <div className="flex items-center gap-1">
-                        <button type="button"
-                            onClick={() => onGroupByChange('none')}
-                            className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${groupBy === 'none'
-                                ? 'bg-brand-600 text-white'
-                                : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                                }`}
-                        >
-                            Semua
-                        </button>
-                        <button type="button"
-                            onClick={() => onGroupByChange('status')}
-                            className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${groupBy === 'status'
-                                ? 'bg-brand-600 text-white'
-                                : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                                }`}
-                        >
-                            Status
-                        </button>
-                        <button type="button"
-                            onClick={() => onGroupByChange('scoreRange')}
-                            className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${groupBy === 'scoreRange'
-                                ? 'bg-brand-600 text-white'
-                                : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                                }`}
-                        >
-                            Rentang
-                        </button>
-                    </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                    <span className="text-[11px] sm:text-xs text-slate-500 dark:text-gray-400 mr-0.5 whitespace-nowrap font-medium">Kelompok:</span>
+                    <button type="button"
+                        onClick={() => onGroupByChange('none')}
+                        className={`px-2 sm:px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${groupBy === 'none'
+                            ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/20'
+                            : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/20'
+                            }`}
+                    >
+                        Semua
+                    </button>
+                    <button type="button"
+                        onClick={() => onGroupByChange('status')}
+                        className={`px-2 sm:px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${groupBy === 'status'
+                            ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/20'
+                            : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/20'
+                            }`}
+                    >
+                        Status
+                    </button>
+                    <button type="button"
+                        onClick={() => onGroupByChange('scoreRange')}
+                        className={`px-2 sm:px-2.5 py-1 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${groupBy === 'scoreRange'
+                            ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/20'
+                            : 'bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-white/20'
+                            }`}
+                    >
+                        Rentang
+                    </button>
                 </div>
             )}
         </div>

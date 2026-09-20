@@ -18,7 +18,8 @@ import {
     CopyIcon,
     CopyCheckIcon,
     Share2Icon,
-    PrinterIcon
+    PrinterIcon,
+    StarIcon
 } from '../Icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Modal } from '../ui/Modal';
@@ -313,7 +314,7 @@ const StudentDetailPage = () => {
                                 navigate('/siswa');
                             }
                         }}
-                        className="gap-2 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 shadow-sm rounded-xl font-semibold text-xs sm:text-sm min-h-[40px]"
+                        className="gap-2 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 shadow-sm rounded-xl font-semibold text-xs sm:text-sm min-h-[40px] cursor-pointer active:scale-95 transition-all duration-200"
                     >
                         <ArrowLeftIcon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                         <span>Kembali ke Data Siswa</span>
@@ -344,7 +345,7 @@ const StudentDetailPage = () => {
                                         onClick={() => photoInputRef.current?.click()}
                                         disabled={isUploadingPhoto || !isOnline}
                                         aria-label="Unggah foto profil siswa"
-                                        className="absolute -bottom-1 -right-1 p-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md shadow-md transition-transform hover:scale-110"
+                                        className="absolute -bottom-1 -right-1 p-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md shadow-md transition-transform hover:scale-110 cursor-pointer active:scale-90"
                                     >
                                         <CameraIcon className="w-3 h-3" />
                                     </button>
@@ -393,7 +394,7 @@ const StudentDetailPage = () => {
                                     variant="outline"
                                     onClick={() => setModalState({ type: 'editStudent', data: student })}
                                     disabled={!isOnline}
-                                    className="f-btn flex-1 sm:flex-none bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm"
+                                    className="f-btn flex-1 sm:flex-none bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm rounded-xl cursor-pointer active:scale-95 transition-all duration-200"
                                 >
                                     <UserCircleIcon className="f-icon-sm text-slate-500 dark:text-slate-400" />
                                     <span className="truncate">Edit Profil</span>
@@ -403,7 +404,7 @@ const StudentDetailPage = () => {
                             <Link to={`/cetak-rapot/${studentId}`} className="flex-1 sm:flex-none flex min-w-0">
                                 <Button
                                     variant="outline"
-                                    className="w-full f-btn bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm"
+                                    className="w-full f-btn bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm rounded-xl cursor-pointer active:scale-95 transition-all duration-200"
                                 >
                                     <FileTextIcon className="f-icon-sm text-slate-500 dark:text-slate-400" />
                                     <span className="truncate">Cetak Rapor</span>
@@ -413,7 +414,7 @@ const StudentDetailPage = () => {
                             {canManageStudentProfile ? (
                                 <Button
                                     onClick={() => setModalState({ type: 'portalAccess' })}
-                                    className="f-btn flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-sm"
+                                    className="f-btn flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-sm rounded-xl cursor-pointer active:scale-95 transition-all duration-200"
                                 >
                                     <KeyRoundIcon className="f-icon-sm" />
                                     <span className="truncate">Akses Portal</span>
@@ -458,27 +459,27 @@ const StudentDetailPage = () => {
                                 <div className={`absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-gray-900 to-transparent pointer-events-none z-10 transition-opacity duration-300 ${tabScrollState.right ? 'opacity-100' : 'opacity-0'}`} />
                                 <div ref={tabsScrollRef} className="flex justify-start px-2 sm:px-4 py-2 overflow-x-auto scrollbar-hide">
                                     <TabsList className="bg-gray-100/70 dark:bg-black/30 p-1 rounded-xl w-full flex justify-between gap-1 min-w-max lg:min-w-0 flex-nowrap lg:flex-wrap xl:flex-nowrap">
-                                        <TabsTrigger value="grades" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none">Nilai</TabsTrigger>
-                                        <TabsTrigger value="activity" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none">Keaktifan</TabsTrigger>
-                                        <TabsTrigger value="violations" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none">Pelanggaran</TabsTrigger>
-                                        <TabsTrigger value="bintang" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none">
-                                            <ShieldAlertIcon className="w-3.5 h-3.5 mr-1 inline text-emerald-500" />
+                                        <TabsTrigger value="grades" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">Nilai</TabsTrigger>
+                                        <TabsTrigger value="activity" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">Keaktifan</TabsTrigger>
+                                        <TabsTrigger value="violations" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">Pelanggaran</TabsTrigger>
+                                        <TabsTrigger value="bintang" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">
+                                            <StarIcon className="w-3.5 h-3.5 mr-1 inline text-amber-500 fill-amber-500/20" />
                                             BINTANG
                                         </TabsTrigger>
-                                        <TabsTrigger value="extracurricular" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none">
+                                        <TabsTrigger value="extracurricular" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">
                                             <Trophy className="w-3.5 h-3.5 mr-1 inline" />
                                             Ekstra
                                         </TabsTrigger>
-                                        <TabsTrigger value="achievements" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none">
+                                        <TabsTrigger value="achievements" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">
                                             <Trophy className="w-3.5 h-3.5 mr-1 inline" />
                                             Prestasi
                                         </TabsTrigger>
-                                        <TabsTrigger value="reports" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none">Catatan Guru</TabsTrigger>
-                                        <TabsTrigger value="development" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none">
+                                        <TabsTrigger value="reports" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">Catatan Guru</TabsTrigger>
+                                        <TabsTrigger value="development" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">
                                             <BrainCircuitIcon className="w-3.5 h-3.5 mr-1 inline" />
                                             Perkembangan
                                         </TabsTrigger>
-                                        <TabsTrigger value="communication" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none">
+                                        <TabsTrigger value="communication" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">
                                             <div className="relative">
                                                 Komunikasi
                                                 {unreadMessagesCount > 0 && (
@@ -800,17 +801,17 @@ const StudentDetailPage = () => {
                                 )}
 
                                 <div className="grid grid-cols-2 gap-3 w-full">
-                                    <Button onClick={handleCopyAccessCode} variant="outline" className="w-full" disabled={!student.access_code}>
+                                    <Button onClick={handleCopyAccessCode} variant="outline" className="w-full h-11 rounded-xl cursor-pointer active:scale-95 transition-all font-medium" disabled={!student.access_code}>
                                         {copied ? <CopyCheckIcon className="w-4 h-4 mr-2 text-green-500" /> : <CopyIcon className="w-4 h-4 mr-2" />}
                                         {copied ? 'Disalin' : 'Salin'}
                                     </Button>
-                                    <Button onClick={handleShare} variant="outline" className="w-full" disabled={!student.access_code}>
+                                    <Button onClick={handleShare} variant="outline" className="w-full h-11 rounded-xl cursor-pointer active:scale-95 transition-all font-medium" disabled={!student.access_code}>
                                         <Share2Icon className="w-4 h-4 mr-2" /> Bagikan
                                     </Button>
-                                    <Button onClick={handlePrint} variant="outline" className="w-full" disabled={!student.access_code}>
+                                    <Button onClick={handlePrint} variant="outline" className="w-full h-11 rounded-xl cursor-pointer active:scale-95 transition-all font-medium" disabled={!student.access_code}>
                                         <PrinterIcon className="w-4 h-4 mr-2" /> Cetak
                                     </Button>
-                                    <Button onClick={handleGenerateAccessCode} variant="outline" className="w-full" disabled={!isOnline || studentMutation.isPending}>
+                                    <Button onClick={handleGenerateAccessCode} variant="outline" className="w-full h-11 rounded-xl cursor-pointer active:scale-95 transition-all font-medium" disabled={!isOnline || studentMutation.isPending}>
                                         <SparklesIcon className="w-4 h-4 mr-2" /> {student.access_code ? 'Reset' : 'Buat Baru'}
                                     </Button>
                                 </div>

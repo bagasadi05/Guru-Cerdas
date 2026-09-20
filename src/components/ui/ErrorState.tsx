@@ -20,7 +20,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   return (
     <div
       className={`bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/30 rounded-xl p-4 ${fullWidth ? 'w-full' : 'max-w-md'} ${className}`}
-      role="alert"
+      role="alert" aria-live="assertive"
     >
       <div className="flex items-start gap-3">
         <AlertCircleIcon className="w-5 h-5 text-rose-500 dark:text-rose-400 mt-0.5 flex-shrink-0" />

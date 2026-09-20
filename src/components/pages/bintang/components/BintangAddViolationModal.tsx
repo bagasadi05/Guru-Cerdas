@@ -63,7 +63,7 @@ export const BintangAddViolationModal: React.FC<BintangAddViolationModalProps> =
           <button
             type="button"
             onClick={() => onInputModeChange('single')}
-            className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+            className={`flex-1 px-3 py-2 text-sm font-medium rounded-xl transition-all cursor-pointer active:scale-95 duration-150 ${
               inputMode === 'single'
                 ? 'bg-rose-600 text-white shadow-sm'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -74,7 +74,7 @@ export const BintangAddViolationModal: React.FC<BintangAddViolationModalProps> =
           <button
             type="button"
             onClick={() => onInputModeChange('bulk')}
-            className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+            className={`flex-1 px-3 py-2 text-sm font-medium rounded-xl transition-all cursor-pointer active:scale-95 duration-150 ${
               inputMode === 'bulk'
                 ? 'bg-rose-600 text-white shadow-sm'
                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -106,14 +106,14 @@ export const BintangAddViolationModal: React.FC<BintangAddViolationModalProps> =
               <button
                 type="button"
                 onClick={onSelectAll}
-                className="text-xs px-2 py-1 rounded bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 hover:bg-rose-200 dark:hover:bg-rose-800/50 transition-colors font-medium"
+                className="text-xs px-2.5 py-1 rounded-lg bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 hover:bg-rose-200 dark:hover:bg-rose-800/50 transition-colors font-medium cursor-pointer active:scale-95 duration-150"
               >
                 Pilih Semua
               </button>
               <button
                 type="button"
                 onClick={onDeselectAll}
-                className="text-xs px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-medium"
+                className="text-xs px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-medium cursor-pointer active:scale-95 duration-150"
               >
                 Hapus Semua
               </button>

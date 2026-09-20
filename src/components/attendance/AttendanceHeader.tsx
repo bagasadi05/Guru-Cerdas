@@ -34,11 +34,11 @@ export const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({ onAnalyze, o
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 self-center">
-                    <Button onClick={onAnalyze} variant="ghost" disabled={!isOnline} className="flex-1 sm:flex-none justify-center bg-white hover:bg-emerald-50 !text-emerald-700 border-none shadow-lg shadow-black/10 transition-all duration-300 font-semibold px-5">
+                    <Button onClick={onAnalyze} variant="ghost" disabled={!isOnline} className="flex-1 sm:flex-none justify-center bg-white hover:bg-emerald-50 !text-emerald-700 border-none shadow-lg shadow-black/10 transition-all duration-200 font-semibold px-5 h-11 rounded-xl cursor-pointer active:scale-95">
                         <BrainCircuitIcon className="w-4 h-4 mr-2" />
                         Analisis Cerdas
                     </Button>
-                    <Button onClick={onExport} variant="outline" className="flex-1 sm:flex-none justify-center bg-emerald-900/40 hover:bg-emerald-900/60 text-white border-emerald-400/30 backdrop-blur-md shadow-lg shadow-black/10 transition-all duration-300 font-medium px-5">
+                    <Button onClick={onExport} variant="outline" className="flex-1 sm:flex-none justify-center bg-emerald-900/40 hover:bg-emerald-900/60 text-white border-emerald-400/30 backdrop-blur-md shadow-lg shadow-black/10 transition-all duration-200 font-medium px-5 h-11 rounded-xl cursor-pointer active:scale-95">
                         <DownloadCloudIcon className="w-4 h-4 mr-2" />
                         Ekspor Data
                     </Button>

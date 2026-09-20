@@ -203,7 +203,7 @@ export const JournalRekapPanel: React.FC<JournalRekapPanelProps> = ({ filters })
             ) : (
                 <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-slate-200 dark:border-slate-800 overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm border-collapse">
+                        <table className="w-full text-left text-sm border-collapse" aria-label="Tabel Rekapitulasi Jurnal Mengajar">
                             <thead className="bg-slate-50 dark:bg-slate-950/50 border-b border-slate-200 dark:border-slate-800">
                                 <tr>
                                     <th className="px-6 py-4 font-semibold text-slate-900 dark:text-white w-12 text-center">No</th>

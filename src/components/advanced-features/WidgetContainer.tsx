@@ -48,7 +48,7 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
 
                     {showMenu && (
                         <>
-                            <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+                            <div role="presentation" aria-hidden="true" onKeyDown={(e) => { if (e.key === 'Escape') setShowMenu(false); }} className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
                             <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800">
                                 {onSettings && (
                                     <button type="button"

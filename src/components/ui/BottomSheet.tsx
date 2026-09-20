@@ -114,7 +114,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, children, ti
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Handle bar for mobile feel */}
-                        <div className="w-full flex justify-center pt-3 pb-1 sm:hidden" onClick={onClose}>
+                        <div className="w-full flex justify-center pt-3 pb-1 sm:hidden" onClick={onClose} onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} role="presentation" aria-hidden="true">
                             <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full cursor-pointer" />
                         </div>
 

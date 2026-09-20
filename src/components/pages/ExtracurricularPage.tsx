@@ -1007,7 +1007,7 @@ const ExtracurricularPage: React.FC = () => {
             {/* Modals from old file */}
             {isModalOpen && createPortal(
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+                    <div role="presentation" aria-hidden="true" onKeyDown={(e) => { if (e.key === 'Escape') setIsModalOpen(false); }} className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
                     <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                         <div className="sticky top-0 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm px-6 py-4 border-b border-slate-200 dark:border-slate-700 z-10">
                             <h2 className="text-xl font-bold text-slate-800 dark:text-white">
@@ -1023,13 +1023,13 @@ const ExtracurricularPage: React.FC = () => {
                             mutations.extracurricularMutation.mutate(formData); 
                         }} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Ekstrakurikuler *</label>
-                                <Input required type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                                <label htmlFor="extra-name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Ekstrakurikuler *</label>
+                                <Input id="extra-name" required type="text" aria-label="Nama Ekstrakurikuler" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Kategori</label>
-                                    <Select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })}>
+                                    <label htmlFor="extra-category" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Kategori</label>
+                                    <Select id="extra-category" aria-label="Kategori" value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })}>
                                         <option value="">Pilih Kategori</option>
                                         <option value="Olahraga">Olahraga</option>
                                         <option value="Seni">Seni</option>
@@ -1039,8 +1039,8 @@ const ExtracurricularPage: React.FC = () => {
                                     </Select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Maks Peserta</label>
-                                    <Input type="number" min="1" value={formData.max_participants} onChange={(e) => setFormData({ ...formData, max_participants: parseInt(e.target.value) || 30 })} />
+                                    <label htmlFor="extra-max-participants" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Maks Peserta</label>
+                                    <Input id="extra-max-participants" type="number" min="1" aria-label="Maksimal Peserta" value={formData.max_participants} onChange={(e) => setFormData({ ...formData, max_participants: parseInt(e.target.value) || 30 })} />
                                 </div>
                             </div>
                             <div className="space-y-3">
@@ -1101,12 +1101,12 @@ const ExtracurricularPage: React.FC = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Pembina</label>
-                                <Input type="text" value={formData.coach_name} onChange={(e) => setFormData({ ...formData, coach_name: e.target.value })} />
+                                <label htmlFor="extra-coach-name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Pembina</label>
+                                <Input id="extra-coach-name" aria-label="Nama Pembina" type="text" value={formData.coach_name} onChange={(e) => setFormData({ ...formData, coach_name: e.target.value })} />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Deskripsi</label>
-                                <Textarea rows={3} value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+                                <label htmlFor="extra-description" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Deskripsi</label>
+                                <Textarea id="extra-description" aria-label="Deskripsi" rows={3} value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
                             </div>
                             <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600">
                                 <Checkbox id="is_active" checked={formData.is_active} onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })} />
@@ -1124,7 +1124,7 @@ const ExtracurricularPage: React.FC = () => {
             {/* Modal Confirm Delete */}
             {confirmDeleteExtracurricular && createPortal(
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteExtracurricular(null)} />
+                    <div role="presentation" aria-hidden="true" onKeyDown={(e) => { if (e.key === 'Escape') setConfirmDeleteExtracurricular(null); }} className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteExtracurricular(null)} />
                     <div className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6">
                         <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-4">
                             <Trash2 className="w-5 h-5 text-red-500" />
@@ -1144,18 +1144,18 @@ const ExtracurricularPage: React.FC = () => {
             {/* Modal Add External Students */}
             {isAddStudentModalOpen && createPortal(
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsAddStudentModalOpen(false)} />
+                    <div role="presentation" aria-hidden="true" onKeyDown={(e) => { if (e.key === 'Escape') setIsAddStudentModalOpen(false); }} className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsAddStudentModalOpen(false)} />
                     <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden p-6">
                         <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Tambah Siswa Eksternal</h2>
                         <form onSubmit={(e) => { e.preventDefault(); mutations.createStudentsMutation.mutate({ rows: newStudentRows, bulkClassName }); }} className="space-y-4">
                             <div className="space-y-4">
                                 {newStudentRows.map((row, index) => (
                                     <div key={index} className="flex gap-3">
-                                        <Input required type="text" value={row.name} onChange={(e) => { const n = [...newStudentRows]; n[index].name = e.target.value; setNewStudentRows(n); }} placeholder="Nama Siswa" className="flex-[2]" />
-                                        <Select value={row.gender} onChange={(e) => { const n = [...newStudentRows]; n[index].gender = e.target.value as Gender; setNewStudentRows(n); }} className="flex-1">
+                                        <Input required type="text" aria-label={`Nama Siswa Baris ${index + 1}`} value={row.name} onChange={(e) => { const n = [...newStudentRows]; n[index].name = e.target.value; setNewStudentRows(n); }} placeholder="Nama Siswa" className="flex-[2]" />
+                                        <Select aria-label={`Jenis Kelamin Baris ${index + 1}`} value={row.gender} onChange={(e) => { const n = [...newStudentRows]; n[index].gender = e.target.value as Gender; setNewStudentRows(n); }} className="flex-1">
                                             <option value="Laki-laki">L</option><option value="Perempuan">P</option>
                                         </Select>
-                                        <Input type="text" value={row.class_name} onChange={(e) => { const n = [...newStudentRows]; n[index].class_name = e.target.value; setNewStudentRows(n); }} placeholder="Kelas (Opsional)" className="flex-1" />
+                                        <Input type="text" aria-label={`Kelas Siswa Baris ${index + 1}`} value={row.class_name} onChange={(e) => { const n = [...newStudentRows]; n[index].class_name = e.target.value; setNewStudentRows(n); }} placeholder="Kelas (Opsional)" className="flex-1" />
                                     </div>
                                 ))}
                             </div>
@@ -1172,15 +1172,15 @@ const ExtracurricularPage: React.FC = () => {
             {/* Edit & Delete External Student Modals */}
             {editingExtraStudent && createPortal(
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setEditingExtraStudent(null)} />
+                    <div role="presentation" aria-hidden="true" onKeyDown={(e) => { if (e.key === 'Escape') setEditingExtraStudent(null); }} className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setEditingExtraStudent(null)} />
                     <div className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6">
                         <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Edit Siswa Eksternal</h2>
                         <form onSubmit={(e) => { e.preventDefault(); mutations.updateExtraStudentMutation.mutate(editingExtraStudent, { onSuccess: () => setEditingExtraStudent(null) }); }} className="space-y-4">
-                            <Input required type="text" value={editingExtraStudent.name} onChange={(e) => setEditingExtraStudent({...editingExtraStudent, name: e.target.value})} placeholder="Nama" />
-                            <Select value={editingExtraStudent.gender} onChange={(e) => setEditingExtraStudent({...editingExtraStudent, gender: e.target.value})}>
+                            <Input required type="text" aria-label="Nama Siswa" value={editingExtraStudent.name} onChange={(e) => setEditingExtraStudent({...editingExtraStudent, name: e.target.value})} placeholder="Nama" />
+                            <Select aria-label="Jenis Kelamin" value={editingExtraStudent.gender} onChange={(e) => setEditingExtraStudent({...editingExtraStudent, gender: e.target.value})}>
                                 <option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option>
                             </Select>
-                            <Input type="text" value={editingExtraStudent.class_name || ''} onChange={(e) => setEditingExtraStudent({...editingExtraStudent, class_name: e.target.value})} placeholder="Kelas" />
+                            <Input type="text" aria-label="Kelas Siswa" value={editingExtraStudent.class_name || ''} onChange={(e) => setEditingExtraStudent({...editingExtraStudent, class_name: e.target.value})} placeholder="Kelas" />
                             <div className="flex gap-3 pt-2">
                                 <button type="button" onClick={() => setEditingExtraStudent(null)} className="flex-1 py-2 rounded-xl border dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 dark:text-white">Batal</button>
                                 <button type="submit" disabled={mutations.updateExtraStudentMutation.isPending} className="flex-1 py-2 bg-amber-500 text-white rounded-xl font-bold">Simpan</button>
@@ -1192,7 +1192,7 @@ const ExtracurricularPage: React.FC = () => {
 
             {confirmDeleteExtraStudent && createPortal(
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteExtraStudent(null)} />
+                    <div role="presentation" aria-hidden="true" onKeyDown={(e) => { if (e.key === 'Escape') setConfirmDeleteExtraStudent(null); }} className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmDeleteExtraStudent(null)} />
                     <div className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6">
                         <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Hapus Siswa Eksternal?</h2>
                         <p className="dark:text-slate-300 mb-4">Hapus {confirmDeleteExtraStudent.name}?</p>
@@ -1207,7 +1207,7 @@ const ExtracurricularPage: React.FC = () => {
             {/* Confirm Mark All */}
             {confirmMarkAllStatus && createPortal(
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmMarkAllStatus(null)} />
+                    <div role="presentation" aria-hidden="true" onKeyDown={(e) => { if (e.key === 'Escape') setConfirmMarkAllStatus(null); }} className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmMarkAllStatus(null)} />
                     <div className="relative w-full max-w-sm bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6">
                         <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-2">Tandai Semua Siswa?</h2>
                         <p className="text-slate-600 dark:text-slate-400 text-sm mb-4">

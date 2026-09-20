@@ -166,11 +166,11 @@ const DataManagementSection: React.FC = () => {
                         </div>
 
                         <div className="flex justify-end">
-                        <Button
-                            onClick={handleSchoolSettingSave}
-                            disabled={!hasChanges || isUpdating}
-                            className="px-8 bg-brand-600 hover:bg-brand-700 text-white"
-                        >
+                            <Button
+                                onClick={handleSchoolSettingSave}
+                                disabled={!hasChanges || isUpdating}
+                                className="px-6 sm:px-8 min-h-[44px] rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-medium cursor-pointer active:scale-95 transition-all duration-150"
+                            >
                                 {isUpdating ? <RefreshCwIcon className="w-4 h-4 animate-spin mr-2" /> : <SaveIcon className="w-4 h-4 mr-2" />}
                                 Simpan Perubahan
                             </Button>
@@ -208,7 +208,7 @@ const DataManagementSection: React.FC = () => {
                         <Button
                             onClick={handleExport}
                             disabled={isExporting}
-                            className="w-full bg-brand-600 hover:bg-brand-700 text-white shadow-lg shadow-brand-600/20 h-10 font-medium"
+                            className="w-full bg-brand-600 hover:bg-brand-700 text-white shadow-lg shadow-brand-600/20 min-h-[44px] rounded-xl font-medium cursor-pointer active:scale-95 transition-all duration-150"
                         >
                             {isExporting ? <RefreshCwIcon className="w-4 h-4 animate-spin mr-2" /> : <DownloadCloudIcon className="w-4 h-4 mr-2" />}
                             {isExporting ? 'Memproses...' : 'Unduh Backup (.json)'}
@@ -249,7 +249,7 @@ const DataManagementSection: React.FC = () => {
                             onClick={handleImportClick}
                             disabled={isImporting}
                             variant="outline"
-                            className="w-full px-6 border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-900/30 h-10 font-medium"
+                            className="w-full px-6 border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-900/30 min-h-[44px] rounded-xl font-medium cursor-pointer active:scale-95 transition-all duration-150"
                         >
                             {isImporting ? <RefreshCwIcon className="w-4 h-4 animate-spin mr-2" /> : <UploadCloudIcon className="w-4 h-4 mr-2" />}
                             {isImporting ? 'Memulihkan...' : 'Pilih File Backup'}

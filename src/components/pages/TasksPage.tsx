@@ -195,7 +195,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
                         <div className="relative">
                             <button type="button"
                                 onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                                className="p-2 -mr-1 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
+                                className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all cursor-pointer active:scale-90"
                                 aria-label="Opsi tugas"
                                 aria-expanded={showMenu}
                                 aria-haspopup="menu"
@@ -205,18 +205,18 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
 
                             {showMenu && (
                                 <>
-                                    <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} aria-hidden="true" />
+                                    <div role="presentation" aria-hidden="true" onKeyDown={(e) => { if (e.key === 'Escape') setShowMenu(false); }} className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
                                     <div className="absolute right-0 top-full mt-1 w-40 sm:w-36 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 py-1 z-20">
                                         <button type="button"
                                             onClick={(e) => { e.stopPropagation(); onEdit(task); setShowMenu(false); }}
-                                            className="w-full flex items-center gap-3 sm:gap-2 px-4 sm:px-3 py-3 sm:py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50"
+                                            className="w-full flex items-center gap-3 sm:gap-2 px-4 sm:px-3 py-3 sm:py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 cursor-pointer active:scale-[0.98] transition-transform"
                                         >
                                             <EditIcon className="w-4 h-4" />
                                             Edit
                                         </button>
                                         <button type="button"
                                             onClick={(e) => { e.stopPropagation(); onDelete(task.id); setShowMenu(false); }}
-                                            className="w-full flex items-center gap-3 sm:gap-2 px-4 sm:px-3 py-3 sm:py-2 text-sm text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
+                                            className="w-full flex items-center gap-3 sm:gap-2 px-4 sm:px-3 py-3 sm:py-2 text-sm text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 cursor-pointer active:scale-[0.98] transition-transform"
                                         >
                                             <TrashIcon className="w-4 h-4" />
                                             Hapus
@@ -251,7 +251,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
                             {prevStatus && (
                                 <button type="button"
                                     onClick={() => onStatusChange(task.id, prevStatus)}
-                                    className="px-3 py-2 sm:px-2.5 sm:py-1.5 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600/50 hover:text-slate-800 dark:hover:text-white transition-all flex items-center gap-1.5 sm:gap-1"
+                                    className="px-3 py-2 sm:px-2.5 sm:py-1.5 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600/50 hover:text-slate-800 dark:hover:text-white transition-all flex items-center gap-1.5 sm:gap-1 cursor-pointer active:scale-95 duration-150"
                                     title={`Pindah ke ${statusConfig[prevStatus].title}`}
                                     disabled={isUpdating}
                                 >
@@ -262,7 +262,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusCha
                             {nextStatus && (
                                 <button type="button"
                                     onClick={() => onStatusChange(task.id, nextStatus)}
-                                    className={`px-3 py-2 sm:px-2.5 sm:py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 sm:gap-1 ${nextStatus === 'done'
+                                    className={`px-3 py-2 sm:px-2.5 sm:py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 sm:gap-1 cursor-pointer active:scale-95 duration-150 ${nextStatus === 'done'
                                         ? 'bg-emerald-500/20 text-emerald-700 hover:bg-emerald-500/30'
                                         : 'bg-blue-500/20 text-blue-600 hover:bg-blue-500/30'
                                         }`}
@@ -338,7 +338,7 @@ const Column: React.FC<ColumnProps> = ({
                 </div>
                 <button type="button"
                     onClick={() => onAddTask(status)}
-                    className="p-2 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
+                    className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all cursor-pointer active:scale-90"
                     title="Tambah tugas"
                     aria-label="Tambah tugas baru"
                 >
@@ -366,7 +366,7 @@ const Column: React.FC<ColumnProps> = ({
                             <p className="text-sm text-slate-500">Tidak ada tugas</p>
                             <button type="button"
                                 onClick={() => onAddTask(status)}
-                                className="mt-3 text-sm text-brand-400 hover:text-brand-300"
+                                className="mt-3 text-sm text-brand-400 hover:text-brand-300 cursor-pointer active:scale-95 duration-150 font-medium"
                             >
                                 + Tambah tugas
                             </button>
@@ -647,7 +647,7 @@ const TasksPage: React.FC = () => {
                         <Button
                             variant="ghost"
                             onClick={() => setIsConfirmingClearAll(true)}
-                            className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl border border-red-200 dark:border-red-900/50 transition-all font-medium"
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl border border-red-200 dark:border-red-900/50 transition-all font-medium cursor-pointer active:scale-95 duration-150"
                         >
                             <TrashIcon className="w-4 h-4 mr-2" />
                             <span className="hidden sm:inline">Bersihkan Selesai</span>
@@ -657,7 +657,7 @@ const TasksPage: React.FC = () => {
                     {/* Add Task Button */}
                     <Button
                         onClick={() => handleAddTask('todo')}
-                        className="bg-brand-600 hover:bg-brand-700 text-white rounded-xl shadow-lg shadow-brand-600/20"
+                        className="bg-brand-600 hover:bg-brand-700 text-white rounded-xl shadow-lg shadow-brand-600/20 cursor-pointer active:scale-95 duration-150"
                     >
                         <PlusIcon className="w-4 h-4 mr-2" />
                         <span className="hidden sm:inline">Tugas Baru</span>
@@ -695,7 +695,7 @@ const TasksPage: React.FC = () => {
                             <button type="button"
                                 key={statusKey}
                                 onClick={() => setMobileActiveTab(statusKey)}
-                                className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-lg text-sm font-medium transition-all ${mobileActiveTab === statusKey
+                                className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-lg text-sm font-medium transition-all cursor-pointer active:scale-95 duration-150 ${mobileActiveTab === statusKey
                                     ? `${config.bgColor} ${config.color} shadow-sm border ${statusKey === 'todo' ? 'border-slate-200' : statusKey === 'in_progress' ? 'border-blue-200' : 'border-emerald-200'} dark:border-slate-600`
                                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                                     }`}
@@ -724,7 +724,7 @@ const TasksPage: React.FC = () => {
                             <p className="text-slate-500 dark:text-slate-500 mb-3">Tidak ada tugas {statusConfig[mobileActiveTab].title}</p>
                             <button type="button"
                                 onClick={() => handleAddTask(mobileActiveTab)}
-                                className="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-500 dark:hover:text-brand-300 font-medium"
+                                className="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-500 dark:hover:text-brand-300 font-medium cursor-pointer active:scale-95 duration-150"
                             >
                                 + Tambah tugas
                             </button>
@@ -850,13 +850,14 @@ const TasksPage: React.FC = () => {
                             type="button"
                             variant="ghost"
                             onClick={() => { setIsModalOpen(false); resetForm(); }}
+                            className="rounded-xl cursor-pointer active:scale-95 duration-150"
                         >
                             Batal
                         </Button>
                         <Button
                             type="submit"
                             disabled={createTaskMutation.isPending || updateTaskMutation.isPending}
-                            className="bg-brand-600 hover:bg-brand-700"
+                            className="bg-brand-600 hover:bg-brand-700 rounded-xl cursor-pointer active:scale-95 duration-150 text-white shadow-sm"
                         >
                             {(createTaskMutation.isPending || updateTaskMutation.isPending) && (
                                 <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />
@@ -882,6 +883,7 @@ const TasksPage: React.FC = () => {
                         <Button
                             variant="ghost"
                             onClick={() => setTaskToDeleteId(null)}
+                            className="rounded-xl cursor-pointer active:scale-95 duration-150"
                         >
                             Batal
                         </Button>
@@ -892,7 +894,7 @@ const TasksPage: React.FC = () => {
                                     setTaskToDeleteId(null);
                                 }
                             }}
-                            className="bg-red-600 hover:bg-red-700 text-white rounded-xl"
+                            className="bg-red-600 hover:bg-red-700 text-white rounded-xl cursor-pointer active:scale-95 duration-150"
                         >
                             Ya, Hapus
                         </Button>
@@ -915,6 +917,7 @@ const TasksPage: React.FC = () => {
                         <Button
                             variant="ghost"
                             onClick={() => setIsConfirmingClearAll(false)}
+                            className="rounded-xl cursor-pointer active:scale-95 duration-150"
                         >
                             Batal
                         </Button>
@@ -923,7 +926,7 @@ const TasksPage: React.FC = () => {
                                 clearCompletedTasksMutation.mutate();
                                 setIsConfirmingClearAll(false);
                             }}
-                            className="bg-red-600 hover:bg-red-700 text-white rounded-xl"
+                            className="bg-red-600 hover:bg-red-700 text-white rounded-xl cursor-pointer active:scale-95 duration-150"
                             disabled={clearCompletedTasksMutation.isPending}
                         >
                             {clearCompletedTasksMutation.isPending && (

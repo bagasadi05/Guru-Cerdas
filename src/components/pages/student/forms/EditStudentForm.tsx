@@ -36,19 +36,19 @@ export const EditStudentForm: React.FC<EditStudentFormProps> = ({ defaultValues,
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-h-[75vh] overflow-y-auto px-1 pr-2">
             {/* Nama Lengkap */}
             <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                <label htmlFor="edit-student-name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                     Nama Lengkap <span className="text-rose-500">*</span>
                 </label>
-                <Input {...register('name')} error={errors.name?.message} placeholder="Masukkan nama lengkap siswa..." />
+                <Input id="edit-student-name" aria-label="Nama Lengkap" {...register('name')} error={errors.name?.message} placeholder="Masukkan nama lengkap siswa..." />
             </div>
 
             {/* Kelas & Tanggal Lahir */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    <label htmlFor="edit-student-class" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                         Kelas <span className="text-rose-500">*</span>
                     </label>
-                    <Select {...register('class_id')} error={errors.class_id?.message}>
+                    <Select id="edit-student-class" aria-label="Pilih Kelas" {...register('class_id')} error={errors.class_id?.message}>
                         <option value="">-- Pilih Kelas --</option>
                         {classes.map((c) => (
                             <option key={c.id} value={c.id}>
@@ -59,10 +59,12 @@ export const EditStudentForm: React.FC<EditStudentFormProps> = ({ defaultValues,
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    <label htmlFor="edit-student-birthdate" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                         Tanggal Lahir
                     </label>
                     <Input
+                        id="edit-student-birthdate"
+                        aria-label="Tanggal Lahir"
                         type="date"
                         {...register('birth_date')}
                         error={errors.birth_date?.message}
@@ -73,10 +75,12 @@ export const EditStudentForm: React.FC<EditStudentFormProps> = ({ defaultValues,
             {/* NIS & NISN */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    <label htmlFor="edit-student-nis" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                         NIS (Nomor Induk Siswa)
                     </label>
                     <Input
+                        id="edit-student-nis"
+                        aria-label="NIS (Nomor Induk Siswa)"
                         {...register('nis')}
                         error={errors.nis?.message}
                         placeholder="Contoh: 2024001"
@@ -84,10 +88,12 @@ export const EditStudentForm: React.FC<EditStudentFormProps> = ({ defaultValues,
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                    <label htmlFor="edit-student-nisn" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                         NISN (Nasional)
                     </label>
                     <Input
+                        id="edit-student-nisn"
+                        aria-label="NISN (Nasional)"
                         {...register('nisn')}
                         error={errors.nisn?.message}
                         placeholder="Contoh: 0081234567"

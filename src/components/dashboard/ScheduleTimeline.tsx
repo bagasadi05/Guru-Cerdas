@@ -137,7 +137,7 @@ const ScheduleTimeline: React.FC<ScheduleTimelineProps> = ({ schedule, currentTi
                   {(isCurrent || isPast) && item.class_id && (
                     <a
                       href={`/jurnal?classId=${item.class_id}&subject=${encodeURIComponent(item.subject)}&scheduleId=${item.id}&action=add`}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:hover:bg-emerald-500/30 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:hover:bg-emerald-500/30 transition-all duration-150 cursor-pointer active:scale-95"
                     >
                       Isi Jurnal
                     </a>

@@ -94,7 +94,7 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                 <button
                   type="button"
                   onClick={bulkSelection.isAllSelected ? bulkSelection.clearSelection : bulkSelection.selectAll}
-                  className="text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 px-2.5 py-1.5 rounded-lg transition-colors"
+                  className="text-xs sm:text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer active:scale-95"
                 >
                   {bulkSelection.isAllSelected ? 'Batal Pilih Semua' : `Pilih Semua (${students.length})`}
                 </button>
@@ -107,7 +107,7 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                     await evalHook.handleDownloadBulkPdf(Array.from(bulkSelection.selectedItems));
                   }}
                   disabled={evalHook.isDownloadingBulk}
-                  className="flex items-center gap-1.5 text-xs sm:text-sm h-10 px-4 font-medium bg-brand-600 hover:bg-brand-500 text-white rounded-xl shadow-sm active:scale-95"
+                  className="flex items-center gap-1.5 text-xs sm:text-sm h-10 px-4 font-medium bg-brand-600 hover:bg-brand-500 text-white rounded-xl shadow-sm cursor-pointer active:scale-95"
                 >
                   {evalHook.isDownloadingBulk ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -122,7 +122,7 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                     await evalHook.handleExportExcel(Array.from(bulkSelection.selectedItems));
                   }}
                   disabled={evalHook.isExportingExcel}
-                  className="flex items-center gap-1.5 text-xs sm:text-sm h-10 px-4 font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-sm active:scale-95"
+                  className="flex items-center gap-1.5 text-xs sm:text-sm h-10 px-4 font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-sm cursor-pointer active:scale-95"
                 >
                   {evalHook.isExportingExcel ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -135,7 +135,7 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                 <Button
                   variant="outline"
                   onClick={onOpenBulkExport}
-                  className="flex items-center gap-1.5 text-xs sm:text-sm h-10 px-3.5 font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 rounded-xl active:scale-95"
+                  className="flex items-center gap-1.5 text-xs sm:text-sm h-10 px-3.5 font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 rounded-xl cursor-pointer active:scale-95"
                 >
                   <Download size={15} />
                   <span className="hidden sm:inline">Opsi Export...</span>
@@ -145,7 +145,7 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                 <button
                   type="button"
                   onClick={bulkSelection.clearSelection}
-                  className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors ml-1"
+                  className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors ml-1 cursor-pointer active:scale-95"
                   aria-label="Batalkan pilihan (Esc)"
                   title="Batalkan pilihan (Esc)"
                 >
@@ -180,7 +180,7 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
       {/* ─── 3. Main Student Table ────────────────────────────────────── */}
       <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[480px]">
+          <table className="w-full text-left border-collapse min-w-[480px]" aria-label="Tabel Evaluasi Karakter Siswa">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
                 {isWalas && (
@@ -192,8 +192,8 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                         if (el) el.indeterminate = bulkSelection.isPartiallySelected;
                       }}
                       onChange={bulkSelection.toggleAll}
+                      aria-label="Pilih semua siswa untuk evaluasi"
                       className="rounded border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-500 h-4 w-4 cursor-pointer"
-                      aria-label="Pilih semua siswa"
                     />
                   </th>
                 )}
@@ -310,7 +310,7 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="px-1.5 py-1 sm:px-2 sm:py-1.5 h-auto min-h-[38px] min-w-[38px] sm:min-h-0 sm:min-w-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+                              className="px-1.5 py-1 sm:px-2 sm:py-1.5 h-auto min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30 rounded-xl cursor-pointer active:scale-90 transition-all"
                               onClick={() => handleSendWhatsAppEvaluation(student, ev, aspect)}
                               title={student.parent_phone ? `Kirim Rapor WA (${student.parent_phone})` : 'Nomor WA orang tua belum diisi'}
                             >
@@ -322,7 +322,7 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                           <Button
                             variant="outline"
                             size="sm"
-                            className="px-1.5 py-1 sm:px-3 sm:py-1.5 h-auto min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+                            className="px-1.5 py-1 sm:px-3 sm:py-1.5 h-auto min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 rounded-xl cursor-pointer active:scale-90 transition-all"
                             onClick={() => onOpenDetail(student.id)}
                             title="Detail & Riwayat"
                           >
@@ -333,7 +333,7 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                             <Button
                               variant="outline"
                               size="sm"
-                              className="px-1.5 py-1 sm:px-3 sm:py-1.5 h-auto min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+                              className="px-1.5 py-1 sm:px-3 sm:py-1.5 h-auto min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 rounded-xl cursor-pointer active:scale-90 transition-all"
                               onClick={() => evalHook.handleOpenEditModal(student, getAspectSummary)}
                               disabled={isPublished}
                               title={isPublished ? 'Rapor sudah terbit. Tarik ke Draft untuk mengedit kembali.' : isCompleted ? 'Edit' : 'Isi Rapor'}
@@ -346,7 +346,7 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                             <Button
                               variant="outline"
                               size="sm"
-                              className="px-1.5 py-1 sm:px-2.5 sm:py-1.5 h-auto min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 text-amber-600 hover:text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100"
+                              className="px-1.5 py-1 sm:px-2.5 sm:py-1.5 h-auto min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 text-amber-600 hover:text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/60 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100 rounded-xl cursor-pointer active:scale-90 transition-all"
                               onClick={() => evalHook.handleUnpublishSingle(student.id, student.name)}
                               disabled={evalHook.unpublishingStudentId === student.id}
                               title="Tarik rapor siswa ini kembali ke Draft agar bisa diedit kembali"
@@ -359,7 +359,7 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                             <Button
                               variant="outline"
                               size="sm"
-                              className="px-1.5 py-1 sm:px-3 sm:py-1.5 h-auto min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+                              className="px-1.5 py-1 sm:px-3 sm:py-1.5 h-auto min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 rounded-xl cursor-pointer active:scale-90 transition-all"
                               onClick={() => evalHook.handleDownloadSinglePdf(student.id)}
                               disabled={evalHook.downloadingStudentId === student.id}
                               title="Cetak Rapor"

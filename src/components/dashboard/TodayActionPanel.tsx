@@ -277,21 +277,21 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data, isLoad
                             <button
                                 type="button"
                                 onClick={() => navigate('/absensi')}
-                                className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-sm transition-all active:scale-[0.98]"
+                                className="flex-1 sm:flex-initial px-3.5 py-2 min-h-[44px] sm:min-h-0 text-xs font-semibold rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-sm transition-all duration-150 cursor-pointer active:scale-95 flex items-center justify-center"
                             >
                                 Cek Absensi
                             </button>
                             <button
                                 type="button"
                                 onClick={() => navigate('/input-massal')}
-                                className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-sm transition-all active:scale-[0.98]"
+                                className="flex-1 sm:flex-initial px-3.5 py-2 min-h-[44px] sm:min-h-0 text-xs font-semibold rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-sm transition-all duration-150 cursor-pointer active:scale-95 flex items-center justify-center"
                             >
                                 Input Nilai
                             </button>
                             <button
                                 type="button"
                                 onClick={() => navigate('/jadwal')}
-                                className="flex-1 sm:flex-initial px-3.5 py-2 text-xs font-semibold rounded-xl bg-brand-600 hover:bg-brand-700 text-white shadow-sm transition-all active:scale-[0.98]"
+                                className="flex-1 sm:flex-initial px-3.5 py-2 min-h-[44px] sm:min-h-0 text-xs font-semibold rounded-xl bg-brand-600 hover:bg-brand-700 text-white shadow-sm transition-all duration-150 cursor-pointer active:scale-95 flex items-center justify-center"
                             >
                                 Buka Jadwal
                             </button>
@@ -305,7 +305,7 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data, isLoad
                         return (
                             <div
                                 onClick={() => navigate(item.href)}
-                                className={`group cursor-pointer rounded-2xl border ${accent.border} ${accent.bannerBg} ${accent.hoverBorder} p-4 sm:p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5`}
+                                className={`group cursor-pointer rounded-2xl border ${accent.border} ${accent.bannerBg} ${accent.hoverBorder} p-4 sm:p-5 transition-all duration-150 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.99]`}
                             >
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                     <div className="flex items-start sm:items-center gap-3.5 min-w-0">
@@ -351,7 +351,7 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data, isLoad
                                 <div
                                     key={item.id}
                                     onClick={() => navigate(item.href)}
-                                    className={`group cursor-pointer rounded-2xl border ${accent.border} ${accent.cardBg} ${accent.hoverBorder} p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md flex flex-col justify-between`}
+                                    className={`group cursor-pointer rounded-2xl border ${accent.border} ${accent.cardBg} ${accent.hoverBorder} p-4 text-left transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] flex flex-col justify-between`}
                                 >
                                     <div>
                                         <div className="flex items-center justify-between gap-2 mb-3">

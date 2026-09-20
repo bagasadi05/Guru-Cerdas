@@ -99,7 +99,7 @@ export const SubjectAnalysisGrid: React.FC<SubjectAnalysisGridProps> = ({ subjec
                 {subjectStats.map((stat) => (
                     <Card
                         key={stat.subject}
-                        className="bg-white dark:bg-slate-900 border-0 shadow-md hover:shadow-lg transition-all cursor-pointer group"
+                        className="bg-white dark:bg-slate-900 border-0 shadow-md hover:shadow-lg transition-all duration-150 active:scale-[0.98] cursor-pointer group rounded-2xl"
                         onClick={() => onSelectSubject(stat)}
                         role="button"
                         tabIndex={0}

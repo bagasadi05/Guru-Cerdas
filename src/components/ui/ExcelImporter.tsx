@@ -305,7 +305,7 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
 
                 {/* Preview Table */}
                 <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-                    <table className="w-full text-sm">
+                    <table className="w-full text-sm" aria-label="Tabel Pratinjau Impor Excel">
                         <thead className="bg-gray-50 dark:bg-gray-800">
                             <tr>
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">#</th>

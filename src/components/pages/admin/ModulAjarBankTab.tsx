@@ -370,7 +370,7 @@ export const ModulAjarBankTab: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-sm" aria-label="Tabel Bank Modul Ajar">
             <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300">
               <tr>
                 <th className="p-3 font-semibold rounded-tl-lg">Topik & Mapel</th>
@@ -459,7 +459,7 @@ export const ModulAjarBankTab: React.FC = () => {
         )}
         
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-xs" aria-label="Tabel Antrean Generator Modul AI">
             <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="p-2">Fingerprint (Topik)</th>

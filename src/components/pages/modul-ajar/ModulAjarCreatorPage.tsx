@@ -549,7 +549,7 @@ const ModulAjarCreatorPage: React.FC = () => {
           <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
             <button 
               onClick={() => setActiveTab('preview')}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 duration-150 ${
                 activeTab === 'preview' 
                 ? 'bg-white text-slate-800 dark:bg-slate-900 dark:text-white shadow-xs'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
@@ -560,7 +560,7 @@ const ModulAjarCreatorPage: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('history')}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 duration-150 ${
                 activeTab === 'history'
                 ? 'bg-white text-slate-800 dark:bg-slate-900 dark:text-white shadow-xs'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
@@ -581,7 +581,7 @@ const ModulAjarCreatorPage: React.FC = () => {
             <div className="flex bg-brand-50/80 dark:bg-brand-950/40 p-0.5 rounded-lg border border-brand-200 dark:border-brand-900/40">
               <button
                 onClick={() => setPreviewMode('guru')}
-                className={`px-2.5 sm:px-3 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                className={`px-2.5 sm:px-3 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer active:scale-95 duration-150 ${
                   previewMode === 'guru'
                   ? 'bg-brand-600 text-white shadow-xs'
                   : 'text-brand-600 dark:text-brand-400 hover:bg-brand-100/50'
@@ -591,7 +591,7 @@ const ModulAjarCreatorPage: React.FC = () => {
               </button>
               <button
                 onClick={() => setPreviewMode('siswa')}
-                className={`px-2.5 sm:px-3 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                className={`px-2.5 sm:px-3 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer active:scale-95 duration-150 ${
                   previewMode === 'siswa'
                   ? 'bg-brand-600 text-white shadow-xs'
                   : 'text-brand-600 dark:text-brand-400 hover:bg-brand-100/50'
@@ -610,7 +610,7 @@ const ModulAjarCreatorPage: React.FC = () => {
                 <div className="hidden sm:flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 mr-1 text-slate-600 dark:text-slate-300">
                   <button
                     onClick={() => handleInputChange('paperSize', 'A4')}
-                    className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${
+                    className={`px-2 py-1 rounded text-[10px] font-bold transition-all cursor-pointer active:scale-95 duration-150 ${
                       (formState.paperSize || 'A4') === 'A4'
                         ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-white shadow-xs'
                         : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -621,7 +621,7 @@ const ModulAjarCreatorPage: React.FC = () => {
                   </button>
                   <button
                     onClick={() => handleInputChange('paperSize', 'F4')}
-                    className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${
+                    className={`px-2 py-1 rounded text-[10px] font-bold transition-all cursor-pointer active:scale-95 duration-150 ${
                       formState.paperSize === 'F4'
                         ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-white shadow-xs'
                         : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
@@ -638,21 +638,21 @@ const ModulAjarCreatorPage: React.FC = () => {
                 <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 mr-1 text-slate-600 dark:text-slate-300">
                   <button
                     onClick={() => setZoomLevel(prev => Math.max(70, prev - 10))}
-                    className="p-1 hover:bg-white dark:hover:bg-slate-700 rounded transition-colors"
+                    className="p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded transition-all cursor-pointer active:scale-90"
                     title="Perkecil (Zoom Out)"
                   >
                     <ZoomOut className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => setZoomLevel(100)}
-                    className="px-1.5 text-[10px] font-semibold hover:bg-white dark:hover:bg-slate-700 rounded transition-colors"
+                    className="px-1.5 text-[10px] font-semibold hover:bg-white dark:hover:bg-slate-700 rounded transition-all cursor-pointer active:scale-95"
                     title="Reset Skala 100%"
                   >
                     {zoomLevel}%
                   </button>
                   <button
                     onClick={() => setZoomLevel(prev => Math.min(150, prev + 10))}
-                    className="p-1 hover:bg-white dark:hover:bg-slate-700 rounded transition-colors"
+                    className="p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded transition-all cursor-pointer active:scale-90"
                     title="Perbesar (Zoom In)"
                   >
                     <ZoomIn className="w-3.5 h-3.5" />
@@ -663,7 +663,7 @@ const ModulAjarCreatorPage: React.FC = () => {
               <button
                 onClick={handleCopy}
                 disabled={!generatedDocument}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 hover:text-brand-600 transition-colors disabled:opacity-50"
+                className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-500 hover:text-brand-600 transition-all disabled:opacity-50 cursor-pointer active:scale-95 duration-150"
                 title={t.lessonPlan.copy}
               >
                 <Copy className="w-4 h-4" />
@@ -672,7 +672,7 @@ const ModulAjarCreatorPage: React.FC = () => {
               <button
                 onClick={handlePrint}
                 disabled={!generatedDocument}
-                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors disabled:opacity-50 flex items-center gap-1 text-xs font-medium"
+                className="p-2 min-h-[36px] min-w-[36px] hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-all disabled:opacity-50 flex items-center justify-center gap-1 text-xs font-medium cursor-pointer active:scale-95 duration-150"
                 title={t.lessonPlan.pdf}
               >
                 <Printer className="w-4 h-4" />
@@ -682,7 +682,7 @@ const ModulAjarCreatorPage: React.FC = () => {
               <button
                 onClick={handleExportWord}
                 disabled={!generatedDocument}
-                className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors disabled:opacity-50 flex items-center gap-1 text-xs font-medium"
+                className="p-2 min-h-[36px] min-w-[36px] hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-all disabled:opacity-50 flex items-center justify-center gap-1 text-xs font-medium cursor-pointer active:scale-95 duration-150"
                 title={t.lessonPlan.word}
               >
                 <FileText className="w-4 h-4" />
@@ -692,7 +692,7 @@ const ModulAjarCreatorPage: React.FC = () => {
               {generatedDocument && (
                 <button
                   onClick={() => setIsFullscreen(true)}
-                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 hover:text-brand-600 transition-colors"
+                  className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-500 hover:text-brand-600 transition-all cursor-pointer active:scale-95 duration-150"
                   title="Mode Layar Penuh (Fokus)"
                 >
                   <Maximize2 className="w-4 h-4" />
@@ -813,7 +813,7 @@ const ModulAjarCreatorPage: React.FC = () => {
               <div className="flex bg-slate-800 p-1 rounded-xl border border-slate-700">
                 <button
                   onClick={() => setPreviewMode('guru')}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95 duration-150 ${
                     previewMode === 'guru'
                     ? 'bg-brand-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-white'
@@ -823,7 +823,7 @@ const ModulAjarCreatorPage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setPreviewMode('siswa')}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95 duration-150 ${
                     previewMode === 'siswa'
                     ? 'bg-brand-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-white'
@@ -837,28 +837,28 @@ const ModulAjarCreatorPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleCopy}
-                  className="p-2 hover:bg-slate-800 rounded-xl text-slate-300 hover:text-white transition-colors"
+                  className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center hover:bg-slate-800 rounded-xl text-slate-300 hover:text-white transition-all cursor-pointer active:scale-95 duration-150"
                   title="Salin Teks"
                 >
                   <Copy className="w-4 h-4" />
                 </button>
                 <button
                   onClick={handlePrint}
-                  className="px-3 py-1.5 bg-red-600 hover:bg-red-700 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 transition-colors"
+                  className="px-3 py-1.5 min-h-[36px] bg-red-600 hover:bg-red-700 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 duration-150"
                 >
                   <Printer className="w-4 h-4" />
                   <span>{t.lessonPlan.pdf}</span>
                 </button>
                 <button
                   onClick={handleExportWord}
-                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 transition-colors"
+                  className="px-3 py-1.5 min-h-[36px] bg-blue-600 hover:bg-blue-700 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 duration-150"
                 >
                   <FileText className="w-4 h-4" />
                   <span>{t.lessonPlan.word}</span>
                 </button>
                 <button
                   onClick={() => setIsFullscreen(false)}
-                  className="p-2 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white ml-2 transition-colors"
+                  className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white ml-2 transition-all cursor-pointer active:scale-95 duration-150"
                   title="Keluar Layar Penuh"
                 >
                   <Minimize2 className="w-5 h-5" />

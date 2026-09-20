@@ -25,11 +25,11 @@ import {
     MoreVerticalIcon,
     ClipboardPenIcon,
     SearchIcon,
-    SparklesIcon,
     AlertTriangleIcon,
     Share2Icon,
     PrinterIcon,
     CheckCircleIcon,
+    XIcon,
 } from '../Icons';
 import { getColorForSubject } from '../../utils/scheduleUtils';
 import type { PhScheduleRow, ClassRow } from '../../types';
@@ -618,7 +618,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
             {/* Stat Summary Cards Bar */}
             {effectiveClassId && selectedSemesterId && !isLoadingSchedules && rawSchedules.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                    <div className="bg-white/90 dark:bg-slate-900/70 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-sm flex items-center gap-3.5">
+                    <div className="bg-white/90 dark:bg-[#111c2e]/80 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-[#1c2b44] p-4 shadow-sm flex items-center gap-3.5">
                         <div className="w-11 h-11 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0 border border-brand-200/60 dark:border-brand-500/20">
                             <CalendarIcon className="w-5 h-5" />
                         </div>
@@ -629,7 +629,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                         </div>
                     </div>
 
-                    <div className="bg-white/90 dark:bg-slate-900/70 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-sm flex items-center gap-3.5">
+                    <div className="bg-white/90 dark:bg-[#111c2e]/80 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-[#1c2b44] p-4 shadow-sm flex items-center gap-3.5">
                         <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-200/60 dark:border-blue-500/20">
                             <ClockIcon className="w-5 h-5" />
                         </div>
@@ -644,7 +644,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                         </div>
                     </div>
 
-                    <div className="bg-white/90 dark:bg-slate-900/70 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-sm flex items-center gap-3.5">
+                    <div className="bg-white/90 dark:bg-[#111c2e]/80 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-[#1c2b44] p-4 shadow-sm flex items-center gap-3.5">
                         <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200/60 dark:border-emerald-500/20">
                             <CheckCircleIcon className="w-5 h-5" />
                         </div>
@@ -690,207 +690,219 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                 </div>
             )}
 
-            {/* Filter & Control Bar */}
-            <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-sm space-y-4">
-                <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 justify-between items-stretch lg:items-center">
-                    {/* Selectors: Class & Semester */}
-                    <div className="flex flex-col sm:flex-row gap-3 flex-1">
-                        <div className="flex-1 min-w-[200px]">
-                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                                Kelas
-                            </label>
-                            <CustomDropdown
-                                value={effectiveClassId}
-                                onChange={handleSelectClass}
-                                options={classes.map(c => ({ value: c.id, label: c.name }))}
-                                placeholder="Pilih Kelas"
-                            />
-                        </div>
-                        <div className="flex-1 min-w-[220px]">
-                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                                Semester
-                            </label>
-                            <CustomDropdown
-                                value={selectedSemesterId}
-                                onChange={setSelectedSemesterId}
-                                options={semesterOptions}
-                                placeholder="Pilih Semester"
-                            />
-                        </div>
+            {/* Filter & Action Card (Stitch Style) */}
+            <div className="bg-white/95 dark:bg-[#111c2e]/80 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-[#1c2b44] p-3 sm:p-3.5 shadow-sm dark:shadow-[0_0_0_1px_rgba(28,43,68,0.8),0_4px_20px_-2px_rgba(0,0,0,0.4)] space-y-3 sm:space-y-3.5">
+                {/* Selectors Row: KELAS & SEMESTER (2 Columns) */}
+                <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+                    <div className="space-y-1">
+                        <label className="block text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-400 dark:text-[#64748b] uppercase">
+                            KELAS
+                        </label>
+                        <CustomDropdown
+                            value={effectiveClassId}
+                            onChange={handleSelectClass}
+                            options={classes.map(c => ({ value: c.id, label: c.name }))}
+                            placeholder="Pilih Kelas"
+                        />
                     </div>
-
-                    {/* Toolbar Actions: WhatsApp Share, Print, ICS & Tambah */}
-                    <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto pt-1 sm:pt-0">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setIsWaModalOpen(true)}
-                            disabled={rawSchedules.length === 0}
-                            className="h-10 px-3.5 rounded-xl border-emerald-200 dark:border-emerald-800/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-bold flex items-center gap-1.5"
-                            title="Salin Jadwal untuk WhatsApp"
-                        >
-                            <Share2Icon className="w-4 h-4" />
-                            <span className="hidden sm:inline">Salin WA</span>
-                        </Button>
-
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={handleTriggerPrint}
-                            disabled={rawSchedules.length === 0}
-                            className="h-10 px-3.5 rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold flex items-center gap-1.5"
-                            title="Cetak Jadwal PH"
-                        >
-                            <PrinterIcon className="w-4 h-4" />
-                            <span className="hidden sm:inline">Cetak</span>
-                        </Button>
-
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={handleExportIcs}
-                            disabled={rawSchedules.length === 0}
-                            className="h-10 px-3.5 rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold flex items-center gap-1.5"
-                            title="Ekspor Jadwal PH ke Kalender (.ics)"
-                        >
-                            <CalendarIcon className="w-4 h-4 text-blue-500" />
-                            <span className="hidden sm:inline">ICS</span>
-                        </Button>
-
-                        {canManage && (
-                            <Button
-                                onClick={openAdd}
-                                variant="primary"
-                                size="sm"
-                                className="h-10 px-4 rounded-xl shadow-md shadow-brand-500/20 font-bold flex items-center gap-2"
-                            >
-                                <PlusIcon className="w-4 h-4" />
-                                <span>Tambah PH</span>
-                            </Button>
-                        )}
+                    <div className="space-y-1">
+                        <label className="block text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-400 dark:text-[#64748b] uppercase">
+                            SEMESTER
+                        </label>
+                        <CustomDropdown
+                            value={selectedSemesterId}
+                            onChange={setSelectedSemesterId}
+                            options={semesterOptions}
+                            placeholder="Pilih Semester"
+                        />
                     </div>
                 </div>
 
-                {/* Sub-bar: Search, Month Filter, Status Filter Pills, Sort & View Mode */}
-                <div className="flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center pt-3 border-t border-slate-100 dark:border-slate-800/80">
-                    {/* Search & Month Filter */}
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1 max-w-xl">
-                        <div className="relative flex-1">
-                            <SearchIcon className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                            <Input
-                                type="text"
-                                placeholder="Cari mata pelajaran atau jam ke-..."
-                                value={searchQuery}
-                                onChange={e => setSearchQuery(e.target.value)}
-                                className="pl-9 h-9 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/60 rounded-xl"
-                            />
-                        </div>
-
-                        {availableMonths.length > 0 && (
-                            <div className="min-w-[150px]">
-                                <CustomDropdown
-                                    value={selectedMonth}
-                                    onChange={setSelectedMonth}
-                                    options={[
-                                        { value: 'all', label: 'Semua Bulan' },
-                                        ...availableMonths,
-                                    ]}
-                                    placeholder="Pilih Bulan"
-                                />
-                            </div>
-                        )}
+                {/* Action Buttons Row: Quick tools (Share, Print, ICS) + Primary Button (+ Tambah PH) */}
+                <div className="flex items-center gap-2">
+                    {/* Quick actions group */}
+                    <div className="flex items-center border border-slate-200 dark:border-[#1c2b44] rounded-xl bg-slate-100/70 dark:bg-[#0f1828]/60 p-0.5">
+                        <button
+                            type="button"
+                            onClick={() => setIsWaModalOpen(true)}
+                            disabled={rawSchedules.length === 0}
+                            className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-[#111c2e] disabled:opacity-40 transition-colors"
+                            title="Salin Jadwal untuk WhatsApp"
+                            aria-label="Bagikan WhatsApp"
+                        >
+                            <Share2Icon className="w-4 h-4" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleTriggerPrint}
+                            disabled={rawSchedules.length === 0}
+                            className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-[#111c2e] disabled:opacity-40 transition-colors"
+                            title="Cetak Jadwal PH"
+                            aria-label="Cetak"
+                        >
+                            <PrinterIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleExportIcs}
+                            disabled={rawSchedules.length === 0}
+                            className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-[#111c2e] disabled:opacity-40 transition-colors"
+                            title="Ekspor Jadwal PH ke Kalender (.ics)"
+                            aria-label="Kalender ICS"
+                        >
+                            <CalendarIcon className="w-4 h-4" />
+                        </button>
                     </div>
 
-                    {/* Status Pills, Sort & View Mode */}
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
-                        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl text-xs font-semibold">
-                            <button
-                                type="button"
-                                onClick={() => setStatusFilter('all')}
-                                className={`px-2.5 py-1 rounded-lg transition-all ${
-                                    statusFilter === 'all'
-                                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm font-bold'
-                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                                }`}
-                            >
-                                Semua ({statusCounts.all})
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setStatusFilter('today')}
-                                className={`px-2.5 py-1 rounded-lg transition-all ${
-                                    statusFilter === 'today'
-                                        ? 'bg-emerald-500 text-white shadow-sm font-bold'
-                                        : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
-                                }`}
-                            >
-                                Hari Ini ({statusCounts.today})
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setStatusFilter('upcoming')}
-                                className={`px-2.5 py-1 rounded-lg transition-all ${
-                                    statusFilter === 'upcoming'
-                                        ? 'bg-blue-500 text-white shadow-sm font-bold'
-                                        : 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30'
-                                }`}
-                            >
-                                Mendatang ({statusCounts.upcoming})
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setStatusFilter('past')}
-                                className={`px-2.5 py-1 rounded-lg transition-all ${
-                                    statusFilter === 'past'
-                                        ? 'bg-slate-400 text-white shadow-sm font-bold'
-                                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
-                                }`}
-                            >
-                                Selesai ({statusCounts.past})
-                            </button>
-                        </div>
+                    {/* Primary Button: + Tambah PH */}
+                    {canManage && (
+                        <button
+                            type="button"
+                            onClick={openAdd}
+                            className="flex-1 h-10 bg-[#00d284] hover:bg-[#00ba74] text-slate-950 font-bold text-[13px] rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-[0_4px_14px_0_rgba(0,210,132,0.25)] active:scale-[0.98] whitespace-nowrap px-3"
+                        >
+                            <PlusIcon className="w-4 h-4 stroke-[2.5] shrink-0" />
+                            <span className="whitespace-nowrap">Tambah PH</span>
+                        </button>
+                    )}
+                </div>
 
+                {/* Search Input Bar (with Month filter if available) */}
+                <div className="flex items-center gap-2">
+                    <div className="relative flex-1 min-w-0">
+                        <SearchIcon className="w-4 h-4 text-slate-400 dark:text-[#64748b] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <Input
+                            type="text"
+                            placeholder="Cari mata pelajaran PH..."
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            className="w-full bg-slate-50 dark:bg-[#0f1828] border border-slate-200 dark:border-[#1f314d] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-[#64748b] text-[13px] rounded-xl py-2.5 pl-10 pr-8 focus:outline-none focus:border-emerald-500 dark:focus:border-[#00d284]/80 transition-colors h-10"
+                        />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                            >
+                                <XIcon className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+                    {availableMonths.length > 0 && (
+                        <div className="w-28 sm:w-36 shrink-0">
+                            <CustomDropdown
+                                value={selectedMonth}
+                                onChange={setSelectedMonth}
+                                options={[
+                                    { value: 'all', label: 'Semua Bulan' },
+                                    ...availableMonths,
+                                ]}
+                                placeholder="Bulan"
+                            />
+                        </div>
+                    )}
+                </div>
+
+                {/* Filter Chips & Sort / View Controls Row */}
+                <div className="flex items-center justify-between pt-0.5">
+                    {/* Horizontal scrollable filter pills */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide py-0.5 min-w-0">
+                        <button
+                            type="button"
+                            onClick={() => setStatusFilter('all')}
+                            className={`px-2.5 py-1.5 rounded-lg font-semibold text-[11px] whitespace-nowrap shadow-sm shrink-0 transition-all ${
+                                statusFilter === 'all'
+                                    ? 'bg-slate-700/80 dark:bg-slate-700/90 text-white border border-slate-600'
+                                    : 'text-slate-600 dark:text-[#94a3b8] hover:bg-slate-100 dark:hover:bg-[#0f1828]'
+                            }`}
+                        >
+                            Semua ({statusCounts.all})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setStatusFilter('today')}
+                            className={`px-2.5 py-1.5 rounded-lg font-medium text-[11px] whitespace-nowrap shrink-0 transition-colors ${
+                                statusFilter === 'today'
+                                    ? 'bg-emerald-500 text-white shadow-sm font-semibold'
+                                    : 'text-emerald-600 dark:text-[#00d284] hover:bg-slate-100 dark:hover:bg-[#0f1828]'
+                            }`}
+                        >
+                            Hari Ini ({statusCounts.today})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setStatusFilter('upcoming')}
+                            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-medium text-[11px] whitespace-nowrap shrink-0 transition-colors ${
+                                statusFilter === 'upcoming'
+                                    ? 'bg-blue-500 text-white shadow-sm font-semibold'
+                                    : 'text-blue-500 dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-[#0f1828]'
+                            }`}
+                        >
+                            <span>Mendatang ({statusCounts.upcoming})</span>
+                            <span className="text-[10px]">↑</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setStatusFilter('past')}
+                            className={`px-2.5 py-1.5 rounded-lg font-medium text-[11px] whitespace-nowrap shrink-0 transition-colors ${
+                                statusFilter === 'past'
+                                    ? 'bg-slate-400 text-white shadow-sm font-semibold'
+                                    : 'text-slate-500 dark:text-[#64748b] hover:bg-slate-100 dark:hover:bg-[#0f1828]'
+                            }`}
+                        >
+                            Selesai ({statusCounts.past})
+                        </button>
+                    </div>
+
+                    {/* Controls Bar: Sort Order & View Mode */}
+                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
                         {/* Sort Order Toggle */}
                         <button
                             type="button"
                             onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
                             title={sortOrder === 'asc' ? 'Urutan: Tanggal Terdekat' : 'Urutan: Tanggal Terjauh'}
-                            className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs font-semibold flex items-center gap-1"
+                            className="h-7 px-2 rounded-lg bg-slate-100 dark:bg-[#0f1828] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-[11px] font-semibold flex items-center gap-1 whitespace-nowrap shrink-0 border border-slate-200 dark:border-[#1c2b44]/80 transition-colors"
                         >
-                            <span>{sortOrder === 'asc' ? '↑ Terdekat' : '↓ Terjauh'}</span>
+                            <span className="font-bold">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                            <span className="hidden sm:inline">{sortOrder === 'asc' ? 'Terdekat' : 'Terjauh'}</span>
                         </button>
 
                         {/* View Mode Toggle */}
-                        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl ml-auto sm:ml-0">
+                        <div className="flex items-center bg-slate-100 dark:bg-[#0f1828] border border-slate-200 dark:border-[#1c2b44]/80 rounded-lg p-0.5 shrink-0">
                             <button
                                 type="button"
                                 onClick={() => setViewMode('cards')}
-                                title="Tampilan Kartu"
-                                className={`p-1.5 rounded-lg transition-all ${
+                                title="Tampilan Grid / Kartu"
+                                className={`w-7 h-7 rounded flex items-center justify-center transition-all ${
                                     viewMode === 'cards'
-                                        ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm'
-                                        : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'
+                                        ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-cyan-300 shadow-sm'
+                                        : 'text-slate-400 dark:text-[#64748b] hover:text-slate-700 dark:hover:text-white'
                                 }`}
                             >
-                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16">
+                                    <rect height="5.5" rx="1.2" width="5.5" x="1" y="1" />
+                                    <rect height="5.5" rx="1.2" width="5.5" x="9.5" y="1" />
+                                    <rect height="5.5" rx="1.2" width="5.5" x="1" y="9.5" />
+                                    <rect height="5.5" rx="1.2" width="5.5" x="9.5" y="9.5" />
                                 </svg>
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setViewMode('table')}
                                 title="Tampilan Tabel / Daftar"
-                                className={`p-1.5 rounded-lg transition-all ${
+                                className={`w-7 h-7 rounded flex items-center justify-center transition-all ${
                                     viewMode === 'table'
-                                        ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm'
-                                        : 'text-slate-400 hover:text-slate-700 dark:hover:text-white'
+                                        ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-cyan-300 shadow-sm'
+                                        : 'text-slate-400 dark:text-[#64748b] hover:text-slate-700 dark:hover:text-white'
                                 }`}
                             >
-                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                    <line x1="8" x2="21" y1="6" y2="6" />
+                                    <line x1="8" x2="21" y1="12" y2="12" />
+                                    <line x1="8" x2="21" y1="18" y2="18" />
+                                    <line x1="3" x2="3.01" y1="6" y2="6" />
+                                    <line x1="3" x2="3.01" y1="12" y2="12" />
+                                    <line x1="3" x2="3.01" y1="18" y2="18" />
                                 </svg>
                             </button>
                         </div>
@@ -900,69 +912,82 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
 
             {/* Main Content Area */}
             {!effectiveClassId || !selectedSemesterId ? (
-                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 p-12 text-center text-slate-500 dark:text-slate-400 space-y-3">
-                    <CalendarIcon className="w-12 h-12 mx-auto text-slate-400 opacity-60" />
-                    <p className="text-base font-semibold">Pilih kelas dan semester di atas untuk melihat jadwal PH.</p>
+                <div className="bg-white dark:bg-[#111c2e]/70 rounded-2xl border border-dashed border-slate-300 dark:border-[#1c2b44] p-8 text-center text-slate-500 dark:text-slate-400 space-y-3">
+                    <CalendarIcon className="w-10 h-10 mx-auto text-slate-400 opacity-60" />
+                    <p className="text-sm font-semibold">Pilih kelas dan semester di atas untuk melihat jadwal PH.</p>
                 </div>
             ) : isLoadingSchedules || isLoadingClasses ? (
-                <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-3">
-                    <div className="w-9 h-9 border-3 border-brand-500 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-sm">Memuat jadwal Penilaian Harian...</p>
+                <div className="py-16 flex flex-col items-center justify-center text-slate-400 gap-3">
+                    <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-xs">Memuat jadwal Penilaian Harian...</p>
                 </div>
             ) : rawSchedules.length === 0 ? (
-                <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-4 shadow-sm">
-                    <div className="w-16 h-16 rounded-2xl bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center mx-auto border border-brand-200 dark:border-brand-500/20">
-                        <SparklesIcon className="w-8 h-8" />
+                /* Empty State Card (Stitch Style) */
+                <div className="bg-white/90 dark:bg-[#111c2e]/70 border border-slate-200/80 dark:border-[#1c2b44]/90 rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center space-y-4 shadow-sm dark:shadow-[0_0_0_1px_rgba(28,43,68,0.8),0_4px_20px_-2px_rgba(0,0,0,0.4)] my-2">
+                    {/* Sparkle / Star Icon Container */}
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-b from-cyan-950/60 to-slate-900 border border-cyan-500/30 flex items-center justify-center shadow-[0_0_24px_-2px_rgba(6,182,212,0.2)] text-cyan-400">
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                            <path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z" strokeLinejoin="round" />
+                            <circle cx="19" cy="5" fill="currentColor" r="1" />
+                        </svg>
                     </div>
-                    <div className="max-w-md mx-auto space-y-1">
-                        <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+
+                    {/* Heading & Copy */}
+                    <div className="space-y-1.5 max-w-[280px] sm:max-w-md">
+                        <h2 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
                             Belum Ada Jadwal PH
-                        </h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                        </h2>
+                        <p className="text-[13px] text-slate-500 dark:text-[#94a3b8] leading-relaxed">
                             Belum ada agenda penilaian harian yang dijadwalkan untuk {currentClassName} pada semester ini.
                         </p>
                     </div>
+
+                    {/* Primary Action: + Tambah Jadwal PH */}
                     {canManage && (
-                        <Button onClick={openAdd} variant="primary" className="h-10 px-5 rounded-xl font-bold">
-                            <PlusIcon className="w-4 h-4 mr-2" />
-                            Tambah Jadwal PH Sekarang
-                        </Button>
+                        <button
+                            type="button"
+                            onClick={openAdd}
+                            className="w-full max-w-[280px] py-3 px-3 bg-[#00d284] hover:bg-[#00ba74] text-slate-950 font-bold text-[13px] rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-[0_4px_14px_0_rgba(0,210,132,0.25)] active:scale-[0.98] mt-2 whitespace-nowrap"
+                        >
+                            <PlusIcon className="w-4 h-4 stroke-[2.5] shrink-0" />
+                            <span className="whitespace-nowrap">Tambah Jadwal PH</span>
+                        </button>
                     )}
                 </div>
             ) : filteredSchedules.length === 0 ? (
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8 text-center text-slate-500 dark:text-slate-400">
+                <div className="bg-white dark:bg-[#111c2e]/70 rounded-2xl border border-slate-200 dark:border-[#1c2b44] p-8 text-center text-slate-500 dark:text-slate-400">
                     Tidak ditemukan jadwal PH yang cocok dengan filter pencarian Anda.
                 </div>
             ) : (
-                <div className="space-y-8">
+                <div className="space-y-5 sm:space-y-6">
                     {Array.from(groupedByDate.entries()).map(([date, items]) => {
                         const dateStatus = getItemStatus(date);
                         const relLabel = getRelativeDateLabel(date);
 
                         return (
-                            <div key={date} className="space-y-3.5">
+                            <div key={date} className="space-y-2.5 sm:space-y-3">
                                 {/* Date Header Badge with Relative Countdown */}
-                                <div className="flex items-center justify-between gap-3 px-1">
-                                    <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-                                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold ${
+                                <div className="flex items-center justify-between gap-2 px-0.5">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl flex items-center justify-center text-xs font-bold ${
                                             dateStatus === 'today'
-                                                ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
+                                                ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
                                                 : dateStatus === 'upcoming'
                                                 ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
                                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                                         }`}>
-                                            <CalendarIcon className="w-4 h-4" />
+                                            <CalendarIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                         </div>
-                                        <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white font-serif">
+                                        <h3 className="text-sm sm:text-base font-bold text-slate-800 dark:text-white font-serif">
                                             {formatDateHeading(date)}
                                         </h3>
                                         {dateStatus === 'today' ? (
-                                            <span className="inline-flex items-center gap-1 text-xxs font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60 animate-pulse">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                                 Hari Ini
                                             </span>
                                         ) : relLabel ? (
-                                            <span className={`text-xxs font-bold px-2 py-0.5 rounded-full border ${
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                                                 dateStatus === 'upcoming'
                                                     ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/40'
                                                     : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'
@@ -972,13 +997,13 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                         ) : null}
                                     </div>
                                     <span className="text-xs font-medium text-slate-400 dark:text-slate-500 shrink-0">
-                                        {items.length} Jadwal PH
+                                        {items.length} PH
                                     </span>
                                 </div>
 
                                 {/* Cards View */}
                                 {viewMode === 'cards' ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                         {items.map(item => {
                                             const colorClass = getColorForSubject(item.subject);
                                             const status = getItemStatus(item.date);
@@ -988,28 +1013,28 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                                     key={item.id}
                                                     className={`
                                                         group relative overflow-hidden rounded-2xl transition-all duration-200
-                                                        bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 hover:border-brand-300 dark:hover:border-slate-700 shadow-sm hover:shadow-md
+                                                        bg-white dark:bg-[#111c2e] border border-slate-200 dark:border-[#1c2b44] hover:border-emerald-500/50 dark:hover:border-emerald-500/40 shadow-sm hover:shadow-md
                                                         flex flex-col border-l-4 ${colorClass}
                                                         ${status === 'today' ? 'ring-1 ring-emerald-500/40' : ''}
                                                     `}
                                                 >
-                                                    <div className="p-4 sm:p-5 flex flex-col h-full gap-3.5">
+                                                    <div className="p-3.5 sm:p-4 flex flex-col h-full gap-2.5 sm:gap-3">
                                                         {/* Top Row: Period Badge, Status & Actions */}
-                                                        <div className="flex justify-between items-start">
+                                                        <div className="flex justify-between items-center">
                                                             <div className="flex flex-wrap items-center gap-1.5">
-                                                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                                                                    <ClockIcon className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                                                                <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-md">
+                                                                    <ClockIcon className="w-3 h-3 text-slate-500 dark:text-slate-400" />
                                                                     <span className="text-xs font-bold font-mono text-slate-700 dark:text-slate-300">
-                                                                        Jam Ke- {item.period_label}
+                                                                        Jam {item.period_label}
                                                                     </span>
                                                                 </div>
                                                                 {status === 'upcoming' && (
-                                                                    <span className="text-xxs font-bold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40">
+                                                                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40">
                                                                         Mendatang
                                                                     </span>
                                                                 )}
                                                                 {status === 'past' && (
-                                                                    <span className="text-xxs font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                                                                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
                                                                         Selesai
                                                                     </span>
                                                                 )}
@@ -1017,8 +1042,8 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
 
                                                             {canManage && (
                                                                 <DropdownMenu>
-                                                                    <DropdownTrigger className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors">
-                                                                        <MoreVerticalIcon className="w-4 h-4" />
+                                                                    <DropdownTrigger className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/50 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors">
+                                                                        <MoreVerticalIcon className="w-3.5 h-3.5" />
                                                                     </DropdownTrigger>
                                                                     <DropdownContent>
                                                                         <DropdownItem
@@ -1045,32 +1070,29 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                                             )}
                                                         </div>
 
-                                                        {/* Subject Title & Class */}
-                                                        <div className="space-y-1.5 mb-auto">
-                                                            <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors line-clamp-2">
-                                                                {item.subject}
-                                                            </h4>
-                                                            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                                                        {/* Subject Title with Badge */}
+                                                        <div>
+                                                            <div className="flex items-center gap-1.5">
+                                                                <h4 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-emerald-400 transition-colors">
+                                                                    {item.subject}
+                                                                </h4>
+                                                            </div>
+                                                            <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
                                                                 <UsersIcon className="w-3.5 h-3.5" />
                                                                 <span>{currentClassName}</span>
                                                             </div>
                                                         </div>
 
-                                                        {/* Footer Action: Quick Input Nilai */}
-                                                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
-                                                            <span className="text-xxs font-medium text-slate-400 dark:text-slate-500">
-                                                                Penilaian Harian
-                                                            </span>
-                                                            <Button
+                                                        {/* Bottom Action: Input Nilai directly */}
+                                                        <div className="mt-auto pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+                                                            <button
                                                                 type="button"
-                                                                variant="outline"
-                                                                size="sm"
                                                                 onClick={() => handleInputNilai(item)}
-                                                                className="h-8 px-3 text-xs font-bold border-brand-200 dark:border-brand-800/40 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/30 rounded-lg flex items-center gap-1.5"
+                                                                className="w-full py-2 px-3 rounded-xl bg-slate-50 dark:bg-[#0f1828] hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-slate-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-[#00d284] border border-slate-200/80 dark:border-[#1c2b44] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all group/btn"
                                                             >
-                                                                <ClipboardPenIcon className="w-3.5 h-3.5" />
-                                                                <span>Input Nilai</span>
-                                                            </Button>
+                                                                <ClipboardPenIcon className="w-3.5 h-3.5 text-slate-400 group-hover/btn:text-emerald-500 transition-colors" />
+                                                                <span>Input Nilai PH</span>
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1079,96 +1101,98 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                     </div>
                                 ) : (
                                     /* Table View */
-                                    <div className="bg-white dark:bg-[#0F172A] rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-                                        <table className="w-full text-sm">
-                                            <thead>
-                                                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                                                    <th className="px-4 py-3">Mata Pelajaran</th>
-                                                    <th className="px-4 py-3 w-36">Jam Ke-</th>
-                                                    <th className="px-4 py-3 w-32">Status</th>
-                                                    <th className="px-4 py-3 text-right">Aksi</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                                                {items.map(item => {
-                                                    const status = getItemStatus(item.date);
-                                                    return (
-                                                        <tr key={item.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors">
-                                                            <td className="px-4 py-3">
-                                                                <div className="font-bold text-slate-900 dark:text-white">
-                                                                    {item.subject}
-                                                                </div>
-                                                                <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
-                                                                    <UsersIcon className="w-3 h-3" />
-                                                                    <span>{currentClassName}</span>
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-4 py-3 font-mono font-semibold text-slate-700 dark:text-slate-300">
-                                                                Jam {item.period_label}
-                                                            </td>
-                                                            <td className="px-4 py-3">
-                                                                {status === 'today' && (
-                                                                    <span className="text-xxs font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
-                                                                        Hari Ini
-                                                                    </span>
-                                                                )}
-                                                                {status === 'upcoming' && (
-                                                                    <span className="text-xxs font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
-                                                                        Mendatang
-                                                                    </span>
-                                                                )}
-                                                                {status === 'past' && (
-                                                                    <span className="text-xxs font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
-                                                                        Selesai
-                                                                    </span>
-                                                                )}
-                                                            </td>
-                                                            <td className="px-4 py-3 text-right">
-                                                                <div className="inline-flex items-center gap-1.5 justify-end">
-                                                                    <Button
-                                                                        type="button"
-                                                                        variant="outline"
-                                                                        size="sm"
-                                                                        onClick={() => handleInputNilai(item)}
-                                                                        className="h-7 px-2.5 text-xs font-bold text-brand-600 dark:text-brand-400 border-brand-200 dark:border-brand-800/40 rounded-lg"
-                                                                    >
-                                                                        Input Nilai
-                                                                    </Button>
-                                                                    {canManage && (
-                                                                        <>
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => handleDuplicate(item)}
-                                                                                className="p-1.5 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-                                                                                title="Duplikat Jadwal"
-                                                                            >
-                                                                                <CopyIcon className="w-3.5 h-3.5" />
-                                                                            </button>
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => openEdit(item)}
-                                                                                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-                                                                                title="Edit Jadwal"
-                                                                            >
-                                                                                <EditIcon className="w-3.5 h-3.5" />
-                                                                            </button>
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => setDeleteConfirm(item)}
-                                                                                className="p-1.5 text-rose-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30"
-                                                                                title="Hapus Jadwal"
-                                                                            >
-                                                                                <TrashIcon className="w-3.5 h-3.5" />
-                                                                            </button>
-                                                                        </>
+                                    <div className="bg-white dark:bg-[#111c2e] rounded-2xl border border-slate-200 dark:border-[#1c2b44] overflow-hidden shadow-sm">
+                                        <div className="overflow-x-auto scrollbar-thin">
+                                            <table className="w-full text-sm min-w-[540px]" aria-label="Tabel Jadwal Penilaian Harian">
+                                                <thead>
+                                                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                                        <th className="px-4 py-3">Mata Pelajaran</th>
+                                                        <th className="px-4 py-3 w-36">Jam Ke-</th>
+                                                        <th className="px-4 py-3 w-32">Status</th>
+                                                        <th className="px-4 py-3 text-right">Aksi</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                                                    {items.map(item => {
+                                                        const status = getItemStatus(item.date);
+                                                        return (
+                                                            <tr key={item.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors">
+                                                                <td className="px-4 py-3">
+                                                                    <div className="font-bold text-slate-900 dark:text-white">
+                                                                        {item.subject}
+                                                                    </div>
+                                                                    <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
+                                                                        <UsersIcon className="w-3 h-3" />
+                                                                        <span>{currentClassName}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-4 py-3 font-mono font-semibold text-slate-700 dark:text-slate-300">
+                                                                    Jam {item.period_label}
+                                                                </td>
+                                                                <td className="px-4 py-3">
+                                                                    {status === 'today' && (
+                                                                        <span className="text-xxs font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
+                                                                            Hari Ini
+                                                                        </span>
                                                                     )}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
+                                                                    {status === 'upcoming' && (
+                                                                        <span className="text-xxs font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                                                                            Mendatang
+                                                                        </span>
+                                                                    )}
+                                                                    {status === 'past' && (
+                                                                        <span className="text-xxs font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                                                                            Selesai
+                                                                        </span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-4 py-3 text-right">
+                                                                    <div className="inline-flex items-center gap-1.5 justify-end">
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="outline"
+                                                                            size="sm"
+                                                                            onClick={() => handleInputNilai(item)}
+                                                                            className="h-7 px-2.5 text-xs font-bold text-brand-600 dark:text-brand-400 border-brand-200 dark:border-brand-800/40 rounded-lg"
+                                                                        >
+                                                                            Input Nilai
+                                                                        </Button>
+                                                                        {canManage && (
+                                                                            <>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => handleDuplicate(item)}
+                                                                                    className="p-1.5 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                                                                                    title="Duplikat Jadwal"
+                                                                                >
+                                                                                    <CopyIcon className="w-3.5 h-3.5" />
+                                                                                </button>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => openEdit(item)}
+                                                                                    className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                                                                                    title="Edit Jadwal"
+                                                                                >
+                                                                                    <EditIcon className="w-3.5 h-3.5" />
+                                                                                </button>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => setDeleteConfirm(item)}
+                                                                                    className="p-1.5 text-rose-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                                                                                    title="Hapus Jadwal"
+                                                                                >
+                                                                                    <TrashIcon className="w-3.5 h-3.5" />
+                                                                                </button>
+                                                                            </>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -1239,7 +1263,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                             className="h-11 rounded-xl"
                             required
                         />
-                        <div className="flex gap-1.5 mt-2">
+                        <div className="flex flex-wrap gap-1.5 mt-2">
                             {PERIOD_PRESETS.map(label => {
                                 const isSelected = formData.period_label === label;
                                 return (
@@ -1342,28 +1366,30 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                             </p>
                         </div>
 
-                        <table className="w-full border-collapse border border-slate-300 text-xs">
-                            <thead>
-                                <tr className="bg-slate-100 text-slate-800">
-                                    <th className="border border-slate-300 px-2 py-1.5 w-8 text-center">No</th>
-                                    <th className="border border-slate-300 px-3 py-1.5 text-left">Hari & Tanggal</th>
-                                    <th className="border border-slate-300 px-2 py-1.5 w-20 text-center">Jam Ke-</th>
-                                    <th className="border border-slate-300 px-3 py-1.5 text-left">Mata Pelajaran & Materi</th>
-                                    <th className="border border-slate-300 px-3 py-1.5 w-24 text-center">Paraf Guru</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredSchedules.map((item, idx) => (
-                                    <tr key={item.id}>
-                                        <td className="border border-slate-300 px-2 py-1.5 text-center">{idx + 1}</td>
-                                        <td className="border border-slate-300 px-3 py-1.5">{formatDateHeading(item.date)}</td>
-                                        <td className="border border-slate-300 px-2 py-1.5 text-center font-mono">{item.period_label}</td>
-                                        <td className="border border-slate-300 px-3 py-1.5 font-medium">{item.subject}</td>
-                                        <td className="border border-slate-300 px-3 py-1.5 text-center"></td>
+                        <div className="overflow-x-auto">
+                            <table className="w-full border-collapse border border-slate-300 text-xs min-w-[480px]" aria-label="Tabel Agenda Penilaian Harian Cetak">
+                                <thead>
+                                    <tr className="bg-slate-100 text-slate-800">
+                                        <th className="border border-slate-300 px-2 py-1.5 w-8 text-center">No</th>
+                                        <th className="border border-slate-300 px-3 py-1.5 text-left">Hari & Tanggal</th>
+                                        <th className="border border-slate-300 px-2 py-1.5 w-20 text-center">Jam Ke-</th>
+                                        <th className="border border-slate-300 px-3 py-1.5 text-left">Mata Pelajaran & Materi</th>
+                                        <th className="border border-slate-300 px-3 py-1.5 w-24 text-center">Paraf Guru</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {filteredSchedules.map((item, idx) => (
+                                        <tr key={item.id}>
+                                            <td className="border border-slate-300 px-2 py-1.5 text-center">{idx + 1}</td>
+                                            <td className="border border-slate-300 px-3 py-1.5">{formatDateHeading(item.date)}</td>
+                                            <td className="border border-slate-300 px-2 py-1.5 text-center font-mono">{item.period_label}</td>
+                                            <td className="border border-slate-300 px-3 py-1.5 font-medium">{item.subject}</td>
+                                            <td className="border border-slate-300 px-3 py-1.5 text-center"></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
 
                         <div className="pt-4 flex justify-between text-xs text-slate-600">
                             <div className="text-center">

@@ -300,7 +300,7 @@ export function AccessibleList<T>({
 }: AccessibleListProps<T>) {
     if (items.length === 0) {
         return (
-            <div className="text-center py-8 text-slate-500" role="status">
+            <div className="text-center py-8 text-slate-500" role="status" aria-live="polite">
                 {emptyMessage}
             </div>
         );
@@ -356,8 +356,7 @@ export const LiveRegion: React.FC<LiveRegionProps> = ({
 }) => {
     return (
         <div
-            role="status"
-            aria-live={mode}
+            role="status" aria-live={mode}
             aria-atomic={atomic}
             className="sr-only"
         >
@@ -438,7 +437,7 @@ export const AccessibleLoading: React.FC<AccessibleLoadingProps> = ({
 }) => {
     return (
         <div
-            role="status"
+            role="status" aria-live="polite"
             aria-busy="true"
             aria-label={message}
             className={`flex items-center justify-center gap-2 ${className}`}

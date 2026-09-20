@@ -62,7 +62,7 @@ export function ExportPreviewModal<T>({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} role="presentation" aria-hidden="true" />
 
       <div className="relative flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
         <div className="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-800">
@@ -120,7 +120,7 @@ export function ExportPreviewModal<T>({
             <h3 className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">Pratinjau Data</h3>
             <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700">
               <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
-                <table className="w-full min-w-[500px] text-sm">
+                <table className="w-full min-w-[500px] text-sm" aria-label="Pratinjau data ekspor">
                   <thead className="bg-slate-50 dark:bg-slate-800">
                     <tr>
                       {previewColumns.map((column) => (

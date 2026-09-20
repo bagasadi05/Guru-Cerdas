@@ -44,7 +44,7 @@ export const AccessibleField: React.FC<AccessibleFieldProps> = ({
             )}
 
             {error && (
-                <p id={errorId} role="alert" className="text-sm text-red-500">
+                <p id={errorId} role="alert" aria-live="assertive" className="text-sm text-red-500">
                     {error}
                 </p>
             )}

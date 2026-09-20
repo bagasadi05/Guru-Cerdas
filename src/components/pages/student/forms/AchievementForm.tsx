@@ -106,10 +106,10 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Category */}
                 <div>
-                    <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
+                    <label htmlFor="achieve-category" className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
                         Bidang Prestasi <span className="text-red-500">*</span>
                     </label>
-                    <Select {...register('category')} error={errors.category?.message}>
+                    <Select id="achieve-category" aria-label="Bidang Prestasi" {...register('category')} error={errors.category?.message}>
                         {Object.entries(ACHIEVEMENT_CATEGORY_META).map(([key, meta]) => (
                             <option key={key} value={key}>
                                 {meta.label}
@@ -120,10 +120,10 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
 
                 {/* Level */}
                 <div>
-                    <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
+                    <label htmlFor="achieve-level" className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
                         Tingkat Kompetisi <span className="text-red-500">*</span>
                     </label>
-                    <Select {...register('level')} error={errors.level?.message}>
+                    <Select id="achieve-level" aria-label="Tingkat Kompetisi" {...register('level')} error={errors.level?.message}>
                         {Object.entries(ACHIEVEMENT_LEVEL_META).map(([key, meta]) => (
                             <option key={key} value={key}>
                                 {meta.label}
@@ -136,10 +136,10 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Rank */}
                 <div>
-                    <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
+                    <label htmlFor="achieve-rank" className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
                         Peringkat/Juara (Opsional)
                     </label>
-                    <Select {...register('rank')} error={errors.rank?.message}>
+                    <Select id="achieve-rank" aria-label="Peringkat atau Juara" {...register('rank')} error={errors.rank?.message}>
                         <option value="">-- Pilih Juara/Peringkat --</option>
                         {Object.entries(ACHIEVEMENT_RANK_META).map(([key, meta]) => (
                             <option key={key} value={key}>
@@ -151,20 +151,22 @@ export const AchievementForm: React.FC<AchievementFormProps> = ({
 
                 {/* Date */}
                 <div>
-                    <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
+                    <label htmlFor="achieve-date" className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
                         Tanggal Prestasi <span className="text-red-500">*</span>
                     </label>
-                    <Input type="date" {...register('date')} error={errors.date?.message} />
+                    <Input id="achieve-date" aria-label="Tanggal Prestasi" type="date" {...register('date')} error={errors.date?.message} />
                 </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Organizer */}
                 <div>
-                    <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
+                    <label htmlFor="achieve-organizer" className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">
                         Penyelenggara (Opsional)
                     </label>
                     <Input
+                        id="achieve-organizer"
+                        aria-label="Penyelenggara"
                         type="text"
                         placeholder="Contoh: Kemenristekdikti"
                         {...register('organizer')}

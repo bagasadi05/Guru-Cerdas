@@ -48,7 +48,7 @@ export const ReportCard = React.forwardRef<HTMLDivElement, ReportCardProps>(({ d
             {/* Academic Records */}
             <div className="mb-8">
                 <h3 className="font-bold text-lg mb-4 border-b border-slate-400 pb-1">A. Nilai Akademik</h3>
-                <table className="w-full border-collapse border border-slate-800 text-sm">
+                <table className="w-full border-collapse border border-slate-800 text-sm" aria-label="Tabel Nilai Akademik Rapor">
                     <thead>
                         <tr className="bg-slate-100">
                             <th className="border border-slate-800 p-2 text-center w-12">No</th>

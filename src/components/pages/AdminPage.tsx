@@ -679,21 +679,22 @@ const AdminPage: React.FC = () => {
                             </div>
                             <button type="button"
                                 onClick={() => { fetchStats(); fetchUsers(); fetchAnnouncements(); fetchActivityLogs(); checkSystemHealth(); }}
-                                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-brand-500/50 transition-all shadow-sm"
+                                className="flex items-center gap-2 px-4 py-2 min-h-[44px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-brand-500/50 transition-all duration-150 shadow-sm cursor-pointer active:scale-95"
+                                aria-label="Muat ulang data admin"
                             >
-                                <RefreshCw size={16} className={statsLoading ? 'animate-spin' : ''} />
+                                <RefreshCw size={16} className={statsLoading ? 'animate-spin text-brand-600' : ''} />
                                 <span className="text-sm font-medium">Muat Ulang</span>
                             </button>
                         </div>
                     </div>
 
                     {/* Tab Navigation */}
-                    <div className="mt-6 flex gap-2 overflow-x-auto pb-2">
+                    <div className="mt-6 flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
                         {tabs.map(tab => (
                             <button type="button"
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${activeTab === tab.id
+                                className={`flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-150 cursor-pointer active:scale-95 ${activeTab === tab.id
                                     ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/30'
                                     : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
                                     }`}

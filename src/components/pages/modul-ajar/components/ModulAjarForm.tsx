@@ -218,7 +218,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
             <button
               type="button"
               onClick={onResetForm}
-              className="p-1.5 lg:px-2.5 lg:py-1 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
+              className="p-1.5 lg:px-2.5 lg:py-1 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors flex items-center gap-1 cursor-pointer active:scale-95 duration-150"
               title="Reset Form / Buat Draf Baru"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -239,7 +239,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                 key={step.id}
                 type="button"
                 onClick={() => setActiveStep(step.id)}
-                className={`py-1.5 px-1 sm:px-2 rounded-xl text-center transition-all flex flex-col sm:flex-row items-center justify-center gap-1 relative ${
+                className={`py-1.5 px-1 sm:px-2 rounded-xl text-center transition-all flex flex-col sm:flex-row items-center justify-center gap-1 relative cursor-pointer active:scale-95 duration-150 ${
                   isActive
                     ? 'bg-brand-600 text-white shadow-sm font-bold'
                     : isCompleted
@@ -342,7 +342,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
           <button
             type="button"
             onClick={() => setActiveStep(prev => prev - 1)}
-            className="px-3.5 py-2 sm:px-4 sm:py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-colors"
+            className="px-3.5 py-2 sm:px-4 sm:py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 duration-150"
           >
             <ChevronLeft className="w-4 h-4" />
             <span className="hidden xs:inline">{t.lessonPlan.previous}</span>
@@ -360,7 +360,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
           <button
             type="button"
             onClick={() => setActiveStep(prev => prev + 1)}
-            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-brand-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-brand-700 flex items-center gap-1.5 transition-colors shadow-sm"
+            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-brand-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-brand-700 flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer active:scale-95 duration-150"
           >
             <span>{t.lessonPlan.next}</span>
             <ChevronRight className="w-4 h-4" />
@@ -370,7 +370,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
             type="button"
             onClick={onGenerate}
             disabled={queueStatus === 'pending' || queueStatus === 'processing' || isAiGenerating || !formState.mataPelajaran || !formState.topik}
-            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-r from-brand-600 to-emerald-600 hover:from-brand-700 hover:to-emerald-700 text-white rounded-xl font-bold flex items-center gap-1.5 disabled:opacity-50 shadow-md transition-all text-xs sm:text-sm"
+            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-r from-brand-600 to-emerald-600 hover:from-brand-700 hover:to-emerald-700 text-white rounded-xl font-bold flex items-center gap-1.5 disabled:opacity-50 shadow-md transition-all text-xs sm:text-sm cursor-pointer active:scale-95 duration-150"
           >
             <Sparkles className="w-4 h-4" />
             <span>{t.lessonPlan.create.replace('{type}', formState.documentType)}</span>

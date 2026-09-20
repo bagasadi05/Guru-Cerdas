@@ -205,7 +205,7 @@ export const ImportPreviewModal: React.FC<ImportPreviewModalProps> = ({
 
                 {/* Table Container */}
                 <div className="overflow-hidden border border-gray-200 dark:border-gray-700 rounded-xl max-h-[350px] overflow-y-auto">
-                    <table className="w-full text-sm text-left">
+                    <table className="w-full text-sm text-left" aria-label="Tabel Pratinjau Impor Data">
                         <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700 z-10">
                             <tr>
                                 <th className="px-4 py-3">Nama di Excel</th>

@@ -193,7 +193,7 @@ export const ClassesMasterDataTab: React.FC<ClassesMasterDataTabProps> = ({ onLo
                 </div>
             ) : (
                 <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
-                    <table className="w-full text-sm text-left">
+                    <table className="w-full text-sm text-left" aria-label="Tabel Data Master Kelas">
                         <thead className="text-xs text-gray-500 bg-gray-50 dark:bg-gray-900/80 dark:text-gray-400 uppercase">
                             <tr>
                                 <th className="px-6 py-4 font-semibold">Nama Kelas</th>

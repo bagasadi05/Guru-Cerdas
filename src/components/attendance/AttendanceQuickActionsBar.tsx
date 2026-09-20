@@ -34,7 +34,7 @@ export const AttendanceQuickActionsBar: React.FC<AttendanceQuickActionsBarProps>
             onClick={onReset}
             size="default"
             variant="ghost"
-            className="text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900/20 px-3 text-sm"
+            className="text-orange-600 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900/20 px-3 text-sm rounded-xl cursor-pointer active:scale-95 transition-all duration-200 min-h-[40px]"
             aria-label="Reset absensi"
             disabled={!hasAttendanceRecords}
           >
@@ -42,7 +42,7 @@ export const AttendanceQuickActionsBar: React.FC<AttendanceQuickActionsBarProps>
             <span className="hidden sm:inline">Reset</span>
           </Button>
 
-          <div className="flex items-center gap-1 bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700 ml-0 sm:ml-1">
+          <div className="flex items-center gap-1 bg-white dark:bg-slate-800 rounded-xl p-1 border border-slate-200 dark:border-slate-700 ml-0 sm:ml-1">
             {attendanceViewModeOptions.map((option) => {
               const Icon = option.icon;
               const isActive = viewMode === option.mode;
@@ -50,9 +50,9 @@ export const AttendanceQuickActionsBar: React.FC<AttendanceQuickActionsBarProps>
                 <button type="button"
                   key={option.mode}
                   onClick={() => onViewModeChange(option.mode)}
-                  className={`w-10 h-10 rounded-lg transition-colors ${
+                  className={`w-10 h-10 rounded-lg cursor-pointer active:scale-95 transition-all duration-150 flex items-center justify-center ${
                     isActive
-                      ? 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300'
+                      ? 'bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 shadow-sm font-semibold'
                       : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
                   }`}
                   aria-label={option.ariaLabel}

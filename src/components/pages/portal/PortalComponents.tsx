@@ -213,10 +213,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
                 )}
 
                 <div className="flex justify-end gap-2 mt-6">
-                    <Button type="button" variant="ghost" onClick={onClose} disabled={isSaving}>
+                    <Button type="button" variant="ghost" onClick={onClose} disabled={isSaving} className="min-h-[44px] px-5 rounded-xl cursor-pointer active:scale-95 transition-all duration-150">
                         Batal
                     </Button>
-                    <Button type="submit" disabled={isSaving}>
+                    <Button type="submit" disabled={isSaving} className="min-h-[44px] px-6 rounded-xl cursor-pointer active:scale-95 transition-all duration-150">
                         {isSaving ? 'Menyimpan...' : 'Simpan Perubahan'}
                     </Button>
                 </div>
@@ -250,18 +250,18 @@ export const PortalHeader: React.FC<PortalHeaderProps> = ({
         <div className="absolute -top-32 right-0 h-80 w-80 rounded-full bg-amber-400/10 blur-3xl" />
         <div className="absolute -bottom-24 left-0 h-72 w-72 rounded-full bg-sky-400/10 blur-3xl" />
 
-        <div className="relative z-10 px-4 pb-20 pt-4 sm:px-6 sm:pb-24 sm:pt-6">
+        <div className="relative z-10 px-4 pb-16 pt-4 sm:px-6 sm:pb-24 sm:pt-6">
             <div className="mx-auto max-w-7xl">
-                <div className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                <div className="mb-6 sm:mb-8 flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-start lg:justify-between">
                     <div className="max-w-2xl">
                         <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-100/90">
                             <GraduationCapIcon className="h-4 w-4 text-amber-300" />
                             Portal Wali Murid
                         </div>
-                        <h1 className="mt-5 font-serif text-3xl leading-tight text-white sm:text-4xl">
+                        <h1 className="mt-3 sm:mt-5 font-serif text-2xl sm:text-3xl lg:text-4xl leading-tight text-white">
                             Informasi akademik siswa dalam satu portal yang rapi dan resmi.
                         </h1>
-                        <p className="mt-4 max-w-xl text-sm leading-6 text-slate-200/80 sm:text-base">
+                        <p className="mt-2.5 sm:mt-4 max-w-xl text-xs sm:text-sm md:text-base leading-relaxed text-slate-200/80">
                             Pantau perkembangan belajar, kehadiran, tugas, dan komunikasi sekolah dengan tampilan yang lebih jelas untuk wali murid.
                         </p>
                     </div>
@@ -269,7 +269,7 @@ export const PortalHeader: React.FC<PortalHeaderProps> = ({
                         <Button
                             variant="ghost"
                             onClick={onSettingsClick}
-                            className="rounded-xl border border-white/15 bg-white/10 px-4 text-white hover:bg-white/15"
+                            className="min-h-[44px] rounded-xl border border-white/15 bg-white/10 px-4 text-white hover:bg-white/15 cursor-pointer active:scale-95 transition-all duration-150"
                             aria-label="Pengaturan"
                         >
                             <SettingsIcon className="h-5 w-5 sm:mr-2" />
@@ -278,7 +278,7 @@ export const PortalHeader: React.FC<PortalHeaderProps> = ({
                         <Button
                             variant="ghost"
                             onClick={onLogout}
-                            className="rounded-xl border border-white/15 bg-white/10 px-4 text-white hover:bg-white/15"
+                            className="min-h-[44px] rounded-xl border border-white/15 bg-white/10 px-4 text-white hover:bg-white/15 cursor-pointer active:scale-95 transition-all duration-150"
                             aria-label="Logout"
                         >
                             <LogoutIcon className="h-5 w-5 sm:mr-2" />

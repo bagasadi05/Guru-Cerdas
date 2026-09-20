@@ -200,7 +200,7 @@ export const PortalProgressTab: React.FC<PortalProgressTabProps> = ({
                     ) : (
                         <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700">
                             <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                                <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700" aria-label="Tabel Rekap Nilai Akademik">
                                     <thead className="bg-slate-50 dark:bg-slate-800/70">
                                         <tr>
                                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Mapel</th>

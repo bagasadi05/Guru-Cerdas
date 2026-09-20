@@ -257,9 +257,9 @@ export const SemesterManagement: React.FC = () => {
     };
 
     return (
-        <SettingsCard className="p-6">
+        <SettingsCard className="p-4 sm:p-6">
             {/* Header with subtle loader */}
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
                 <div>
                     <CardTitle className="flex items-center gap-2">
                         Manajemen Semester
@@ -267,48 +267,54 @@ export const SemesterManagement: React.FC = () => {
                     </CardTitle>
                     <CardDescription>Atur Tahun Ajaran dan Semester Aktif</CardDescription>
                 </div>
-                <Button onClick={() => setCreatingYear(!creatingYear)}>
+                <Button onClick={() => setCreatingYear(!creatingYear)} className="min-h-[44px] px-4 rounded-xl font-medium cursor-pointer active:scale-95 transition-all duration-150">
                     <PlusIcon className="w-4 h-4 mr-2" />
                     Buat Tahun Ajaran
                 </Button>
             </div>
 
             {creatingYear && (
-                <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 animate-fade-in">
+                <div className="mb-6 p-4 sm:p-5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 animate-fade-in">
                     <h4 className="font-semibold mb-3">Tahun Ajaran Baru</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div>
-                            <label className="block text-sm font-medium mb-1">Nama (contoh: 2024/2025)</label>
+                            <label htmlFor="new-year-name" className="block text-sm font-medium mb-1">Nama (contoh: 2024/2025)</label>
                             <input
+                                id="new-year-name"
                                 type="text"
-                                className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800"
+                                className="w-full h-10 px-3 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-800 text-sm"
                                 value={newYearName}
                                 onChange={e => setNewYearName(e.target.value)}
                                 placeholder="2024/2025"
+                                aria-label="Nama Tahun Ajaran"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium mb-1">Mulai</label>
+                            <label htmlFor="new-year-start" className="block text-sm font-medium mb-1">Mulai</label>
                             <input
+                                id="new-year-start"
                                 type="date"
-                                className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800"
+                                className="w-full h-10 px-3 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-800 text-sm"
                                 value={newYearStart}
                                 onChange={e => setNewYearStart(e.target.value)}
+                                aria-label="Tanggal Mulai Tahun Ajaran"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium mb-1">Selesai</label>
+                            <label htmlFor="new-year-end" className="block text-sm font-medium mb-1">Selesai</label>
                             <input
+                                id="new-year-end"
                                 type="date"
-                                className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-600 dark:bg-slate-800"
+                                className="w-full h-10 px-3 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-800 text-sm"
                                 value={newYearEnd}
                                 onChange={e => setNewYearEnd(e.target.value)}
+                                aria-label="Tanggal Selesai Tahun Ajaran"
                             />
                         </div>
                     </div>
                     <div className="flex justify-end gap-2">
-                        <Button variant="ghost" onClick={() => setCreatingYear(false)} className="px-6">Batal</Button>
-                        <Button onClick={handleCreateYear}>Simpan</Button>
+                        <Button variant="ghost" onClick={() => setCreatingYear(false)} className="min-h-[44px] px-6 rounded-xl cursor-pointer active:scale-95 transition-all duration-150">Batal</Button>
+                        <Button onClick={handleCreateYear} className="min-h-[44px] px-6 rounded-xl cursor-pointer active:scale-95 transition-all duration-150">Simpan</Button>
                     </div>
                 </div>
             )}
@@ -348,9 +354,9 @@ export const SemesterManagement: React.FC = () => {
                                         </p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                                <div className="flex items-center gap-2">
                                     {!year.is_active && (
-                                        <Button variant="ghost" size="sm" onClick={() => handleDeleteYear(year.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDeleteYear(year.id); }} aria-label={`Hapus tahun ajaran ${year.name}`} className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
                                             <TrashIcon className="w-4 h-4" />
                                         </Button>
                                     )}
@@ -373,52 +379,56 @@ export const SemesterManagement: React.FC = () => {
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        {sem.is_locked ? (
-                                                            <div className="flex items-center gap-2 text-amber-600 text-sm mr-2 bg-amber-50 px-2 py-1 rounded">
-                                                                <LockIcon className="w-3 h-3" /> Terkunci
-                                                            </div>
-                                                        ) : null}
+                                                         {sem.is_locked ? (
+                                                             <div className="flex items-center gap-1.5 text-amber-600 text-xs font-semibold mr-1 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-lg border border-amber-200/60 dark:border-amber-800/40">
+                                                                 <LockIcon className="w-3.5 h-3.5" /> Terkunci
+                                                             </div>
+                                                         ) : null}
 
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => handleToggleLock(sem)}
-                                                            title={sem.is_locked ? "Buka Kunci" : "Kunci Semester"}
-                                                        >
-                                                            {sem.is_locked ? <LockIcon className="w-4 h-4 text-amber-500" /> : <LockIcon className="w-4 h-4 text-gray-300" />}
-                                                        </Button>
+                                                         <Button
+                                                             variant="ghost"
+                                                             size="sm"
+                                                             onClick={() => handleToggleLock(sem)}
+                                                             title={sem.is_locked ? "Buka Kunci" : "Kunci Semester"}
+                                                             aria-label={sem.is_locked ? "Buka Kunci Semester" : "Kunci Semester"}
+                                                             className="w-11 h-11 p-0 flex items-center justify-center rounded-xl cursor-pointer active:scale-90 transition-transform"
+                                                         >
+                                                             {sem.is_locked ? <LockIcon className="w-4 h-4 text-amber-500" /> : <LockIcon className="w-4 h-4 text-gray-400" />}
+                                                         </Button>
 
-                                                        {sem.is_active ? (
-                                                            <span className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium dark:bg-green-900/30 dark:text-green-400">
-                                                                <CheckCircleIcon className="w-4 h-4" /> Aktif
-                                                            </span>
-                                                        ) : (
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={() => handleActivateSemester(sem.id, year.id)}
-                                                            >
-                                                                Aktifkan
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="text-center py-4">
-                                            <p className="text-gray-500 mb-3 text-sm">Belum ada daftar semester untuk tahun ajaran ini.</p>
-                                            <Button 
-                                                variant="outline" 
-                                                size="sm" 
-                                                onClick={() => {
-                                                    createDefaultSemesters(year.id, year.start_date).then(() => fetchData());
-                                                }}
-                                            >
-                                                Buat Semester Ganjil & Genap
-                                            </Button>
-                                        </div>
-                                    )}
+                                                         {sem.is_active ? (
+                                                             <span className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-semibold dark:bg-green-900/30 dark:text-green-400">
+                                                                 <CheckCircleIcon className="w-4 h-4" /> Aktif
+                                                             </span>
+                                                         ) : (
+                                                             <Button
+                                                                 variant="outline"
+                                                                 size="sm"
+                                                                 onClick={() => handleActivateSemester(sem.id, year.id)}
+                                                                 className="min-h-[38px] px-3.5 rounded-xl font-medium cursor-pointer active:scale-95 transition-all duration-150"
+                                                             >
+                                                                 Aktifkan
+                                                             </Button>
+                                                         )}
+                                                     </div>
+                                                 </div>
+                                             ))}
+                                         </div>
+                                     ) : (
+                                         <div className="text-center py-4">
+                                             <p className="text-gray-500 mb-3 text-sm">Belum ada daftar semester untuk tahun ajaran ini.</p>
+                                             <Button 
+                                                 variant="outline" 
+                                                 size="sm" 
+                                                 onClick={() => {
+                                                     createDefaultSemesters(year.id, year.start_date).then(() => fetchData());
+                                                 }}
+                                                 className="min-h-[44px] px-4 rounded-xl font-medium cursor-pointer active:scale-95 transition-all duration-150"
+                                             >
+                                                 Buat Semester Ganjil & Genap
+                                             </Button>
+                                         </div>
+                                     )}
                                 </div>
                             )}
                         </div>

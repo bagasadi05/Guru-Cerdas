@@ -209,7 +209,7 @@ const AttendancePage: React.FC = () => {
                 <div className="relative z-10 p-3 sm:p-0 -mx-4 px-4 sm:mx-0 transition-all rounded-3xl overflow-hidden flex-1 shadow-[0_8px_30px_rgba(13,126,158,0.15)] mb-2">
                     <button
                         type="button"
-                        className="group relative overflow-hidden w-full rounded-3xl bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 dark:from-brand-700 dark:via-brand-800 dark:to-brand-900 cursor-pointer text-left"
+                        className="group relative overflow-hidden w-full rounded-3xl bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 dark:from-brand-700 dark:via-brand-800 dark:to-brand-900 cursor-pointer text-left active:scale-[0.99] transition-all duration-200"
                         onClick={() => setDatePickerOpen(true)}
                         aria-label="Pilih tanggal absensi"
                     >
@@ -266,7 +266,7 @@ const AttendancePage: React.FC = () => {
                                 size="sm"
                                 onClick={() => handleAutoFillWeekdays()}
                                 disabled={isAutoFilling}
-                                className="bg-amber-600 hover:bg-amber-700 text-white shadow-sm border-none font-semibold text-xs px-3 py-1.5 h-auto min-h-[36px]"
+                                className="bg-amber-600 hover:bg-amber-700 text-white shadow-sm border-none font-semibold text-xs px-3 py-1.5 h-auto min-h-[36px] rounded-xl cursor-pointer active:scale-95 transition-all"
                             >
                                 {isAutoFilling ? (
                                     <>
@@ -283,7 +283,7 @@ const AttendancePage: React.FC = () => {
                             <button
                                 type="button"
                                 onClick={() => setIsAssistantDismissed(true)}
-                                className="p-1.5 text-amber-700 dark:text-amber-400 hover:bg-amber-200/60 dark:hover:bg-amber-900/40 rounded-lg transition-colors"
+                                className="p-1.5 text-amber-700 dark:text-amber-400 hover:bg-amber-200/60 dark:hover:bg-amber-900/40 rounded-lg transition-colors cursor-pointer active:scale-90"
                                 title="Tutup pengingat"
                                 aria-label="Tutup pengingat"
                             >
@@ -305,7 +305,7 @@ const AttendancePage: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => setIsAutoFillBannerDismissed(true)}
-                            className="p-1 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200/50 dark:hover:bg-emerald-900/40 rounded-lg transition-colors shrink-0"
+                            className="p-1 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200/50 dark:hover:bg-emerald-900/40 rounded-lg transition-colors shrink-0 cursor-pointer active:scale-90"
                             title="Tutup pemberitahuan"
                             aria-label="Tutup pemberitahuan"
                         >
@@ -346,7 +346,7 @@ const AttendancePage: React.FC = () => {
                             <Button
                                 onClick={markRestAsPresent}
                                 size="default"
-                                className="w-full sm:w-auto text-sm font-bold shadow-lg shadow-brand-600/20 bg-brand-600 hover:bg-brand-700 border-none transition-all active:scale-95 duration-200"
+                                className="w-full sm:w-auto text-sm font-bold shadow-lg shadow-brand-600/20 bg-brand-600 hover:bg-brand-700 border-none transition-all cursor-pointer active:scale-95 duration-200 min-h-[42px] rounded-xl"
                             >
                                 <CheckCircleIcon className="w-4 h-4 mr-2" />
                                 Tandai Sisa Hadir ({unmarkedStudents.length})
@@ -362,7 +362,7 @@ const AttendancePage: React.FC = () => {
                             <span className="font-bold text-sm">{selectedStudents.size} siswa dipilih</span>
                             <button type="button"
                                 onClick={() => setSelectedStudents(new Set())}
-                                className="w-11 h-11 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                                className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center cursor-pointer active:scale-90 transition-all"
                                 aria-label="Batal pilih semua"
                             >
                                 <XIcon className="w-4 h-4 text-white" />
@@ -381,7 +381,7 @@ const AttendancePage: React.FC = () => {
                                     <button type="button"
                                         key={opt.value}
                                         onClick={() => handleBatchStatusChange(opt.value)}
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-xl text-xs font-bold transition-all active:scale-95 ${btnStyle}`}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 ${btnStyle}`}
                                     >
                                         <opt.icon className="w-3.5 h-3.5" />
                                         {opt.label}
@@ -446,7 +446,7 @@ const AttendancePage: React.FC = () => {
                             onClick={handleSave}
                             disabled={isSaving}
                             data-tutorial="attendance-save"
-                            className={`w-full h-14 text-lg font-bold rounded-2xl transition-all active:scale-[0.98] text-white ${
+                            className={`w-full h-14 text-base sm:text-lg font-bold rounded-2xl transition-all cursor-pointer active:scale-[0.98] text-white ${
                                 isDirty
                                     ? 'bg-emerald-600 hover:bg-emerald-700 shadow-[0_8px_30px_rgba(16,185,129,0.35)] ring-2 ring-emerald-400/50'
                                     : 'bg-brand-700 hover:bg-brand-800 shadow-[0_8px_30px_rgba(13,126,158,0.25)] border border-white/20'
@@ -712,8 +712,7 @@ const AttendancePage: React.FC = () => {
             {/* Floating Save Bar for unsaved changes — rendered via portal to escape parent transform/overflow stacking contexts */}
             {isDirty && viewMode === 'list' && typeof document !== 'undefined' && createPortal(
                 <div
-                    role="status"
-                    aria-live="polite"
+                    role="status" aria-live="polite"
                     className="fixed bottom-20 lg:bottom-6 inset-x-0 z-50 pointer-events-none flex justify-center lg:pl-72 px-4 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5"
                 >
                     <div className="pointer-events-auto shadow-2xl bg-slate-900/95 dark:bg-slate-800/95 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl flex items-center gap-3 sm:gap-4 backdrop-blur-md border border-slate-700/60 dark:border-slate-600 shadow-black/40 max-w-[95vw]">

@@ -130,8 +130,7 @@ export const UndoToast: React.FC<UndoToastProps> = ({
 
     return (
         <div
-            role="alert"
-            aria-live="polite"
+            role="alert" aria-live="polite"
             aria-atomic="true"
             className={`
                 fixed bottom-24 lg:bottom-6 left-1/2 -translate-x-1/2 z-50

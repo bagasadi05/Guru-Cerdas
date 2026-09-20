@@ -228,7 +228,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
 
             {/* User Table */}
             <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full" aria-label="Tabel Daftar Pengguna">
                     <thead className="bg-gray-50 dark:bg-gray-900/50">
                         <tr className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                             <th className="px-6 py-4 text-left">Pengguna</th>
@@ -412,7 +412,7 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                 {showDeletedUsers && (
                     <div className="animate-fade-in">
                         <div className="overflow-x-auto border-t border-gray-100 dark:border-gray-700">
-                            <table className="w-full">
+                            <table className="w-full" aria-label="Tabel Pengguna yang Dihapus">
                                 <thead className="bg-red-50/30 dark:bg-red-950/10">
                                     <tr className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                         <th className="px-6 py-4 text-left">Pengguna</th>

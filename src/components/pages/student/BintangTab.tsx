@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CardTitle, CardDescription } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { PrinterIcon, ShieldAlertIcon } from '../../Icons';
+import { PrinterIcon, StarIcon } from '../../Icons';
 import { bintangService, calculateAspectPoints, type BintangGrade } from '../../../services/bintangService';
 import { ViolationRow } from './types';
 import { useToast } from '../../../hooks/useToast';
@@ -127,7 +127,7 @@ export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-800/60">
                 <div>
                     <CardTitle className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
-                        <ShieldAlertIcon className="w-5 h-5 text-emerald-500 shrink-0" />
+                        <StarIcon className="w-5 h-5 text-amber-500 fill-amber-500/20 shrink-0" />
                         Rapor BINTANG
                     </CardTitle>
                     <CardDescription className="mt-1 text-slate-500 dark:text-slate-400 text-sm">
@@ -149,7 +149,7 @@ export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: 
                     <Button 
                         onClick={handleDownloadPdf}
                         disabled={isDownloadingPdf}
-                        className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-medium rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm justify-center flex-1 sm:flex-none"
+                        className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-medium rounded-xl shadow-sm cursor-pointer active:scale-95 transition-all flex items-center gap-2 text-sm justify-center flex-1 sm:flex-none"
                     >
                         {isDownloadingPdf ? (
                             <span className="flex items-center gap-2">

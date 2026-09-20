@@ -582,7 +582,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                                 <h3 className="text-sm font-bold uppercase tracking-[0.08em] text-white">A. Capaian Akademik</h3>
                             </div>
                             <div className="overflow-x-auto rounded-b-xl border border-t-0 border-slate-300 dark:border-slate-700">
-                                <table className="w-full text-sm border-collapse min-w-[680px] md:min-w-0">
+                                <table className="w-full text-sm border-collapse min-w-[680px] md:min-w-0" aria-label="Tabel Capaian Akademik">
                                     <thead>
                                         <tr className="bg-slate-800 dark:bg-slate-700 text-white">
                                             <th className="p-3 text-center w-10 font-bold">No</th>
@@ -626,7 +626,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                             <section className="mb-8">
                                 <h3 className="text-base font-bold mb-3 border-b-2 border-emerald-500 dark:border-emerald-400 pb-1 uppercase tracking-wide text-emerald-700 dark:text-emerald-400">B. Portofolio Prestasi</h3>
                                 <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-                                    <table className="w-full text-sm border-collapse min-w-[600px] md:min-w-0">
+                                    <table className="w-full text-sm border-collapse min-w-[600px] md:min-w-0" aria-label="Tabel Portofolio Prestasi">
                                         <thead>
                                             <tr className="bg-gradient-to-r from-emerald-700 to-emerald-800 text-white">
                                                 <th className="p-3 text-center w-10 font-bold">No</th>
@@ -669,7 +669,13 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                                 <h3 className="text-base font-bold mb-3 border-b-2 border-emerald-500 dark:border-emerald-400 pb-1 uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
                                     {filteredAchievements.length > 0 ? 'C. Ketidakhadiran' : 'B. Ketidakhadiran'}
                                 </h3>
-                                <table className="w-full text-sm border-collapse rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
+                                <table className="w-full text-sm border-collapse rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700" aria-label="Rekap Ketidakhadiran Siswa">
+                                    <thead>
+                                        <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                                            <th scope="col" className="p-3 text-left font-semibold text-slate-700 dark:text-slate-300">Keterangan</th>
+                                            <th scope="col" className="p-3 text-center font-semibold text-slate-700 dark:text-slate-300">Jumlah</th>
+                                        </tr>
+                                    </thead>
                                     <tbody>
                                         <tr className="border-b border-slate-100 dark:border-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/10">
                                             <td className="p-3 font-medium text-slate-700 dark:text-slate-300">Sakit</td>
@@ -691,7 +697,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                                     {filteredAchievements.length > 0 ? 'D. Catatan Perilaku' : 'C. Catatan Perilaku'}
                                 </h3>
                                 <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-                                    <table className="w-full text-sm border-collapse min-w-[520px] md:min-w-0">
+                                    <table className="w-full text-sm border-collapse min-w-[520px] md:min-w-0" aria-label="Tabel Catatan Perilaku">
                                         <thead>
                                             <tr className="bg-gradient-to-r from-emerald-700 to-emerald-800 text-white">
                                                 <th className="p-3 text-center w-10 font-bold">No</th>
@@ -728,7 +734,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                                     {filteredAchievements.length > 0 ? 'E. Keaktifan & Prestasi' : 'D. Keaktifan & Prestasi'}
                                 </h3>
                                 <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
-                                    <table className="w-full text-sm border-collapse min-w-[520px] md:min-w-0">
+                                    <table className="w-full text-sm border-collapse min-w-[520px] md:min-w-0" aria-label="Tabel Keaktifan dan Prestasi">
                                         <thead>
                                             <tr className="bg-gradient-to-r from-emerald-700 to-emerald-800 text-white">
                                                 <th className="p-3 text-center w-10 font-bold">No</th>

@@ -292,7 +292,7 @@ const StudentRekapTable: React.FC<{
                     <>
                         {/* Desktop Table */}
                         <div className="hidden md:block overflow-x-auto">
-                            <table className="w-full">
+                            <table className="w-full" aria-label="Tabel Evaluasi Karakter Siswa">
                                 <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
                                     <tr>
                                         <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide w-8">

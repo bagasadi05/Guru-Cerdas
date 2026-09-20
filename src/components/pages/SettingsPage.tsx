@@ -151,42 +151,44 @@ const SettingsPage: React.FC = () => {
 
             <div className="max-w-7xl mx-auto space-y-4 sm:space-y-8 relative">
                 {/* Premium Header */}
-                <header className="relative p-6 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-green-950 via-emerald-950 to-slate-950 text-white shadow-2xl shadow-emerald-950/30 overflow-hidden isolate border border-emerald-900/30">
+                <header className="relative p-5 sm:p-7 md:p-10 rounded-2xl sm:rounded-3xl bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-green-950 via-emerald-950 to-slate-950 text-white shadow-2xl shadow-emerald-950/30 overflow-hidden isolate border border-emerald-900/30">
                     {/* Decorative Elements */}
                     <div className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl -z-10"></div>
                     <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/30 to-transparent -z-10"></div>
 
                     {/* Mechanical Settings Spinning Gear Logo */}
-                    <div className="absolute top-6 right-6 md:top-8 md:right-8 opacity-20 sm:opacity-30 pointer-events-none">
-                        <Settings className="w-16 h-16 sm:w-28 sm:h-28 text-emerald-300 animate-[spin_20s_linear_infinite]" />
+                    <div className="absolute top-5 right-5 md:top-8 md:right-8 opacity-20 sm:opacity-30 pointer-events-none">
+                        <Settings className="w-14 h-14 sm:w-24 sm:h-24 text-emerald-300 animate-[spin_20s_linear_infinite]" />
                     </div>
 
-                    <div className="relative z-10 animate-fade-in-up space-y-6">
+                    <div className="relative z-10 animate-fade-in-up space-y-4 sm:space-y-6">
                         <div>
-                            <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-green-100 to-emerald-200">
+                            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-green-100 to-emerald-200">
                                 Pengaturan Portal
                             </h1>
-                            <p className="mt-2 text-emerald-100/70 text-xs sm:text-base max-w-2xl leading-relaxed">
+                            <p className="mt-1.5 text-emerald-100/70 text-xs sm:text-sm md:text-base max-w-2xl leading-relaxed">
                                 Konfigurasikan profil guru, kurikulum akademik, otentikasi akun, preferensi notifikasi, dan tema visual secara dinamis.
                             </p>
                         </div>
 
                         {/* Integrated Settings Intelligent Search Bar */}
                         <div className="max-w-xl relative">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Search className="h-5 w-5 text-emerald-300/60" />
+                            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                <Search className="h-4.5 w-4.5 text-emerald-300/60" />
                             </div>
                             <input
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Cari KKM, mapel, semester, ganti password, mode gelap..."
-                                className="block w-full pl-11 pr-10 py-3 sm:py-3.5 rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md text-white placeholder-emerald-200/40 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent text-sm transition-all shadow-inner"
+                                aria-label="Cari opsi pengaturan"
+                                className="block w-full pl-10 pr-12 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md text-white placeholder-emerald-200/40 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent text-xs sm:text-sm transition-all shadow-inner"
                             />
                             {searchQuery && (
                                 <button type="button"
                                     onClick={() => setSearchQuery('')}
-                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-xs text-emerald-300 hover:text-white font-semibold transition-colors"
+                                    aria-label="Hapus kata kunci pencarian"
+                                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs text-emerald-300 hover:text-white font-semibold transition-transform active:scale-90"
                                 >
                                     Batal
                                 </button>
@@ -263,7 +265,7 @@ const SettingsPage: React.FC = () => {
                 <div className="lg:hidden overflow-x-auto -mx-3 px-3 scrollbar-hide relative z-10">
                     <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-slate-50 to-transparent dark:from-slate-950 z-10"></div>
                     <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-slate-50 to-transparent dark:from-slate-950 z-10"></div>
-                    <nav className="flex gap-2 p-2 rounded-2xl bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 shadow-lg min-w-max relative">
+                    <nav className="flex gap-2 p-1.5 sm:p-2 rounded-2xl bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 shadow-lg min-w-max relative">
                         {navItems.map((item) => {
                             const theme = getTabTheme(item.id);
                             const isActive = activeTab === item.id;
@@ -273,7 +275,7 @@ const SettingsPage: React.FC = () => {
                                     onClick={() => setActiveTab(item.id)}
                                     aria-current={isActive ? 'page' : undefined}
                                     className={`
-                                        flex items-center gap-2 px-4 py-3 rounded-xl transition-all duration-300 whitespace-nowrap hover:scale-105 active:scale-95
+                                        flex items-center gap-2 px-3.5 py-2.5 sm:px-4 sm:py-3 min-h-[44px] rounded-xl transition-all duration-150 whitespace-nowrap cursor-pointer active:scale-95
                                         ${isActive
                                             ? `bg-gradient-to-r ${theme.gradient} text-white shadow-md ${theme.glow} ring-1 ring-white/10`
                                             : `text-slate-600 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-white/5 font-semibold text-xs sm:text-sm`
@@ -305,7 +307,7 @@ const SettingsPage: React.FC = () => {
                                         onClick={() => setActiveTab(item.id)}
                                         aria-current={isActive ? 'page' : undefined}
                                         className={`
-                                            group flex items-center gap-3 w-full text-left px-4 py-3.5 rounded-2xl transition-all duration-300 relative overflow-hidden hover:translate-x-1
+                                            group flex items-center gap-3 w-full text-left px-4 py-3 min-h-[44px] rounded-2xl transition-all duration-150 relative overflow-hidden cursor-pointer active:scale-[0.98]
                                             ${isActive
                                                 ? `bg-gradient-to-r ${theme.gradient} text-white shadow-lg ${theme.glow} ring-1 ring-white/10`
                                                 : `text-slate-600 dark:text-slate-400 ${theme.hover} hover:text-slate-900 dark:hover:text-white`
@@ -313,7 +315,7 @@ const SettingsPage: React.FC = () => {
                                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40
                                         `}
                                     >
-                                        <item.icon className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110 group-hover:rotate-12'}`} />
+                                        <item.icon className={`w-5 h-5 flex-shrink-0 transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-110 group-hover:rotate-6'}`} />
                                         <span className="text-sm font-semibold tracking-wide">{item.label}</span>
                                         {isActive && (
                                             <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-white/30 rounded-l-full"></div>
