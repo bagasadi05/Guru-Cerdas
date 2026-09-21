@@ -10,6 +10,10 @@ interface StudentSummary {
     totalViolationPoints: number;
     totalViolations: number;
     aspects: AspectPointsSummary;
+    effectiveAdabGrade: BintangGrade;
+    effectiveKedisiplinanGrade: BintangGrade;
+    effectiveKerapianGrade: BintangGrade;
+    catatanWali?: string;
     keaktifanPoints: number;
     keaktifanCount: number;
     evaluationStatus: 'Published' | 'Draft' | 'Auto';
@@ -32,7 +36,12 @@ interface BintangExcelOptions {
         points: number; category: string | null; quiz_date: string;
     }>;
     evaluations: Array<{
-        student_id: string; is_published: boolean;
+        student_id: string;
+        is_published: boolean;
+        adab_score?: string | null;
+        kedisiplinan_score?: string | null;
+        kerapian_score?: string | null;
+        catatan_wali?: string | null;
     }>;
     attitudeMap?: Map<string, { spiritual?: string; social?: string }> | Record<string, { spiritual?: string; social?: string }>;
 }
@@ -126,6 +135,11 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
         if (evalRecord?.is_published) evalStatus = 'Published';
         else if (evalRecord) evalStatus = 'Draft';
 
+        const effectiveAdabGrade = (evalRecord?.adab_score as BintangGrade) || aspects.ADAB.grade;
+        const effectiveKedisiplinanGrade = (evalRecord?.kedisiplinan_score as BintangGrade) || aspects.KEDISIPLINAN.grade;
+        const effectiveKerapianGrade = (evalRecord?.kerapian_score as BintangGrade) || aspects.KERAPIAN.grade;
+        const catatanWali = evalRecord?.catatan_wali ? String(evalRecord.catatan_wali).trim() : undefined;
+
         let studentAtt: { spiritual?: string; social?: string } | undefined;
         if (attitudeMap) {
             studentAtt = attitudeMap instanceof Map ? attitudeMap.get(student.id) : attitudeMap[student.id];
@@ -137,6 +151,10 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
             totalViolationPoints: studentVios.reduce((s, v) => s + (Number(v.points) || 0), 0),
             totalViolations: studentVios.length,
             aspects,
+            effectiveAdabGrade,
+            effectiveKedisiplinanGrade,
+            effectiveKerapianGrade,
+            catatanWali,
             keaktifanPoints: totalQP,
             keaktifanCount: studentQP.length,
             evaluationStatus: evalStatus,
@@ -148,7 +166,7 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
     // SHEET 1: Rekap Kelas
     // ═══════════════════════════════════════════════════════════════════════
     const wsRekap = workbook.addWorksheet('Rekap Kelas');
-    const totalColsRekap = 15;
+    const totalColsRekap = 16;
     
     wsRekap.mergeCells(1, 1, 1, totalColsRekap);
     const title1Rekap = wsRekap.getCell(1, 1);
@@ -185,7 +203,8 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
         'Rapi (Poin)', 'Rapi (Grade)',
         'Poin Keaktifan', 'Frekuensi Keaktifan',
         'Sikap Spiritual (KI-1)', 'Sikap Sosial (KI-2)',
-        'Status Evaluasi'
+        'Status Evaluasi',
+        'Catatan Wali Kelas'
     ]);
     styleHeaderRow(headerRekap, totalColsRekap);
 
@@ -205,6 +224,7 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
     wsRekap.getColumn(13).width = 22;
     wsRekap.getColumn(14).width = 22;
     wsRekap.getColumn(15).width = 18;
+    wsRekap.getColumn(16).width = 40;
 
     studentSummaries.forEach((s, idx) => {
         const row = wsRekap.addRow([
@@ -212,14 +232,15 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
             s.name,
             s.totalViolationPoints,
             s.totalViolations,
-            s.aspects.ADAB.points, getGradeColorLabel(s.aspects.ADAB.grade),
-            s.aspects.KEDISIPLINAN.points, getGradeColorLabel(s.aspects.KEDISIPLINAN.grade),
-            s.aspects.KERAPIAN.points, getGradeColorLabel(s.aspects.KERAPIAN.grade),
+            s.aspects.ADAB.points, getGradeColorLabel(s.effectiveAdabGrade),
+            s.aspects.KEDISIPLINAN.points, getGradeColorLabel(s.effectiveKedisiplinanGrade),
+            s.aspects.KERAPIAN.points, getGradeColorLabel(s.effectiveKerapianGrade),
             s.keaktifanPoints,
             s.keaktifanCount,
             s.attitude?.spiritual || '-',
             s.attitude?.social || '-',
             s.evaluationStatus,
+            s.catatanWali || '-',
         ]);
         
         const fillColor = idx % 2 !== 0 ? 'FFF8FAFC' : 'FFFFFFFF';
@@ -227,7 +248,9 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
             if (colNumber <= totalColsRekap) {
                 cell.border = borderAll;
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
-                if (colNumber === 1 || colNumber >= 3) {
+                if (colNumber === 16) {
+                    cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+                } else if (colNumber === 1 || colNumber >= 3) {
                     cell.alignment = { horizontal: 'center', vertical: 'middle' };
                 }
                 
@@ -262,7 +285,7 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
         studentSummaries.reduce((s, st) => s + st.aspects.KERAPIAN.points, 0), '',
         studentSummaries.reduce((s, st) => s + st.keaktifanPoints, 0),
         studentSummaries.reduce((s, st) => s + st.keaktifanCount, 0),
-        '', '', '',
+        '', '', '', '',
     ]);
     summaryRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
         if (colNumber <= totalColsRekap) {

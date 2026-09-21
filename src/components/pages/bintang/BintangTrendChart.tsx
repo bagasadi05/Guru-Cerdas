@@ -90,31 +90,39 @@ export const BintangTrendChart: React.FC<BintangTrendChartProps> = ({ selectedCl
         setIsLoading(true);
         try {
             const months = generatePastMonths(6);
-            const results = await Promise.all(
-                months.map(async (month) => {
-                    let violations: Array<{ description: string; points: number }> = [];
+            let results: TrendMonth[] | null = null;
 
-                    if (selectedStudent) {
-                        // Fetch for specific student
-                        const data = await bintangService.getViolationsForStudent(selectedStudent, month);
-                        violations = (data || []).map(v => ({ description: v.description, points: v.points }));
-                    } else {
-                        // Fetch for entire class
-                        const data = await bintangService.getViolationsForClass(selectedClass, month);
-                        violations = (data || []).map(v => ({ description: v.description, points: v.points }));
-                    }
+            if (typeof bintangService.getTrendData === 'function') {
+                results = await bintangService.getTrendData(selectedClass, months, selectedStudent || undefined);
+            }
 
-                    const points = calculateAspectPoints(violations);
-                    return {
-                        month,
-                        label: monthLabel(month),
-                        ADAB: { points: points.ADAB.points, grade: points.ADAB.grade },
-                        KEDISIPLINAN: { points: points.KEDISIPLINAN.points, grade: points.KEDISIPLINAN.grade },
-                        KERAPIAN: { points: points.KERAPIAN.points, grade: points.KERAPIAN.grade },
-                    } as TrendMonth;
-                })
-            );
-            setTrendData(results);
+            // Fallback for mocked environments or edge cases
+            if (!results || results.length === 0) {
+                results = await Promise.all(
+                    months.map(async (month) => {
+                        let violations: Array<{ description: string; points: number }> = [];
+
+                        if (selectedStudent) {
+                            const data = await bintangService.getViolationsForStudent(selectedStudent, month);
+                            violations = (data || []).map(v => ({ description: v.description, points: v.points }));
+                        } else {
+                            const data = await bintangService.getViolationsForClass(selectedClass, month);
+                            violations = (data || []).map(v => ({ description: v.description, points: v.points }));
+                        }
+
+                        const points = calculateAspectPoints(violations);
+                        return {
+                            month,
+                            label: monthLabel(month),
+                            ADAB: { points: points.ADAB.points, grade: points.ADAB.grade },
+                            KEDISIPLINAN: { points: points.KEDISIPLINAN.points, grade: points.KEDISIPLINAN.grade },
+                            KERAPIAN: { points: points.KERAPIAN.points, grade: points.KERAPIAN.grade },
+                        } as TrendMonth;
+                    })
+                );
+            }
+
+            setTrendData(results || []);
         } catch (error) {
             console.error('Failed to fetch trend data:', error);
         } finally {

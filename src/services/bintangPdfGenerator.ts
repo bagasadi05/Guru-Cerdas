@@ -341,10 +341,22 @@ export const generateBintangReportPdf = async (
         // 6. Main Evaluation Table (Section A)
         renderSectionHeader("A. Rekapitulasi Penilaian Bintang");
 
+        const adabDesc = (report.evaluation?.adab_notes && String(report.evaluation.adab_notes).trim())
+            ? normalizeTextForPdf(String(report.evaluation.adab_notes).trim())
+            : (DESKRIPSI_ASPEK.ADAB[adabScore as BintangGrade] || '');
+
+        const kedisiplinanDesc = (report.evaluation?.kedisiplinan_notes && String(report.evaluation.kedisiplinan_notes).trim())
+            ? normalizeTextForPdf(String(report.evaluation.kedisiplinan_notes).trim())
+            : (DESKRIPSI_ASPEK.KEDISIPLINAN[kedisiplinanScore as BintangGrade] || '');
+
+        const kerapianDesc = (report.evaluation?.kerapian_notes && String(report.evaluation.kerapian_notes).trim())
+            ? normalizeTextForPdf(String(report.evaluation.kerapian_notes).trim())
+            : (DESKRIPSI_ASPEK.KERAPIAN[kerapianScore as BintangGrade] || '');
+
         const tableABody: (string | null)[][] = [
-            ['1', 'Adab', String(adabScore), DESKRIPSI_ASPEK.ADAB[adabScore as BintangGrade]],
-            ['2', 'Kedisiplinan', String(kedisiplinanScore), DESKRIPSI_ASPEK.KEDISIPLINAN[kedisiplinanScore as BintangGrade]],
-            ['3', 'Kerapian', String(kerapianScore), DESKRIPSI_ASPEK.KERAPIAN[kerapianScore as BintangGrade]]
+            ['1', 'Adab', String(adabScore), adabDesc],
+            ['2', 'Kedisiplinan', String(kedisiplinanScore), kedisiplinanDesc],
+            ['3', 'Kerapian', String(kerapianScore), kerapianDesc]
         ];
 
         autoTable(targetDoc, {

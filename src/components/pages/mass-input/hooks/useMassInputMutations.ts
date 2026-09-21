@@ -294,9 +294,10 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                     const pendingScores = Object.entries(scores)
                         .filter(([, score]: [string, string]) => score && score.trim() !== '')
                         .map(([student_id, score]: [string, string]) => {
-                            const numScore = Number(score);
-                            if (numScore < 0 || numScore > 100)
-                                throw new Error(`Nilai untuk siswa tidak valid: ${numScore}. Harus antara 0-100.`);
+                            const normalized = score.trim().replace(',', '.');
+                            const numScore = Number(normalized);
+                            if (isNaN(numScore) || numScore < 0 || numScore > 100)
+                                throw new Error(`Nilai untuk siswa tidak valid: ${score}. Harus antara 0-100.`);
                             return { student_id, numScore };
                         });
 

@@ -336,6 +336,108 @@ export const bintangService = {
   },
 
   /**
+   * Fetch historical trend metrics for a class or specific student over a list of months.
+   * Batches violation and quiz point queries across the entire date range in parallel,
+   * eliminating the N+1 network fanout and incorporating quiz points (keaktifan) offsets.
+   */
+  async getTrendData(
+    classId: string,
+    months: string[],
+    studentId?: string
+  ): Promise<Array<{
+    month: string;
+    label: string;
+    ADAB: { points: number; grade: BintangGrade };
+    KEDISIPLINAN: { points: number; grade: BintangGrade };
+    KERAPIAN: { points: number; grade: BintangGrade };
+  }>> {
+    if (!months || months.length === 0) return [];
+
+    try {
+      const sortedMonths = [...months].sort();
+      const firstMonth = sortedMonths[0];
+      const lastMonth = sortedMonths[sortedMonths.length - 1];
+
+      const startDate = `${firstMonth}-01`;
+      const [lastYear, lastMonthNum] = lastMonth.split('-');
+      const nextMonthNum = parseInt(lastMonthNum, 10) === 12 ? 1 : parseInt(lastMonthNum, 10) + 1;
+      const nextYear = parseInt(lastMonthNum, 10) === 12 ? parseInt(lastYear, 10) + 1 : parseInt(lastYear, 10);
+      const endDate = `${nextYear}-${nextMonthNum.toString().padStart(2, '0')}-01`;
+
+      let targetStudentIds: string[] = [];
+      if (studentId) {
+        targetStudentIds = [studentId];
+      } else {
+        const { data: classStudents } = await supabase
+          .from('students')
+          .select('id')
+          .eq('class_id', classId)
+          .is('deleted_at', null);
+        targetStudentIds = (classStudents || []).map(s => s.id);
+      }
+
+      if (targetStudentIds.length === 0) {
+        return months.map(month => {
+          const d = new Date(month + '-01');
+          return {
+            month,
+            label: d.toLocaleDateString('id-ID', { month: 'short' }),
+            ADAB: { points: 0, grade: 'A' as BintangGrade },
+            KEDISIPLINAN: { points: 0, grade: 'A' as BintangGrade },
+            KERAPIAN: { points: 0, grade: 'A' as BintangGrade },
+          };
+        });
+      }
+
+      const [viosRes, quizRes] = await Promise.all([
+        supabase
+          .from('violations')
+          .select('date, description, points, student_id')
+          .in('student_id', targetStudentIds)
+          .gte('date', startDate)
+          .lt('date', endDate)
+          .is('deleted_at', null),
+        supabase
+          .from('quiz_points')
+          .select('quiz_date, points, student_id')
+          .in('student_id', targetStudentIds)
+          .gte('quiz_date', startDate)
+          .lt('quiz_date', endDate)
+          .is('deleted_at', null),
+      ]);
+
+      const allVios = viosRes.data || [];
+      const allQuiz = quizRes.data || [];
+
+      return months.map(month => {
+        const d = new Date(month + '-01');
+        const label = d.toLocaleDateString('id-ID', { month: 'short' });
+
+        const monthVios = allVios
+          .filter(v => v.date && v.date.startsWith(month))
+          .map(v => ({ description: v.description || '', points: Number(v.points) || 0 }));
+
+        const monthQuizTotal = allQuiz
+          .filter(q => q.quiz_date && q.quiz_date.startsWith(month))
+          .reduce((sum, q) => sum + (Number(q.points) || 0), 0);
+
+        const points = calculateAspectPoints(monthVios, monthQuizTotal);
+
+        return {
+          month,
+          label,
+          ADAB: { points: points.ADAB.points, grade: points.ADAB.grade },
+          KEDISIPLINAN: { points: points.KEDISIPLINAN.points, grade: points.KEDISIPLINAN.grade },
+          KERAPIAN: { points: points.KERAPIAN.points, grade: points.KERAPIAN.grade },
+        };
+      });
+    } catch (err) {
+      console.warn('bintangService.getTrendData exception:', err);
+      return [];
+    }
+  },
+
+  /**
    * Insert a new violation record (used by the BINTANG dashboard so walas
    * can record a violation without leaving the menu).
    */

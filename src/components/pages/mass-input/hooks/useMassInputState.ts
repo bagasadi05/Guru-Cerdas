@@ -55,6 +55,11 @@ export function useMassInputState() {
         max_points: 1,
     });
     const [subjectGradeInfo, setSubjectGradeInfo] = useState(() => initialDraft?.subjectGradeInfo || { subject: '', assessment_name: '', notes: '', semester: '' });
+    const getAssessmentKey = (classId: string, info: { subject: string; assessment_name: string; semester: string }) =>
+        `${classId}::${info.subject}::${info.assessment_name}::${info.semester}`;
+    const [prevAssessmentKey, setPrevAssessmentKey] = useState(() =>
+        getAssessmentKey(initialDraft?.selectedClass || '', initialDraft?.subjectGradeInfo || { subject: '', assessment_name: '', notes: '', semester: '' })
+    );
     const [kkm, setKkm] = useState(75);
     const [attitudeDate, setAttitudeDate] = useState(new Date().toISOString().slice(0, 10));
     const [attitudeCategory, setAttitudeCategory] = useState('Adab & Akhlak');
@@ -138,6 +143,17 @@ export function useMassInputState() {
         setIsScoresDirtyState(false);
     }
 
+    // Reset scores and dirty flag when assessment context changes in subject_grade mode
+    const currentAssessmentKey = getAssessmentKey(selectedClass, subjectGradeInfo);
+    if (prevAssessmentKey !== currentAssessmentKey) {
+        setPrevAssessmentKey(currentAssessmentKey);
+        if (mode === 'subject_grade') {
+            setScores({});
+            setValidationErrors({});
+            setIsScoresDirtyState(false);
+        }
+    }
+
     // Reset filter when mode changes
     if (prevMode !== mode) {
         setPrevMode(mode);
@@ -148,7 +164,7 @@ export function useMassInputState() {
 
     useEffect(() => {
         isScoresDirtyRef.current = false;
-    }, [selectedClass]);
+    }, [selectedClass, subjectGradeInfo.subject, subjectGradeInfo.assessment_name, subjectGradeInfo.semester]);
 
     const clearSubjectGradeDraft = () => {
         sessionStorage.removeItem(SUBJECT_GRADE_DRAFT_KEY);
@@ -180,7 +196,9 @@ export function useMassInputState() {
             const draft = readSubjectGradeDraft();
             if (draft && draft.step === 2 && draft.mode === 'subject_grade') {
                 setSelectedClass(draft.selectedClass);
+                setPrevClass(draft.selectedClass);
                 setSubjectGradeInfo(draft.subjectGradeInfo);
+                setPrevAssessmentKey(getAssessmentKey(draft.selectedClass, draft.subjectGradeInfo));
                 setKkm(draft.kkm || 75);
                 setScores(draft.scores);
                 setValidationErrors(draft.validationErrors || {});
@@ -227,15 +245,35 @@ export function useMassInputState() {
     const handleScoreChange = (studentId: string, value: string) => {
         isScoresDirtyRef.current = true;
         setIsScoresDirtyState(true);
-        const numValue = Number(value);
+        const normalized = value.trim().replace(',', '.');
+        const numValue = Number(normalized);
         const errors = { ...validationErrors };
-        if (value && (isNaN(numValue) || numValue < 0 || numValue > 100)) {
+        if (value.trim() !== '' && (isNaN(numValue) || numValue < 0 || numValue > 100)) {
             errors[studentId] = 'Nilai harus antara 0-100';
         } else {
             delete errors[studentId];
         }
         setValidationErrors(errors);
         setScores(prev => ({ ...prev, [studentId]: value }));
+    };
+
+    const handleBatchScoreChange = (newScores: Record<string, string>) => {
+        isScoresDirtyRef.current = true;
+        setIsScoresDirtyState(true);
+        setValidationErrors(prev => {
+            const next = { ...prev };
+            Object.entries(newScores).forEach(([studentId, value]) => {
+                const normalized = value.trim().replace(',', '.');
+                const numValue = Number(normalized);
+                if (value.trim() !== '' && (isNaN(numValue) || numValue < 0 || numValue > 100)) {
+                    next[studentId] = 'Nilai harus antara 0-100';
+                } else {
+                    delete next[studentId];
+                }
+            });
+            return next;
+        });
+        setScores(prev => ({ ...prev, ...newScores }));
     };
 
     const handleAttitudePredicateChange = (
@@ -330,7 +368,7 @@ export function useMassInputState() {
         saveSubjectGradeDraft,
         bypassDuplicateGuard, setBypassDuplicateGuard,
         pendingImportData, setPendingImportData,
-        handleModeSelect, handleBack, handleScoreChange,
+        handleModeSelect, handleBack, handleScoreChange, handleBatchScoreChange,
         handleAttitudePredicateChange, handleQuickFillAttitude,
         handleStudentSelect,
     };

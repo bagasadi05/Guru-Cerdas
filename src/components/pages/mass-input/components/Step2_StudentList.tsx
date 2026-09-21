@@ -28,6 +28,7 @@ interface Step2_StudentListProps {
     handleStudentSelect: (id: string) => void;
     scores: Record<string, string>;
     handleScoreChange: (id: string, value: string) => void;
+    handleBatchScoreChange?: (newScores: Record<string, string>) => void;
     onScoreFieldFocus?: (studentId: string | null) => void;
     validationErrors?: Record<string, string>;
     existingGrades: AcademicRecordRow[] | undefined;
@@ -46,7 +47,7 @@ interface Step2_StudentListProps {
 export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     mode, searchTerm, setSearchTerm, filterOptions, studentFilter, setStudentFilter,
     isLoadingStudents, students, isAllSelected, handleSelectAllStudents,
-    selectedStudentIds, handleStudentSelect, scores, handleScoreChange, onScoreFieldFocus, validationErrors = {}, existingGrades,
+    selectedStudentIds, handleStudentSelect, scores, handleScoreChange, handleBatchScoreChange, onScoreFieldFocus, validationErrors = {}, existingGrades,
     existingAttitudeRecords: _existingAttitudeRecords,
     attitudePoints: _attitudePoints = 1, attitudeCategory = 'Adab & Akhlak', attitudeDate,
     existingQuizPoints, quizInfo,
@@ -274,7 +275,13 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                             students={students}
                             scores={scores}
                             onApply={(score) => {
-                                students.forEach(s => handleScoreChange(s.id, score));
+                                if (handleBatchScoreChange) {
+                                    const batch: Record<string, string> = {};
+                                    students.forEach(s => { batch[s.id] = score; });
+                                    handleBatchScoreChange(batch);
+                                } else {
+                                    students.forEach(s => handleScoreChange(s.id, score));
+                                }
                             }}
                             onClearRequest={onClearRequest}
                             onClose={() => setShowBatchFill(false)}
@@ -345,9 +352,11 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                 const isSelected = selectedStudentIds.has(s.id);
                                                 const gradeRecord = existingGradesMap.get(s.id);
                                                 const hasGrade = !!gradeRecord;
-                                                const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
-                                                const scoreNum = Number(scores[s.id]);
-                                                const hasValidScore = Boolean(scores[s.id] && !isNaN(scoreNum) && scores[s.id].trim() !== '');
+                                                const rawScore = scores[s.id] || '';
+                                                const scoreNormalized = rawScore.trim().replace(',', '.');
+                                                const scoreNum = Number(scoreNormalized);
+                                                const hasScore = mode === 'subject_grade' && rawScore.trim() !== '';
+                                                const hasValidScore = Boolean(rawScore.trim() !== '' && !isNaN(scoreNum));
                                                 const isPassing = hasValidScore && scoreNum >= kkm;
                                                 const isFailing = hasValidScore && scoreNum < kkm;
                                                 const studentQuizPoints = studentQuizPointsCountMap.get(s.id) || 0;
@@ -556,9 +565,11 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                         const isSelected = selectedStudentIds.has(s.id);
                                         const gradeRecord = existingGradesMap.get(s.id);
                                         const hasGrade = !!gradeRecord;
-                                        const hasScore = mode === 'subject_grade' && scores[s.id]?.trim();
-                                        const scoreNum = Number(scores[s.id]);
-                                        const hasValidScore = Boolean(scores[s.id] && !isNaN(scoreNum) && scores[s.id].trim() !== '');
+                                        const rawScore = scores[s.id] || '';
+                                        const scoreNormalized = rawScore.trim().replace(',', '.');
+                                        const scoreNum = Number(scoreNormalized);
+                                        const hasScore = mode === 'subject_grade' && rawScore.trim() !== '';
+                                        const hasValidScore = Boolean(rawScore.trim() !== '' && !isNaN(scoreNum));
                                         const isPassing = hasValidScore && scoreNum >= kkm;
                                         const isFailing = hasValidScore && scoreNum < kkm;
                                         const studentQuizPoints = studentQuizPointsCountMap.get(s.id) || 0;
@@ -675,9 +686,9 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                                     onBlur={() => onScoreFieldFocus?.(null)}
                                                                     className={`w-full min-w-0 flex-1 text-xl font-bold text-center h-12 rounded-xl transition-all ${validationErrors[s.id] ? 'border-rose-500 focus:ring-rose-500 bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300' : 'bg-slate-50 dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white focus:ring-brand-500'}`}
                                                                 />
-                                                                {scores[s.id] && !validationErrors[s.id] && (
-                                                                    <span className={`px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-md whitespace-nowrap flex-shrink-0 ${Number(scores[s.id]) >= kkm ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
-                                                                        {Number(scores[s.id]) >= kkm ? 'Tuntas' : 'Belum Tuntas'}
+                                                                {hasValidScore && !validationErrors[s.id] && (
+                                                                    <span className={`px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-md whitespace-nowrap flex-shrink-0 ${isPassing ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+                                                                        {isPassing ? 'Tuntas' : 'Belum Tuntas'}
                                                                     </span>
                                                                 )}
                                                             </div>

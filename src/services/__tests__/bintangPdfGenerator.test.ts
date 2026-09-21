@@ -803,6 +803,58 @@ describe('bintangPdfGenerator', () => {
         expect(renderedNote).toBeDefined();
         expect(renderedNote).toContain('poin keaktifan');
     });
+
+    it('renders custom aspect notes in Table A when provided in evaluation', async () => {
+        const { getAutoTable } = await import('../../utils/dynamicImports');
+        const mockAutoTable = (await getAutoTable()).default;
+
+        const doc = new jsPDF();
+        const report = {
+            student: {
+                id: 'student-custom-aspect',
+                name: 'Zaid bin Tsabit',
+                classes: { name: 'Kelas 5B' },
+                nis: '55667',
+                nisn: '0055667788',
+            },
+            aspects: {
+                ADAB: { grade: 'B' },
+                KEDISIPLINAN: { grade: 'B' },
+                KERAPIAN: { grade: 'A' },
+            },
+            violations: [],
+            evaluation: {
+                adab_score: 'B',
+                kedisiplinan_score: 'B',
+                kerapian_score: 'A',
+                adab_notes: 'Catatan kustom adab Zaid: sangat santun terhadap ustadz.',
+                kedisiplinan_notes: 'Catatan kustom disiplin: selalu datang awal waktu.',
+                kerapian_notes: 'Catatan kustom kerapian: seragam rapi dan wangi.',
+                catatan_wali: 'Pertahankan prestasi Ananda Zaid.',
+            },
+            quizPoints: [],
+        };
+
+        await generateBintangReportPdf(
+            doc,
+            [report],
+            'September 2026',
+            '15 September 2026',
+            { id: 'u1', name: 'Ustadz Abdullah, S.Pd.I', avatarUrl: '' }
+        );
+
+        const autoTableCalls = vi.mocked(mockAutoTable).mock.calls;
+        const tableACall = autoTableCalls.find(call => {
+            const opts = call[1] as any;
+            return opts && opts.body && opts.body.some((row: any[]) => row[1] === 'Adab');
+        });
+
+        expect(tableACall).toBeDefined();
+        const bodyRows = (tableACall![1] as any).body;
+        expect(bodyRows[0][3]).toBe('Catatan kustom adab Zaid: sangat santun terhadap ustadz.');
+        expect(bodyRows[1][3]).toBe('Catatan kustom disiplin: selalu datang awal waktu.');
+        expect(bodyRows[2][3]).toBe('Catatan kustom kerapian: seragam rapi dan wangi.');
+    });
 });
 
 

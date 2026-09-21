@@ -206,8 +206,8 @@ export function sortStudents<T extends { id: string; name: string }>(
                 const rawB = scores[b.id];
                 const hasA = rawA !== undefined && rawA !== '';
                 const hasB = rawB !== undefined && rawB !== '';
-                const scoreA = hasA ? parseFloat(String(rawA)) : Number.NEGATIVE_INFINITY;
-                const scoreB = hasB ? parseFloat(String(rawB)) : Number.NEGATIVE_INFINITY;
+                const scoreA = hasA ? parseFloat(String(rawA).replace(',', '.')) : Number.NEGATIVE_INFINITY;
+                const scoreB = hasB ? parseFloat(String(rawB).replace(',', '.')) : Number.NEGATIVE_INFINITY;
                 comparison = scoreA - scoreB;
                 break;
             }
@@ -256,7 +256,7 @@ export function groupStudents<T extends { id: string; name: string }>(
             if (rawScore === undefined || rawScore === null || rawScore === '') {
                 noScore.push(student);
             } else {
-                const score = parseFloat(String(rawScore));
+                const score = parseFloat(String(rawScore).replace(',', '.'));
                 if (isNaN(score)) {
                     noScore.push(student);
                 } else if (score >= kkm) {

@@ -103,7 +103,7 @@ const generateActivities = (data: DashboardActivityData | null): ActivityItem[] 
  * @param data - Dashboard activity data
  * @returns Array of reminder items
  */
-const generateReminders = (data: DashboardActivityData | null): Reminder[] => {
+export const generateReminders = (data: DashboardActivityData | null): Reminder[] => {
   if (!data) return [];
 
   const reminders: Reminder[] = [];
@@ -136,18 +136,18 @@ const generateReminders = (data: DashboardActivityData | null): Reminder[] => {
     });
   }
 
-  // Check for low attendance
-  const attendancePercentage =
-    students.length > 0
-      ? Math.round((dailyAttendanceSummary?.present || 0) / students.length * 100)
+  // Check for low attendance among recorded students
+  const recordedAttendancePercentage =
+    attendanceRecorded > 0
+      ? Math.round(((dailyAttendanceSummary?.present || 0) / attendanceRecorded) * 100)
       : 100;
       
-  if (attendancePercentage < 70 && attendanceRecorded > 0) {
+  if (recordedAttendancePercentage < 70 && attendanceRecorded > 0) {
     reminders.push({
       id: 'low-attendance',
       type: 'urgent',
       title: 'Kehadiran Rendah!',
-      message: `Hanya ${attendancePercentage}% siswa hadir hari ini`,
+      message: `Hanya ${recordedAttendancePercentage}% siswa hadir hari ini`,
       action: { label: 'Cek Details', link: '/absensi' },
       dismissible: false,
     });

@@ -136,4 +136,11 @@ describe('calculateAspectPoints', () => {
         expect(typeof bintangService.unpublishEvaluations).toBe('function');
         expect(typeof bintangService.unpublishSingleEvaluation).toBe('function');
     });
+
+    it('bintangService provides getTrendData method and handles empty months gracefully', async () => {
+        const { bintangService } = await import('../bintangService');
+        expect(typeof bintangService.getTrendData).toBe('function');
+        const emptyResult = await bintangService.getTrendData('class-1', []);
+        expect(emptyResult).toEqual([]);
+    });
 });

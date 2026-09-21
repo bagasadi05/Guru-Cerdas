@@ -221,7 +221,7 @@ export const BintangStudentHistoryModal: React.FC<BintangStudentHistoryModalProp
               </thead>
               <tbody>
                 {studentQuizzes.length === 0 ? (
-                  <tr><td colSpan={4} className="py-4 text-center text-slate-500">Belum ada poin keaktifan bulan ini</td></tr>
+                  <tr><td colSpan={isWalas ? 4 : 3} className="py-4 text-center text-slate-500">Belum ada poin keaktifan bulan ini</td></tr>
                 ) : (
                   studentQuizzes.map(q => (
                     <tr key={q.id} className="border-t border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30">

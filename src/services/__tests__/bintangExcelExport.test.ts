@@ -4,20 +4,26 @@ import { exportBintangToExcel } from '../bintangExcelExport';
 // Mock getExcelJS dynamic import (service switched from getXLSX to getExcelJS).
 // The mock provides a minimal ExcelJS.Workbook surface used by exportBintangToExcel:
 // addWorksheet → worksheet with mergeCells/getCell/addRow/getColumn, and workbook.xlsx.writeBuffer.
-const { MockWorkbook } = vi.hoisted(() => {
+const { MockWorkbook, createdWorksheets } = vi.hoisted(() => {
+    const createdWorksheets: any[] = [];
     const makeCell = () => ({ value: null, font: {}, alignment: {}, fill: {}, border: {} });
-    const makeWorksheet = () => ({
-        mergeCells: vi.fn(),
-        getCell: vi.fn(() => makeCell()),
-        addRow: vi.fn(() => ({ eachCell: vi.fn(), font: {} })),
-        getColumn: vi.fn(() => ({ width: 0 })),
-    });
+    const makeWorksheet = (name: string) => {
+        const ws = {
+            name,
+            mergeCells: vi.fn(),
+            getCell: vi.fn(() => makeCell()),
+            addRow: vi.fn((row: any) => ({ eachCell: vi.fn(), font: {}, row })),
+            getColumn: vi.fn(() => ({ width: 0 })),
+        };
+        createdWorksheets.push(ws);
+        return ws;
+    };
     const MockWorkbook = class {
         creator: string | null = null;
-        addWorksheet = vi.fn(() => makeWorksheet());
+        addWorksheet = vi.fn((name: string) => makeWorksheet(name));
         xlsx = { writeBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(0)) };
     };
-    return { MockWorkbook };
+    return { MockWorkbook, createdWorksheets };
 });
 
 vi.mock('../../utils/dynamicImports', () => ({
@@ -126,5 +132,59 @@ describe('bintangExcelExport', () => {
         };
 
         await expect(exportBintangToExcel(options)).resolves.not.toThrow();
+    });
+
+    it('includes Catatan Wali Kelas column and uses evaluated aspect grades in Rekap Kelas', async () => {
+        createdWorksheets.length = 0;
+        const options = {
+            className: 'Kelas 6A',
+            schoolName: 'SDIT GURU CERDAS',
+            monthName: 'September 2026',
+            academicYear: '2026/2027',
+            semesterName: 'Ganjil',
+            students: [{ id: 's1', name: 'Salman' }],
+            violations: [
+                // 15 violation points in Adab => raw calculated grade is C
+                {
+                    student_id: 's1',
+                    description: 'Membuang sampah sembarangan',
+                    points: 15,
+                    date: '2026-09-05',
+                    severity: 'sedang',
+                    students: { name: 'Salman' },
+                },
+            ],
+            quizPoints: [],
+            evaluations: [
+                // Teacher adjusted Adab to A and added custom homeroom note
+                {
+                    student_id: 's1',
+                    is_published: true,
+                    adab_score: 'A',
+                    catatan_wali: 'Ananda Salman menunjukkan perbaikan adab yang sangat pesat.',
+                },
+            ],
+        };
+
+        await exportBintangToExcel(options);
+
+        const rekapSheet = createdWorksheets.find((w: any) => w.name === 'Rekap Kelas');
+        expect(rekapSheet).toBeDefined();
+
+        const addRowCalls = rekapSheet.addRow.mock.calls.map((c: any[]) => c[0]);
+        // Header row: 16 columns including Catatan Wali Kelas
+        const headerRow = addRowCalls.find((r: any) => Array.isArray(r) && r.includes('Catatan Wali Kelas'));
+        expect(headerRow).toBeDefined();
+        expect(headerRow.length).toBe(16);
+        expect(headerRow[15]).toBe('Catatan Wali Kelas');
+
+        // Student row
+        const studentRow = addRowCalls.find((r: any) => Array.isArray(r) && r[1] === 'Salman');
+        expect(studentRow).toBeDefined();
+        expect(studentRow.length).toBe(16);
+        // Index 5 is Adab Grade: should reflect evaluated 'A', not calculated 'C'
+        expect(studentRow[5]).toContain('A');
+        // Index 15 is Catatan Wali
+        expect(studentRow[15]).toBe('Ananda Salman menunjukkan perbaikan adab yang sangat pesat.');
     });
 });

@@ -126,7 +126,15 @@ export function useMassInputViewModel() {
             state.setScores(prev => Object.keys(prev).length === 0 ? prev : {});
             state.setIsScoresDirty(false);
         }
-    }, [data.existingGrades, state.mode]); // eslint-disable-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        data.existingGrades,
+        state.mode,
+        state.selectedClass,
+        state.subjectGradeInfo.subject,
+        state.subjectGradeInfo.assessment_name,
+        state.subjectGradeInfo.semester,
+    ]);
 
     // --- Derived state ---
 
@@ -505,6 +513,7 @@ export function useMassInputViewModel() {
         handleStudentSelect: state.handleStudentSelect,
         scores: state.scores,
         handleScoreChange: state.handleScoreChange,
+        handleBatchScoreChange: state.handleBatchScoreChange,
         onScoreFieldFocus: setFocusedStudentId,
         existingGrades: data.existingGrades,
         filteredExistingGrades,

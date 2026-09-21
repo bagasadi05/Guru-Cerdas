@@ -15,6 +15,7 @@ vi.mock('../../../../services/bintangService', () => ({
     bintangService: {
         getViolationsForClass: vi.fn(),
         getViolationsForStudent: vi.fn(),
+        getTrendData: vi.fn(),
     },
     calculateAspectPoints: vi.fn((violations) => {
         const total = (violations || []).reduce((acc: number, v: any) => acc + (v.points || 0), 0);
@@ -74,6 +75,25 @@ describe('BintangTrendChart', () => {
         await waitFor(() => {
             const elements = screen.getAllByText('40');
             expect(elements.length).toBeGreaterThanOrEqual(1);
+        });
+    });
+
+    it('uses getTrendData when available and displays the loaded aspect trends', async () => {
+        (bintangService.getTrendData as any).mockResolvedValue([
+            {
+                month: '2026-09',
+                label: 'Sep',
+                ADAB: { points: 5, grade: 'B' },
+                KEDISIPLINAN: { points: 0, grade: 'A' },
+                KERAPIAN: { points: 0, grade: 'A' },
+            },
+        ]);
+
+        render(<BintangTrendChart selectedClass="class-1" />);
+
+        await waitFor(() => {
+            expect(bintangService.getTrendData).toHaveBeenCalledWith('class-1', expect.any(Array), undefined);
+            expect(screen.getByText('Tren Poin Pelanggaran (6 Bulan Terakhir)')).toBeInTheDocument();
         });
     });
 });

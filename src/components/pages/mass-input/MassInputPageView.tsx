@@ -98,6 +98,7 @@ export interface MassInputPageViewProps {
     handleStudentSelect: (id: string) => void;
     scores: Record<string, string>;
     handleScoreChange: (studentId: string, value: string) => void;
+    handleBatchScoreChange?: (newScores: Record<string, string>) => void;
     onScoreFieldFocus: (studentId: string | null) => void;
     validationErrors: Record<string, string>;
     existingGrades: AcademicRecordRow[] | undefined;
@@ -167,7 +168,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         showImportModal, setShowImportModal,
         searchTerm, setSearchTerm, filterOptions, studentFilter, setStudentFilter,
         isLoadingStudents, students, isAllSelected, handleSelectAllStudents,
-        selectedStudentIds, handleStudentSelect, scores, handleScoreChange, onScoreFieldFocus, validationErrors,
+        selectedStudentIds, handleStudentSelect, scores, handleScoreChange, handleBatchScoreChange, onScoreFieldFocus, validationErrors,
         existingGrades,
         summaryText, gradedCount, setScores,
         isExporting, exportProgress, handleSubmit, isSubmitDisabled, submitButtonTooltip,
@@ -320,6 +321,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                     handleStudentSelect={handleStudentSelect}
                                     scores={scores}
                                     handleScoreChange={handleScoreChange}
+                                    handleBatchScoreChange={handleBatchScoreChange}
                                     onScoreFieldFocus={onScoreFieldFocus}
                                     validationErrors={validationErrors}
                                     existingGrades={existingGrades}
@@ -638,7 +640,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                             : mode === 'quiz'
                                             ? `Simpan Kuis (${selectedStudentIds.size})`
                                             : mode === 'attitude'
-                                            ? `Simpan Sikap (${selectedStudentIds.size})`
+                                            ? `Simpan Poin Sikap (${selectedStudentIds.size})`
                                             : mode === 'subject_grade'
                                             ? isDirty
                                                 ? `Simpan Nilai (${gradedCount})`

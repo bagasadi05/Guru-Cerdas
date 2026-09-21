@@ -12,7 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
 import { useAuth } from './useAuth';
 import { queryKeys } from '../lib/queryKeys';
-import type { DashboardQueryData, WeeklyAttendance } from '../types';
+import type { DashboardQueryData, WeeklyAttendance, StudentAchievement } from '../types';
 import type { Database } from '../types';
 
 // =============================================================================
@@ -53,12 +53,34 @@ export interface UseDashboardDataReturn {
  * // ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05']
  * ```
  */
-const getLastNDays = (count: number): string[] => {
+/**
+ * Formats a Date to YYYY-MM-DD in the local calendar timezone.
+ */
+export const formatLocalDate = (date: Date = new Date()): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+/**
+ * Gets the last N days as an array of YYYY-MM-DD strings in local timezone.
+ * 
+ * @param count - Number of days to look back
+ * @returns Array of date strings in ascending order (oldest first)
+ * 
+ * @example
+ * ```typescript
+ * const dates = getLastNDays(5);
+ * // ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05']
+ * ```
+ */
+export const getLastNDays = (count: number): string[] => {
     const dates: string[] = [];
     for (let i = count - 1; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
-        dates.push(date.toISOString().slice(0, 10));
+        dates.push(formatLocalDate(date));
     }
     return dates;
 };
@@ -71,7 +93,7 @@ const INDONESIAN_DAY_NAMES = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jum
  * 
  * @returns Day name (e.g., "Senin", "Selasa", "Kamis")
  */
-const getTodayDayName = (date: Date = new Date()): string => {
+export const getTodayDayName = (date: Date = new Date()): string => {
     return INDONESIAN_DAY_NAMES[date.getDay()];
 };
 
@@ -83,7 +105,7 @@ const getTodayDayName = (date: Date = new Date()): string => {
  * @param totalStudents - Total number of students for percentage calculation
  * @returns Array of weekly attendance data points
  */
-const calculateWeeklyAttendance = (
+export const calculateWeeklyAttendance = (
     attendanceData: Array<{ date: string; status: string }>,
     dates: string[],
     totalStudents: number
@@ -98,8 +120,10 @@ const calculateWeeklyAttendance = (
         // Use total students as denominator to avoid inflated percentages
         const total = totalStudents || dayAttendance.length;
 
-        // Get day name for display
-        const dayName = INDONESIAN_DAY_NAMES[new Date(date).getDay()];
+        // Get day name for display safely without UTC timezone shift
+        const [year, month, day] = date.split('-').map(Number);
+        const dayOfWeek = (year && month && day) ? new Date(year, month - 1, day).getDay() : new Date(date).getDay();
+        const dayName = INDONESIAN_DAY_NAMES[dayOfWeek] || 'Senin';
 
         return {
             day: dayName,
@@ -130,7 +154,7 @@ const calculateWeeklyAttendance = (
  * @throws Error if any of the queries fail
  */
 export const fetchDashboardData = async (userId: string, userRole: string): Promise<DashboardQueryData> => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = formatLocalDate(new Date());
     const todayDay = getTodayDayName();
     const last5Days = getLastNDays(5);
     const isGlobalRole = userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum' || userRole === 'kepala_madrasah' || userRole === 'admin';
@@ -328,7 +352,7 @@ export const fetchDashboardData = async (userId: string, userRole: string): Prom
         // O(1) Set lookups instead of O(N * M) quadratic linear scans
         academicRecords: (academicRecordsRes.data || []).filter(r => activeStudentIds.has(r.student_id)),
         violations: (violationsRes.data || []).filter(v => activeStudentIds.has(v.student_id)),
-        achievements: ((achievementsRes.data || []) as any[]).filter(ach => activeStudentIds.has(ach.student_id)),
+        achievements: ((achievementsRes.data || []) as unknown as StudentAchievement[]).filter(ach => activeStudentIds.has(ach.student_id)),
         recentTasks: recentTasksRes.data || [],
         todayAttendanceRecords: recentAttendanceForActive.slice(0, 10).reduce((acc: { created_at: string; status: string; count: number }[], record) => {
             const existing = acc.find(a => a.created_at === record.created_at && a.status === record.status);

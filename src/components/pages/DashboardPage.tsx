@@ -4,7 +4,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { useScheduleNotifications } from '../../hooks/useScheduleNotifications';
 import { useDashboardData } from '../../hooks/useDashboardData';
 import { useClock } from '../../hooks/useClock';
-import { useGradeAudit } from '../../hooks/useGradeAudit';
 import { useDashboardActivities } from '../../hooks/useDashboardActivities';
 import { useTodayJournalStatus } from '../../hooks/useTodayJournalStatus';
 import { isTaskOverdue, formatTaskDueDate } from '../../utils/dateHelpers';
@@ -94,7 +93,6 @@ const DashboardPage: React.FC = () => {
     error instanceof Error ? error.message : 'Gagal memuat data dashboard. Silakan coba lagi.';
 
   useScheduleNotifications(user?.id);
-  useGradeAudit({ data });
 
   const { activeReminders, activities: recentActivities, dismissReminder: handleDismissReminder } = useDashboardActivities(
     data ? {
