@@ -1,37 +1,24 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../../services/supabase';
-import { generateGeminiJson } from '../../../../services/geminiService';
-import { generateTeacherNotesBatched } from '../../../../utils/aiBatch';
 import { useAuth } from '../../../../hooks/useAuth';
 import { useToast } from '../../../../hooks/useToast';
 import { useSemester } from '../../../../contexts/SemesterContext';
 import { useOfflineStatus } from '../../../../hooks/useOfflineStatus';
-import { Database } from '../../../../services/database.types';
-import { formatExportDate } from '../../../../utils/exportFormatUtils';
-import { generateStudentReport, ReportData as ReportDataType } from '../../../../services/pdfGenerator';
-import { addPdfHeader, ensureLogosLoaded } from '../../../../utils/pdfHeaderUtils';
-import { getAutoTable, getJsPDF } from '../../../../utils/dynamicImports';
-import { recordAction } from '../../../../services/UndoManager';
 import { violationList } from '../../../../services/violations.data';
-import { sanitizeFilename } from '../../../../services/securityEnhanced';
-import { InputMode, ClassRow, StudentRow, AcademicRecordRow, ReviewDataItem } from '../types';
-import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../../../utils/academicRecordUtils';
+import { InputMode, ClassRow, StudentRow, AcademicRecordRow } from '../types';
 import { triggerStarsConfetti } from '../../../../utils/confetti';
 
-const DUPLICATE_GUARD_WINDOW_MINUTES = 10;
+import { useDuplicateGuard, DUPLICATE_GUARD_WINDOW_MINUTES, getDuplicateGuardWindowIso } from './mutations/useDuplicateGuard';
+import { executeSubjectGradeMutation } from './mutations/useSubjectGradeMutation';
+import { executeAttitudeMutation } from './mutations/useAttitudeMutation';
+import { executeQuizPointsMutation } from './mutations/useQuizPointsMutation';
+import { executeViolationMutation } from './mutations/useViolationMutation';
+import { useGradeDeletionMutation } from './mutations/useGradeDeletionMutation';
+import { useMassInputExport } from './mutations/useMassInputExport';
+import { useMassInputAiParse, findStudentMatch } from './mutations/useMassInputAiParse';
 
-/** Safe crypto.randomUUID with fallback for non-secure contexts */
-const selfCryptoUUID = (): string => {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-        return crypto.randomUUID();
-    }
-    return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-};
-
-const getDuplicateGuardWindowIso = () => (
-    new Date(Date.now() - DUPLICATE_GUARD_WINDOW_MINUTES * 60 * 1000).toISOString()
-);
+export { findStudentMatch, DUPLICATE_GUARD_WINDOW_MINUTES };
 
 export interface UseMassInputMutationsParams {
     mode: InputMode | null;
@@ -66,21 +53,11 @@ export interface UseMassInputMutationsParams {
     saveSubjectGradeDraft?: (draft: any) => void;
 }
 
-import { findStudentMatch as centralFindStudentMatch } from '../../../../utils/studentMatcher';
-
-export const findStudentMatch = (targetName: string, students: StudentRow[]): StudentRow | undefined => {
-    const res = centralFindStudentMatch(targetName, students);
-    if (res.method !== 'none') {
-        return students.find(s => s.id === res.studentId);
-    }
-    return undefined;
-};
-
 export function useMassInputMutations(params: UseMassInputMutationsParams) {
     const {
         mode, selectedClass, quizInfo, subjectGradeInfo, scores, validationErrors,
         existingGrades, selectedStudentIds, selectedViolationCode, violationDate, violationNotes,
-        attitudeDate, attitudeCategory, attitudeName, attitudePoints: _attitudePoints, attitudeNotes,
+        attitudeDate, attitudeCategory, attitudeName, attitudeNotes,
         studentsData, noteMethod, templateNote, pasteData,
         gradedCount, classes,
         setScores, setSelectedStudentIds, bypassDuplicateGuard, isScoresDirtyRef, setIsScoresDirty, clearSubjectGradeDraft,
@@ -93,455 +70,142 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
     const toast = useToast();
     const isOnline = useOfflineStatus();
 
-    const [isParsing, setIsParsing] = useState(false);
-    const [isExporting, setIsExporting] = useState(false);
-    const [exportProgress, setExportProgress] = useState('0%');
-    const [confirmDeleteModal, setConfirmDeleteModal] = useState<{ isOpen: boolean; count: number }>({ isOpen: false, count: 0 });
-    const [confirmDeleteText, setConfirmDeleteText] = useState('');
-    const [duplicateList, setDuplicateList] = useState<{
-        student_id: string;
-        student_name: string;
-        recorded_by_name: string | null;
-        description: string;
-        date: string;
-        points: number;
-    }[]>([]);
-    const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
-
     const selectedViolation = violationList.find(v => v.code === selectedViolationCode) || null;
 
-    /**
-     * Pratinjau data yang akan dilewati sebelum menyimpan.
-     *
-     * Dipakai oleh mode `violation`, `quiz`, dan `attitude`: ketiganya punya
-     * jalur skip duplikat saat menyimpan, tetapi sebelumnya hanya pelanggaran
-     * yang memberi tahu guru lebih dulu. Ambangnya sengaja disamakan dengan
-     * jalur simpan supaya dialog dan hasil simpan tidak pernah berbeda.
-     */
-    const checkDuplicates = async (onProceed: () => void) => {
-        if (!user || selectedStudentIds.size === 0) {
-            onProceed();
-            return;
-        }
-        const studentIds = Array.from(selectedStudentIds);
+    // Sub-hook: Duplicate guard checking
+    const {
+        duplicateList,
+        showDuplicateDialog,
+        setShowDuplicateDialog,
+        checkDuplicates,
+    } = useDuplicateGuard({
+        mode,
+        user,
+        selectedStudentIds,
+        selectedViolation,
+        violationDate,
+        quizInfo,
+        attitudeName,
+        attitudeCategory,
+        attitudeDate,
+        subjectGradeInfo,
+        activeSemester,
+        studentsData,
+    });
 
-        if (mode === 'violation') {
-            if (!selectedViolation) {
-                onProceed();
-                return;
-            }
-            let query = supabase
-                .from('violations')
-                .select('id, student_id, user_id')
-                .in('student_id', studentIds)
-                .eq('date', violationDate)
-                .eq('description', selectedViolation.description)
-                .is('deleted_at', null);
+    // Sub-hook: Grade deletion
+    const {
+        deleteGrades,
+        deleteGradesAsync,
+        isDeleting,
+        confirmDeleteModal,
+        setConfirmDeleteModal,
+        confirmDeleteText,
+        setConfirmDeleteText,
+        handleConfirmDelete,
+        handleDeleteSelected,
+    } = useGradeDeletionMutation({
+        user,
+        subjectGradeInfo,
+        existingGrades,
+        selectedStudentIds,
+        setScores,
+        setSelectedStudentIds,
+        isScoresDirtyRef,
+        setIsScoresDirty,
+        queryClient,
+        toast,
+    });
 
-            query = activeSemester?.id
-                ? query.eq('semester_id', activeSemester.id)
-                : query.is('semester_id', null);
+    // Sub-hook: Exports (PDF Report & Grades)
+    const {
+        handlePrintBulkReports,
+        handlePrintGrades,
+        isExporting,
+        exportProgress,
+    } = useMassInputExport({
+        selectedClass,
+        subjectGradeInfo,
+        selectedStudentIds,
+        studentsData,
+        classes,
+        noteMethod,
+        templateNote,
+        activeSemester,
+        activeAcademicYear,
+        user,
+        toast,
+    });
 
-            const { data: existingRows } = await query;
-            if (!existingRows || existingRows.length === 0) {
-                onProceed();
-                return;
-            }
+    // Sub-hook: AI table paste parser
+    const {
+        handleAiParse,
+        isParsing,
+    } = useMassInputAiParse({
+        studentsData,
+        pasteData,
+        selectedClass,
+        subjectGradeInfo,
+        selectedStudentIds,
+        setScores,
+        isScoresDirtyRef,
+        setIsScoresDirty,
+        saveSubjectGradeDraft,
+        toast,
+    });
 
-            // Get recorder names for all user_ids (both current user and other teachers)
-            const allUserIds = Array.from(new Set(existingRows.map((r: any) => r.user_id).filter(Boolean)));
-            const nameMap: Record<string, string> = {};
-            if (allUserIds.length > 0) {
-                const { data: roleRows } = await supabase
-                    .from('user_roles')
-                    .select('user_id, full_name')
-                    .in('user_id', allUserIds);
-                (roleRows || []).forEach((r: any) => { if (r.user_id) nameMap[r.user_id] = r.full_name || ''; });
-            }
-
-            setDuplicateList(existingRows.map((r: any) => ({
-                student_id: r.student_id,
-                student_name: studentsData?.find(s => s.id === r.student_id)?.name || 'Unknown',
-                recorded_by_name: r.user_id === user.id ? 'Anda' : (nameMap[r.user_id] || 'Guru lain'),
-                description: selectedViolation.description,
-                date: violationDate,
-                points: selectedViolation.points,
-            })));
-            setShowDuplicateDialog(true);
-            return;
-        }
-
-        if (mode === 'quiz' || mode === 'attitude') {
-            const activityName = mode === 'quiz' ? quizInfo.name : (attitudeName || '').trim();
-            const activityDate = mode === 'quiz'
-                ? quizInfo.date
-                : (attitudeDate || new Date().toISOString().slice(0, 10));
-            if (!activityName || (mode === 'quiz' && !quizInfo.subject)) {
-                onProceed();
-                return;
-            }
-
-            let query = supabase
-                .from('quiz_points')
-                .select('id, student_id, user_id')
-                .in('student_id', studentIds)
-                .eq('user_id', user.id)
-                .eq('quiz_name', activityName)
-                .eq('quiz_date', activityDate)
-                .gte('created_at', getDuplicateGuardWindowIso())
-                .is('deleted_at', null);
-
-            if (mode === 'quiz') {
-                query = query.eq('subject', quizInfo.subject);
-            } else {
-                query = query.eq('category', (attitudeCategory || 'Adab & Akhlak').trim());
-            }
-
-            const semesterId = mode === 'attitude'
-                ? ((subjectGradeInfo.semester && subjectGradeInfo.semester.trim() !== '') ? subjectGradeInfo.semester : (activeSemester?.id || null))
-                : (activeSemester?.id || null);
-            query = semesterId ? query.eq('semester_id', semesterId) : query.is('semester_id', null);
-
-            const { data: existingRows } = await query;
-            if (!existingRows || existingRows.length === 0) {
-                onProceed();
-                return;
-            }
-
-            setDuplicateList(existingRows.map((r) => ({
-                student_id: r.student_id,
-                student_name: studentsData?.find(s => s.id === r.student_id)?.name || 'Unknown',
-                // Poin keaktifan/sikap hanya dicek milik guru yang sedang login.
-                recorded_by_name: 'Anda',
-                description: activityName,
-                date: activityDate,
-                points: 1,
-            })));
-            setShowDuplicateDialog(true);
-            return;
-        }
-
-        onProceed();
-    };
-
+    // Core Mutation: Submit data across modes
     const { mutate: submitData, isPending: isSubmitting } = useMutation({
         mutationFn: async (overrideBypassGuard?: boolean | void) => {
             if (!mode || !user) throw new Error('Mode atau pengguna tidak diatur');
             const shouldBypassGuard = overrideBypassGuard ?? bypassDuplicateGuard;
+
             switch (mode) {
-                case 'quiz': {
-                    if (!quizInfo.name || !quizInfo.subject || selectedStudentIds.size === 0)
-                        throw new Error('Informasi aktivitas dan siswa harus diisi.');
-                    const studentIds = Array.from(selectedStudentIds);
-                    
-                    let duplicateStudentIds = new Set<string>();
-                    // `shouldBypassGuard`, not the raw state: the "Tetap Simpan Semua"
-                    // button passes the override while the state update is still
-                    // pending, so reading `bypassDuplicateGuard` here kept skipping
-                    // the students the teacher had just confirmed.
-                    if (!shouldBypassGuard) {
-                        let existingQuizQuery = supabase
-                            .from('quiz_points')
-                            .select('id, student_id')
-                            .in('student_id', studentIds)
-                            .eq('user_id', user.id)
-                            .eq('quiz_name', quizInfo.name)
-                            .eq('subject', quizInfo.subject)
-                            .eq('quiz_date', quizInfo.date)
-                            .gte('created_at', getDuplicateGuardWindowIso())
-                            .is('deleted_at', null);
-
-                        existingQuizQuery = activeSemester?.id
-                            ? existingQuizQuery.eq('semester_id', activeSemester.id)
-                            : existingQuizQuery.is('semester_id', null);
-
-                        const { data: existingQuizRows, error: existingQuizError } = await existingQuizQuery;
-                        if (existingQuizError) throw existingQuizError;
-                        duplicateStudentIds = new Set((existingQuizRows || []).map((row) => row.student_id));
-                    }
-
-                    const records: Database['public']['Tables']['quiz_points']['Insert'][] = studentIds
-                        .filter((student_id) => !duplicateStudentIds.has(student_id))
-                        .map((student_id: string) => ({
-                            quiz_name: quizInfo.name,
-                            category: quizInfo.category || 'lainnya',
-                            subject: quizInfo.subject,
-                            quiz_date: quizInfo.date,
-                            student_id,
-                            user_id: user.id,
-                            points: 1, // STRICT CONSTRAINT: Poin keaktifan selalu 1 sesuai kesepakatan kelas
-                            max_points: 1,
-                            semester_id: activeSemester?.id || null,
-                        }));
-
-                    if (records.length === 0) {
-                        return 'Tidak ada poin baru yang disimpan. Sistem mendeteksi input yang sama sudah tersimpan beberapa menit terakhir.';
-                    }
-
-                    const { data, error } = await supabase.from('quiz_points').insert(records).select();
-                    if (error) throw error;
-                    await recordAction(user.id, 'create', 'quiz_points', data.map(d => d.id));
-                    return duplicateStudentIds.size > 0
-                        ? `Poin keaktifan (+1 ${quizInfo.name}) untuk ${records.length} siswa berhasil disimpan! ${duplicateStudentIds.size} data duplikat terbaru dilewati.`
-                        : `Poin keaktifan (+1 ${quizInfo.name}) untuk ${records.length} siswa berhasil disimpan! 🌟`;
-                }
-                case 'subject_grade': {
-                    if (!subjectGradeInfo.subject || !subjectGradeInfo.assessment_name || gradedCount === 0)
-                        throw new Error('Mata pelajaran, nama penilaian, dan setidaknya satu nilai harus diisi.');
-                    if (Object.keys(validationErrors).length > 0)
-                        throw new Error('Perbaiki nilai yang tidak valid sebelum menyimpan.');
-
-                    const pendingScores = Object.entries(scores)
-                        .filter(([, score]: [string, string]) => score && score.trim() !== '')
-                        .map(([student_id, score]: [string, string]) => {
-                            const normalized = score.trim().replace(',', '.');
-                            const numScore = Number(normalized);
-                            if (isNaN(numScore) || numScore < 0 || numScore > 100)
-                                throw new Error(`Nilai untuk siswa tidak valid: ${score}. Harus antara 0-100.`);
-                            return { student_id, numScore };
-                        });
-
-                    // Ponytail: key by student_id+subject+assessment_name to prevent
-                    // cross-assessment overwrite.
-                    const recordIdByStudent = new Map<string, string>();
-                    const existingNotesByStudent = new Map<string, string>();
-                    const existingRecordMap = new Map<string, { id: string; score: number; notes: string | null }>();
-                    dedupeAcademicRecords(existingGrades || []).forEach(record => {
-                        recordIdByStudent.set(record.student_id, record.id);
-                        if (record.notes) existingNotesByStudent.set(record.student_id, record.notes);
-                        existingRecordMap.set(record.student_id, { id: record.id, score: record.score, notes: record.notes });
+                case 'quiz':
+                    return executeQuizPointsMutation({
+                        user,
+                        quizInfo,
+                        selectedStudentIds,
+                        activeSemester,
+                        shouldBypassGuard,
+                        getDuplicateGuardWindowIso,
                     });
 
-                    // `uq_academic_records_student_subject_assessment_semester` is
-                    // table-wide, so a soft-deleted row still holds its key. Saving a
-                    // grade that was deleted earlier must reuse (and revive) that row,
-                    // otherwise the insert is rejected by the constraint and the
-                    // teacher can never re-enter a deleted value.
-                    const studentsWithoutKnownRecord = pendingScores
-                        .map(item => item.student_id)
-                        .filter(studentId => !recordIdByStudent.has(studentId));
-
-                    if (studentsWithoutKnownRecord.length > 0) {
-                        let keyQuery = supabase
-                            .from('academic_records')
-                            .select('id, student_id, deleted_at, notes, score')
-                            .eq('subject', subjectGradeInfo.subject)
-                            .eq('assessment_name', subjectGradeInfo.assessment_name)
-                            .in('student_id', studentsWithoutKnownRecord);
-
-                        keyQuery = subjectGradeInfo.semester
-                            ? keyQuery.eq('semester_id', subjectGradeInfo.semester)
-                            : keyQuery.is('semester_id', null);
-
-                        const { data: keyRows, error: keyError } = await keyQuery;
-                        if (keyError) throw keyError;
-
-                        (keyRows || []).forEach(row => {
-                            // A live row always wins over a soft-deleted one.
-                            if (!recordIdByStudent.has(row.student_id) || row.deleted_at === null) {
-                                recordIdByStudent.set(row.student_id, row.id);
-                            }
-                            if (row.notes) existingNotesByStudent.set(row.student_id, row.notes);
-                            if (row.deleted_at === null) {
-                                existingRecordMap.set(row.student_id, { id: row.id, score: (row as any).score, notes: row.notes });
-                            }
-                        });
-                    }
-
-                    const records: Database['public']['Tables']['academic_records']['Insert'][] = pendingScores.map(({ student_id, numScore }) => {
-                        let id = recordIdByStudent.get(student_id);
-                        if (!id) {
-                            id = selfCryptoUUID();
-                            recordIdByStudent.set(student_id, id);
-                        }
-                        return {
-                            id,
-                            subject: subjectGradeInfo.subject,
-                            assessment_name: subjectGradeInfo.assessment_name,
-                            // An empty "Catatan umum" field means "leave the existing note
-                            // alone" — saving must not wipe per-student notes.
-                            notes: subjectGradeInfo.notes || existingNotesByStudent.get(student_id) || '',
-                            score: numScore,
-                            student_id,
-                            user_id: user.id,
-                            semester_id: subjectGradeInfo.semester || null,
-                            // Reviving a reused row requires clearing the soft-delete flag.
-                            deleted_at: null,
-                        };
-                    });
-                    const { data: _data, error } = await supabase
-                        .from('academic_records')
-                        .upsert(records)
-                        .select();
-                    if (error) throw error;
-
-                    const createdIds: string[] = [];
-                    const updatedIds: string[] = [];
-                    const previousStates: Record<string, unknown>[] = [];
-
-                    pendingScores.forEach(({ student_id }) => {
-                        const recId = recordIdByStudent.get(student_id);
-                        const existing = existingRecordMap.get(student_id);
-                        if (existing && recId) {
-                            updatedIds.push(recId);
-                            previousStates.push({ score: existing.score, notes: existing.notes });
-                        } else if (recId) {
-                            createdIds.push(recId);
-                        }
+                case 'subject_grade':
+                    return executeSubjectGradeMutation({
+                        user,
+                        subjectGradeInfo,
+                        scores,
+                        validationErrors,
+                        gradedCount,
+                        existingGrades,
                     });
 
-                    if (createdIds.length > 0) {
-                        await recordAction(user.id, 'create', 'academic_records', createdIds);
-                    }
-                    if (updatedIds.length > 0) {
-                        await recordAction(user.id, 'update', 'academic_records', updatedIds, previousStates);
-                    }
-                    return `Nilai untuk ${records.length} siswa berhasil disimpan.`;
-                }
-                case 'violation': {
-                    if (!selectedViolation || selectedStudentIds.size === 0)
-                        throw new Error('Jenis pelanggaran dan siswa harus dipilih.');
-                    const studentIds = Array.from(selectedStudentIds);
-                    let duplicateStudentIds = new Set<string>();
-                    
-                    if (!shouldBypassGuard) {
-                        let existingViolationQuery = supabase
-                            .from('violations')
-                            .select('id, student_id, user_id')
-                            .in('student_id', studentIds)
-                            .eq('date', violationDate)
-                            .eq('description', selectedViolation.description)
-                            .is('deleted_at', null);
+                case 'violation':
+                    return executeViolationMutation({
+                        user,
+                        selectedViolation,
+                        selectedStudentIds,
+                        violationDate,
+                        violationNotes,
+                        activeSemester,
+                        shouldBypassGuard,
+                    });
 
-                        existingViolationQuery = activeSemester?.id
-                            ? existingViolationQuery.eq('semester_id', activeSemester.id)
-                            : existingViolationQuery.is('semester_id', null);
+                case 'attitude':
+                    return executeAttitudeMutation({
+                        user,
+                        selectedStudentIds,
+                        attitudeName,
+                        attitudeCategory,
+                        attitudeDate,
+                        attitudeNotes,
+                        subjectGradeInfo,
+                        activeSemester,
+                        shouldBypassGuard,
+                        getDuplicateGuardWindowIso,
+                    });
 
-                        const { data: existingRows, error: existingViolationError } = await existingViolationQuery;
-                        if (existingViolationError) throw existingViolationError;
-
-                        duplicateStudentIds = new Set((existingRows || []).map((r: any) => r.student_id));
-                    }
-                    const records: Database['public']['Tables']['violations']['Insert'][] = studentIds
-                        .filter((student_id) => !duplicateStudentIds.has(student_id))
-                        .map((student_id: string) => {
-                            const record: Database['public']['Tables']['violations']['Insert'] = {
-                                date: violationDate,
-                                description: selectedViolation.description,
-                                points: selectedViolation.points,
-                                type: selectedViolation.code,
-                                severity: selectedViolation.category?.toLowerCase() || 'ringan',
-                                student_id,
-                                user_id: user.id,
-                                semester_id: activeSemester?.id || null,
-                            };
-                            if (violationNotes) {
-                                record.context_notes = violationNotes;
-                            }
-                            return record;
-                        });
-
-                    if (records.length === 0) {
-                        return 'Tidak ada pelanggaran baru yang disimpan. Seluruh siswa yang dipilih sudah memiliki catatan pelanggaran yang sama hari ini.';
-                    }
-
-                    const { data, error } = await supabase.from('violations').insert(records).select();
-                    if (error) throw error;
-                    await recordAction(user.id, 'create', 'violations', data.map(d => d.id));
-                    return duplicateStudentIds.size > 0
-                        ? `Pelanggaran untuk ${records.length} siswa berhasil dicatat. ${duplicateStudentIds.size} siswa yang sudah tercatat sebelumnya dilewati.`
-                        : `Pelanggaran untuk ${records.length} siswa berhasil dicatat.`;
-                }
-                case 'attitude': {
-                    const targetStudentIds = Array.from(selectedStudentIds);
-                    if (targetStudentIds.length === 0) {
-                        throw new Error('Pilih minimal satu siswa untuk diberi poin sikap.');
-                    }
-                    const resolvedName = (attitudeName || '').trim();
-                    if (!resolvedName) {
-                        throw new Error('Nama aktivitas sikap harus diisi.');
-                    }
-                    const resolvedCategory = (attitudeCategory || 'Adab & Akhlak').trim();
-                    const resolvedDate = attitudeDate || new Date().toISOString().slice(0, 10);
-                    const semesterId = (subjectGradeInfo.semester && subjectGradeInfo.semester.trim() !== '')
-                        ? subjectGradeInfo.semester
-                        : (activeSemester?.id || null);
-
-                    let duplicateStudentIds = new Set<string>();
-                    if (!shouldBypassGuard) {
-                        let existingAttitudeQuery = supabase
-                            .from('quiz_points')
-                            .select('id, student_id')
-                            .in('student_id', targetStudentIds)
-                            .eq('user_id', user.id)
-                            .eq('quiz_name', resolvedName)
-                            .eq('category', resolvedCategory)
-                            .eq('quiz_date', resolvedDate)
-                            .gte('created_at', getDuplicateGuardWindowIso())
-                            .is('deleted_at', null);
-
-                        existingAttitudeQuery = semesterId
-                            ? existingAttitudeQuery.eq('semester_id', semesterId)
-                            : existingAttitudeQuery.is('semester_id', null);
-
-                        const { data: existingRows, error: existingError } = await existingAttitudeQuery;
-                        if (existingError) throw existingError;
-                        duplicateStudentIds = new Set((existingRows || []).map((row) => row.student_id));
-                    }
-
-                    const finalStudentIds = targetStudentIds.filter((student_id) => !duplicateStudentIds.has(student_id));
-
-                    if (finalStudentIds.length === 0) {
-                        return 'Tidak ada poin sikap baru yang disimpan. Sistem mendeteksi input sikap yang sama sudah tersimpan beberapa menit terakhir.';
-                    }
-
-                    // 1. Simpan ke quiz_points (Poin Keaktifan/Sikap Rapot BINTANG - Tabel C & Offset Aspek)
-                    const quizRecords = finalStudentIds.map(student_id => ({
-                        student_id,
-                        user_id: user.id,
-                        subject: null, // Poin sikap BINTANG tidak terikat mapel spesifik
-                        quiz_name: resolvedName,
-                        quiz_date: resolvedDate,
-                        points: 1, // STRICT CONSTRAINT: Poin sikap selalu 1 sesuai kesepakatan kelas
-                        max_points: 1,
-                        category: resolvedCategory,
-                        is_used: false,
-                        semester_id: semesterId,
-                    }));
-
-                    const { data: qpData, error: qpError } = await supabase
-                        .from('quiz_points')
-                        .insert(quizRecords)
-                        .select();
-
-                    if (qpError) throw qpError;
-                    if (qpData && qpData.length > 0) {
-                        await recordAction(user.id, 'create', 'quiz_points', qpData.map(d => d.id));
-                    }
-
-                    // 2. Sinkronkan ke attitude_records untuk kompatibilitas data historis
-                    try {
-                        const attitudeRecords: Database['public']['Tables']['attitude_records']['Insert'][] = finalStudentIds.map(student_id => ({
-                            student_id,
-                            subject: 'Sikap & Pembiasaan',
-                            assessment_name: resolvedName,
-                            date: resolvedDate,
-                            spiritual_predicate: (resolvedCategory.includes('Ibadah') || resolvedCategory.includes('Adab')) ? 'SB' : 'B',
-                            social_predicate: (resolvedCategory.includes('Kedisiplinan') || resolvedCategory.includes('Kerapian') || resolvedCategory.includes('Keaktifan')) ? 'SB' : 'B',
-                            semester_id: semesterId,
-                            user_id: user.id,
-                        }));
-                        await supabase
-                            .from('attitude_records')
-                            .insert(attitudeRecords);
-                    } catch (attErr) {
-                        console.warn('Silent sync to attitude_records skipped:', attErr);
-                    }
-
-                    return duplicateStudentIds.size > 0
-                        ? `Poin sikap (+1 ${resolvedName}) untuk ${finalStudentIds.length} siswa berhasil dicatat! ${duplicateStudentIds.size} data duplikat terbaru dilewati.`
-                        : `Poin sikap (+1 ${resolvedName}) untuk ${finalStudentIds.length} siswa berhasil dicatat! Terhubung ke Rapot BINTANG 🌟`;
-                }
                 default:
                     throw new Error(`Mode "${mode}" tidak mendukung penyimpanan data.`);
             }
@@ -602,343 +266,6 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         },
         onError: (err: Error) => toast.error(`Gagal menyimpan: ${err.message}`),
     });
-
-    const { mutate: deleteGrades, mutateAsync: deleteGradesAsync, isPending: isDeleting } = useMutation({
-        mutationFn: async ({ studentIds, recordIds }: { studentIds: string[]; recordIds: string[] }) => {
-            if (studentIds.length === 0 && recordIds.length === 0) {
-                throw new Error('Pilih setidaknya satu siswa untuk dihapus.');
-            }
-
-            let deletedRecords: any[] = [];
-            let query = supabase
-                .from('academic_records')
-                .update({ deleted_at: new Date().toISOString() } as never);
-
-            if (recordIds.length > 0) {
-                query = query.in('id', recordIds);
-            } else {
-                query = query
-                    .in('student_id', studentIds)
-                    .eq('subject', subjectGradeInfo.subject)
-                    .eq('assessment_name', subjectGradeInfo.assessment_name)
-                    .is('deleted_at', null);
-
-                if (subjectGradeInfo.semester) {
-                    query = query.eq('semester_id', subjectGradeInfo.semester);
-                }
-            }
-
-            const { data, error } = await query.select();
-            if (error) throw error;
-            deletedRecords = data || [];
-
-            if (user && deletedRecords.length > 0) {
-                await recordAction(user.id, 'delete', 'academic_records', deletedRecords.map(d => d.id));
-            }
-            return deletedRecords.length > 0
-                ? `${deletedRecords.length} data nilai berhasil dihapus.`
-                : 'Nilai yang dipilih berhasil dibersihkan dari daftar input.';
-        },
-        onSuccess: (message) => {
-            toast.success(message);
-            // Clear local scores for deleted students and update dirty state atomically from next scores
-            setScores(prev => {
-                const next = { ...prev };
-                selectedStudentIds.forEach(id => {
-                    delete next[id];
-                });
-                const hasRemaining = Object.values(next).some(v => typeof v === 'string' && v.trim() !== '');
-                if (isScoresDirtyRef) {
-                    isScoresDirtyRef.current = hasRemaining;
-                }
-                setIsScoresDirty?.(hasRemaining);
-                return next;
-            });
-            queryClient.invalidateQueries({ queryKey: ['existingGrades'] });
-            queryClient.invalidateQueries({ queryKey: ['studentDetails'] });
-            queryClient.invalidateQueries({ queryKey: ['studentStats'] });
-            queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
-            queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });
-            setConfirmDeleteModal({ isOpen: false, count: 0 });
-            setSelectedStudentIds(new Set());
-        },
-        onError: (err: Error) => toast.error(`Gagal menghapus: ${err.message}`),
-    });
-
-    const handleAiParse = async () => {
-        if (!studentsData || studentsData.length === 0) { toast.warning('Pilih kelas dengan siswa terlebih dahulu.'); return; }
-        if (!pasteData.trim()) { toast.warning('Tempelkan data nilai terlebih dahulu.'); return; }
-        setIsParsing(true);
-        try {
-            const studentNames = studentsData.map(s => s.name);
-            const systemInstruction = `Anda adalah asisten entri data. Tugas Anda adalah mencocokkan nama dari teks yang diberikan dengan daftar nama siswa yang ada dan mengekstrak nilainya. Hanya cocokkan nama yang ada di daftar. Abaikan nama yang tidak ada di daftar. Format output harus JSON yang valid.
-            
-            Format JSON yang diharapkan:
-            [
-              { "studentName": "Nama Siswa", "score": "85" }
-            ]`;
-            const prompt = `Daftar Siswa: ${JSON.stringify(studentNames)}\n\nTeks Nilai untuk Diproses:\n${pasteData}`;
-            const parsedResults = await generateGeminiJson<ReviewDataItem[]>(prompt, systemInstruction, 'parse-values');
-            if (!Array.isArray(parsedResults)) throw new Error('Format respon AI tidak valid (bukan list).');
-            const newScores: Record<string, string> = {}; let matchedCount = 0;
-            const unmatchedNames: string[] = [];
-            parsedResults.forEach(item => {
-                if (!item || typeof item.studentName !== 'string') return;
-                const student = findStudentMatch(item.studentName, studentsData);
-                if (student) {
-                    const score = item.score !== undefined && item.score !== null ? String(item.score) : '';
-                    if (score && !isNaN(Number(score))) {
-                        newScores[student.id] = score;
-                        matchedCount++;
-                    }
-                } else {
-                    unmatchedNames.push(item.studentName);
-                }
-            });
-            if (unmatchedNames.length > 0) {
-                toast.warning(`Nama tidak dikenali: ${unmatchedNames.slice(0, 3).join(', ')}${unmatchedNames.length > 3 ? `, dan ${unmatchedNames.length - 3} lainnya` : ''}`);
-            }
-            if (isScoresDirtyRef) {
-                isScoresDirtyRef.current = true;
-            }
-            setIsScoresDirty?.(true);
-            setScores(prev => {
-                const merged = { ...prev, ...newScores };
-                saveSubjectGradeDraft?.({
-                    selectedClass,
-                    subjectGradeInfo,
-                    scores: merged,
-                    selectedStudentIds: Array.from(selectedStudentIds),
-                });
-                return merged;
-            });
-            toast.success(`${matchedCount} dari ${parsedResults.length} nilai berhasil dicocokkan dan diisi.`);
-        } catch (error) {
-            console.error('AI Parsing Error:', error);
-            const errMsg = error instanceof Error ? error.message : '';
-            if (errMsg.includes('network') || errMsg.includes('fetch') || errMsg.includes('Failed to fetch')) {
-                toast.error('Gagal terhubung ke server AI. Periksa koneksi internet Anda.');
-            } else if (errMsg.includes('rate') || errMsg.includes('limit') || errMsg.includes('429')) {
-                toast.error('Batas permintaan AI tercapai. Coba lagi dalam beberapa saat.');
-            } else {
-                toast.error('Gagal memproses data. Pastikan format teks sesuai contoh yang diberikan.');
-            }
-        } finally { setIsParsing(false); }
-    };
-
-    const fetchBulkReportData = async (studentIds: string[], semesterId: string): Promise<ReportDataType[]> => {
-        if (studentIds.length === 0) return [];
-        const [
-            studentsRes,
-            reportsRes,
-            attendanceRes,
-            academicRes,
-            violationsRes,
-            quizPointsRes,
-            achievementsRes
-        ] = await Promise.all([
-            supabase.from('students').select('*, classes(id, name)').in('id', studentIds).is('deleted_at', null),
-            supabase.from('reports').select('*').in('student_id', studentIds).is('deleted_at', null),
-            supabase.from('attendance').select('*').in('student_id', studentIds).eq('semester_id', semesterId).is('deleted_at', null),
-            supabase.from('academic_records').select('*').in('student_id', studentIds).eq('semester_id', semesterId).is('deleted_at', null),
-            supabase.from('violations').select('*').in('student_id', studentIds).eq('semester_id', semesterId).is('deleted_at', null),
-            supabase.from('quiz_points').select('*').in('student_id', studentIds).eq('semester_id', semesterId).is('deleted_at', null),
-            supabase.from('student_achievements').select('*').in('student_id', studentIds).is('deleted_at', null),
-        ]) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const errors = [studentsRes, reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes, achievementsRes]
-            .map((r: any) => r.error)
-            .filter((e: any) => e !== null);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (errors.length > 0) throw new Error(errors.map((e: any) => e!.message).join(', '));
-
-        const studentsList: any[] = studentsRes.data || [];
-        const reportsByStudent = new Map<string, any[]>();
-        const attendanceByStudent = new Map<string, any[]>();
-        const academicByStudent = new Map<string, any[]>();
-        const violationsByStudent = new Map<string, any[]>();
-        const quizPointsByStudent = new Map<string, any[]>();
-        const achievementsByStudent = new Map<string, any[]>();
-
-        (reportsRes.data || []).forEach((item: any) => {
-            const arr = reportsByStudent.get(item.student_id) || [];
-            arr.push(item);
-            reportsByStudent.set(item.student_id, arr);
-        });
-        (attendanceRes.data || []).forEach((item: any) => {
-            const arr = attendanceByStudent.get(item.student_id) || [];
-            arr.push(item);
-            attendanceByStudent.set(item.student_id, arr);
-        });
-        (academicRes.data || []).forEach((item: any) => {
-            const arr = academicByStudent.get(item.student_id) || [];
-            arr.push(item);
-            academicByStudent.set(item.student_id, arr);
-        });
-        (violationsRes.data || []).forEach((item: any) => {
-            const arr = violationsByStudent.get(item.student_id) || [];
-            arr.push(item);
-            violationsByStudent.set(item.student_id, arr);
-        });
-        (quizPointsRes.data || []).forEach((item: any) => {
-            const arr = quizPointsByStudent.get(item.student_id) || [];
-            arr.push(item);
-            quizPointsByStudent.set(item.student_id, arr);
-        });
-        (achievementsRes.data || []).forEach((item: any) => {
-            const arr = achievementsByStudent.get(item.student_id) || [];
-            arr.push(item);
-            achievementsByStudent.set(item.student_id, arr);
-        });
-
-        // Ensure order matches studentIds input
-        const studentMap = new Map<string, any>(studentsList.map(s => [s.id, s]));
-        return studentIds
-            .map(id => studentMap.get(id))
-            .filter(Boolean)
-            .map(student => ({
-                student: student as any,
-                reports: reportsByStudent.get(student.id) || [],
-                attendanceRecords: attendanceByStudent.get(student.id) || [],
-                academicRecords: dedupeAcademicRecords((academicByStudent.get(student.id) || []) as any) as any,
-                violations: dedupeViolations((violationsByStudent.get(student.id) || []) as any) as any,
-                quizPoints: dedupeQuizPoints((quizPointsByStudent.get(student.id) || []) as any) as any,
-                achievements: achievementsByStudent.get(student.id) || []
-            }));
-    };
-
-    const handlePrintBulkReports = async () => {
-        if (selectedStudentIds.size === 0) { toast.warning('Pilih setidaknya satu siswa.'); return; }
-        if (!studentsData) return;
-        setIsExporting(true); setExportProgress('0%'); toast.info(`Mulai proses cetak ${selectedStudentIds.size} rapor...`);
-        const studentsToPrint = studentsData.filter(s => selectedStudentIds.has(s.id));
-        try {
-            setExportProgress('10%');
-            if (!activeSemester?.id) throw new Error('Semester aktif tidak ditemukan.');
-            const allReportData = await fetchBulkReportData(studentsToPrint.map(s => s.id), activeSemester.id);
-            setExportProgress('40%');
-            let teacherNotesMap: Map<string, string>;
-            if (noteMethod === 'template') {
-                teacherNotesMap = new Map(allReportData.map(data => [data.student.id, templateNote.replace(/\[Nama Siswa\]/g, data.student.name)]));
-            } else {
-                const studentDataForPrompt = allReportData.map(data => {
-                    const academicSummary = data.academicRecords.length > 0
-                        ? `Nilai rata-rata: ${Math.round(data.academicRecords.reduce((sum, r) => sum + r.score, 0) / data.academicRecords.length)}. Pelajaran terbaik: ${[...data.academicRecords].sort((a, b) => b.score - a.score)[0]?.subject || 'N/A'}.`
-                        : 'Belum ada data nilai.';
-                    const behaviorSummary = data.violations.length > 0
-                        ? `${data.violations.length} pelanggaran dengan total ${data.violations.reduce((sum, v) => sum + v.points, 0)} poin.`
-                        : 'Perilaku baik, tidak ada pelanggaran.';
-                    const attendanceSummary = `Sakit: ${data.attendanceRecords.filter(r => r.status === 'Sakit').length}, Izin: ${data.attendanceRecords.filter(r => r.status === 'Izin').length}, Alpha: ${data.attendanceRecords.filter(r => r.status === 'Alpha').length}.`;
-                    return { studentId: data.student.id, studentName: data.student.name, academicSummary, behaviorSummary, attendanceSummary };
-                });
-                const systemInstruction = `Anda adalah wali kelas yang menulis catatan rapor SINGKAT. ATURAN KETAT:
-1. Setiap catatan HANYA 2-3 kalimat (maksimal 40 kata per siswa)
-2. Format: [Penilaian singkat]. [Saran/motivasi].
-3. TIDAK perlu menyebutkan angka/data yang sudah ada
-4. Langsung, to the point, tidak bertele-tele
-5. Bahasa Indonesia formal tapi hangat
-
-Format JSON yang diharapkan:
-{
-  "notes": [
-    { "studentId": "ID_SISWA", "teacherNote": "Catatan singkat 2-3 kalimat..." }
-  ]
-}`;
-                teacherNotesMap = await generateTeacherNotesBatched(
-                    studentDataForPrompt,
-                    systemInstruction,
-                    (done, total) => setExportProgress(Math.round(40 + (done / total) * 25) + '%')
-                );
-            }
-            setExportProgress('70%');
-            const { default: jsPDF } = await getJsPDF();
-            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-            let isFirstPage = true;
-            for (let i = 0; i < allReportData.length; i++) {
-                const reportData = allReportData[i];
-                const teacherNote = teacherNotesMap.get(reportData.student.id) || 'Catatan tidak dapat dibuat.';
-                if (!isFirstPage) doc.addPage();
-                isFirstPage = false;
-                const semName = activeSemester.semester_number % 2 !== 0 ? 'Ganjil' : 'Genap';
-                const acadYear = activeAcademicYear?.name || `${new Date().getFullYear()} / ${new Date().getFullYear() + 1}`;
-                await generateStudentReport(doc, reportData, teacherNote, new Date().toISOString().slice(0, 10), semName, acadYear, user);
-                setExportProgress(`${Math.round(70 + ((i + 1) / studentsToPrint.length) * 30)}%`);
-            }
-            const selectedClassName = classes?.find(c => c.id === selectedClass)?.name || 'Kelas';
-            const exportDate = formatExportDate();
-            const fileName = allReportData.length === 1
-                ? `Rapor_${sanitizeFilename(allReportData[0]?.student.name || studentsToPrint[0]?.name || 'Siswa')}_${sanitizeFilename(selectedClassName)}_${exportDate}.pdf`
-                : `Rapor_Massal_${sanitizeFilename(selectedClassName)}_${exportDate}.pdf`;
-            doc.save(fileName);
-            toast.success(allReportData.length === 1 ? 'Rapor siswa berhasil diunduh!' : 'Semua rapor terpilih berhasil digabung dalam satu PDF!');
-        } catch (err) {
-            console.error('Gagal membuat rapor massal:', err);
-            toast.error(`Gagal membuat rapor massal: ${err instanceof Error ? err.message : 'Unknown error'}`);
-        } finally { setIsExporting(false); }
-    };
-
-    const handlePrintGrades = async () => {
-        if (!selectedClass || !subjectGradeInfo.subject) { toast.warning('Pilih kelas dan mata pelajaran.'); return; }
-        if (selectedStudentIds.size === 0) { toast.warning('Pilih setidaknya satu siswa untuk mencetak.'); return; }
-        setIsExporting(true); toast.info('Membuat rekap nilai...');
-        await ensureLogosLoaded();
-        const { default: jsPDF } = await getJsPDF();
-        const { default: autoTable } = await getAutoTable();
-        const doc = new jsPDF();
-        const className = classes?.find(c => c.id === selectedClass)?.name;
-        const pageWidth = doc.internal.pageSize.getWidth();
-        let y = addPdfHeader(doc, { orientation: 'portrait' });
-        doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-        doc.text(`Rekap Nilai: ${subjectGradeInfo.subject}`, pageWidth / 2, y, { align: 'center' });
-        y += 8;
-        doc.setFontSize(11); doc.setFont('helvetica', 'normal');
-        doc.text(`Kelas: ${className}`, 14, y);
-        doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, pageWidth - 14, y, { align: 'right' });
-        const tableStartY = y + 8;
-        
-        let query = supabase
-            .from('academic_records').select('*')
-            .eq('subject', subjectGradeInfo.subject)
-            .in('student_id', Array.from(selectedStudentIds))
-            .is('deleted_at', null);
-            
-        if (activeSemester?.id) {
-            query = query.eq('semester_id', activeSemester.id);
-        } else {
-            query = query.is('semester_id', null);
-        }
-            
-        const { data: rawAllSubjectGrades } = await query;
-        const allSubjectGrades = dedupeAcademicRecords((rawAllSubjectGrades || []) as any) as any[];
-        const allAssessments = [...new Set(allSubjectGrades.map((r: any) => r.assessment_name || 'Lainnya'))].sort();
-        const head = [['No', 'Nama Siswa', ...allAssessments]];
-        const tableData = (studentsData || [])
-            .filter(s => selectedStudentIds.has(s.id))
-            .map((s, index) => {
-                const studentScores: Record<string, string | number> = {};
-                (allSubjectGrades || []).filter(r => r.student_id === s.id).forEach(r => { studentScores[r.assessment_name || 'Lainnya'] = r.score; });
-                const rowData: (string | number)[] = [index + 1, s.name];
-                allAssessments.forEach(assessmentName => { rowData.push(studentScores[assessmentName] ?? 'N/A'); });
-                return rowData;
-            });
-        autoTable(doc, { startY: tableStartY, head, body: tableData, theme: 'grid', headStyles: { fillColor: '#0284c7' } });
-        doc.save(`Nilai_${subjectGradeInfo.subject.replace(/\s/g, '_')}_${className}_${formatExportDate()}.pdf`);
-        toast.success('Rekap nilai berhasil diunduh.'); setIsExporting(false);
-    };
-
-    const handleConfirmDelete = () => {
-        const studentIds = Array.from(selectedStudentIds);
-        const recordIds = (existingGrades || [])
-            .filter(g => selectedStudentIds.has(g.student_id))
-            .map(g => g.id);
-
-        deleteGrades({ studentIds, recordIds });
-    };
-
-    const handleDeleteSelected = () => {
-        setConfirmDeleteModal({ isOpen: true, count: selectedStudentIds.size });
-    };
 
     const handleSubmit = (overrideBypassGuard?: boolean) => {
         if (mode === 'bulk_report') handlePrintBulkReports();

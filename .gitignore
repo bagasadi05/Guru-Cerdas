@@ -172,3 +172,6 @@ graphify-out/
 
 # One-off scratch/debug scripts - jangan pernah masuk repo
 scratch/
+
+# Tech-debt scan artifacts
+debt_*.json

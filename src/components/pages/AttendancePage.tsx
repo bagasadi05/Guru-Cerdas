@@ -1,44 +1,35 @@
 import React, { lazy, Suspense, useState, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import { AttendancePageSkeleton } from '../skeletons/PageSkeletons';
-import { SemesterSelector } from '../ui/SemesterSelector';
 import {
-    CalendarIcon,
-    ChevronDownIcon,
     SearchIcon,
     CheckCircleIcon,
-    InfoIcon,
     UsersIcon,
-    RotateCcw,
-    AlertTriangle,
-    XIcon,
-    Sparkles,
-    CheckCircle2,
-    CalendarClock,
-    Loader2,
+    BarChart3,
 } from 'lucide-react';
-import { statusOptions } from '../../constants';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Modal } from '../ui/Modal';
-import BottomSheet from '../ui/BottomSheet';
+import { EmptyState } from '../ui/EmptyState';
+import { ErrorState } from '../ui/ErrorState';
+import { CollapsibleSection } from '../ui/CollapsibleSection';
 
 import { useAttendance } from '../attendance/useAttendance';
 import { useWarnUnsavedChanges } from '../../hooks/useWarnUnsavedChanges';
-import { AttendanceSummaryWidget } from '../attendance/AttendanceSummaryWidget';
 import { AttendanceHeader } from '../attendance/AttendanceHeader';
-import { AttendanceList } from '../attendance/AttendanceList';
-const AttendanceExportModal = lazy(() => import('../attendance/AttendanceExportModal').then(module => ({ default: module.AttendanceExportModal })));
-const AiAnalysisModal = lazy(() => import('../attendance/AiAnalysisModal').then(module => ({ default: module.AiAnalysisModal })));
-const AttendanceCalendar = lazy(() => import('../attendance/AttendanceCalendar').then(module => ({ default: module.AttendanceCalendar })));
 import { AttendanceClassSelector } from '../attendance/AttendanceClassSelector';
 import { AttendanceQuickActionsBar } from '../attendance/AttendanceQuickActionsBar';
-import { EmptyState } from '../ui/EmptyState';
-import { ErrorState } from '../ui/ErrorState';
+import { AttendanceList } from '../attendance/AttendanceList';
+import { AttendanceSummaryWidget } from '../attendance/AttendanceSummaryWidget';
 import { AttendanceStreakIndicator } from '../attendance/AttendanceStreakIndicator';
 import { AttendanceOfficialPanel } from '../attendance/AttendanceOfficialPanel';
-import { CollapsibleSection } from '../ui/CollapsibleSection';
-import { BarChart3 } from 'lucide-react';
+
+// Modularized Attendance Components
+import { AttendanceDateControlBar } from '../attendance/AttendanceDateControlBar';
+import { AttendanceAssistantBanners } from '../attendance/AttendanceAssistantBanners';
+import { AttendanceBatchActionBar } from '../attendance/AttendanceBatchActionBar';
+import { AttendanceFloatingSaveBar } from '../attendance/AttendanceFloatingSaveBar';
+import { AttendanceModals } from '../attendance/AttendanceModals';
+
+const AttendanceCalendar = lazy(() => import('../attendance/AttendanceCalendar').then(module => ({ default: module.AttendanceCalendar })));
 
 const AttendancePage: React.FC = () => {
     const {
@@ -119,15 +110,12 @@ const AttendancePage: React.FC = () => {
         isCurrentDateAutoFilled,
         isDirty,
     } = useAttendance();
+
     const [highlightedStudentId, setHighlightedStudentId] = useState<string | null>(null);
-    const [isAutoFillBannerDismissed, setIsAutoFillBannerDismissed] = useState(false);
+    const [dismissedAutoFillKey, setDismissedAutoFillKey] = useState<string | null>(null);
+    const isAutoFillBannerDismissed = dismissedAutoFillKey === `${selectedClass}_${selectedDate}`;
 
     useWarnUnsavedChanges(isDirty, 'Ada data absensi yang belum disimpan. Yakin ingin keluar?');
-
-    // Reset auto-fill banner dismissal when class or date changes
-    React.useEffect(() => {
-        setIsAutoFillBannerDismissed(false);
-    }, [selectedClass, selectedDate]);
 
     const handleToggleSelect = useCallback((studentId: string) => {
         setSelectedStudents(prev => {
@@ -153,8 +141,6 @@ const AttendancePage: React.FC = () => {
     }, [selectedStudents, handleStatusChange, setSelectedStudents]);
 
     // Keep the selected class and page controls visible while its students load.
-    // Replacing the whole page with a skeleton here made each class change look
-    // like a full reload and forced teachers to re-orient themselves.
     if (isLoadingClasses) return <AttendancePageSkeleton />;
 
     if (classesError || studentsError) {
@@ -192,127 +178,29 @@ const AttendancePage: React.FC = () => {
             )}
 
             {/* Control Bar: Semester & Date Picker */}
-            <div className="flex flex-col lg:flex-row gap-4 lg:items-center mb-6">
-                {/* Semester Selector */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 lg:w-1/3">
-                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Semester:</span>
-                    <SemesterSelector
-                        value={selectedSemesterId || 'all'}
-                        onChange={(semId) => setSelectedSemesterId(semId === 'all' ? null : semId)}
-                        size="sm"
-                        includeAllOption={false}
-                        className="w-full"
-                    />
-                </div>
-
-                {/* Date Picker Banner */}
-                <div className="relative z-10 p-3 sm:p-0 -mx-4 px-4 sm:mx-0 transition-all rounded-xl overflow-hidden flex-1 shadow-md mb-2">
-                    <button
-                        type="button"
-                        className="group relative overflow-hidden w-full rounded-xl bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 dark:from-brand-700 dark:via-brand-800 dark:to-brand-900 cursor-pointer text-left active:scale-[0.99] transition-all duration-200"
-                        onClick={() => setDatePickerOpen(true)}
-                        aria-label="Pilih tanggal absensi"
-                    >
-                        <div className="relative p-3 sm:p-4 flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-inner border border-white/20 group-hover:scale-105 transition-transform duration-300 flex-shrink-0">
-                                    <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6" />
-                                </div>
-                                <div className="text-left flex-1 min-w-0">
-                                    <p className="text-xs sm:text-xs font-bold uppercase tracking-wider text-green-100 mb-0.5">Tanggal Absensi</p>
-                                    <h2 className="text-sm sm:text-xl font-bold text-white leading-tight truncate">
-                                        {new Date(selectedDate).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                                    </h2>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                                {selectedDate === today && <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-white/20 text-white border border-white/20 backdrop-blur-sm">HARI INI</span>}
-                                {selectedDate === today && <span className="sm:hidden inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-white/20 text-white border border-white/20">HARI INI</span>}
-                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:bg-white/20 transition-colors">
-                                    <ChevronDownIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                                </div>
-                            </div>
-                        </div>
-                    </button>
-                </div>
-            </div>
+            <AttendanceDateControlBar
+                selectedSemesterId={selectedSemesterId}
+                setSelectedSemesterId={setSelectedSemesterId}
+                selectedDate={selectedDate}
+                today={today}
+                setDatePickerOpen={setDatePickerOpen}
+            />
 
             <main className="bg-transparent flex flex-col">
-                {/* ─── Smart Assistant: Missing Weekdays Reminder ─────────────── */}
-                {missingWeekdays.length > 0 && !isAssistantDismissed && (
-                    <div className="mb-4 p-3.5 sm:p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 animate-fade-in">
-                        <div className="flex items-start gap-3">
-                            <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5">
-                                <Sparkles size={18} />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <h4 className="text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200">
-                                        Pengingat Absensi Hari Terlewat
-                                    </h4>
-                                    <span className="text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-300 font-semibold">
-                                        {missingWeekdays.length} hari belum diabsen
-                                    </span>
-                                </div>
-                                <p className="text-[11px] sm:text-xs text-amber-800/90 dark:text-amber-300/90 mt-0.5 leading-relaxed">
-                                    Kelas ini belum diabsen pada: <strong className="font-semibold">{missingWeekdays.map(m => m.formattedDate).join(', ')}</strong>.
-                                    Setiap Sabtu sore sistem otomatis mengisinya sebagai <em>Hadir</em>, atau Anda dapat mengisinya sekarang secara instan.
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2 w-full md:w-auto justify-end shrink-0">
-                            <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={() => handleAutoFillWeekdays()}
-                                disabled={isAutoFilling}
-                                className="bg-amber-600 hover:bg-amber-700 text-white shadow-sm border-none font-semibold text-xs px-3 py-1.5 h-auto min-h-[36px] rounded-xl cursor-pointer active:scale-95 transition-all"
-                            >
-                                {isAutoFilling ? (
-                                    <>
-                                        <Loader2 size={14} className="mr-1.5 animate-spin" />
-                                        Mengisi...
-                                    </>
-                                ) : (
-                                    <>
-                                        <CalendarClock size={14} className="mr-1.5" />
-                                        Isi Hadir Semua
-                                    </>
-                                )}
-                            </Button>
-                            <button
-                                type="button"
-                                onClick={() => setIsAssistantDismissed(true)}
-                                className="p-1.5 text-amber-700 dark:text-amber-400 hover:bg-amber-200/60 dark:hover:bg-amber-900/40 rounded-lg transition-colors cursor-pointer active:scale-90"
-                                title="Tutup pengingat"
-                                aria-label="Tutup pengingat"
-                            >
-                                <XIcon size={16} />
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* ─── Auto-filled Date Indicator Banner ────────────────────────── */}
-                {isCurrentDateAutoFilled && !isAutoFillBannerDismissed && (
-                    <div className="mb-4 p-3 rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/25 border border-emerald-200/80 dark:border-emerald-800/50 flex items-center justify-between gap-3 text-xs text-emerald-800 dark:text-emerald-300 animate-fade-in">
-                        <div className="flex items-center gap-2.5">
-                            <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            <span>
-                                <strong>Absensi Terisi Otomatis:</strong> Data kehadiran tanggal ini diisi otomatis oleh sistem sebagai <em>Hadir</em>. Anda dapat mengedit siswa yang Sakit, Izin, atau Alpha seperti biasa.
-                            </span>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setIsAutoFillBannerDismissed(true)}
-                            className="p-1 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200/50 dark:hover:bg-emerald-900/40 rounded-lg transition-colors shrink-0 cursor-pointer active:scale-90"
-                            title="Tutup pemberitahuan"
-                            aria-label="Tutup pemberitahuan"
-                        >
-                            <XIcon size={15} />
-                        </button>
-                    </div>
-                )}
+                {/* Assistant Banners: Missing Weekdays & Auto-filled indicators */}
+                <AttendanceAssistantBanners
+                    missingWeekdays={missingWeekdays}
+                    isAssistantDismissed={isAssistantDismissed}
+                    setIsAssistantDismissed={setIsAssistantDismissed}
+                    handleAutoFillWeekdays={handleAutoFillWeekdays}
+                    isAutoFilling={isAutoFilling}
+                    isCurrentDateAutoFilled={isCurrentDateAutoFilled}
+                    isAutoFillBannerDismissed={isAutoFillBannerDismissed}
+                    setIsAutoFillBannerDismissed={(dismissed) => {
+                        if (dismissed) setDismissedAutoFillKey(`${selectedClass}_${selectedDate}`);
+                        else setDismissedAutoFillKey(null);
+                    }}
+                />
 
                 {students && students.length > 0 && (
                     <AttendanceQuickActionsBar
@@ -355,41 +243,13 @@ const AttendancePage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Batch Action Bar — appears when students are selected */}
-                {selectedStudents.size > 0 && viewMode === 'list' && (
-                    <div className="mb-4 p-3 bg-brand-600 rounded-2xl shadow-lg shadow-brand-600/25 flex flex-col sm:flex-row sm:items-center gap-3 animate-fade-in">
-                        <div className="flex items-center gap-2 text-white flex-shrink-0">
-                            <span className="font-bold text-sm">{selectedStudents.size} siswa dipilih</span>
-                            <button type="button"
-                                onClick={() => setSelectedStudents(new Set())}
-                                className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center cursor-pointer active:scale-90 transition-all"
-                                aria-label="Batal pilih semua"
-                            >
-                                <XIcon className="w-4 h-4 text-white" />
-                            </button>
-                        </div>
-                        <div className="flex-1 flex flex-wrap gap-1.5">
-                            {statusOptions.map(opt => {
-                                let btnStyle = 'bg-white/20 hover:bg-white/30 text-white border border-white/20';
-                                if (opt.value === 'Hadir') btnStyle = 'bg-white text-emerald-700 hover:bg-emerald-50 font-bold shadow-sm';
-                                else if (opt.value === 'Sakit') btnStyle = 'bg-white/20 hover:bg-white/30 text-white border border-white/20';
-                                else if (opt.value === 'Izin') btnStyle = 'bg-white/20 hover:bg-white/30 text-white border border-white/20';
-                                else if (opt.value === 'Alpha') btnStyle = 'bg-white/20 hover:bg-white/30 text-white border border-white/20';
-                                else if (opt.value === 'Libur') btnStyle = 'bg-white/20 hover:bg-white/30 text-white border border-white/20';
-
-                                return (
-                                    <button type="button"
-                                        key={opt.value}
-                                        onClick={() => handleBatchStatusChange(opt.value)}
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95 ${btnStyle}`}
-                                    >
-                                        <opt.icon className="w-3.5 h-3.5" />
-                                        {opt.label}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
+                {/* Batch Action Bar — appears when students are selected in list view */}
+                {viewMode === 'list' && (
+                    <AttendanceBatchActionBar
+                        selectedStudents={selectedStudents}
+                        setSelectedStudents={setSelectedStudents}
+                        handleBatchStatusChange={handleBatchStatusChange}
+                    />
                 )}
 
                 <div className="space-y-3">
@@ -502,252 +362,57 @@ const AttendancePage: React.FC = () => {
                 )}
             </main>
 
-            {isSaving && (
-                <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 flex items-center justify-center">
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 text-center p-6">
-                        <div className="w-12 h-12 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                        <h3 className="text-base font-semibold text-slate-900 dark:text-white">Menyimpan Absensi</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Mohon tunggu sebentar...</p>
-                    </div>
-                </div>
-            )}
+            {/* Attendance Modals & Overlays */}
+            <AttendanceModals
+                isSaving={isSaving}
+                isAiModalOpen={isAiModalOpen}
+                setIsAiModalOpen={setIsAiModalOpen}
+                isAiLoading={isAiLoading}
+                aiAnalysisResult={aiAnalysisResult}
+                isNoteModalOpen={isNoteModalOpen}
+                setIsNoteModalOpen={setIsNoteModalOpen}
+                noteText={noteText}
+                setNoteText={setNoteText}
+                handleSaveNote={handleSaveNote}
+                isExportModalOpen={isExportModalOpen}
+                setIsExportModalOpen={setIsExportModalOpen}
+                handleExport={handleExport}
+                isExporting={isExporting}
+                exportMonth={exportMonth}
+                setExportMonth={setExportMonth}
+                attendanceClasses={attendanceClasses}
+                selectedExportClasses={selectedExportClasses}
+                setSelectedExportClasses={setSelectedExportClasses}
+                exportPeriod={exportPeriod}
+                setExportPeriod={setExportPeriod}
+                exportSemesterId={exportSemesterId}
+                setExportSemesterId={setExportSemesterId}
+                isDatePickerOpen={isDatePickerOpen}
+                setDatePickerOpen={setDatePickerOpen}
+                selectedDate={selectedDate}
+                setSelectedDate={setSelectedDate}
+                today={today}
+                yesterday={yesterday}
+                selectedSemester={selectedSemester}
+                isSaveConfirmOpen={isSaveConfirmOpen}
+                setIsSaveConfirmOpen={setIsSaveConfirmOpen}
+                unmarkedStudentsCount={unmarkedStudents.length}
+                performSave={performSave}
+                isResetModalOpen={isResetModalOpen}
+                setIsResetModalOpen={setIsResetModalOpen}
+                selectedClassName={attendanceClasses.find(c => c.id === selectedClass)?.name}
+                confirmResetAttendance={confirmResetAttendance}
+                isResetting={isResetting}
+            />
 
-            {isAiModalOpen && (
-                <Suspense fallback={null}>
-                    <AiAnalysisModal
-                        isOpen={isAiModalOpen}
-                        onClose={() => setIsAiModalOpen(false)}
-                        isLoading={isAiLoading}
-                        result={aiAnalysisResult}
-                    />
-                </Suspense>
-            )}
-
-            <Modal title="Catatan Absensi" isOpen={isNoteModalOpen} onClose={() => setIsNoteModalOpen(false)}>
-                <div className="space-y-4">
-                    <p className="text-sm text-slate-500">Tambahkan catatan untuk siswa yang dipilih.</p>
-                    <textarea
-                        value={noteText}
-                        onChange={(e) => setNoteText(e.target.value)}
-                        className="w-full h-32 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
-                        placeholder="Contoh: Pulang cepat karena urusan keluarga..."
-                    />
-                    <div className="flex justify-end gap-2">
-                        <Button variant="ghost" onClick={() => setIsNoteModalOpen(false)}>Batal</Button>
-                        <Button onClick={handleSaveNote}>Simpan Catatan</Button>
-                    </div>
-                </div>
-            </Modal>
-
-            {isExportModalOpen && (
-                <Suspense fallback={null}>
-                    <AttendanceExportModal
-                        isOpen={isExportModalOpen}
-                        onClose={() => setIsExportModalOpen(false)}
-                        onExport={handleExport}
-                        isExporting={isExporting}
-                        exportMonth={exportMonth}
-                        setExportMonth={setExportMonth}
-                        classes={attendanceClasses}
-                        selectedExportClasses={selectedExportClasses}
-                        setSelectedExportClasses={setSelectedExportClasses}
-                        exportPeriod={exportPeriod}
-                        setExportPeriod={setExportPeriod}
-                        exportSemesterId={exportSemesterId}
-                        setExportSemesterId={setExportSemesterId}
-                    />
-                </Suspense>
-            )}
-
-            <BottomSheet isOpen={isDatePickerOpen} onClose={() => setDatePickerOpen(false)} title="Pilih Tanggal Absensi">
-                <div className="space-y-6 pb-6">
-                    <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl border border-green-100 dark:border-green-800/50 flex items-start gap-3">
-                        <InfoIcon className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm text-green-800 dark:text-green-200">
-                            Anda sedang melihat data absensi untuk tanggal <span className="font-bold">{new Date(selectedDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>.
-                        </p>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">Aksi Cepat</label>
-                        <div className="grid grid-cols-2 gap-3">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setSelectedDate(today);
-                                    setDatePickerOpen(false);
-                                }}
-                                className={`flex items-center justify-center gap-2 p-4 rounded-xl border transition-all ${selectedDate === today
-                                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-500/30'
-                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-500 text-slate-700 dark:text-slate-200'
-                                    }`}
-                            >
-                                <CalendarIcon className="w-5 h-5" />
-                                <span className="font-bold">Hari Ini</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setSelectedDate(yesterday);
-                                    setDatePickerOpen(false);
-                                }}
-                                className={`flex items-center justify-center gap-2 p-4 rounded-xl border transition-all ${selectedDate === yesterday
-                                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-500/30'
-                                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-500 text-slate-700 dark:text-slate-200'
-                                    }`}
-                            >
-                                <span className="font-bold">Kemarin</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">Pilih Tanggal Manual</label>
-                        <Input
-                            type="date"
-                            value={selectedDate}
-                            onChange={(e) => {
-                                setSelectedDate(e.target.value);
-                                setDatePickerOpen(false);
-                            }}
-                            min={selectedSemester?.start_date}
-                            max={selectedSemester?.end_date}
-                            className="w-full h-12 text-lg"
-                        />
-                    </div>
-                </div>
-            </BottomSheet>
-
-            {/* Save Confirmation Modal — replaces window.confirm */}
-            <Modal
-                isOpen={isSaveConfirmOpen}
-                onClose={() => setIsSaveConfirmOpen(false)}
-                title="Konfirmasi Simpan"
-            >
-                <div className="space-y-4">
-                    <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
-                        <AlertTriangle className="w-6 h-6 text-amber-500 flex-shrink-0 mt-0.5" />
-                        <div>
-                            <h4 className="font-bold text-amber-700 dark:text-amber-300">Siswa Belum Diabsen</h4>
-                            <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
-                                Masih ada <strong>{unmarkedStudents.length} siswa</strong> yang belum diabsen.
-                            </p>
-                            <p className="text-sm text-amber-600 dark:text-amber-400 mt-2">
-                                Mereka akan otomatis ditandai <strong>"Hadir"</strong> saat disimpan.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
-                        <Button
-                            onClick={() => setIsSaveConfirmOpen(false)}
-                            variant="outline"
-                            className="flex-1"
-                        >
-                            Batal
-                        </Button>
-                        <Button
-                            onClick={() => {
-                                setIsSaveConfirmOpen(false);
-                                performSave();
-                            }}
-                            className="flex-1 bg-brand-700 hover:bg-brand-800 text-white"
-                        >
-                            {isSaving ? 'Menyimpan...' : 'Simpan & Tandai Hadir'}
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
-
-            {/* Reset Attendance Confirmation Modal */}
-            <Modal
-                isOpen={isResetModalOpen}
-                onClose={() => setIsResetModalOpen(false)}
-                title="Reset Absensi"
-            >
-                <div className="space-y-4">
-                    <div className="flex items-start gap-3 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
-                        <AlertTriangle className="w-6 h-6 text-orange-500 flex-shrink-0 mt-0.5" />
-                        <div>
-                            <h4 className="font-bold text-orange-700 dark:text-orange-300">Peringatan</h4>
-                            <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">
-                                Anda akan menghapus <strong>semua data absensi</strong> untuk kelas <strong>{attendanceClasses.find(c => c.id === selectedClass)?.name}</strong> pada tanggal <strong>{new Date(selectedDate).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</strong>.
-                            </p>
-                            <p className="text-sm text-orange-600 dark:text-orange-400 mt-2">
-                                Tindakan ini tidak dapat dibatalkan!
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
-                        <Button
-                            onClick={() => setIsResetModalOpen(false)}
-                            variant="outline"
-                            className="flex-1"
-                        >
-                            Batal
-                        </Button>
-                        <Button
-                            onClick={confirmResetAttendance}
-                            variant="destructive"
-                            className="flex-1"
-                            disabled={isResetting}
-                        >
-                            {isResetting ? (
-                                <>
-                                    <RotateCcw className="w-4 h-4 mr-2 animate-spin" />
-                                    Mereset...
-                                </>
-                            ) : (
-                                <>
-                                    <RotateCcw className="w-4 h-4 mr-2" />
-                                    Ya, Reset Absensi
-                                </>
-                            )}
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
-
-            {/* Floating Save Bar for unsaved changes — rendered via portal to escape parent transform/overflow stacking contexts */}
-            {isDirty && viewMode === 'list' && typeof document !== 'undefined' && createPortal(
-                <div
-                    role="status" aria-live="polite"
-                    className="fixed bottom-20 lg:bottom-6 inset-x-0 z-50 pointer-events-none flex justify-center lg:pl-72 px-4 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5"
-                >
-                    <div className="pointer-events-auto shadow-2xl bg-slate-900/95 dark:bg-slate-800/95 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl flex items-center gap-3 sm:gap-4 backdrop-blur-md border border-slate-700/60 dark:border-slate-600 shadow-black/40 max-w-[95vw]">
-                        <div className="flex items-center gap-2">
-                            <span className="relative flex h-2.5 w-2.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-                            </span>
-                            <span className="text-xs sm:text-sm font-semibold tracking-tight whitespace-nowrap">
-                                Perubahan belum disimpan
-                            </span>
-                        </div>
-                        <div className="h-4 w-px bg-white/20" />
-                        <Button
-                            onClick={handleSave}
-                            disabled={isSaving}
-                            size="sm"
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm px-3.5 sm:px-4 py-1.5 h-8 sm:h-9 rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5 whitespace-nowrap"
-                        >
-                            {isSaving ? (
-                                <>
-                                    <Loader2 size={14} className="animate-spin" />
-                                    Menyimpan...
-                                </>
-                            ) : (
-                                <>
-                                    <CheckCircle2 size={14} />
-                                    {isOnline ? 'Simpan Sekarang' : 'Simpan Offline'}
-                                </>
-                            )}
-                        </Button>
-                    </div>
-                </div>,
-                document.body
-            )}
+            {/* Floating Save Bar for unsaved changes */}
+            <AttendanceFloatingSaveBar
+                isDirty={isDirty}
+                viewMode={viewMode}
+                handleSave={handleSave}
+                isSaving={isSaving}
+                isOnline={isOnline}
+            />
         </div>
     );
 };

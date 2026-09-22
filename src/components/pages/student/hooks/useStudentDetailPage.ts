@@ -2,42 +2,21 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '../../../../hooks/useToast';
 import { supabase } from '../../../../services/supabase';
-import { r2StorageService } from '../../../../services/r2StorageService';
 import { useAuth } from '../../../../hooks/useAuth';
 import { Database } from '../../../../services/database.types';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useOfflineStatus } from '../../../../hooks/useOfflineStatus';
-import { optimizeImage } from '../../../utils/image';
-import { violationList } from '../../../../services/violations.data';
 import { useUserSettings } from '../../../../hooks/useUserSettings';
 import { useSemester } from '../../../../contexts/SemesterContext';
 import { getSemesterDisplayName } from '../../../../utils/semesterUtils';
-import { logger } from '../../../../services/logger';
-import {
-    buildStudentCommunicationSignals,
-    getAvailableQuizPoints,
-    getLatestRecordForSubject,
-    resolveSubmitSemesterId,
-} from '../studentDetailHelpers';
-import { writeAuditLog } from '../../../../services/auditTrail';
-import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../../../utils/academicRecordUtils';
-import { generateSimpleAccessCode } from '../../../../utils/accessCode';
+import { resolveSubmitSemesterId } from '../studentDetailHelpers';
 import { useStudentMutations } from './useStudentMutations';
 import { normalizeStudentName } from '../../../../utils/textSanitizer';
 import { useConfetti } from '../../../../hooks/useConfetti';
-import { type SeverityLevel } from '../violationMeta';
-import { type DuplicateViolationData } from '../components/DuplicateViolationDialog';
 
 import {
     ModalState,
     StudentMutationVars,
-    AcademicRecordRow,
-    AttendanceRow,
-    ViolationRow,
-    QuizPointRow,
-    CommunicationRow,
-    ReportRow,
-    StudentWithClass
 } from '../types';
 
 import {
@@ -45,17 +24,16 @@ import {
     ReportFormValues,
     AcademicFormValues,
     QuizFormValues,
-    ViolationFormValues,
-    CommunicationFormValues
+    CommunicationFormValues,
 } from '../schemas';
 
-const getViolationSeverityFromCategory = (category?: string): SeverityLevel | null => {
-    const normalized = category?.toLowerCase();
-    if (normalized === 'ringan' || normalized === 'sedang' || normalized === 'berat') {
-        return normalized as SeverityLevel;
-    }
-    return null;
-};
+// Modular domain sub-hooks
+import { useStudentProfileData } from './detail/useStudentProfileData';
+import { useStudentTabQueries } from './detail/useStudentTabQueries';
+import { useStudentTabFilters } from './detail/useStudentTabFilters';
+import { useStudentViolationActions } from './detail/useStudentViolationActions';
+import { useStudentAiReport } from './detail/useStudentAiReport';
+import { useStudentProfileActions } from './detail/useStudentProfileActions';
 
 export const useStudentDetailPage = () => {
     const { studentId } = useParams<{ studentId: string }>();
@@ -65,24 +43,15 @@ export const useStudentDetailPage = () => {
     const isOnline = useOfflineStatus();
     const toast = useToast();
     const queryClient = useQueryClient();
+
+    // UI state
     const [modalState, setModalState] = useState<ModalState>({ type: 'closed' });
     const [activeTab, setActiveTab] = useState('grades');
-    const [copied, setCopied] = useState(false);
-    const [aiReport, setAiReport] = useState('');
-    const [isAiReportLoading, setIsAiReportLoading] = useState(false);
-    const [aiReportError, setAiReportError] = useState('');
-    const [copiedAiReport, setCopiedAiReport] = useState(false);
-    const photoInputRef = useRef<HTMLInputElement>(null);
-    const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+    const [subjectToApply, setSubjectToApply] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const tabsScrollRef = useRef<HTMLDivElement>(null);
     const [tabScrollState, setTabScrollState] = useState({ left: false, right: false });
-    const [subjectToApply, setSubjectToApply] = useState('');
-    const [duplicateDialog, setDuplicateDialog] = useState<{
-        existingViolation: DuplicateViolationData;
-        pendingData: ViolationFormValues & { evidence_file?: File };
-    } | null>(null);
-    const [violationConflictFields, setViolationConflictFields] = useState<string[]>([]);
+
     const { kkm } = useUserSettings();
     const { activeSemester, semesters } = useSemester();
 
@@ -94,7 +63,6 @@ export const useStudentDetailPage = () => {
         ? `${selectedSemester.academic_years?.name || 'Tahun Ajaran'} - ${getSemesterDisplayName(selectedSemester.name, selectedSemester.start_date, 'full')}`
         : 'Semua Semester';
 
-    // Initialize selectedSemesterId when activeSemester loads (if not already set)
     useEffect(() => {
         if (activeSemester && !selectedSemesterId) {
             setSelectedSemesterId(activeSemester.id);
@@ -127,266 +95,23 @@ export const useStudentDetailPage = () => {
         };
     }, []);
 
-    // 1. Core Profile Query (Fastest, High Priority)
-    const { data: studentProfile, isLoading: isProfileLoading, error: profileError } = useQuery({
-        queryKey: ['studentProfile', studentId],
-        queryFn: async () => {
-            if (!studentId || !user) throw new Error("User or Student ID not found");
-            const studentRes = await supabase
-                .from('students')
-                .select('id, name, user_id, class_id, gender, avatar_url, access_code, parent_name, parent_phone, nis, nisn, birth_date, created_at, deleted_at')
-                .eq('id', studentId)
-                .is('deleted_at', null)
-                .single();
+    // 1. Profile Data & Stats
+    const {
+        studentProfile,
+        isProfileLoading,
+        profileError,
+        statsData,
+    } = useStudentProfileData({ studentId, user });
 
-            if (studentRes.error) throw studentRes.error;
-
-            const [classInfoRes, assignmentsRes, classesRes] = await Promise.all([
-                studentRes.data.class_id
-                    ? supabase
-                        .from('classes')
-                        .select('id, name, user_id, created_at, deleted_at')
-                        .eq('id', studentRes.data.class_id)
-                        .is('deleted_at', null)
-                        .single()
-                    : Promise.resolve({ data: null, error: null }),
-                supabase
-                    .from('teacher_class_assignments')
-                    .select('class_id, assignment_role, subject_name')
-                    .eq('teacher_user_id', user.id)
-                    .is('deleted_at', null),
-                supabase
-                    .rpc('get_active_classes')
-                    .then(async (rpcRes) => {
-                        if (!rpcRes.error && rpcRes.data && rpcRes.data.length > 0) {
-                            return rpcRes;
-                        }
-                        return supabase
-                            .from('classes')
-                            .select('id, name, user_id, created_at, deleted_at')
-                            .is('deleted_at', null)
-                            .eq('is_archived', false)
-                            .order('name');
-                    })
-            ]);
-
-            if (classInfoRes.error) throw classInfoRes.error;
-            if (assignmentsRes.error) throw assignmentsRes.error;
-
-            const studentData = studentRes.data as unknown as StudentWithClass;
-            const assignments = (assignmentsRes.data || []) as { class_id: string, assignment_role: string, subject_name: string | null }[];
-            let classRows = (classesRes.data || []) as unknown as Database['public']['Tables']['classes']['Row'][];
-            const classInfo = classInfoRes.data as Database['public']['Tables']['classes']['Row'];
-
-            // Pastikan kelas siswa saat ini selalu ada dalam daftar kelas meskipun berstatus diarsipkan
-            if (classInfo && !classRows.some(c => c.id === classInfo.id)) {
-                classRows = [classInfo, ...classRows];
-            }
-
-            const studentWithClass = { ...studentData, classes: classInfo ? { id: classInfo.id, name: classInfo.name, user_id: classInfo.user_id } : null };
-
-            return { student: studentWithClass, assignments, classes: classRows };
-        },
-        enabled: !!studentId && !!user,
-        staleTime: 0,
-    });
-
-    // 2. Stats Query (Attendance & Violations) - Needed for top cards
-    const { data: statsData } = useQuery({
-        queryKey: ['studentStats', studentId],
-        queryFn: async () => {
-            if (!studentId || !user) return { attendanceRecords: [], violations: [] };
-            const [attendanceRes, violationsRes] = await Promise.all([
-                supabase.from('attendance').select('id, student_id, user_id, date, status, notes, semester_id, created_at').eq('student_id', studentId).is('deleted_at', null),
-                supabase.from('violations').select('id, student_id, user_id, date, description, context_notes, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, deleted_at').eq('student_id', studentId).is('deleted_at', null)
-            ]);
-            // F17-2: enrich tiap pelanggaran dengan nama guru pencatat (akuntabilitas).
-            // Karena akses kini kolaboratif, daftar bisa berisi catatan dari guru lain.
-            const rawViolations = (violationsRes.data || []) as ViolationRow[];
-            const recorderIds = Array.from(new Set(rawViolations.map(v => v.user_id).filter(Boolean)));
-            let recorderNames: Record<string, string> = {};
-            if (recorderIds.length > 0) {
-                const { data: roleRows } = await supabase
-                    .from('user_roles')
-                    .select('user_id, full_name, email')
-                    .in('user_id', recorderIds);
-                recorderNames = (roleRows || []).reduce((acc, r) => {
-                    if (r.user_id) {
-                        acc[r.user_id] = r.full_name?.trim() || (r.email ? r.email.split('@')[0] : '') || '';
-                    }
-                    return acc;
-                }, {} as Record<string, string>);
-            }
-            const violations = rawViolations.map(v => ({
-                ...v,
-                recorded_by_name: recorderNames[v.user_id] || null,
-            }));
-            return {
-                attendanceRecords: (attendanceRes.data || []) as AttendanceRow[],
-                violations
-            };
-        },
-        enabled: !!studentId && !!user
-    });
-
-    // 3. Tab-Specific Queries (Lazy Loaded)
-    const shouldLoadGrades = activeTab === 'grades' || activeTab === 'development';
-    const { data: academicRecords = [] } = useQuery({
-        queryKey: ['studentGrades', studentId],
-        queryFn: async () => {
-            const { data, error } = await supabase.from('academic_records').select('id, student_id, user_id, subject, score, assessment_name, notes, semester_id, created_at, version').eq('student_id', studentId!).is('deleted_at', null);
-            if (error) throw error;
-            const rawRecords = (data || []) as AcademicRecordRow[];
-            const recorderIds = Array.from(new Set(rawRecords.map(r => r.user_id).filter(Boolean)));
-            let recorderNames: Record<string, string> = {};
-            if (recorderIds.length > 0) {
-                const { data: roleRows } = await supabase
-                    .from('user_roles')
-                    .select('user_id, full_name, email')
-                    .in('user_id', recorderIds);
-                recorderNames = (roleRows || []).reduce((acc, r) => {
-                    if (r.user_id) {
-                        acc[r.user_id] = r.full_name?.trim() || (r.email ? r.email.split('@')[0] : '') || '';
-                    }
-                    return acc;
-                }, {} as Record<string, string>);
-            }
-            return rawRecords.map(r => ({
-                ...r,
-                recorded_by_name: recorderNames[r.user_id || ''] || null
-            })) as AcademicRecordRow[];
-        },
-        enabled: !!studentId && !!user && shouldLoadGrades,
-        staleTime: 5 * 60 * 1000
-    });
-
-    const shouldLoadActivity = activeTab === 'activity' || activeTab === 'development';
-    const { data: quizPoints = [] } = useQuery({
-        queryKey: ['studentQuizzes', studentId],
-        queryFn: async () => {
-            const { data, error } = await supabase.from('quiz_points').select('id, student_id, user_id, quiz_date, quiz_name, subject, points, max_points, category, is_used, used_at, used_for_subject, semester_id, created_at').eq('student_id', studentId!).is('deleted_at', null);
-            if (error) throw error;
-            const rawQuizzes = (data || []) as unknown as QuizPointRow[];
-            const recorderIds = Array.from(new Set(rawQuizzes.map(q => q.user_id).filter(Boolean)));
-            let recorderNames: Record<string, string> = {};
-            if (recorderIds.length > 0) {
-                const { data: roleRows } = await supabase
-                    .from('user_roles')
-                    .select('user_id, full_name, email')
-                    .in('user_id', recorderIds);
-                recorderNames = (roleRows || []).reduce((acc, r) => {
-                    if (r.user_id) {
-                        acc[r.user_id] = r.full_name?.trim() || (r.email ? r.email.split('@')[0] : '') || '';
-                    }
-                    return acc;
-                }, {} as Record<string, string>);
-            }
-            return rawQuizzes.map(q => ({
-                ...q,
-                recorded_by_name: recorderNames[q.user_id || ''] || null
-            })) as QuizPointRow[];
-        },
-        enabled: !!studentId && !!user && shouldLoadActivity
-    });
-
-    const { data: reports = [] } = useQuery({
-        queryKey: ['studentReports', studentId],
-        queryFn: async () => {
-            const { data, error } = await supabase
-                .from('reports')
-                .select('id, user_id, student_id, title, notes, date, category, attachment_url, tags, created_at')
-                .eq('student_id', studentId!)
-                .order('created_at', { ascending: false });
-            if (error) throw error;
-            return (data || []) as unknown as ReportRow[];
-        },
-        enabled: !!studentId && !!user && activeTab === 'reports'
-    });
-
-    const { data: extracurricularData } = useQuery({
-        queryKey: ['studentExtra', studentId],
-        queryFn: async () => {
-            const [extraRes, attRes, gradesRes] = await Promise.all([
-                supabase
-                    .from('student_extracurriculars')
-                    .select('id, user_id, student_id, extracurricular_id, extracurricular_student_id, semester_id, joined_at, status, created_at, deleted_at, extracurriculars(id, user_id, name, category, description, schedule_day, schedule_time, coach_name, max_participants, is_active, created_at, updated_at, deleted_at)')
-                    .eq('student_id', studentId!)
-                    .is('deleted_at', null),
-                supabase
-                    .from('extracurricular_attendance')
-                    .select('id, user_id, student_id, extracurricular_student_id, extracurricular_id, semester_id, date, status, notes, created_at, deleted_at')
-                    .eq('student_id', studentId!)
-                    .is('deleted_at', null),
-                supabase
-                    .from('extracurricular_grades')
-                    .select('id, user_id, student_id, extracurricular_student_id, extracurricular_id, semester_id, grade, score, description, notes, created_at, updated_at, deleted_at')
-                    .eq('student_id', studentId!)
-                    .is('deleted_at', null)
-            ]);
-            if (extraRes.error) throw extraRes.error;
-            if (attRes.error) throw attRes.error;
-            if (gradesRes.error) throw gradesRes.error;
-            return {
-                studentExtracurriculars: extraRes.data || [],
-                extracurricularAttendance: attRes.data || [],
-                extracurricularGrades: gradesRes.data || []
-            };
-        },
-        enabled: !!studentId && !!user && activeTab === 'extracurricular'
-    });
-
-    const { data: unreadMessagesCount = 0 } = useQuery({
-        queryKey: ['studentCommsUnreadCount', studentId],
-        queryFn: async () => {
-            const { count, error } = await supabase
-                .from('communications')
-                .select('id', { count: 'exact', head: true })
-                .eq('student_id', studentId!)
-                .eq('sender', 'parent')
-                .eq('is_read', false);
-            if (error) throw error;
-            return count || 0;
-        },
-        enabled: !!studentId && !!user,
-        staleTime: 30 * 1000
-    });
-
-    const { data: communications = [] } = useQuery({
-        queryKey: ['studentComms', studentId],
-        queryFn: async () => {
-            const { data, error } = await supabase
-                .from('communications')
-                .select('id, user_id, teacher_id, student_id, sender, message, is_read, parent_id, attachment_url, attachment_type, attachment_name, created_at')
-                .eq('student_id', studentId!)
-                .order('created_at', { ascending: true });
-            if (error) throw error;
-            const records = (data || []) as unknown as CommunicationRow[];
-            const teacherIds = [...new Set(records
-                .filter((record) => record.sender === 'teacher' && record.teacher_id)
-                .map((record) => record.teacher_id as string))];
-
-            if (teacherIds.length === 0) {
-                return records;
-            }
-
-            const { data: teacherRoles } = await supabase
-                .from('user_roles')
-                .select('user_id, full_name')
-                .in('user_id', teacherIds);
-
-            const teacherNameMap = new Map(
-                (teacherRoles || []).filter((r): r is { user_id: string; full_name: string } => r.full_name != null).map((role) => [role.user_id, role.full_name])
-            );
-
-            return records.map((record) => ({
-                ...record,
-                teacher_name: record.sender === 'teacher'
-                    ? teacherNameMap.get(record.teacher_id ?? '') || null
-                    : null,
-            }));
-        },
-        enabled: !!studentId && !!user && activeTab === 'communication'
-    });
+    // 2. Tab-Specific Queries (Lazy Loaded)
+    const {
+        academicRecords,
+        quizPoints,
+        reports,
+        extracurricularData,
+        unreadMessagesCount,
+        communications,
+    } = useStudentTabQueries({ studentId, user, activeTab });
 
     // Composite data object
     const studentDetails = useMemo(() => {
@@ -407,10 +132,6 @@ export const useStudentDetailPage = () => {
         };
     }, [studentProfile, statsData, academicRecords, quizPoints, reports, extracurricularData, communications]);
 
-    const isLoading = isProfileLoading;
-    const isError = !!profileError;
-    const queryError = profileError;
-
     // Mutations
     const {
         studentMutation,
@@ -421,9 +142,97 @@ export const useStudentDetailPage = () => {
         communicationMutation,
         deleteMutation,
         sendMessageMutation,
-        applyPointsMutation
+        applyPointsMutation,
     } = useStudentMutations(studentId, () => setModalState({ type: 'closed' }));
 
+    // 3. Tab Filters & Selectors
+    const {
+        filteredAttendance,
+        attendanceSummary,
+        filteredViolations,
+        filteredAcademicRecords,
+        filteredQuizPoints,
+        availableFilteredQuizPoints,
+        filteredExtracurriculars,
+        filteredExAttendance,
+        filteredExGrades,
+        totalViolationPoints,
+        communicationSignals,
+        uniqueSubjectsForGrades,
+        currentRecordForSubject,
+    } = useStudentTabFilters({
+        studentDetails,
+        selectedSemesterId,
+        academicRecords,
+        quizPoints,
+        user,
+        userRole,
+        studentProfile,
+        subjectToApply,
+    });
+
+    // 4. Violation Actions & Duplicate Checking
+    const {
+        duplicateDialog,
+        violationConflictFields,
+        setViolationConflictFields,
+        handleViolationSubmit,
+        handleDuplicateConfirm,
+        handleDuplicateCancel,
+        handleNotifyParent,
+    } = useStudentViolationActions({
+        user,
+        studentId,
+        modalState,
+        selectedSemesterId,
+        activeSemester,
+        studentDetails,
+        filteredViolations,
+        violationMutation,
+        queryClient,
+        toast,
+    });
+
+    // 5. AI Report Generation
+    const {
+        aiReport,
+        setAiReport,
+        isAiReportLoading,
+        aiReportError,
+        copiedAiReport,
+        setCopiedAiReport,
+        handleGenerateAiReport,
+    } = useStudentAiReport({
+        studentDetails,
+        selectedSemesterLabel,
+        filteredAcademicRecords,
+        filteredAttendance,
+        attendanceSummary,
+        filteredQuizPoints,
+        filteredViolations,
+        totalViolationPoints,
+        modalState,
+    });
+
+    // 6. Profile Actions (Avatar, Access Code, Share, Print)
+    const {
+        copied,
+        setCopied,
+        photoInputRef,
+        isUploadingPhoto,
+        handleCopyAccessCode,
+        handleGenerateAccessCode,
+        handlePhotoChange,
+        handleShare,
+        handlePrint,
+    } = useStudentProfileActions({
+        studentId,
+        studentDetails,
+        studentMutation,
+        toast,
+    });
+
+    // Form Submission Handlers
     const handleEditStudentSubmit = (data: EditStudentFormValues) => {
         const studentPayload: StudentMutationVars = {
             name: normalizeStudentName(data.name),
@@ -498,121 +307,6 @@ export const useStudentDetailPage = () => {
         }
     };
 
-    const executeViolationSubmit = async (
-        data: ViolationFormValues & { evidence_file?: File },
-        options?: { allowDuplicate?: boolean }
-    ) => {
-        if (!user || !studentId) return;
-
-        const selectedViolation = violationList.find(v => v.description === data.description);
-        const existingViolationRecord = modalState.type === 'violation' ? modalState.data : null;
-        let evidenceUrl = existingViolationRecord?.evidence_url || null;
-
-        if (data.evidence_file) {
-            try {
-                const result = await r2StorageService.uploadFile(data.evidence_file, 'violations');
-                if (existingViolationRecord?.evidence_url) {
-                    await r2StorageService.deleteFile({ publicUrl: existingViolationRecord.evidence_url });
-                }
-                evidenceUrl = result.publicUrl;
-            } catch (error: unknown) {
-                toast.error(`Gagal unggah bukti: ${error instanceof Error ? error.message : String(error)}`);
-                return;
-            }
-        }
-
-        const violationPayload = {
-            date: data.date,
-            description: data.description,
-            context_notes: data.context_notes || null,
-            points: selectedViolation?.points ?? existingViolationRecord?.points ?? 0,
-            type: existingViolationRecord?.type || 'general',
-            severity: data.severity || getViolationSeverityFromCategory(selectedViolation?.category) || existingViolationRecord?.severity || null,
-            evidence_url: evidenceUrl,
-            student_id: studentId,
-            user_id: user.id,
-            semester_id: resolveSubmitSemesterId(existingViolationRecord?.semester_id, selectedSemesterId, activeSemester?.id),
-        };
-
-        if (modalState.type === 'violation' && modalState.data?.id) {
-            violationMutation.mutate({ operation: 'edit', data: violationPayload, id: modalState.data.id });
-        } else {
-            violationMutation.mutate({ operation: 'add', data: violationPayload, allowDuplicate: options?.allowDuplicate });
-        }
-    };
-
-    const handleViolationSubmit = async (data: ViolationFormValues & { evidence_file?: File }) => {
-        if (!user || !studentId) return;
-
-        // Duplicate detection — check if same violation type + date already exists
-        if (modalState.type === 'violation' && !modalState.data?.id) {
-            // 1. Cek dari daftar lokal terlebih dahulu
-            const localList = studentDetails?.violations || filteredViolations || [];
-            let existingViolation: any = localList.find(
-                v => v.date === data.date && v.description === data.description
-            );
-
-            // 2. Query ke Supabase untuk memastikan catatan terbaru hari ini selalu tertangkap
-            if (!existingViolation) {
-                const { data: dbRows } = await supabase
-                    .from('violations')
-                    .select('id, student_id, user_id, date, description, points')
-                    .eq('student_id', studentId)
-                    .eq('date', data.date)
-                    .eq('description', data.description)
-                    .is('deleted_at', null)
-                    .order('created_at', { ascending: false })
-                    .limit(1);
-
-                if (dbRows && dbRows.length > 0) {
-                    existingViolation = dbRows[0];
-                }
-            }
-
-            if (existingViolation) {
-                let recordedByName = existingViolation.recorded_by_name || null;
-                if (existingViolation.user_id === user.id) {
-                    recordedByName = 'Anda';
-                } else if (!recordedByName && existingViolation.user_id) {
-                    const { data: roleRow } = await supabase
-                        .from('user_roles')
-                        .select('full_name')
-                        .eq('user_id', existingViolation.user_id)
-                        .maybeSingle();
-                    recordedByName = roleRow?.full_name || 'Guru lain';
-                }
-
-                setDuplicateDialog({
-                    existingViolation: {
-                        recorded_by_name: recordedByName,
-                        date: existingViolation.date,
-                        description: existingViolation.description,
-                        points: existingViolation.points,
-                    },
-                    pendingData: data,
-                });
-                return;
-            }
-        }
-
-        await executeViolationSubmit(data);
-    };
-
-    const handleDuplicateConfirm = () => {
-        if (duplicateDialog) {
-            const data = duplicateDialog.pendingData;
-            setDuplicateDialog(null);
-            executeViolationSubmit(data, { allowDuplicate: true });
-        }
-    };
-
-    const handleDuplicateCancel = () => {
-        if (duplicateDialog) {
-            setViolationConflictFields(['date', 'description']);
-        }
-        setDuplicateDialog(null);
-    };
-
     const handleCommunicationSubmit = (data: CommunicationFormValues) => {
         if (modalState.type === 'editCommunication' && modalState.data?.id) {
             communicationMutation.mutate({ operation: 'edit', data: { message: data.message }, id: modalState.data.id });
@@ -625,171 +319,15 @@ export const useStudentDetailPage = () => {
             title: 'Konfirmasi Hapus',
             message: 'Apakah Anda yakin ingin menghapus data ini secara permanen?',
             onConfirm: () => deleteMutation.mutate({ table, id }),
-            isPending: false
+            isPending: false,
         });
     };
 
-    // Filters & Computations
-    const filteredAttendance = useMemo(() => {
-        if (!studentDetails?.attendanceRecords) return [];
-        if (!selectedSemesterId) return studentDetails.attendanceRecords;
-        return studentDetails.attendanceRecords.filter(r => r.semester_id === selectedSemesterId);
-    }, [studentDetails?.attendanceRecords, selectedSemesterId]);
-
-    const attendanceSummary = useMemo(() => {
-        const summary = { Hadir: 0, Izin: 0, Sakit: 0, Alpha: 0, Libur: 0 };
-        filteredAttendance.forEach(rec => {
-            const status = rec.status as keyof typeof summary;
-            if (status in summary) {
-                summary[status]++;
-            }
-        });
-        return summary;
-    }, [filteredAttendance]);
-
-    const filteredViolations = useMemo(() => {
-        const semesterScopedViolations = !studentDetails?.violations
-            ? []
-            : !selectedSemesterId
-                ? studentDetails.violations
-                : studentDetails.violations.filter(r => !r.semester_id || r.semester_id === selectedSemesterId);
-        return dedupeViolations(semesterScopedViolations);
-    }, [studentDetails, selectedSemesterId]);
-
-    const filteredAcademicRecords = useMemo(() => {
-        const semesterScopedRecords = !selectedSemesterId
-            ? academicRecords
-            : academicRecords.filter(r => !r.semester_id || r.semester_id === selectedSemesterId);
-        return dedupeAcademicRecords(semesterScopedRecords);
-    }, [academicRecords, selectedSemesterId]);
-
-    const filteredQuizPoints = useMemo(() => {
-        const semesterScopedQuizPoints = !selectedSemesterId
-            ? quizPoints
-            : quizPoints.filter(r => !r.semester_id || r.semester_id === selectedSemesterId);
-        return dedupeQuizPoints(semesterScopedQuizPoints);
-    }, [quizPoints, selectedSemesterId]);
-
-    const availableFilteredQuizPoints = useMemo(() => getAvailableQuizPoints(filteredQuizPoints), [filteredQuizPoints]);
-
-    const filteredExtracurriculars = useMemo(() => {
-        if (!studentDetails?.studentExtracurriculars) return [];
-        if (!selectedSemesterId) return studentDetails.studentExtracurriculars;
-        return studentDetails.studentExtracurriculars.filter(r => !r.semester_id || r.semester_id === selectedSemesterId);
-    }, [studentDetails, selectedSemesterId]);
-
-    const filteredExAttendance = useMemo(() => {
-        if (!studentDetails?.extracurricularAttendance) return [];
-        if (!selectedSemesterId) return studentDetails.extracurricularAttendance;
-        return studentDetails.extracurricularAttendance.filter(r => !r.semester_id || r.semester_id === selectedSemesterId);
-    }, [studentDetails, selectedSemesterId]);
-
-    const filteredExGrades = useMemo(() => {
-        if (!studentDetails?.extracurricularGrades) return [];
-        if (!selectedSemesterId) return studentDetails.extracurricularGrades;
-        return studentDetails.extracurricularGrades.filter(r => !r.semester_id || r.semester_id === selectedSemesterId);
-    }, [studentDetails, selectedSemesterId]);
-
-    const totalViolationPoints = useMemo(() => filteredViolations.reduce((sum, v) => sum + v.points, 0) || 0, [filteredViolations]);
-
-    const communicationSignals = useMemo(() => buildStudentCommunicationSignals({
-        studentName: studentDetails?.student.name || 'Siswa',
-        academicRecords: filteredAcademicRecords,
-        attendanceRecords: filteredAttendance,
-        violations: filteredViolations,
-    }), [studentDetails?.student.name, filteredAcademicRecords, filteredAttendance, filteredViolations]);
-
-    const handleCopyAccessCode = () => {
-        if (!studentDetails?.student.access_code) return;
-        navigator.clipboard.writeText(studentDetails.student.access_code);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
-    const handleNotifyParent = async (violation: ViolationRow) => {
-        try {
-            if (!studentDetails?.student || !user) return;
-            const notifiedAt = new Date().toISOString();
-
-            const message = `[NOTIFIKASI PELANGGARAN]\n\nYth. Orang Tua/Wali ${studentDetails.student.name},\n\nKami informasikan bahwa anak Anda telah melakukan pelanggaran:\n\n📋 Jenis: ${violation.description}\n📅 Tanggal: ${new Date(violation.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}\n⚠️ Poin: ${violation.points}\n\nMohon perhatian dan kerjasamanya untuk membimbing anak di rumah.\n\nTerima kasih.`;
-
-            const { error: commError } = await supabase
-                .from('communications')
-                .insert({
-                    student_id: studentId!,
-                    teacher_id: user.id,
-                    user_id: user.id,
-                    message,
-                    sender: 'teacher',
-                    is_read: false
-                });
-
-            if (commError) throw commError;
-
-            const { data: updated, error: updateError } = await supabase.rpc('update_accessible_violation_follow_up', {
-                p_violation_id: violation.id,
-                p_parent_notified: true,
-                p_parent_notified_at: notifiedAt,
-            });
-
-            if (updateError) throw updateError;
-            if (!updated) throw new Error('Status notifikasi pelanggaran tidak dapat diperbarui.');
-
-            queryClient.invalidateQueries({ queryKey: ['studentStats', studentId] });
-            queryClient.invalidateQueries({ queryKey: ['studentComms', studentId] });
-            queryClient.invalidateQueries({ queryKey: ['studentCommsUnreadCount', studentId] });
-            await writeAuditLog({
-                userId: user.id,
-                userEmail: user.email,
-                tableName: 'violations',
-                recordId: violation.id,
-                action: 'UPDATE',
-                oldData: { parent_notified: violation.parent_notified || false },
-                newData: { parent_notified: true, parent_notified_at: notifiedAt },
-            });
-            toast.success('Notifikasi pelanggaran berhasil dikirim ke orang tua!');
-        } catch (error: unknown) {
-            toast.error(`Gagal mengirim notifikasi: ${error instanceof Error ? error.message : String(error)}`);
-        }
-    };
-
-    const handleGenerateAccessCode = async () => {
-        if (!studentId || studentMutation.isPending) return;
-        const newCode = generateSimpleAccessCode();
-        studentMutation.mutate({ access_code: newCode });
-    };
-
-    const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files.length === 0 || !studentId) return;
-        setIsUploadingPhoto(true);
-        const file = e.target.files[0];
-        try {
-            const optimizedBlob = await optimizeImage(file, { maxWidth: 300, quality: 0.8 });
-            const fileToUpload = new File([optimizedBlob], file.name || 'avatar.jpg', { type: 'image/jpeg' });
-            const result = await r2StorageService.uploadFile(fileToUpload, 'student_avatars');
-
-            // Delete old avatar if it exists
-            const oldAvatarUrl = studentDetails?.student?.avatar_url;
-            if (oldAvatarUrl) {
-                try {
-                    await r2StorageService.deleteFile({ publicUrl: oldAvatarUrl });
-                } catch (delErr) {
-                    console.error('Failed to delete old student avatar:', delErr);
-                }
-            }
-
-            studentMutation.mutate({ avatar_url: result.publicUrl });
-        } catch (error: unknown) {
-            toast.error(`Gagal unggah foto: ${error instanceof Error ? error.message : String(error)}`);
-        } finally {
-            setIsUploadingPhoto(false);
-        }
-    };
-
+    // Auto mark messages as read
     useEffect(() => {
         const markMessagesAsRead = async () => {
             if (activeTab === 'communication' && studentDetails?.communications) {
-                const unreadIds = studentDetails.communications
+                const unreadIds = (studentDetails.communications as { id: string; sender: string; is_read: boolean }[])
                     .filter(m => m.sender === 'parent' && !m.is_read)
                     .map(m => m.id);
 
@@ -799,7 +337,7 @@ export const useStudentDetailPage = () => {
                     });
 
                     if (error) {
-                        console.error("Failed to mark messages as read:", error);
+                        console.error('Failed to mark messages as read:', error);
                     } else {
                         queryClient.invalidateQueries({ queryKey: ['studentComms', studentId] });
                         queryClient.invalidateQueries({ queryKey: ['studentCommsUnreadCount', studentId] });
@@ -814,54 +352,7 @@ export const useStudentDetailPage = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [studentDetails?.communications]);
 
-    const handleShare = () => {
-        if (navigator.share && studentDetails?.student.access_code) {
-            navigator.share({
-                title: `Akses Portal Siswa - ${studentDetails.student.name}`,
-                text: `Gunakan kode akses ${studentDetails.student.access_code} untuk melihat perkembangan ${studentDetails.student.name} di portal siswa.`,
-                url: window.location.origin,
-            })
-                .then(() => logger.debug('Access code shared', 'StudentDetail'))
-                .catch((error) => logger.warn('Share sheet dismissed or failed', 'StudentDetail', error));
-        } else {
-            toast.info("Fitur berbagi tidak didukung di browser ini. Silakan salin kodenya secara manual.");
-        }
-    };
-
-    const handlePrint = () => {
-        window.print();
-    };
-
-    const uniqueSubjectsForGrades = useMemo((): (string | null)[] => {
-        const records = filteredAcademicRecords as AcademicRecordRow[];
-        const subjects = records.map(r => r.subject);
-        const unique = [...new Set(subjects)];
-
-        // Walas or admin has access to all subjects
-        const isWalas = studentProfile?.student?.classes?.user_id === user?.id || 
-            (studentProfile?.assignments || []).some(
-                (a: any) => a.class_id === studentProfile?.student?.class_id && a.assignment_role === 'homeroom'
-            );
-
-        if (isWalas || userRole === 'admin') {
-            return unique;
-        }
-
-        // Subject teacher: only allow subjects they teach in this class
-        const taughtSubjects = new Set(
-            (studentProfile?.assignments || [])
-                .filter((a: any) => a.class_id === studentProfile?.student?.class_id && a.assignment_role === 'subject_teacher' && a.subject_name)
-                .map((a: any) => a.subject_name.trim().toLowerCase())
-        );
-
-        return unique.filter(s => s && taughtSubjects.has(s.trim().toLowerCase()));
-    }, [filteredAcademicRecords, studentProfile, user, userRole]);
-
-    const currentRecordForSubject = useMemo(() => {
-        if (!subjectToApply) return null;
-        return getLatestRecordForSubject(filteredAcademicRecords, subjectToApply);
-    }, [subjectToApply, filteredAcademicRecords]);
-
+    // Apply Points
     useEffect(() => {
         if (modalState.type === 'applyPoints') {
             const firstSubject = uniqueSubjectsForGrades.length > 0 ? uniqueSubjectsForGrades[0] : '';
@@ -875,86 +366,19 @@ export const useStudentDetailPage = () => {
 
     const handleApplyPointsSubmit = () => {
         if (!subjectToApply) {
-            toast.error("Silakan pilih mata pelajaran.");
+            toast.error('Silakan pilih mata pelajaran.');
             return;
         }
         applyPointsMutation.mutate({ subject: subjectToApply, semesterId: selectedSemesterId }, {
             onSuccess: () => {
                 triggerConfetti();
-            }
+            },
         });
     };
 
-    const handleGenerateAiReport = async () => {
-        if (!studentDetails?.student) return;
-        setIsAiReportLoading(true);
-        setAiReportError('');
-        try {
-            const { generateGeminiContent, getAssistantContent } = await import('../../../../services/geminiService');
-
-            const avgScore = filteredAcademicRecords.length > 0
-                ? Math.round(filteredAcademicRecords.reduce((a, b) => a + b.score, 0) / filteredAcademicRecords.length)
-                : 'N/A';
-            const attendanceRate = filteredAttendance.length > 0
-                ? Math.round((filteredAttendance.filter(r => r.status === 'Hadir').length / filteredAttendance.length) * 100)
-                : 100;
-            const violationCount = filteredViolations.length;
-
-            const systemPrompt = `Anda adalah wali kelas yang bijaksana, peduli, dan profesional di Madrasah Ibtidaiyah. Anda ditugaskan untuk menyusun laporan perkembangan berkala siswa ("Rapor Perkembangan Wali Kelas") untuk dibagikan kepada orang tua melalui WhatsApp.
-
-ATURAN DAN FORMAT PENULISAN:
-1. Gunakan bahasa Indonesia yang santun, hangat, mengayomi, dan memberikan kesan peduli serta apresiatif. Sapa orang tua dengan hangat dan santun (Ayah/Bunda dari [Nama Siswa]).
-2. FORMAT OUTPUT HARUS RAPI dan menggunakan EMOJI menarik agar mudah dibaca di WhatsApp. Gunakan garis pemisah/bold yang sesuai.
-3. Struktur laporan wajib mencakup:
-   - *SALAM & PEMBUKA*: Salam hangat pembuka, sebutkan nama siswa dan kelasnya.
-   - *📊 RINGKASAN AKADEMIK*: Sebutkan rata-rata nilai dan apresiasi atas kerja kerasnya di mata pelajaran tertentu (jika ada).
-   - *🌟 AKTIVITAS & KEAKTIFAN*: Sebutkan partisipasi positif siswa, poin keaktifan yang diperoleh, dan bagaimana hal itu membantu perkembangan dirinya.
-   - *📅 KEHADIRAN*: Persentase kehadiran dan apresiasi kedisiplinan atau pesan motivasi jika kehadiran kurang optimal.
-   - *⚠️ PERILAKU & DISIPLIN*: Sampaikan evaluasi perilaku secara objektif dan halus. Jika ada pelanggaran, sebutkan perlunya bimbingan bersama. Jika nihil pelanggaran, berikan pujian luar biasa.
-   - *💡 SARAN & MOTIVASI WALI KELAS*: Kalimat penyemangat, saran konkret untuk pendampingan belajar di rumah, serta ajakan kolaborasi yang hangat antara sekolah dan orang tua.
-   - *PENUTUP*: Doa dan salam penutup dari Wali Kelas.
-4. Jangan menuliskan teks penjelasan teknis atau metadata di luar isi pesan. Langsung berikan teks pesan WhatsApp yang siap disalin.`;
-
-            const prompt = `Susunlah laporan perkembangan WhatsApp terperinci untuk siswa berikut:
-- Nama Siswa: ${studentDetails.student.name}
-- Kelas: ${studentDetails.student.classes?.name || 'N/A'}
-- Semester: ${selectedSemesterLabel}
-- Rata-rata Nilai Akademik: ${avgScore} (dari ${filteredAcademicRecords.length} penilaian)
-- Detail Nilai: ${filteredAcademicRecords.map(r => `${r.subject}: ${r.score} (${r.assessment_name})`).join(', ') || 'Belum ada penilaian'}
-- Kehadiran: ${attendanceRate}% (Hadir: ${attendanceSummary.Hadir}, Sakit: ${attendanceSummary.Sakit}, Izin: ${attendanceSummary.Izin}, Alpha: ${attendanceSummary.Alpha})
-- Keaktifan (Poin): ${filteredQuizPoints.length} poin (Detail: ${filteredQuizPoints.map(q => q.quiz_name).join(', ') || 'Belum ada catatan keaktifan'})
-- Catatan Pelanggaran: ${violationCount} kejadian (Total Poin Pelanggaran: ${totalViolationPoints})
-${filteredViolations.length > 0 ? `- Detail Pelanggaran: ${filteredViolations.map(v => `${v.description} (${v.points} poin)`).join(', ')}` : '- Catatan Perilaku: Sangat baik, tidak memiliki catatan pelanggaran.'}
-
-Tulis laporan yang menyentuh hati, memotivasi, dan komprehensif agar orang tua memahami betul perkembangan anaknya secara holistik. Gunakan format WhatsApp yang indah.`;
-
-            const response = await generateGeminiContent([
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: prompt }
-            ], 'teacher-report');
-
-            const text = getAssistantContent(response) || '';
-            setAiReport(text.trim());
-        } catch (err: any) {
-            console.error('Error generating AI report:', err);
-            setAiReportError(err.message || 'Gagal menghasilkan laporan AI. Silakan coba lagi.');
-        } finally {
-            setIsAiReportLoading(false);
-        }
-    };
-
-    const handleGenerateAiReportRef = useRef(handleGenerateAiReport);
-    handleGenerateAiReportRef.current = handleGenerateAiReport;
-
-    useEffect(() => {
-        if (modalState.type === 'aiAssistant') {
-            handleGenerateAiReportRef.current();
-        } else {
-            setAiReport('');
-            setAiReportError('');
-            setCopiedAiReport(false);
-        }
-    }, [modalState.type]);
+    const isLoading = isProfileLoading;
+    const isError = !!profileError;
+    const queryError = profileError;
 
     return {
         studentId,
@@ -1019,7 +443,6 @@ Tulis laporan yang menyentuh hati, memotivasi, dan komprehensif agar orang tua m
         handleCommunicationSubmit,
         handleDelete,
         handleCopyAccessCode,
-
         handleNotifyParent,
         handleGenerateAccessCode,
         handlePhotoChange,

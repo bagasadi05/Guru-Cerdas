@@ -340,9 +340,29 @@ export const queryKeys = {
         /** Root key for all dashboard queries */
         all: ['dashboard'] as const,
 
-        /** Key for dashboard data */
+        /** Key for dashboard data (backward compatibility) */
         data: (userId: string, userRole?: string | null) =>
             [...queryKeys.dashboard.all, 'data', userId, userRole ?? ''] as const,
+
+        /** Key for dashboard core (classes & students) */
+        core: (userId: string, userRole?: string | null) =>
+            [...queryKeys.dashboard.all, 'core', userId, userRole ?? ''] as const,
+
+        /** Key for dashboard agenda (schedules, active tasks, recent tasks) */
+        agenda: (userId: string) =>
+            [...queryKeys.dashboard.all, 'agenda', userId] as const,
+
+        /** Key for dashboard attendance (daily, weekly trend, recent logs) */
+        attendance: (userId: string, date: string) =>
+            [...queryKeys.dashboard.all, 'attendance', userId, date] as const,
+
+        /** Key for dashboard academic & behavior (academic records, violations, achievements) */
+        academic: (userId: string) =>
+            [...queryKeys.dashboard.all, 'academic', userId] as const,
+
+        /** Key for dashboard communications (unread messages) */
+        communications: (userId: string) =>
+            [...queryKeys.dashboard.all, 'communications', userId] as const,
 
         /** Key for AI insights */
         aiInsight: (userId: string) =>

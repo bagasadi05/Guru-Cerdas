@@ -1,416 +1,208 @@
 /**
  * @fileoverview Custom hook for fetching and managing dashboard data
  * 
- * This hook encapsulates all data fetching logic for the main dashboard,
- * including students, tasks, schedules, attendance, and academic records.
- * It uses React Query for caching and automatic background updates.
+ * This hook encapsulates data fetching logic for the main dashboard,
+ * decomposing queries into granular domains with tiered cache stale times:
+ * - Core (Students, Classes): 10-minute cache
+ * - Agenda (Tasks, Schedules): 3-minute cache
+ * - Attendance (Daily, Weekly trend): 2-minute cache
+ * - Academic (Grades, Violations, Achievements): 10-minute cache (heavy query, up to 3000 rows)
+ * - Communications (Unread parent messages): 2-minute cache
  * 
  * @module hooks/useDashboardData
  */
 
+import { useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../services/supabase';
 import { useAuth } from './useAuth';
 import { queryKeys } from '../lib/queryKeys';
-import type { DashboardQueryData, WeeklyAttendance, StudentAchievement } from '../types';
-import type { Database } from '../types';
+import type { DashboardQueryData } from '../types';
+
+import {
+    formatLocalDate,
+    getLastNDays,
+    getTodayDayName,
+    calculateWeeklyAttendance,
+    INDONESIAN_DAY_NAMES,
+} from './dashboard/dashboardHelpers';
+import { fetchDashboardCore } from './dashboard/fetchDashboardCore';
+import { fetchDashboardAgenda } from './dashboard/fetchDashboardAgenda';
+import { fetchDashboardAttendance } from './dashboard/fetchDashboardAttendance';
+import { fetchDashboardAcademic } from './dashboard/fetchDashboardAcademic';
+import { fetchDashboardCommunications } from './dashboard/fetchDashboardCommunications';
+
+// Re-export helpers for backward compatibility & tests
+export {
+    formatLocalDate,
+    getLastNDays,
+    getTodayDayName,
+    calculateWeeklyAttendance,
+    INDONESIAN_DAY_NAMES,
+};
 
 // TYPES
-
-/**
- * Return type for the useDashboardData hook.
- */
 export interface UseDashboardDataReturn {
     /** Dashboard data when loaded successfully */
     data: DashboardQueryData | undefined;
-    /** Whether the data is currently loading */
+    /** Whether the primary data is currently loading */
     isLoading: boolean;
-    /** Error object if the query failed */
+    /** Error object if the core query failed */
     error: Error | null;
     /** Whether the query encountered an error */
     isError: boolean;
-    /** Function to refetch the data */
+    /** Function to refetch all dashboard data */
     refetch: () => void;
     /** Whether a refetch is in progress */
     isRefetching: boolean;
 }
 
-// HELPER FUNCTIONS
-
 /**
- * Generates an array of the last N days' dates in YYYY-MM-DD format.
- * 
- * @param count - Number of days to generate
- * @returns Array of date strings
- * 
- * @example
- * ```typescript
- * const dates = getLastNDays(5);
- * // ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05']
- * ```
- */
-/**
- * Formats a Date to YYYY-MM-DD in the local calendar timezone.
- */
-export const formatLocalDate = (date: Date = new Date()): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-};
-
-/**
- * Gets the last N days as an array of YYYY-MM-DD strings in local timezone.
- * 
- * @param count - Number of days to look back
- * @returns Array of date strings in ascending order (oldest first)
- * 
- * @example
- * ```typescript
- * const dates = getLastNDays(5);
- * // ['2024-01-01', '2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05']
- * ```
- */
-export const getLastNDays = (count: number): string[] => {
-    const dates: string[] = [];
-    for (let i = count - 1; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        dates.push(formatLocalDate(date));
-    }
-    return dates;
-};
-
-const INDONESIAN_DAY_NAMES = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'] as const;
-
-/**
- * Gets today's day name in Indonesian.
- * Uses index-based lookup to avoid browser locale fallbacks returning English names.
- * 
- * @returns Day name (e.g., "Senin", "Selasa", "Kamis")
- */
-export const getTodayDayName = (date: Date = new Date()): string => {
-    return INDONESIAN_DAY_NAMES[date.getDay()];
-};
-
-/**
- * Calculates weekly attendance percentages from raw attendance data.
- * 
- * @param attendanceData - Raw attendance records
- * @param dates - Array of dates to calculate for
- * @param totalStudents - Total number of students for percentage calculation
- * @returns Array of weekly attendance data points
- */
-export const calculateWeeklyAttendance = (
-    attendanceData: Array<{ date: string; status: string }>,
-    dates: string[],
-    totalStudents: number
-): WeeklyAttendance[] => {
-    return dates.map(date => {
-        // Filter attendance records for this specific date
-        const dayAttendance = attendanceData.filter(a => a.date === date);
-
-        // Count students marked as present
-        const presentOnDay = dayAttendance.filter(a => a.status === 'Hadir').length;
-
-        // Use total students as denominator to avoid inflated percentages
-        const total = totalStudents || dayAttendance.length;
-
-        // Get day name for display safely without UTC timezone shift
-        const [year, month, day] = date.split('-').map(Number);
-        const dayOfWeek = (year && month && day) ? new Date(year, month - 1, day).getDay() : new Date(date).getDay();
-        const dayName = INDONESIAN_DAY_NAMES[dayOfWeek] || 'Senin';
-
-        return {
-            day: dayName,
-            present_percentage: total > 0 ? (presentOnDay / total) * 100 : 0
-        };
-    });
-};
-
-// DATA FETCHING
-
-/**
- * Fetches all dashboard data from Supabase.
- * 
- * This function executes multiple parallel queries to fetch:
- * - Students (id, name, avatar_url, class_id)
- * - Active tasks (not deleted, not done)
- * - Today's schedule
- * - Classes
- * - Daily attendance summary
- * - Weekly attendance trend
- * - Academic records
- * - Violations
+ * Fetches all dashboard data from Supabase aggregating granular domain queries.
+ * Maintained for standalone batch-fetch usage and backward compatibility.
  * 
  * @param userId - The authenticated user's ID
- * @returns Promise resolving to dashboard data
- * @throws Error if any of the queries fail
+ * @param userRole - The authenticated user's role
+ * @returns Promise resolving to complete dashboard data
  */
 export const fetchDashboardData = async (userId: string, userRole: string): Promise<DashboardQueryData> => {
     const today = formatLocalDate(new Date());
-    const todayDay = getTodayDayName();
     const last5Days = getLastNDays(5);
-    const isGlobalRole = userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum' || userRole === 'kepala_madrasah' || userRole === 'admin';
 
-    // Execute all queries in parallel for optimal performance
-    const [
-        studentsRes,
-        tasksRes,
-        scheduleRes,
-        classesRes,
-        dailyAttendanceRes,
-        weeklyAttendanceRes,
-        academicRecordsRes,
-        violationsRes,
-        recentTasksRes,
-        todayAttendanceRecordsRes,
-        unreadParentMessagesRes,
-        achievementsRes
-    ] = await Promise.all([
-        // Fetch students with minimal fields needed for dashboard
-        supabase
-            .from('students')
-            .select('id, name, class_id, avatar_url')
-            .is('deleted_at', null),
-
-        // Fetch active tasks (not deleted, not completed)
-        supabase
-            .from('tasks')
-            .select('id, title, status, due_date')
-            .eq('user_id', userId)
-            .neq('status', 'done')
-            .is('deleted_at', null)
-            .order('due_date'),
-
-        // Fetch today's schedule entries
-        supabase
-            .from('schedules')
-            .select('id, user_id, day, subject, start_time, end_time, class_id, created_at')
-            .eq('user_id', userId)
-            .eq('day', todayDay as Database['public']['Tables']['schedules']['Row']['day'])
-            .order('start_time'),
-
-        // Fetch classes (scoped by user_id/wali_kelas_id for teachers, all active for leadership/admin)
-        isGlobalRole
-            ? supabase
-                .from('classes')
-                .select('id, name')
-                .is('deleted_at', null)
-                .eq('is_archived', false)
-            : supabase
-                .from('classes')
-                .select('id, name')
-                .is('deleted_at', null)
-                .eq('is_archived', false)
-                .or(`user_id.eq.${userId},wali_kelas_id.eq.${userId}`),
-
-        // Fetch today's attendance (student_id selected to filter in memory)
-        supabase
-            .from('attendance')
-            .select('student_id, status')
-            .eq('date', today)
-            .is('deleted_at', null),
-
-        // Fetch last 5 days attendance for trend chart (student_id selected to filter in memory)
-        supabase
-            .from('attendance')
-            .select('student_id, date, status')
-            .gte('date', last5Days[0])
-            .lte('date', last5Days[4])
-            .is('deleted_at', null),
-
-        // Fetch academic records for grade analysis (up to 3000 records to support class-wide analytics)
-        supabase
-            .from('academic_records')
-            .select('student_id, subject, score, assessment_name, created_at')
-            .is('deleted_at', null)
-            .order('created_at', { ascending: false })
-            .limit(3000),
-
-        // Fetch violations for behavior analysis
-        supabase
-            .from('violations')
-            .select('student_id, points')
-            .is('deleted_at', null),
-
-        // Fetch recent tasks for activity feed
-        supabase
-            .from('tasks')
-            .select('id, title, created_at, status')
-            .eq('user_id', userId)
-            .is('deleted_at', null)
-            .order('created_at', { ascending: false })
-            .limit(5),
-
-        // Fetch recent attendance records for activity feed (student_id selected to filter in memory)
-        supabase
-            .from('attendance')
-            .select('student_id, created_at, status')
-            .eq('date', today)
-            .is('deleted_at', null)
-            .order('created_at', { ascending: false })
-            .limit(100),
-
-        // Fetch unread messages from parents for daily follow-up
-        supabase
-            .from('communications')
-            .select('id, student_id, message, created_at, sender, is_read')
-            .eq('sender', 'parent')
-            .eq('is_read', false)
-            .order('created_at', { ascending: false })
-            .limit(10),
-
-        // Fetch student achievements for dashboard
-        supabase
-            .from('student_achievements')
-            .select('*')
+    const core = await fetchDashboardCore(userId, userRole);
+    const [agenda, attendance, academic, communications] = await Promise.all([
+        fetchDashboardAgenda(userId),
+        fetchDashboardAttendance(today, last5Days, core.activeStudentIds, core.students.length),
+        fetchDashboardAcademic(core.activeStudentIds),
+        fetchDashboardCommunications(core.activeStudentIds),
     ]);
 
-    // Separate core errors (fatal) from secondary errors (graceful degradation)
-    const coreErrors = [studentsRes, tasksRes, scheduleRes, classesRes]
-        .map(res => res.error)
-        .filter((e): e is NonNullable<typeof e> => e !== null);
-
-    if (coreErrors.length > 0) {
-        throw new Error(coreErrors.map(e => e.message).join(', '));
-    }
-
-    // Secondary errors log a warning and fall back to empty datasets to prevent crashing the entire dashboard
-    const secondaryErrors = [
-        dailyAttendanceRes,
-        weeklyAttendanceRes,
-        academicRecordsRes,
-        violationsRes,
-        recentTasksRes,
-        todayAttendanceRecordsRes,
-        unreadParentMessagesRes,
-        achievementsRes
-    ]
-        .map(res => res.error)
-        .filter((e): e is NonNullable<typeof e> => e !== null);
-
-    if (secondaryErrors.length > 0) {
-        console.warn('[DashboardData] Non-fatal secondary query warnings:', secondaryErrors.map(e => e.message));
-    }
-
-    // Filter active classes and active students in memory
-    const activeClassIds = new Set((classesRes.data || []).map(c => c.id));
-    const activeStudents = (studentsRes.data || []).filter(s => s.class_id && activeClassIds.has(s.class_id));
-    const activeStudentIds = new Set(activeStudents.map(s => s.id));
-
-    // Calculate attendance statistics (only include active students for this teacher)
-    const dailyAttendanceForActive = (dailyAttendanceRes.data || []).filter(
-        a => a.student_id && activeStudentIds.has(a.student_id)
-    );
-    const presentCount = dailyAttendanceForActive.filter(a => a.status === 'Hadir').length || 0;
-    const totalStudents = activeStudents.length || 1;
-
-    // Filter weekly attendance to active students in memory
-    const weeklyAttendanceFiltered = (weeklyAttendanceRes.data || []).filter(
-        a => a.student_id && activeStudentIds.has(a.student_id)
-    );
-    const weeklyAttendance = calculateWeeklyAttendance(
-        weeklyAttendanceFiltered,
-        last5Days,
-        totalStudents
-    );
-
-    // Filter recent attendance records to active students in memory
-    const recentAttendanceForActive = (todayAttendanceRecordsRes.data || []).filter(
-        r => r.student_id && activeStudentIds.has(r.student_id)
-    );
-
     return {
-        students: activeStudents,
-        tasks: (tasksRes.data || []).map(task => ({
-            ...task,
-            completed: task.status === 'done',
-            created_at: '',
-            description: null,
-            due_date: task.due_date,
-            updated_at: '',
-            user_id: userId,
-        })) as DashboardQueryData['tasks'],
-        schedule: (scheduleRes.data || []).map(item => ({
-            ...item,
-            room: null,
-            updated_at: item.created_at,
-        })) as DashboardQueryData['schedule'],
-        classes: classesRes.data || [],
-        dailyAttendanceSummary: {
-            present: presentCount,
-            total: dailyAttendanceForActive.length
-        },
-        weeklyAttendance,
-        // O(1) Set lookups instead of O(N * M) quadratic linear scans
-        academicRecords: (academicRecordsRes.data || []).filter(r => activeStudentIds.has(r.student_id)),
-        violations: (violationsRes.data || []).filter(v => activeStudentIds.has(v.student_id)),
-        achievements: ((achievementsRes.data || []) as unknown as StudentAchievement[]).filter(ach => activeStudentIds.has(ach.student_id)),
-        recentTasks: recentTasksRes.data || [],
-        todayAttendanceRecords: recentAttendanceForActive.slice(0, 10).reduce((acc: { created_at: string; status: string; count: number }[], record) => {
-            const existing = acc.find(a => a.created_at === record.created_at && a.status === record.status);
-            if (existing) {
-                existing.count++;
-            } else {
-                acc.push({ created_at: record.created_at || '', status: record.status || '', count: 1 });
-            }
-            return acc;
-        }, []) || [],
-        unreadParentMessages: (unreadParentMessagesRes.data || []).filter(m => activeStudentIds.has(m.student_id)),
+        students: core.students,
+        classes: core.classes,
+        tasks: agenda.tasks,
+        schedule: agenda.schedule,
+        recentTasks: agenda.recentTasks,
+        dailyAttendanceSummary: attendance.dailyAttendanceSummary,
+        weeklyAttendance: attendance.weeklyAttendance,
+        todayAttendanceRecords: attendance.todayAttendanceRecords,
+        academicRecords: academic.academicRecords,
+        violations: academic.violations,
+        achievements: academic.achievements,
+        unreadParentMessages: communications.unreadParentMessages,
     };
 };
-
-// HOOK
 
 /**
  * Custom hook for fetching and managing dashboard data.
  * 
- * Uses React Query for:
- * - Automatic caching
- * - Background refetching
- * - Loading and error states
- * - Deduplication of requests
+ * Employs domain-level query decoupling and tiered stale times:
+ * - Core (Students, Classes): 10 min cache
+ * - Agenda (Tasks, Schedules): 3 min cache
+ * - Attendance: 2 min cache
+ * - Academic (Grades, Violations, Achievements): 10 min cache (heavy query, up to 3000 rows)
+ * - Communications: 2 min cache
  * 
  * @returns Dashboard data, loading state, error, and refetch function
- * 
- * @example
- * ```tsx
- * function Dashboard() {
- *   const { data, isLoading, error, refetch } = useDashboardData();
- *   
- *   if (isLoading) return <Skeleton />;
- *   if (error) return <Error message={error.message} />;
- *   
- *   return <DashboardContent data={data} />;
- * }
- * ```
  */
 export function useDashboardData(): UseDashboardDataReturn {
     const { user, userRole, loading: authLoading } = useAuth();
+    const isAuthReady = !!user && !authLoading && userRole !== null && userRole !== undefined;
 
-    const {
-        data,
-        isLoading,
-        error,
-        isError,
-        refetch,
-        isRefetching
-    } = useQuery({
-        queryKey: queryKeys.dashboard.data(user?.id ?? '', userRole),
-        queryFn: () => fetchDashboardData(user!.id, userRole ?? ''),
-        enabled: !!user && !authLoading && userRole !== null && userRole !== undefined,
+    // 1. Core Query (Classes & Students) — 10 min cache
+    const coreQuery = useQuery({
+        queryKey: queryKeys.dashboard.core(user?.id ?? '', userRole),
+        queryFn: () => fetchDashboardCore(user!.id, userRole ?? ''),
+        enabled: isAuthReady,
+        staleTime: 10 * 60 * 1000,
         refetchOnWindowFocus: false,
-        // Keep previous data while refetching
-        placeholderData: (previousData) => previousData,
     });
+
+    // 2. Agenda Query (Schedules & Tasks) — 3 min cache
+    const agendaQuery = useQuery({
+        queryKey: queryKeys.dashboard.agenda(user?.id ?? ''),
+        queryFn: () => fetchDashboardAgenda(user!.id),
+        enabled: isAuthReady,
+        staleTime: 3 * 60 * 1000,
+        refetchOnWindowFocus: false,
+    });
+
+    // 3. Attendance Query (Daily & Weekly Attendance) — 2 min cache
+    const today = formatLocalDate(new Date());
+    const last5Days = getLastNDays(5);
+    const activeStudentIds = coreQuery.data?.activeStudentIds;
+    const totalStudents = coreQuery.data?.students.length ?? 0;
+
+    const attendanceQuery = useQuery({
+        queryKey: queryKeys.dashboard.attendance(user?.id ?? '', today),
+        queryFn: () => fetchDashboardAttendance(today, last5Days, activeStudentIds!, totalStudents),
+        enabled: isAuthReady && !!activeStudentIds,
+        staleTime: 2 * 60 * 1000,
+        refetchOnWindowFocus: false,
+    });
+
+    // 4. Academic Query (Grades, Violations, Achievements) — 10 min cache (heavy query, up to 3000 rows)
+    const academicQuery = useQuery({
+        queryKey: queryKeys.dashboard.academic(user?.id ?? ''),
+        queryFn: () => fetchDashboardAcademic(activeStudentIds!),
+        enabled: isAuthReady && !!activeStudentIds,
+        staleTime: 10 * 60 * 1000,
+        refetchOnWindowFocus: false,
+    });
+
+    // 5. Communications Query (Unread parent messages) — 2 min cache
+    const communicationsQuery = useQuery({
+        queryKey: queryKeys.dashboard.communications(user?.id ?? ''),
+        queryFn: () => fetchDashboardCommunications(activeStudentIds!),
+        enabled: isAuthReady && !!activeStudentIds,
+        staleTime: 2 * 60 * 1000,
+        refetchOnWindowFocus: false,
+    });
+
+    // Assemble unified DashboardQueryData
+    const data: DashboardQueryData | undefined = useMemo(() => {
+        if (!coreQuery.data) return undefined;
+
+        return {
+            students: coreQuery.data.students,
+            classes: coreQuery.data.classes,
+            tasks: agendaQuery.data?.tasks ?? [],
+            schedule: agendaQuery.data?.schedule ?? [],
+            recentTasks: agendaQuery.data?.recentTasks ?? [],
+            dailyAttendanceSummary: attendanceQuery.data?.dailyAttendanceSummary ?? { present: 0, total: 0 },
+            weeklyAttendance: attendanceQuery.data?.weeklyAttendance ?? [],
+            todayAttendanceRecords: attendanceQuery.data?.todayAttendanceRecords ?? [],
+            academicRecords: academicQuery.data?.academicRecords ?? [],
+            violations: academicQuery.data?.violations ?? [],
+            achievements: academicQuery.data?.achievements ?? [],
+            unreadParentMessages: communicationsQuery.data?.unreadParentMessages ?? [],
+        };
+    }, [
+        coreQuery.data,
+        agendaQuery.data,
+        attendanceQuery.data,
+        academicQuery.data,
+        communicationsQuery.data,
+    ]);
+
+    const isLoading = (coreQuery.isLoading || agendaQuery.isLoading) && !coreQuery.data;
+    const coreError = coreQuery.error || agendaQuery.error;
+    const isError = coreQuery.isError || agendaQuery.isError;
+    const isRefetching = coreQuery.isRefetching || agendaQuery.isRefetching || attendanceQuery.isRefetching || academicQuery.isRefetching || communicationsQuery.isRefetching;
+
+    const refetch = useCallback(() => {
+        coreQuery.refetch();
+        agendaQuery.refetch();
+        attendanceQuery.refetch();
+        academicQuery.refetch();
+        communicationsQuery.refetch();
+    }, [coreQuery, agendaQuery, attendanceQuery, academicQuery, communicationsQuery]);
 
     return {
         data,
         isLoading,
-        error: error as Error | null,
+        error: (coreError as Error) || null,
         isError,
-        refetch: () => { refetch(); },
+        refetch,
         isRefetching,
     };
 }
