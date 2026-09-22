@@ -436,7 +436,7 @@ const BrankasPage: React.FC = () => {
                 </p>
               </div>
             </div>
-            <div className="px-3.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm shadow-amber-500/5">
+            <div className="px-3.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
               <Lock className="w-3.5 h-3.5" />
               Mode Kunci (Read-Only)
             </div>
@@ -477,7 +477,7 @@ const BrankasPage: React.FC = () => {
                       onClick={() => setSelectedStudent(student)}
                       className={`w-full flex items-center gap-3 p-3 rounded-2xl border text-left transition-all duration-200 ${
                         selectedStudent?.id === student.id
-                          ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-500/20 scale-[1.02]'
+                          ? 'bg-emerald-600 border-emerald-600 text-white shadow-md scale-[1.02]'
                           : 'bg-white dark:bg-slate-900 border-slate-200/70 dark:border-slate-800 text-slate-800 dark:text-slate-300 hover:border-emerald-300 dark:hover:border-slate-700 hover:shadow-sm'
                       }`}
                     >
@@ -541,7 +541,7 @@ const BrankasPage: React.FC = () => {
                       href={`/cetak-rapot/${selectedStudent.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-sm shadow-md shadow-emerald-500/20 hover:shadow-lg transition-all"
+                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all"
                     >
                       <Printer className="w-4 h-4" />
                       Cetak Rapor Lama
@@ -848,7 +848,7 @@ const BrankasPage: React.FC = () => {
             <Button
               onClick={handleArchive}
               disabled={archiveMutation.isPending || confirmText !== 'ARSIP'}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold shadow-lg shadow-emerald-500/20"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold shadow-md"
             >
               {archiveMutation.isPending ? 'Mengarsipkan...' : 'Ya, Masukkan Brankas'}
             </Button>
@@ -878,7 +878,7 @@ const BrankasPage: React.FC = () => {
             <Button
               onClick={handleRestore}
               disabled={restoreMutation.isPending}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-500/20"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md"
             >
               {restoreMutation.isPending ? 'Memulihkan...' : 'Ya, Pulihkan Kelas'}
             </Button>

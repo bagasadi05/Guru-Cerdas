@@ -206,10 +206,10 @@ const AttendancePage: React.FC = () => {
                 </div>
 
                 {/* Date Picker Banner */}
-                <div className="relative z-10 p-3 sm:p-0 -mx-4 px-4 sm:mx-0 transition-all rounded-3xl overflow-hidden flex-1 shadow-[0_8px_30px_rgba(13,126,158,0.15)] mb-2">
+                <div className="relative z-10 p-3 sm:p-0 -mx-4 px-4 sm:mx-0 transition-all rounded-xl overflow-hidden flex-1 shadow-md mb-2">
                     <button
                         type="button"
-                        className="group relative overflow-hidden w-full rounded-3xl bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 dark:from-brand-700 dark:via-brand-800 dark:to-brand-900 cursor-pointer text-left active:scale-[0.99] transition-all duration-200"
+                        className="group relative overflow-hidden w-full rounded-xl bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 dark:from-brand-700 dark:via-brand-800 dark:to-brand-900 cursor-pointer text-left active:scale-[0.99] transition-all duration-200"
                         onClick={() => setDatePickerOpen(true)}
                         aria-label="Pilih tanggal absensi"
                     >
@@ -336,7 +336,7 @@ const AttendancePage: React.FC = () => {
                                 placeholder="Cari nama siswa..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10 h-12 text-base bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_rgb(0,0,0,0.03)] focus:ring-green-500 rounded-2xl"
+                                className="pl-10 h-12 text-base bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700 shadow-sm focus:ring-green-500 rounded-xl"
                                 aria-label="Cari siswa berdasarkan nama"
                             />
                         </div>
@@ -448,8 +448,8 @@ const AttendancePage: React.FC = () => {
                             data-tutorial="attendance-save"
                             className={`w-full h-14 text-base sm:text-lg font-bold rounded-2xl transition-all cursor-pointer active:scale-[0.98] text-white ${
                                 isDirty
-                                    ? 'bg-emerald-600 hover:bg-emerald-700 shadow-[0_8px_30px_rgba(16,185,129,0.35)] ring-2 ring-emerald-400/50'
-                                    : 'bg-brand-700 hover:bg-brand-800 shadow-[0_8px_30px_rgba(13,126,158,0.25)] border border-white/20'
+                                    ? 'bg-emerald-600 hover:bg-emerald-700 shadow-md ring-2 ring-emerald-400/50'
+                                    : 'bg-brand-700 hover:bg-brand-800 shadow-md border border-white/20'
                             }`}
                         >
                             {isSaving
@@ -504,7 +504,7 @@ const AttendancePage: React.FC = () => {
 
             {isSaving && (
                 <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 flex items-center justify-center">
-                    <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all p-6 shadow-xl border border-slate-200 dark:border-slate-800 text-center">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 text-center p-6">
                         <div className="w-12 h-12 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
                         <h3 className="text-base font-semibold text-slate-900 dark:text-white">Menyimpan Absensi</h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Mohon tunggu sebentar...</p>

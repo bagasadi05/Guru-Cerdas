@@ -242,7 +242,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                 <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300 dark:border-amber-700/60 shadow-sm animate-fade-in">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-start gap-3.5">
-                            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
                                 <AlertTriangle className="w-5 h-5" />
                             </div>
                             <div className="space-y-1.5">
@@ -295,7 +295,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Rata-rata Hadir
                             </span>
-                            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
                                 <CheckCircle2 className="w-4 h-4" />
                             </div>
                         </div>
@@ -328,8 +328,8 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                             </span>
                             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                                 atRiskCount > 0 
-                                    ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400' 
-                                    : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                    ? 'bg-rose-500/10 text-rose-700 dark:text-rose-400' 
+                                    : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
                             }`}>
                                 <AlertTriangle className="w-4 h-4" />
                             </div>
@@ -383,7 +383,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                 Total Alpha
                             </span>
-                            <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center justify-center">
                                 <ShieldAlert className="w-4 h-4" />
                             </div>
                         </div>

@@ -94,7 +94,7 @@ const ProfileSection: React.FC = () => {
     return (
         <SettingsCard className="overflow-hidden">
             <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
-                <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-green-400 dark:to-emerald-400">Profil Pengguna</CardTitle>
+                <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-700 to-emerald-800 dark:from-green-400 dark:to-emerald-400">Profil Pengguna</CardTitle>
                 <CardDescription className="text-base">Perbarui informasi profil dan foto identitas Anda.</CardDescription>
             </CardHeader>
             <CardContent className="pt-8">

@@ -113,7 +113,7 @@ const IntegrationsSection: React.FC = () => {
     return (
         <SettingsCard className="overflow-hidden">
             <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
-                <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-green-400 dark:to-emerald-400">Integrasi Eksternal</CardTitle>
+                <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-700 to-emerald-800 dark:from-green-400 dark:to-emerald-400">Integrasi Eksternal</CardTitle>
                 <CardDescription className="text-base">Hubungkan dan sinkronkan data Anda dengan layanan lain.</CardDescription>
             </CardHeader>
             <CardContent className="pt-8">

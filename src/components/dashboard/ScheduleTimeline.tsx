@@ -69,7 +69,7 @@ const ScheduleTimeline: React.FC<ScheduleTimelineProps> = ({ schedule, currentTi
               <div
                 className={`absolute -left-2.5 top-0 w-4 h-4 rounded-full border-2 transition-all duration-500 ${
                   isCurrent
-                    ? 'bg-emerald-500 border-emerald-200 dark:border-emerald-900 shadow-[0_0_0_4px_rgba(16,185,129,0.2)] scale-110'
+                    ? 'bg-emerald-500 border-emerald-200 dark:border-emerald-900 ring-4 ring-emerald-500/20 scale-110'
                     : 'bg-slate-200 dark:bg-slate-800 border-white dark:border-slate-900'
                 }`}
               ></div>

@@ -128,7 +128,7 @@ export const BintangBulkExportModal: React.FC<BintangBulkExportModalProps> = ({
                                     : 'border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
                             }`}
                         >
-                            <div className={`p-2 rounded-lg shrink-0 ${format === 'pdf' ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-700'}`}>
+                            <div className={`p-2 rounded-lg shrink-0 ${format === 'pdf' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-700'}`}>
                                 <FileText size={20} />
                             </div>
                             <div>
@@ -153,7 +153,7 @@ export const BintangBulkExportModal: React.FC<BintangBulkExportModalProps> = ({
                                     : 'border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
                             }`}
                         >
-                            <div className={`p-2 rounded-lg shrink-0 ${format === 'excel' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-700'}`}>
+                            <div className={`p-2 rounded-lg shrink-0 ${format === 'excel' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-700'}`}>
                                 <FileSpreadsheet size={20} />
                             </div>
                             <div>

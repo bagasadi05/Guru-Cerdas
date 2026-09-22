@@ -279,7 +279,7 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
             {/* List */}
             {filteredAchievements.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 px-4 text-center border border-dashed border-slate-200 dark:border-slate-800/80 rounded-2xl bg-slate-50/50 dark:bg-slate-900/30">
-                    <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-4 shadow-inner">
+                    <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-700 flex items-center justify-center mb-4 shadow-inner">
                         <Trophy className="w-8 h-8 text-amber-500" />
                     </div>
                     <h4 className="text-lg font-bold text-slate-900 dark:text-white">

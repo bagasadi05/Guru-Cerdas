@@ -304,7 +304,7 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                             {weeklySummary && (
                                 <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-dashed border-slate-200/80 dark:border-slate-800/80">
                                     <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
-                                        <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
+                                        <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400">
                                             <TrendingUp className="w-4 h-4" />
                                         </div>
                                         <div>
@@ -313,7 +313,7 @@ const AttendanceStatsWidget: React.FC<AttendanceStatsProps> = ({
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
-                                        <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
+                                        <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400">
                                             <Award className="w-4 h-4" />
                                         </div>
                                         <div>

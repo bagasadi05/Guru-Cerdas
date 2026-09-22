@@ -167,8 +167,6 @@ const DashboardPage: React.FC = () => {
         userName={user?.name}
         isOnline={isOnline}
         randomQuote={randomQuote}
-        isSidebarOpen={true}
-        onToggleSidebar={() => {}}
       />
 
       {/* ============================================ */}
@@ -201,7 +199,7 @@ const DashboardPage: React.FC = () => {
           </div>
 
           {/* Schedule + Tasks Tabs */}
-          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col h-full min-h-[360px]">
+          <div className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-sm flex flex-col h-full min-h-[360px]">
             <Tabs defaultValue="schedule" className="w-full flex flex-col flex-1 min-h-0">
               <div className="px-3 py-2.5 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-100/50 dark:bg-slate-800/40">
                 <TabsList className="w-full grid grid-cols-2">
@@ -231,7 +229,7 @@ const DashboardPage: React.FC = () => {
                               {task.due_date ? formatTaskDueDate(task.due_date) : 'Tidak ada deadline'}
                             </p>
                           </div>
-                          <div className={`w-2.5 h-2.5 rounded-full mt-1.5 ${isTaskOverdue(task.due_date, currentTime) ? 'bg-red-500 shadow-sm shadow-red-500/50' : 'bg-blue-500 shadow-sm shadow-blue-500/50'}`} />
+                          <div className={`w-2.5 h-2.5 rounded-full mt-1.5 ${isTaskOverdue(task.due_date, currentTime) ? 'bg-red-500' : 'bg-blue-500'}`} />
                         </div>
                       </div>
                     ))

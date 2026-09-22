@@ -66,7 +66,7 @@ export const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
                         </button>
                     ) : (
                         <div className="flex items-center gap-2.5">
-                            <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-lg text-amber-600 dark:text-amber-400">
+                            <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-lg text-amber-700 dark:text-amber-400">
                                 <TrophyIcon className="w-5 h-5" />
                             </div>
                             <div>

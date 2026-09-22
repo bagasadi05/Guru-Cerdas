@@ -210,7 +210,7 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                             className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold border transition-all ${
                                 engine.soundEnabled
                                     ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/50'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 border-slate-200 dark:border-slate-700'
                             }`}
                             title={engine.soundEnabled ? 'Suara umpan balik aktif' : 'Suara dimatikan'}
                         >
@@ -285,7 +285,7 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                                     ? Number(activeScore) >= effectiveKkm
                                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-400 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-600'
                                                         : 'bg-rose-50 text-rose-700 border-rose-400 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-600'
-                                                    : 'bg-slate-50 text-slate-300 border-slate-200 dark:bg-slate-800 dark:text-slate-600 dark:border-slate-700'
+                                                    : 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-600 dark:border-slate-700'
                                             }`}
                                         >
                                             {activeScore !== '' ? activeScore : '—'}

@@ -570,7 +570,7 @@ export const ParentPortalPage: React.FC = () => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
                 <div className="max-w-md w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 text-center shadow-lg">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400">
                         <AlertCircle className="h-8 w-8" />
                     </div>
                     <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">

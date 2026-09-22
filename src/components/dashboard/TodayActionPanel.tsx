@@ -41,9 +41,9 @@ const getToneAccent = (tone: ActionTone) => {
                 bannerBg: 'bg-gradient-to-r from-rose-50/90 via-white to-rose-50/40 dark:from-rose-950/25 dark:via-slate-900/60 dark:to-rose-950/15',
                 cardBg: 'bg-gradient-to-br from-rose-50/70 via-white to-white dark:from-rose-950/20 dark:via-slate-900/60 dark:to-slate-900/40',
                 hoverBorder: 'hover:border-rose-300 dark:hover:border-rose-700/60',
-                iconBox: 'bg-rose-500/10 dark:bg-rose-500/20 border-rose-500/20 text-rose-600 dark:text-rose-400',
+                iconBox: 'bg-rose-500/10 dark:bg-rose-500/20 border-rose-500/20 text-rose-700 dark:text-rose-400',
                 titleHover: 'group-hover:text-rose-600 dark:group-hover:text-rose-400',
-                btn: 'bg-rose-600 hover:bg-rose-700 text-white shadow-sm shadow-rose-600/20',
+                btn: 'bg-rose-600 hover:bg-rose-700 text-white shadow-sm',
                 badge: 'bg-rose-100/90 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300 border border-rose-200/50 dark:border-rose-800/40',
             };
         case 'warning':
@@ -52,9 +52,9 @@ const getToneAccent = (tone: ActionTone) => {
                 bannerBg: 'bg-gradient-to-r from-amber-50/90 via-white to-amber-50/40 dark:from-amber-950/25 dark:via-slate-900/60 dark:to-amber-950/15',
                 cardBg: 'bg-gradient-to-br from-amber-50/70 via-white to-white dark:from-amber-950/20 dark:via-slate-900/60 dark:to-slate-900/40',
                 hoverBorder: 'hover:border-amber-300 dark:hover:border-amber-700/60',
-                iconBox: 'bg-amber-500/10 dark:bg-amber-500/20 border-amber-500/20 text-amber-600 dark:text-amber-400',
+                iconBox: 'bg-amber-500/10 dark:bg-amber-500/20 border-amber-500/20 text-amber-700 dark:text-amber-400',
                 titleHover: 'group-hover:text-amber-600 dark:group-hover:text-amber-400',
-                btn: 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm shadow-amber-600/20',
+                btn: 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm',
                 badge: 'bg-amber-100/90 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 border border-amber-200/50 dark:border-amber-800/40',
             };
         case 'info':
@@ -63,9 +63,9 @@ const getToneAccent = (tone: ActionTone) => {
                 bannerBg: 'bg-gradient-to-r from-sky-50/90 via-white to-sky-50/40 dark:from-sky-950/25 dark:via-slate-900/60 dark:to-sky-950/15',
                 cardBg: 'bg-gradient-to-br from-sky-50/70 via-white to-white dark:from-sky-950/20 dark:via-slate-900/60 dark:to-slate-900/40',
                 hoverBorder: 'hover:border-sky-300 dark:hover:border-sky-700/60',
-                iconBox: 'bg-sky-500/10 dark:bg-sky-500/20 border-sky-500/20 text-sky-600 dark:text-sky-400',
+                iconBox: 'bg-sky-500/10 dark:bg-sky-500/20 border-sky-500/20 text-sky-700 dark:text-sky-400',
                 titleHover: 'group-hover:text-sky-600 dark:group-hover:text-sky-400',
-                btn: 'bg-sky-600 hover:bg-sky-700 text-white shadow-sm shadow-sky-600/20',
+                btn: 'bg-sky-600 hover:bg-sky-700 text-white shadow-sm',
                 badge: 'bg-sky-100/90 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 border border-sky-200/50 dark:border-sky-800/40',
             };
         case 'success':
@@ -75,9 +75,9 @@ const getToneAccent = (tone: ActionTone) => {
                 bannerBg: 'bg-gradient-to-r from-emerald-50/90 via-white to-emerald-50/40 dark:from-emerald-950/25 dark:via-slate-900/60 dark:to-emerald-950/15',
                 cardBg: 'bg-gradient-to-br from-emerald-50/70 via-white to-white dark:from-emerald-950/20 dark:via-slate-900/60 dark:to-slate-900/40',
                 hoverBorder: 'hover:border-emerald-300 dark:hover:border-emerald-700/60',
-                iconBox: 'bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-500/20 text-emerald-600 dark:text-emerald-400',
+                iconBox: 'bg-emerald-500/10 dark:bg-emerald-500/20 border-emerald-500/20 text-emerald-700 dark:text-emerald-400',
                 titleHover: 'group-hover:text-emerald-600 dark:group-hover:text-emerald-400',
-                btn: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20',
+                btn: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm',
                 badge: 'bg-emerald-100/90 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/40',
             };
     }
@@ -196,7 +196,7 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data, isLoad
 
     if (isLoading) {
         return (
-            <div className={isCombined ? "" : "overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"}>
+            <div className={isCombined ? "" : "overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"}>
                 <div className="p-5 sm:p-6 pb-4">
                     <Skeleton className="h-4 w-28 mb-2.5 rounded-full" />
                     <Skeleton className="h-6 w-52 mb-1.5 rounded-lg" />
@@ -212,7 +212,7 @@ export const TodayActionPanel: React.FC<TodayActionPanelProps> = ({ data, isLoad
     const isAllClear = actions.length === 1 && actions[0].id === 'all-clear';
 
     return (
-        <div className={isCombined ? "" : "overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/90 transition-all"}>
+        <div className={isCombined ? "" : "overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 transition-all"}>
             {/* Unified Header */}
             <div className="p-5 sm:p-6 pb-3 sm:pb-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

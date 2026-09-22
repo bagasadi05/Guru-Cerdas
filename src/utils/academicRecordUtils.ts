@@ -44,6 +44,7 @@ type QuizPointIdentity = {
     quiz_date?: string | null;
     semester_id?: string | null;
     user_id?: string | null;
+    points?: number | null;
 };
 
 export const buildQuizPointIdentityKey = (record: QuizPointIdentity) => (
@@ -53,18 +54,17 @@ export const buildQuizPointIdentityKey = (record: QuizPointIdentity) => (
         normalizeText(record.quiz_name),
         record.quiz_date || 'no-date',
         record.semester_id || 'no-semester',
-        record.user_id,
     ].join('::')
 );
 
-export const dedupeQuizPoints = <T extends QuizPointIdentity & { created_at: string }>(records: T[]): T[] => {
+export const dedupeQuizPoints = <T extends QuizPointIdentity & { created_at?: string }>(records: T[]): T[] => {
     const latestByKey = new Map<string, T>();
 
     records.forEach((record) => {
         const key = buildQuizPointIdentityKey(record);
         const existing = latestByKey.get(key);
-        const currentCreatedAt = new Date(record.created_at).getTime();
-        const existingCreatedAt = existing ? new Date(existing.created_at).getTime() : 0;
+        const currentCreatedAt = record.created_at ? new Date(record.created_at).getTime() : 0;
+        const existingCreatedAt = existing?.created_at ? new Date(existing.created_at).getTime() : 0;
 
         if (!existing || currentCreatedAt >= existingCreatedAt) {
             latestByKey.set(key, record);
@@ -76,18 +76,14 @@ export const dedupeQuizPoints = <T extends QuizPointIdentity & { created_at: str
 
 type ViolationIdentity = Pick<
     ViolationRow,
-    'student_id' | 'description' | 'date' | 'semester_id' | 'user_id' | 'points' | 'type'
->;
+    'student_id' | 'description' | 'date'
+> & Partial<Pick<ViolationRow, 'semester_id' | 'user_id' | 'points' | 'type'>>;
 
 export const buildViolationIdentityKey = (record: ViolationIdentity) => (
     [
         record.student_id,
         normalizeText(record.description),
         record.date || 'no-date',
-        record.semester_id || 'no-semester',
-        record.user_id,
-        record.points,
-        record.type || 'no-type',
     ].join('::')
 );
 
@@ -97,8 +93,8 @@ export const dedupeViolations = (records: ViolationRow[]) => {
     records.forEach((record) => {
         const key = buildViolationIdentityKey(record);
         const existing = latestByKey.get(key);
-        const currentCreatedAt = new Date(record.created_at).getTime();
-        const existingCreatedAt = existing ? new Date(existing.created_at).getTime() : 0;
+        const currentCreatedAt = record.created_at ? new Date(record.created_at).getTime() : 0;
+        const existingCreatedAt = existing?.created_at ? new Date(existing.created_at).getTime() : 0;
 
         if (!existing || currentCreatedAt >= existingCreatedAt) {
             latestByKey.set(key, record);

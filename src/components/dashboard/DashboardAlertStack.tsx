@@ -23,9 +23,9 @@ interface AlertItem {
 }
 
 const severityStyles: Record<string, string> = {
-  danger: 'bg-rose-50/90 dark:bg-rose-500/10 border-rose-200/80 dark:border-rose-500/20 shadow-[0_8px_30px_rgb(243,24,96,0.06)]',
-  warning: 'bg-amber-50/90 dark:bg-amber-500/10 border-amber-200/80 dark:border-amber-500/20 shadow-[0_8px_30px_rgb(245,158,11,0.06)]',
-  info: 'bg-blue-50/90 dark:bg-blue-500/10 border-blue-200/80 dark:border-blue-500/20 shadow-[0_8px_30px_rgb(59,130,246,0.06)]',
+  danger: 'bg-rose-50/90 dark:bg-rose-500/10 border-rose-200/80 dark:border-rose-500/20 shadow-sm',
+  warning: 'bg-amber-50/90 dark:bg-amber-500/10 border-amber-200/80 dark:border-amber-500/20 shadow-sm',
+  info: 'bg-blue-50/90 dark:bg-blue-500/10 border-blue-200/80 dark:border-blue-500/20 shadow-sm',
 };
 
 const iconBgStyles: Record<string, string> = {

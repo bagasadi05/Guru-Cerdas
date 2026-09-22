@@ -18,8 +18,6 @@ interface DashboardGreetingProps {
   userName?: string;
   isOnline: boolean;
   randomQuote: string;
-  isSidebarOpen: boolean;
-  onToggleSidebar: () => void;
 }
 
 const GREETING_CONFIG = [
@@ -39,8 +37,6 @@ const DashboardGreeting: React.FC<DashboardGreetingProps> = ({
   userName,
   isOnline,
   randomQuote,
-  isSidebarOpen,
-  onToggleSidebar,
 }) => {
   const currentTime = useClock();
   const { t, language } = useI18n();
@@ -62,7 +58,7 @@ const DashboardGreeting: React.FC<DashboardGreetingProps> = ({
   const locale = language === 'id' ? 'id-ID' : 'en-US';
 
   return (
-    <header className="bg-gradient-to-br from-brand-100/90 via-brand-200/60 to-brand-50/60 dark:from-brand-950/40 dark:via-brand-900/20 dark:to-brand-800/20 backdrop-blur-xl border border-brand-200/60 dark:border-slate-800/60 p-4 sm:p-6 md:p-7 rounded-3xl shadow-[0_8px_30px_rgb(13,126,158,0.10)] dark:shadow-brand-500/10 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-5 animate-scale-in relative overflow-hidden">
+    <header className="bg-gradient-to-br from-brand-100/90 via-brand-200/60 to-brand-50/60 dark:from-brand-950/40 dark:via-brand-900/20 dark:to-brand-800/20 border border-brand-200/60 dark:border-slate-800/60 p-4 sm:p-6 md:p-7 rounded-xl shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-5 animate-scale-in relative overflow-hidden">
       {/* Decorative background blur element */}
       <div className="absolute -top-20 -right-20 w-64 h-64 bg-brand-400/20 dark:bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
       
@@ -82,11 +78,11 @@ const DashboardGreeting: React.FC<DashboardGreetingProps> = ({
         {/* Online / Offline badge */}
         <div className={`flex items-center gap-1.5 font-bold text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border shadow-sm transition-all duration-300 ${
           isOnline
-            ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200/20 shadow-emerald-500/5'
-            : 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200/20 shadow-amber-500/5 animate-pulse'
+            ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200/20 shadow-sm'
+            : 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200/20 shadow-sm animate-pulse'
         }`}>
           <span className={`w-2 h-2 rounded-full shrink-0 ${
-            isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)] animate-ping'
+            isOnline ? 'bg-emerald-500 ring-2 ring-emerald-400/40' : 'bg-amber-500 ring-2 ring-amber-400/40 animate-ping'
           }`} />
           <span>{isOnline ? t.dashboard.cloudSyncActive : t.dashboard.modeOffline}</span>
         </div>
@@ -102,13 +98,6 @@ const DashboardGreeting: React.FC<DashboardGreetingProps> = ({
           ⏰ {currentTime.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\./g, ':')}
         </div>
 
-        {/* Sidebar toggle (XL only) */}
-        <button type="button"
-          onClick={onToggleSidebar}
-          className="hidden lg:flex items-center gap-2 bg-white/40 dark:bg-slate-900/40 border border-slate-200/40 dark:border-slate-800/40 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-2xl text-xs font-extrabold text-slate-700 dark:text-brand-200 px-3.5 py-1.5 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
-        >
-          {isSidebarOpen ? t.dashboard.hidePanel : t.dashboard.showPanel}
-        </button>
       </div>
     </header>
   );

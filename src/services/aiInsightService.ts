@@ -12,9 +12,7 @@ import type { Database } from './database.types';
 import { logger } from './logger';
 import { supabase } from './supabase';
 
-// =============================================================================
 // TYPES
-// =============================================================================
 
 type StudentRow = Database['public']['Tables']['students']['Row'];
 type AcademicRecord = Database['public']['Tables']['academic_records']['Row'];
@@ -41,15 +39,11 @@ export interface DashboardDataForAI {
   dailyAttendanceSummary: { present: number; total: number };
 }
 
-// =============================================================================
 // CONSTANTS
-// =============================================================================
 
 const AI_INSIGHT_STORAGE_KEY = 'portal_guru_ai_insight';
 
-// =============================================================================
 // HELPER FUNCTIONS
-// =============================================================================
 
 /**
  * Gets today's date in YYYY-MM-DD format.
@@ -105,9 +99,7 @@ const resolveStudentId = (
   return ids && ids.length === 1 ? ids[0] : undefined;
 };
 
-// =============================================================================
 // AI INSIGHT GENERATION
-// =============================================================================
 
 /**
  * Generates AI-powered insights for dashboard.
@@ -188,9 +180,7 @@ Tugas Anda:
   return enrichedInsight;
 };
 
-// =============================================================================
 // CACHE MANAGEMENT
-// =============================================================================
 
 /**
  * Saves insight to Supabase database.

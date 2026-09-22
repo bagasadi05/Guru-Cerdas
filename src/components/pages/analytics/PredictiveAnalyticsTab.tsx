@@ -196,7 +196,7 @@ export const PredictiveAnalyticsTab: React.FC<PredictiveAnalyticsTabProps> = ({
                 <div className="absolute right-0 top-0 w-80 h-80 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="space-y-2">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/20 text-brand-300 text-xs font-bold uppercase tracking-wider border border-brand-400/30">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/20 text-brand-700 text-xs font-bold uppercase tracking-wider border border-brand-400/30">
                             <Sparkles className="w-3.5 h-3.5" />
                             AI Predictive Intelligence • Roadmap Q3
                         </div>
@@ -228,7 +228,7 @@ export const PredictiveAnalyticsTab: React.FC<PredictiveAnalyticsTabProps> = ({
                             <span className="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">
                                 Peringatan Kritis
                             </span>
-                            <div className="p-2 rounded-xl bg-rose-100 dark:bg-rose-950/50 text-rose-600">
+                            <div className="p-2 rounded-xl bg-rose-100 dark:bg-rose-950/50 text-rose-700">
                                 <ShieldAlert className="w-5 h-5" />
                             </div>
                         </div>
@@ -248,7 +248,7 @@ export const PredictiveAnalyticsTab: React.FC<PredictiveAnalyticsTabProps> = ({
                             <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
                                 Pengawasan (Watchlist)
                             </span>
-                            <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-950/50 text-amber-600">
+                            <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-950/50 text-amber-700">
                                 <AlertTriangle className="w-5 h-5" />
                             </div>
                         </div>
@@ -268,7 +268,7 @@ export const PredictiveAnalyticsTab: React.FC<PredictiveAnalyticsTabProps> = ({
                             <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
                                 Hari Rawan Absensi
                             </span>
-                            <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-600">
+                            <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-700">
                                 <Calendar className="w-5 h-5" />
                             </div>
                         </div>
@@ -288,7 +288,7 @@ export const PredictiveAnalyticsTab: React.FC<PredictiveAnalyticsTabProps> = ({
                             <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                                 Kondisi Stabil & Optimal
                             </span>
-                            <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600">
+                            <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700">
                                 <CheckCircle2 className="w-5 h-5" />
                             </div>
                         </div>

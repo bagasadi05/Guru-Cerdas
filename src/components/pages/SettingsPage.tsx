@@ -35,55 +35,46 @@ const SettingsPage: React.FC = () => {
         switch (tabId) {
             case 'profile': return {
                 gradient: 'from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500',
-                glow: 'shadow-green-500/25',
                 hover: 'hover:text-green-600 dark:hover:text-green-400 hover:bg-green-500/5',
                 text: 'text-green-600 dark:text-green-400 border-green-500/20'
             };
             case 'appearance': return {
                 gradient: 'from-brand-600 to-brand-700 dark:from-brand-500 dark:to-brand-600',
-                glow: 'shadow-brand-600/25',
                 hover: 'hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-500/5',
                 text: 'text-brand-600 dark:text-brand-400 border-brand-500/20'
             };
             case 'pwa': return {
                 gradient: 'from-emerald-600 to-teal-600 dark:from-emerald-500 dark:to-teal-500',
-                glow: 'shadow-emerald-500/25',
                 hover: 'hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/5',
                 text: 'text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
             };
             case 'academic': return {
                 gradient: 'from-blue-600 to-cyan-600 dark:from-blue-500 dark:to-cyan-500',
-                glow: 'shadow-blue-500/25',
                 hover: 'hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/5',
                 text: 'text-blue-600 dark:text-blue-400 border-blue-500/20'
             };
             case 'notifications': return {
                 gradient: 'from-amber-600 to-orange-600 dark:from-amber-500 dark:to-orange-500',
-                glow: 'shadow-amber-500/25',
                 hover: 'hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-500/5',
                 text: 'text-amber-600 dark:text-amber-400 border-amber-500/20'
             };
             case 'integrations': return {
                 gradient: 'from-pink-600 to-rose-600 dark:from-pink-500 dark:to-rose-500',
-                glow: 'shadow-pink-500/25',
                 hover: 'hover:text-pink-600 dark:hover:text-pink-400 hover:bg-pink-500/5',
                 text: 'text-pink-600 dark:text-pink-400 border-pink-500/20'
             };
             case 'database': return {
                 gradient: 'from-slate-700 to-zinc-700 dark:from-slate-600 dark:to-zinc-600',
-                glow: 'shadow-slate-500/25',
                 hover: 'hover:text-slate-700 dark:hover:text-slate-400 hover:bg-slate-500/5',
                 text: 'text-slate-700 dark:text-slate-400 border-slate-500/20'
             };
             case 'account': return {
                 gradient: 'from-red-600 to-rose-600 dark:from-red-500 dark:to-rose-500',
-                glow: 'shadow-red-500/25',
                 hover: 'hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/5',
                 text: 'text-red-600 dark:text-red-400 border-red-500/20'
             };
             default: return {
                 gradient: 'from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500',
-                glow: 'shadow-green-500/25',
                 hover: 'hover:text-green-600 dark:hover:text-green-400 hover:bg-green-500/5',
                 text: 'text-green-600 dark:text-green-400 border-green-500/20'
             };
@@ -277,7 +268,7 @@ const SettingsPage: React.FC = () => {
                                     className={`
                                         flex items-center gap-2 px-3.5 py-2.5 sm:px-4 sm:py-3 min-h-[44px] rounded-xl transition-all duration-150 whitespace-nowrap cursor-pointer active:scale-95
                                         ${isActive
-                                            ? `bg-gradient-to-r ${theme.gradient} text-white shadow-md ${theme.glow} ring-1 ring-white/10`
+                                            ? `bg-gradient-to-r ${theme.gradient} text-white shadow-md ring-1 ring-white/10`
                                             : `text-slate-600 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-white/5 font-semibold text-xs sm:text-sm`
                                         }
                                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40
@@ -292,9 +283,9 @@ const SettingsPage: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8">
-                    {/* Desktop Navigation Sidebar - Overhauled Glassmorphic Menu */}
+                    {/* Desktop Navigation Sidebar */}
                     <aside className="hidden lg:block lg:col-span-3">
-                        <nav className="flex flex-col gap-2 p-3 rounded-3xl bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/50 dark:border-white/5 shadow-xl sticky top-4">
+                        <nav className="flex flex-col gap-2 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm sticky top-4">
                             <div className="px-3 py-2.5 mb-2 border-b border-slate-100 dark:border-white/5">
                                 <p className="text-xxs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Menu Navigasi</p>
                             </div>
@@ -307,9 +298,9 @@ const SettingsPage: React.FC = () => {
                                         onClick={() => setActiveTab(item.id)}
                                         aria-current={isActive ? 'page' : undefined}
                                         className={`
-                                            group flex items-center gap-3 w-full text-left px-4 py-3 min-h-[44px] rounded-2xl transition-all duration-150 relative overflow-hidden cursor-pointer active:scale-[0.98]
+                                            group flex items-center gap-3 w-full text-left px-4 py-3 min-h-[44px] rounded-xl transition-all duration-150 relative overflow-hidden cursor-pointer active:scale-[0.98]
                                             ${isActive
-                                                ? `bg-gradient-to-r ${theme.gradient} text-white shadow-lg ${theme.glow} ring-1 ring-white/10`
+                                                ? `bg-gradient-to-r ${theme.gradient} text-white shadow-md ring-1 ring-white/10`
                                                 : `text-slate-600 dark:text-slate-400 ${theme.hover} hover:text-slate-900 dark:hover:text-white`
                                             }
                                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40

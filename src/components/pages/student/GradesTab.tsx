@@ -283,7 +283,7 @@ const GradesPanel: React.FC<{
                 const averageScore = subjectRecords.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / subjectRecords.length) : 0;
                 const prediction = predictFinalGrade(scores);
                 const isAboveKkm = averageScore >= kkm;
-                const avgColorClass = isAboveKkm ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20' : averageScore >= kkm - 15 ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20' : 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20';
+                const avgColorClass = isAboveKkm ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20' : averageScore >= kkm - 15 ? 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20' : 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20';
 
                 return (
                     <Card key={subject} className="bg-gray-50 dark:bg-black/20 overflow-hidden">
@@ -323,7 +323,7 @@ const GradesPanel: React.FC<{
                                                 <div className="flex items-center gap-2">
                                                     <h4 className="font-bold text-base text-gray-900 dark:text-white">{record.assessment_name || 'Penilaian'}</h4>
                                                     {record.score < kkm && (
-                                                        <span className="text-xxs px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                                                        <span className="text-xxs px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
                                                             Remidi
                                                         </span>
                                                     )}
@@ -428,7 +428,7 @@ export const GradesTab: React.FC<GradesTabProps> = ({
                 <div>
                     <CardTitle className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
                         Nilai Akademik
-                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/50">
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/50">
                             KKM: {kkm}
                         </span>
                     </CardTitle>

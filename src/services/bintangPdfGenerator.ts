@@ -8,6 +8,7 @@ import { formatDegreeProperly } from '../utils/greetingUtils';
 import { generateContextualHomeroomNote } from '../components/pages/bintang/bintangConstants';
 import { violationList } from './violations.data';
 import { normalizeTextForPdf } from '../utils/textSanitizer';
+import { dedupeViolations, dedupeQuizPoints } from '../utils/academicRecordUtils';
 
 
 
@@ -923,8 +924,8 @@ export const downloadBintangReportAction = async ({
     ]);
 
     const allEvals = (evalsBatch.data || []) as any[];
-    const allVios = (viosBatch.data || []) as any[];
-    const allQuiz = (qpBatch.data || []) as any[];
+    const allVios = dedupeViolations((viosBatch.data || []) as any[]);
+    const allQuiz = dedupeQuizPoints((qpBatch.data || []) as any[]);
 
     const viosByStudent = new Map<string, any[]>();
     for (const v of allVios) {

@@ -206,7 +206,7 @@ const JurnalMengajarPage: React.FC<JurnalMengajarPageProps> = ({ embedded = true
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 relative z-10">
           <div className="relative">
             <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 blur-xl opacity-50 dark:opacity-20 rounded-full" />
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400 bg-gradient-to-r from-emerald-500 to-emerald-600 bg-clip-text text-transparent font-serif relative">
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400 bg-gradient-to-r from-emerald-700 to-emerald-800 dark:from-emerald-400 dark:to-emerald-300 bg-clip-text text-transparent font-serif relative">
               Jurnal Mengajar
             </h1>
             <p className="mt-2 text-gray-600 dark:text-gray-400 relative">
@@ -216,7 +216,7 @@ const JurnalMengajarPage: React.FC<JurnalMengajarPageProps> = ({ embedded = true
           {!backendMissing && (
             <Button
               onClick={handleOpenAdd}
-              className="rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:-translate-y-0.5 transition-all duration-300"
+              className="rounded-xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
             >
               <Plus className="w-4 h-4 mr-2" /> Tambah Jurnal
             </Button>
@@ -249,7 +249,7 @@ const JurnalMengajarPage: React.FC<JurnalMengajarPageProps> = ({ embedded = true
             <Button
               onClick={handleOpenAdd}
               size="sm"
-              className="rounded-xl shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/40 text-xs sm:text-sm font-semibold h-9 sm:h-10 px-3 sm:px-4 cursor-pointer"
+              className="rounded-xl shadow-sm hover:shadow-md text-xs sm:text-sm font-semibold h-9 sm:h-10 px-3 sm:px-4 cursor-pointer"
             >
               <Plus className="w-4 h-4 sm:mr-1.5 shrink-0" />
               <span className="hidden sm:inline">Tambah Jurnal</span>
@@ -262,7 +262,7 @@ const JurnalMengajarPage: React.FC<JurnalMengajarPageProps> = ({ embedded = true
           <MotionDiv initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="space-y-6">
           
           {/* Modern Filter Section */}
-          <div className="relative group rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/5">
+          <div className="relative group rounded-2xl transition-all duration-300 hover:shadow-md">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-300" />
             <div className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-2xl overflow-hidden">
               <button
@@ -448,7 +448,7 @@ const JurnalMengajarPage: React.FC<JurnalMengajarPageProps> = ({ embedded = true
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-sm">
                   Tidak ada jurnal yang cocok dengan filter saat ini. Coba ubah filter atau tambah jurnal baru.
                 </p>
-                <Button onClick={handleOpenAdd} className="rounded-xl shadow-lg shadow-emerald-500/20">
+                <Button onClick={handleOpenAdd} className="rounded-xl shadow-sm hover:shadow-md">
                   <Plus className="w-4 h-4 mr-2" /> Tambah Jurnal
                 </Button>
               </div>

@@ -15,9 +15,7 @@ import { queryKeys } from '../lib/queryKeys';
 import type { DashboardQueryData, WeeklyAttendance, StudentAchievement } from '../types';
 import type { Database } from '../types';
 
-// =============================================================================
 // TYPES
-// =============================================================================
 
 /**
  * Return type for the useDashboardData hook.
@@ -37,9 +35,7 @@ export interface UseDashboardDataReturn {
     isRefetching: boolean;
 }
 
-// =============================================================================
 // HELPER FUNCTIONS
-// =============================================================================
 
 /**
  * Generates an array of the last N days' dates in YYYY-MM-DD format.
@@ -132,9 +128,7 @@ export const calculateWeeklyAttendance = (
     });
 };
 
-// =============================================================================
 // DATA FETCHING
-// =============================================================================
 
 /**
  * Fetches all dashboard data from Supabase.
@@ -367,9 +361,7 @@ export const fetchDashboardData = async (userId: string, userRole: string): Prom
     };
 };
 
-// =============================================================================
 // HOOK
-// =============================================================================
 
 /**
  * Custom hook for fetching and managing dashboard data.

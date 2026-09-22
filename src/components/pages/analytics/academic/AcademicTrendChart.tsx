@@ -304,7 +304,7 @@ export const AcademicTrendChart: React.FC<AcademicTrendChartProps> = ({
             <CardHeader className="pb-2.5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <CardTitle className="flex items-center gap-2.5 text-base font-bold text-slate-900 dark:text-white">
-                        <div className="w-8 h-8 rounded-xl bg-brand-500/10 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 flex items-center justify-center border border-brand-500/20 shadow-xs">
+                        <div className="w-8 h-8 rounded-xl bg-brand-500/10 dark:bg-brand-500/20 text-brand-700 dark:text-brand-400 flex items-center justify-center border border-brand-500/20 shadow-xs">
                             <TrendingUp className="w-4 h-4" />
                         </div>
                         <div>

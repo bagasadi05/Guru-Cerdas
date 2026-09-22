@@ -34,7 +34,7 @@ export const AIFieldGenerator: React.FC<AIFieldGeneratorProps> = ({
           type="button"
           onClick={() => onGenerate(fieldId)}
           disabled={isLoading}
-          className="text-xs bg-brand-50 hover:bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:hover:bg-brand-800/50 dark:text-brand-400 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50"
+          className="text-xs bg-brand-50 hover:bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:hover:bg-brand-800/50 dark:text-brand-400 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50"
         >
           {isLoading ? (
             <RefreshCw className="w-3.5 h-3.5 animate-spin" />

@@ -17,11 +17,11 @@ export const POINT_CATEGORIES = {
 export type PointCategory = keyof typeof POINT_CATEGORIES;
 
 const POINT_CATEGORY_BADGE_CLASSES: Record<PointCategory, string> = {
-    bertanya: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+    bertanya: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
     presentasi: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
-    tugas_tambahan: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
-    menjawab: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400',
-    diskusi: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400',
+    tugas_tambahan: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+    menjawab: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
+    diskusi: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400',
     lainnya: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
 };
 

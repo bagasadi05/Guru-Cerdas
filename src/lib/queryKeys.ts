@@ -20,9 +20,7 @@
  * ```
  */
 
-// =============================================================================
 // FILTER TYPES
-// =============================================================================
 
 /**
  * Filter parameters for student queries.
@@ -102,9 +100,7 @@ export interface TeachingJournalFilters {
     endDate?: string;
 }
 
-// =============================================================================
 // QUERY KEY FACTORY
-// =============================================================================
 
 /**
  * Centralized query key factory for React Query.
@@ -127,9 +123,7 @@ export interface TeachingJournalFilters {
  * ```
  */
 export const queryKeys = {
-    // =========================================================================
     // STUDENTS
-    // =========================================================================
     students: {
         /** Root key for all student queries */
         all: ['students'] as const,
@@ -153,9 +147,7 @@ export const queryKeys = {
             [...queryKeys.students.detail(id), 'full'] as const,
     },
 
-    // =========================================================================
     // CLASSES
-    // =========================================================================
     classes: {
         /** Root key for all class queries */
         all: ['classes'] as const,
@@ -172,9 +164,7 @@ export const queryKeys = {
             [...queryKeys.classes.detail(id), 'students'] as const,
     },
 
-    // =========================================================================
     // ATTENDANCE
-    // =========================================================================
     attendance: {
         /** Root key for all attendance queries */
         all: ['attendance'] as const,
@@ -199,9 +189,7 @@ export const queryKeys = {
             [...queryKeys.attendance.all, 'summary', classId ?? 'all'] as const,
     },
 
-    // =========================================================================
     // SCHEDULES
-    // =========================================================================
     schedules: {
         /** Root key for all schedule queries */
         all: ['schedules'] as const,
@@ -218,9 +206,7 @@ export const queryKeys = {
             [...queryKeys.schedules.all, 'class', classId] as const,
     },
 
-    // =========================================================================
     // TASKS
-    // =========================================================================
     tasks: {
         /** Root key for all task queries */
         all: ['tasks'] as const,
@@ -241,9 +227,7 @@ export const queryKeys = {
             [...queryKeys.tasks.all, 'pending'] as const,
     },
 
-    // =========================================================================
     // ACADEMIC RECORDS
-    // =========================================================================
     academicRecords: {
         /** Root key for all academic record queries */
         all: ['academicRecords'] as const,
@@ -264,9 +248,7 @@ export const queryKeys = {
             [...queryKeys.academicRecords.all, 'subject', subject] as const,
     },
 
-    // =========================================================================
     // VIOLATIONS
-    // =========================================================================
     violations: {
         /** Root key for all violation queries */
         all: ['violations'] as const,
@@ -279,9 +261,7 @@ export const queryKeys = {
             [...queryKeys.violations.all, 'student', studentId] as const,
     },
 
-    // =========================================================================
     // REPORTS
-    // =========================================================================
     reports: {
         /** Root key for all report queries */
         all: ['reports'] as const,
@@ -291,9 +271,7 @@ export const queryKeys = {
             [...queryKeys.reports.all, 'student', studentId] as const,
     },
 
-    // =========================================================================
     // ACHIEVEMENTS (Portofolio Prestasi)
-    // =========================================================================
     achievements: {
         /** Root key for all achievement queries */
         all: ['achievements'] as const,
@@ -314,9 +292,7 @@ export const queryKeys = {
             [...queryKeys.achievements.all, 'detail', id] as const,
     },
 
-    // =========================================================================
     // TEACHING JOURNALS (Jurnal Mengajar)
-    // =========================================================================
     teachingJournals: {
         /** Root key for all teaching journal queries */
         all: ['teachingJournals'] as const,
@@ -345,9 +321,7 @@ export const queryKeys = {
             [...queryKeys.teachingJournals.all, 'rekap', filters ?? {}] as const,
     },
 
-    // =========================================================================
     // COMMUNICATIONS
-    // =========================================================================
     communications: {
         /** Root key for all communication queries */
         all: ['communications'] as const,
@@ -361,9 +335,7 @@ export const queryKeys = {
             [...queryKeys.communications.all, 'unread'] as const,
     },
 
-    // =========================================================================
     // DASHBOARD
-    // =========================================================================
     dashboard: {
         /** Root key for all dashboard queries */
         all: ['dashboard'] as const,
@@ -381,9 +353,7 @@ export const queryKeys = {
             [...queryKeys.dashboard.all, 'attendanceWidget'] as const,
     },
 
-    // =========================================================================
     // USER/AUTH
-    // =========================================================================
     user: {
         /** Root key for all user queries */
         all: ['user'] as const,
@@ -396,9 +366,7 @@ export const queryKeys = {
     },
 } as const;
 
-// =============================================================================
 // HELPER FUNCTIONS
-// =============================================================================
 
 /**
  * Invalidates all queries related to a specific entity type.

@@ -438,13 +438,13 @@ const SchedulePage: React.FC = () => {
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         {/* Stitch Intro Badge */}
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-950/60 border border-emerald-500/30 dark:border-emerald-500/40 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 mb-1.5 sm:mb-2 whitespace-nowrap">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-950/60 border border-emerald-500/30 dark:border-emerald-500/40 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 mb-1.5 sm:mb-2 whitespace-nowrap">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-[#00d284] animate-pulse shrink-0" />
                             <span>Menu Utama</span>
                         </div>
                         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight font-serif">
                             <span className="relative inline-block">
-                                <span className="relative z-10 bg-gradient-to-r from-slate-900 via-emerald-800 to-emerald-600 dark:from-white dark:via-emerald-100 dark:to-[#00d284] bg-clip-text text-transparent">
+                                <span className="relative z-10 bg-gradient-to-r from-slate-900 via-emerald-800 to-emerald-700 dark:from-white dark:via-emerald-100 dark:to-[#00d284] bg-clip-text text-transparent">
                                     Jadwal & Jurnal Mengajar
                                 </span>
                                 <span className="absolute left-0 bottom-0.5 sm:bottom-1 w-full h-[5px] sm:h-[6px] bg-emerald-500/20 dark:bg-emerald-500/30 rounded-full -z-0 blur-[1px]" />

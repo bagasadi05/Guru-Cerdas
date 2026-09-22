@@ -73,7 +73,7 @@ export function usePhScheduleDomain({
             const yearName = Array.isArray(academicYear) ? academicYear[0]?.name : academicYear?.name;
             return {
                 value: s.id,
-                label: [s.name, yearName].filter(Boolean).join(' — '),
+                label: [s.name, yearName].filter(Boolean).join(' - '),
             };
         });
     }, [semesters]);

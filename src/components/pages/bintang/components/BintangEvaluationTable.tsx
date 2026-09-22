@@ -84,7 +84,7 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
             <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 dark:bg-slate-850 text-white p-3 sm:px-4 sm:py-3 rounded-2xl shadow-md border border-slate-700/80">
               {/* Kiri: Status pilihan */}
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-brand-500/20 border border-brand-500/30 text-brand-300">
+                <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-brand-500/20 border border-brand-500/30 text-brand-700">
                   <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-600 text-white text-xs font-bold shadow-sm">
                     {bulkSelection.selectedCount}
                   </span>

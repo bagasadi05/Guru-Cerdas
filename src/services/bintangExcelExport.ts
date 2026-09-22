@@ -1,6 +1,7 @@
 import { getExcelJS } from '../utils/dynamicImports';
 import { getAspectForViolation, calculateAspectPoints, type AspectPointsSummary, type BintangGrade } from './bintangService';
 import { formatExportDate } from '../utils/exportUtils';
+import { dedupeViolations, dedupeQuizPoints } from '../utils/academicRecordUtils';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -89,11 +90,14 @@ export const exportBintangToExcel = async (options: BintangExcelOptions): Promis
         academicYear = '',
         semesterName = '',
         students = [],
-        violations = [],
-        quizPoints = [],
+        violations: rawViolations = [],
+        quizPoints: rawQuizPoints = [],
         evaluations = [],
         attitudeMap,
     } = options || {};
+
+    const violations = dedupeViolations(rawViolations as any[]);
+    const quizPoints = dedupeQuizPoints(rawQuizPoints as any[]);
 
     const ExcelJS = await getExcelJS();
     const workbook = new ExcelJS.Workbook();

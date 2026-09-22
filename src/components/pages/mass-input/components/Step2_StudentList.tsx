@@ -221,7 +221,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                     <button
                         type="button"
                         onClick={() => setIsVoiceModalOpen(true)}
-                        className="flex items-center gap-1.5 h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl text-xs font-semibold transition-all bg-gradient-to-r from-rose-500 to-brand-600 hover:from-rose-600 hover:to-brand-700 text-white shadow-sm shadow-rose-500/20 active:scale-95 flex-shrink-0"
+                        className="flex items-center gap-1.5 h-9 sm:h-10 px-2.5 sm:px-3 rounded-xl text-xs font-semibold transition-all bg-gradient-to-r from-rose-600 to-brand-700 hover:from-rose-700 hover:to-brand-800 text-white shadow-sm shadow-rose-600/20 active:scale-95 flex-shrink-0"
                         title="Input nilai menggunakan suara (Dikte)"
                     >
                         <Mic className="w-3.5 h-3.5 animate-pulse text-rose-100" />

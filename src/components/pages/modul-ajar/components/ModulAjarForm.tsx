@@ -370,7 +370,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
             type="button"
             onClick={onGenerate}
             disabled={queueStatus === 'pending' || queueStatus === 'processing' || isAiGenerating || !formState.mataPelajaran || !formState.topik}
-            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-r from-brand-600 to-emerald-600 hover:from-brand-700 hover:to-emerald-700 text-white rounded-xl font-bold flex items-center gap-1.5 disabled:opacity-50 shadow-md transition-all text-xs sm:text-sm cursor-pointer active:scale-95 duration-150"
+            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-r from-brand-700 to-emerald-700 hover:from-brand-800 hover:to-emerald-800 text-white rounded-xl font-bold flex items-center gap-1.5 disabled:opacity-50 shadow-md transition-all text-xs sm:text-sm cursor-pointer active:scale-95 duration-150"
           >
             <Sparkles className="w-4 h-4" />
             <span>{t.lessonPlan.create.replace('{type}', formState.documentType)}</span>

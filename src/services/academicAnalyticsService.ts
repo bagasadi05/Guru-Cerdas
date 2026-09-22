@@ -392,7 +392,7 @@ export function generateOfflineAcademicInsights(
             id: 'critical-subjects',
             severity: 'high',
             title: `${criticalSubjects.length} mapel di bawah KKTP`,
-            detail: `${criticalSubjects.map((s) => s.subject).join(', ')} — rata-rata jauh di bawah target ${DEFAULT_KKTP}. Perlu remedial segera.`,
+            detail: `${criticalSubjects.map((s) => s.subject).join(', ')}: rata-rata jauh di bawah target ${DEFAULT_KKTP}. Perlu remedial segera.`,
             cta: { label: 'Lihat detail mapel', action: 'scroll-subjects' },
         });
     }
@@ -404,7 +404,7 @@ export function generateOfflineAcademicInsights(
             id: 'declining-trends',
             severity: 'warning',
             title: `Tren penurunan di ${declining.length} mapel`,
-            detail: `${declining.map((s) => `${s.subject} (${s.trendDelta})`).join(', ')} — nilai menurun dibanding periode sebelumnya.`,
+            detail: `${declining.map((s) => `${s.subject} (${s.trendDelta})`).join(', ')}: nilai menurun dibanding periode sebelumnya.`,
         });
     }
 
@@ -437,7 +437,7 @@ export function generateOfflineAcademicInsights(
             id: 'all-good',
             severity: 'good',
             title: 'Semua mapel dalam kondisi baik',
-            detail: `Rata-rata keseluruhan ${kpi.overallAverage} — seluruh mapel memenuhi target KKTP. Pertahankan!`,
+            detail: `Rata-rata keseluruhan ${kpi.overallAverage}, seluruh mapel memenuhi target KKTP. Pertahankan!`,
         });
     }
 

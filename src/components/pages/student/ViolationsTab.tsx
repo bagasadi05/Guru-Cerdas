@@ -213,7 +213,7 @@ const ViolationCard: React.FC<{
                         {severity.label}
                     </span>
                     {violation.parent_notified && (
-                        <span className="px-2 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                        <span className="px-2 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 flex items-center gap-1">
                             <BellIcon className="w-3 h-3" />
                             Terkirim
                         </span>

@@ -37,7 +37,7 @@ const AppearanceSection: React.FC = () => {
         <div className="space-y-6">
             <SettingsCard className="overflow-hidden">
                 <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
-                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">Tampilan Aplikasi</CardTitle>
+                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-700 to-emerald-700 dark:from-green-400 dark:to-emerald-400">Tampilan Aplikasi</CardTitle>
                     <CardDescription className="text-base">Sesuaikan tema aplikasi dengan preferensi visual Anda.</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-8 space-y-6">
@@ -100,7 +100,7 @@ const AppearanceSection: React.FC = () => {
             {/* Accessibility Section */}
             <SettingsCard className="overflow-hidden">
                 <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
-                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400">Aksesibilitas</CardTitle>
+                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-700 to-blue-700 dark:from-cyan-400 dark:to-blue-400">Aksesibilitas</CardTitle>
                     <CardDescription className="text-base">Pengaturan untuk meningkatkan aksesibilitas aplikasi.</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6 space-y-4">
@@ -157,7 +157,7 @@ const AppearanceSection: React.FC = () => {
             {/* Onboarding Tour Section */}
             <SettingsCard className="overflow-hidden">
                 <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
-                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400">Tutorial Aplikasi</CardTitle>
+                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-700 to-teal-700 dark:from-emerald-400 dark:to-teal-400">Tutorial Aplikasi</CardTitle>
                     <CardDescription className="text-base">Pelajari fitur-fitur aplikasi dengan panduan interaktif.</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">

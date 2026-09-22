@@ -143,7 +143,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
             {domain.effectiveClassId && domain.selectedSemesterId && !domain.isLoadingSchedules && domain.rawSchedules.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                     <div className="bg-white/90 dark:bg-[#111c2e]/80 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-[#1c2b44] p-4 shadow-sm flex items-center gap-3.5">
-                        <div className="w-11 h-11 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0 border border-brand-200/60 dark:border-brand-500/20">
+                        <div className="w-11 h-11 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-400 flex items-center justify-center shrink-0 border border-brand-200/60 dark:border-brand-500/20">
                             <CalendarIcon className="w-5 h-5" />
                         </div>
                         <div className="min-w-0">
@@ -169,7 +169,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                     </div>
 
                     <div className="bg-white/90 dark:bg-[#111c2e]/80 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-[#1c2b44] p-4 shadow-sm flex items-center gap-3.5">
-                        <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200/60 dark:border-emerald-500/20">
+                        <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200/60 dark:border-emerald-500/20">
                             <CheckCircleIcon className="w-5 h-5" />
                         </div>
                         <div className="min-w-0">
@@ -581,7 +581,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                                         ? 'bg-emerald-500 text-white animate-pulse'
                                                         : st === 'upcoming'
                                                         ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
-                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                                                 }`}
                                             >
                                                 {rel}
@@ -778,7 +778,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                             onClick={() => domain.handleCopyWhatsApp('upcoming')}
                             className="p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-800 hover:border-emerald-500 dark:hover:border-emerald-500 bg-white dark:bg-slate-900/50 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 text-left transition-all group"
                         >
-                            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 flex items-center justify-center mb-2.5">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 flex items-center justify-center mb-2.5">
                                 <ClockIcon className="w-5 h-5" />
                             </div>
                             <div className="font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors">
@@ -794,7 +794,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                             onClick={() => domain.handleCopyWhatsApp('all')}
                             className="p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-800 hover:border-brand-500 dark:hover:border-brand-500 bg-white dark:bg-slate-900/50 hover:bg-brand-50/40 dark:hover:bg-brand-950/20 text-left transition-all group"
                         >
-                            <div className="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-900/40 text-brand-600 flex items-center justify-center mb-2.5">
+                            <div className="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-900/40 text-brand-700 flex items-center justify-center mb-2.5">
                                 <CalendarIcon className="w-5 h-5" />
                             </div>
                             <div className="font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors">

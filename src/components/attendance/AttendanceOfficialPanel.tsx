@@ -68,7 +68,7 @@ export const AttendanceOfficialPanel: React.FC<Props> = ({ students, attendanceR
     <div className="border border-brand-200 dark:border-brand-800 rounded-xl p-4 bg-brand-50/50 dark:bg-brand-900/10">
       <div className="flex items-center gap-2 mb-3">
         <ShieldCheckIcon className="w-5 h-5 text-brand-600" />
-        <h3 className="font-bold text-brand-800 dark:text-brand-300">Panel Wali Kelas — Status Resmi</h3>
+        <h3 className="font-bold text-brand-800 dark:text-brand-300">Panel Wali Kelas: Status Resmi</h3>
       </div>
       <p className="text-xs text-brand-600/70 dark:text-brand-400/70 mb-3">
         Tetapkan status resmi untuk rekap harian. Menggantikan status dari guru mapel jika ada.

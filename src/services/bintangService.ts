@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { violationList, type BintangAspect } from './violations.data';
 import type { Database } from './database.types';
+import { dedupeViolations, dedupeQuizPoints } from '../utils/academicRecordUtils';
 import type {
   BintangMentoringInsert,
   BintangDailyObservationInsert,
@@ -301,7 +302,8 @@ export const bintangService = {
       }
 
       const rawViolations = data || [];
-      const recorderIds = Array.from(new Set(rawViolations.map((v: any) => v.user_id).filter(Boolean)));
+      const dedupedViolations = dedupeViolations(rawViolations as any);
+      const recorderIds = Array.from(new Set(dedupedViolations.map((v: any) => v.user_id).filter(Boolean)));
       let recorderNames: Record<string, string> = {};
       if (recorderIds.length > 0) {
         try {
@@ -321,7 +323,7 @@ export const bintangService = {
         }
       }
 
-      return rawViolations.map((v: any) => {
+      return dedupedViolations.map((v: any) => {
         const recorderName = recorderNames[v.user_id] || null;
         return {
           ...v,
@@ -392,22 +394,22 @@ export const bintangService = {
       const [viosRes, quizRes] = await Promise.all([
         supabase
           .from('violations')
-          .select('date, description, points, student_id')
+          .select('date, description, points, student_id, created_at')
           .in('student_id', targetStudentIds)
           .gte('date', startDate)
           .lt('date', endDate)
           .is('deleted_at', null),
         supabase
           .from('quiz_points')
-          .select('quiz_date, points, student_id')
+          .select('quiz_name, subject, quiz_date, points, student_id, created_at')
           .in('student_id', targetStudentIds)
           .gte('quiz_date', startDate)
           .lt('quiz_date', endDate)
           .is('deleted_at', null),
       ]);
 
-      const allVios = viosRes.data || [];
-      const allQuiz = quizRes.data || [];
+      const allVios = dedupeViolations((viosRes.data || []) as any);
+      const allQuiz = dedupeQuizPoints((quizRes.data || []) as any);
 
       return months.map(month => {
         const d = new Date(month + '-01');
@@ -453,11 +455,24 @@ export const bintangService = {
 
   /**
    * Bulk insert violation records (used by BINTANG dashboard for mass violation input).
+   * Sanitizes payloads against internal duplicates (same student, date, and description).
    */
   async bulkInsertViolations(payloads: Database['public']['Tables']['violations']['Insert'][]) {
+    if (!payloads || payloads.length === 0) return [];
+
+    const seen = new Set<string>();
+    const sanitizedPayloads = payloads.filter((p) => {
+      const key = `${p.student_id}::${p.date}::${(p.description || '').trim().toLowerCase()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    if (sanitizedPayloads.length === 0) return [];
+
     const { data, error } = await supabase
       .from('violations')
-      .insert(payloads)
+      .insert(sanitizedPayloads)
       .select('id');
 
     if (error) throw error;

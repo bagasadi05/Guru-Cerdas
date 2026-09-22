@@ -149,7 +149,7 @@ export const StudentProfileHeader: React.FC<StudentProfileHeaderProps> = ({
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Kode Akses Saat Ini</label>
                             <div className="flex items-center gap-2">
-                                <div className="flex-1 bg-slate-100 dark:bg-slate-800 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 font-mono text-xl text-center font-bold tracking-widest text-emerald-600 dark:text-emerald-400">
+                                <div className="flex-1 bg-slate-100 dark:bg-slate-800 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 font-mono text-xl text-center font-bold tracking-widest text-emerald-700 dark:text-emerald-400">
                                     {student.access_code}
                                 </div>
                                 <Button

@@ -5,9 +5,7 @@ import {
   recordCircuitFailure as baseRecordCircuitFailure,
 } from '../utils/aiConfig';
 
-// =============================================================================
 // SHARED TYPES
-// =============================================================================
 
 export interface GeminiMessage {
   role: 'user' | 'assistant' | 'system';
@@ -20,9 +18,7 @@ export interface GeminiResponse {
   }[];
 }
 
-// =============================================================================
 // TASK CLASSIFICATION
-// =============================================================================
 
 export type AiTaskType =
   | 'teacher-report'
@@ -35,18 +31,14 @@ export type AiTaskType =
 
 export type AiProviderName = 'gemini' | 'groq';
 
-// =============================================================================
 // PROVIDER INTERFACE
-// =============================================================================
 
 export interface AiProvider {
   readonly name: AiProviderName;
   generateContent(messages: GeminiMessage[], model: string): Promise<GeminiResponse>;
 }
 
-// =============================================================================
 // ROUTING CONFIG
-// =============================================================================
 
 interface RouteConfig {
   primary: AiProviderName;
@@ -75,9 +67,7 @@ const FALLBACK_MODELS: Record<AiTaskType, string> = {
   general:            'llama-3.3-70b-versatile',
 };
 
-// =============================================================================
 // PROVIDER ROUTER
-// =============================================================================
 
 export class ProviderRouter {
   private providers = new Map<AiProviderName, AiProvider>();
@@ -146,8 +136,6 @@ export class ProviderRouter {
   }
 }
 
-// =============================================================================
 // SINGLETON
-// =============================================================================
 
 export const aiRouter = new ProviderRouter();

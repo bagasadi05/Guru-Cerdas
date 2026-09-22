@@ -14,7 +14,6 @@ import { CheckIcon, XCircleIcon, CheckSquareIcon } from '../components/Icons';
  * This enhanced version is for more complex use cases.
  */
 
-// ============================================
 // Bulk Selection Hook (Enhanced)
 export interface UseBulkSelectionOptions<T> {
     items: T[];
@@ -133,9 +132,7 @@ export function useBulkSelection<T extends Record<string, any>>(
     };
 }
 
-// ============================================
 // Bulk Selection Checkbox Component
-// ============================================
 interface BulkCheckboxProps {
     checked: boolean;
     indeterminate?: boolean;
@@ -197,9 +194,7 @@ export const BulkCheckbox: React.FC<BulkCheckboxProps> = ({
     );
 };
 
-// ============================================
 // Bulk Action Bar Component
-// ============================================
 export interface BulkAction {
     id: string;
     label: string;
@@ -296,9 +291,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
     );
 };
 
-// ============================================
 // Selectable List Item Wrapper
-// ============================================
 interface SelectableItemProps {
     id: string;
     isSelected: boolean;
@@ -378,9 +371,7 @@ export const SelectableItem: React.FC<SelectableItemProps> = ({
     );
 };
 
-// ============================================
 // Bulk Select Header Component
-// ============================================
 interface BulkSelectHeaderProps {
     isSelectionMode: boolean;
     isAllSelected: boolean;
@@ -440,9 +431,7 @@ export const BulkSelectHeader: React.FC<BulkSelectHeaderProps> = ({
     );
 };
 
-// ============================================
 // Example Usage Component (for documentation)
-// ============================================
 /*
 Usage Example:
 

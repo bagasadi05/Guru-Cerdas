@@ -60,8 +60,8 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                         key={student.id}
                         id={`student-${student.id}`}
                         className={`
-                            attendance-student-card group flex flex-col p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900/60 sm:backdrop-blur-xl border shadow-sm sm:shadow-[0_8px_30px_rgb(0,0,0,0.04)]
-                            sm:hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] sm:hover:border-emerald-500/20 dark:sm:hover:border-emerald-500/30 sm:hover:-translate-y-0.5
+                            attendance-student-card group flex flex-col p-4 sm:p-5 rounded-xl bg-white dark:bg-slate-900 border shadow-sm
+                            sm:hover:shadow-md sm:hover:border-emerald-500/40 dark:sm:hover:border-emerald-500/40 sm:hover:-translate-y-0.5
                             transition-colors sm:transition-all duration-200 card-interactive
                             ${highlightedStudentId === student.id ? 'ring-2 ring-emerald-500' : ''}
                             ${isSelected
@@ -155,7 +155,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                         </div>
 
                         {/* 2. Attendance Buttons (Middle Row) */}
-                        <div className="mt-4 sm:mt-5 mb-4 bg-slate-100/50 dark:bg-slate-800/40 backdrop-blur-sm p-2 sm:p-3 rounded-2xl border border-white/60 dark:border-slate-700/50 shadow-inner">
+                        <div className="mt-4 sm:mt-5 mb-4 bg-slate-100/70 dark:bg-slate-800/60 p-2 sm:p-3 rounded-xl border border-slate-200/60 dark:border-slate-700/50 shadow-inner">
                             <div className="grid grid-cols-5 gap-1 sm:gap-2 w-full" data-tutorial="attendance-status-group">
                                 {statusOptions.map((opt) => {
                                     const isActive = record?.status === opt.value;
@@ -166,15 +166,15 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
 
                                     if (isActive) {
                                         if (opt.value === AttendanceStatus.Hadir) {
-                                            circleClass = "bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/30 ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-slate-800";
+                                            circleClass = "bg-emerald-500 border-emerald-500 text-white shadow-sm ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-slate-800";
                                         } else if (opt.value === AttendanceStatus.Sakit) {
-                                            circleClass = "bg-sky-500 border-sky-500 text-white shadow-md shadow-sky-500/30 ring-2 ring-sky-500 ring-offset-2 dark:ring-offset-slate-800";
+                                            circleClass = "bg-sky-500 border-sky-500 text-white shadow-sm ring-2 ring-sky-500 ring-offset-2 dark:ring-offset-slate-800";
                                         } else if (opt.value === AttendanceStatus.Izin) {
-                                            circleClass = "bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-500/30 ring-2 ring-amber-500 ring-offset-2 dark:ring-offset-slate-800";
+                                            circleClass = "bg-amber-500 border-amber-500 text-white shadow-sm ring-2 ring-amber-500 ring-offset-2 dark:ring-offset-slate-800";
                                         } else if (opt.value === AttendanceStatus.Alpha) {
-                                            circleClass = "bg-rose-500 border-rose-500 text-white shadow-md shadow-rose-500/30 ring-2 ring-rose-500 ring-offset-2 dark:ring-offset-slate-800";
+                                            circleClass = "bg-rose-500 border-rose-500 text-white shadow-sm ring-2 ring-rose-500 ring-offset-2 dark:ring-offset-slate-800";
                                         } else if (opt.value === AttendanceStatus.Libur) {
-                                            circleClass = "bg-purple-500 border-purple-500 text-white shadow-md shadow-purple-500/30 ring-2 ring-purple-500 ring-offset-2 dark:ring-offset-slate-800";
+                                            circleClass = "bg-purple-500 border-purple-500 text-white shadow-sm ring-2 ring-purple-500 ring-offset-2 dark:ring-offset-slate-800";
                                         }
                                         textClass = "text-slate-800 dark:text-white font-bold";
                                     } else {
@@ -186,7 +186,7 @@ export const AttendanceList: React.FC<AttendanceListProps> = ({ students, attend
                                         <button type="button"
                                             key={opt.value}
                                             onClick={() => onStatusChange(student.id, opt.value)}
-                                            className="group/btn flex flex-col items-center justify-center gap-1 sm:gap-1.5 py-1.5 px-0.5 rounded-xl outline-none min-h-[44px] cursor-pointer active:scale-90 transition-all duration-150 select-none"
+                                            className="group/btn flex flex-col items-center justify-center gap-1 sm:gap-1.5 py-1.5 px-0.5 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-800 min-h-[44px] cursor-pointer active:scale-90 transition-all duration-150 select-none"
                                             title={opt.label}
                                             aria-label={opt.label}
                                             aria-pressed={isActive}

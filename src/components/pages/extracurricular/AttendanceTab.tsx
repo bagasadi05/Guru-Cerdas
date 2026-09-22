@@ -129,10 +129,10 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                         <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tandai Semua:</span>
                         <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
                             {[
-                                { label: 'Hadir', status: 'Hadir', icon: CheckSquare, color: 'text-white', bg: 'bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700', border: 'border-transparent shadow-sm shadow-emerald-500/20' },
-                                { label: 'Sakit', status: 'Sakit', icon: Activity, color: 'text-white', bg: 'bg-sky-500 hover:bg-sky-600 dark:bg-sky-600 dark:hover:bg-sky-700', border: 'border-transparent shadow-sm shadow-sky-500/20' },
-                                { label: 'Izin', status: 'Izin', icon: Info, color: 'text-white', bg: 'bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700', border: 'border-transparent shadow-sm shadow-amber-500/20' },
-                                { label: 'Libur', status: 'Libur', icon: CalendarOff, color: 'text-white', bg: 'bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700', border: 'border-transparent shadow-sm shadow-purple-500/20' },
+                                { label: 'Hadir', status: 'Hadir', icon: CheckSquare, color: 'text-white', bg: 'bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700', border: 'border-transparent shadow-sm' },
+                                { label: 'Sakit', status: 'Sakit', icon: Activity, color: 'text-white', bg: 'bg-sky-500 hover:bg-sky-600 dark:bg-sky-600 dark:hover:bg-sky-700', border: 'border-transparent shadow-sm' },
+                                { label: 'Izin', status: 'Izin', icon: Info, color: 'text-white', bg: 'bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700', border: 'border-transparent shadow-sm' },
+                                { label: 'Libur', status: 'Libur', icon: CalendarOff, color: 'text-white', bg: 'bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700', border: 'border-transparent shadow-sm' },
                             ].map((btn) => (
                                 <button type="button"
                                     key={btn.status}
@@ -239,11 +239,11 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                                     <div className="mt-5 bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-2xl border border-slate-100 dark:border-slate-700/50">
                                         <div className="grid grid-cols-5 gap-1 lg:gap-2 w-full">
                                             {[
-                                                { id: 'Hadir', label: 'H', fullLabel: 'Hadir', icon: CheckCircle2, activeClass: 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20 ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-slate-800 border-emerald-500' },
-                                                { id: 'Sakit', label: 'S', fullLabel: 'Sakit', icon: Activity, activeClass: 'bg-sky-500 text-white shadow-md shadow-sky-500/20 ring-2 ring-sky-500 ring-offset-2 dark:ring-offset-slate-800 border-sky-500' },
-                                                { id: 'Izin', label: 'I', fullLabel: 'Izin', icon: Info, activeClass: 'bg-amber-500 text-white shadow-md shadow-amber-500/20 ring-2 ring-amber-500 ring-offset-2 dark:ring-offset-slate-800 border-amber-500' },
-                                                { id: 'Alpha', label: 'A', fullLabel: 'Alpha', icon: XCircle, activeClass: 'bg-rose-500 text-white shadow-md shadow-rose-500/20 ring-2 ring-rose-500 ring-offset-2 dark:ring-offset-slate-800 border-rose-500' },
-                                                { id: 'Libur', label: 'L', fullLabel: 'Libur', icon: CalendarOff, activeClass: 'bg-purple-500 text-white shadow-md shadow-purple-500/20 ring-2 ring-purple-500 ring-offset-2 dark:ring-offset-slate-800 border-purple-500' },
+                                                { id: 'Hadir', label: 'H', fullLabel: 'Hadir', icon: CheckCircle2, activeClass: 'bg-emerald-500 text-white shadow-sm ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-slate-800 border-emerald-500' },
+                                                { id: 'Sakit', label: 'S', fullLabel: 'Sakit', icon: Activity, activeClass: 'bg-sky-500 text-white shadow-sm ring-2 ring-sky-500 ring-offset-2 dark:ring-offset-slate-800 border-sky-500' },
+                                                { id: 'Izin', label: 'I', fullLabel: 'Izin', icon: Info, activeClass: 'bg-amber-500 text-white shadow-sm ring-2 ring-amber-500 ring-offset-2 dark:ring-offset-slate-800 border-amber-500' },
+                                                { id: 'Alpha', label: 'A', fullLabel: 'Alpha', icon: XCircle, activeClass: 'bg-rose-500 text-white shadow-sm ring-2 ring-rose-500 ring-offset-2 dark:ring-offset-slate-800 border-rose-500' },
+                                                { id: 'Libur', label: 'L', fullLabel: 'Libur', icon: CalendarOff, activeClass: 'bg-purple-500 text-white shadow-sm ring-2 ring-purple-500 ring-offset-2 dark:ring-offset-slate-800 border-purple-500' },
                                             ].map((status) => {
                                                 const isActive = currentStatus === status.id;
                                                 const initial = status.id.charAt(0).toUpperCase();
@@ -252,11 +252,11 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                                                 let textClass = "";
 
                                                 if (isActive) {
-                                                    if (status.id === 'Hadir') circleClass = "bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/30 ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-slate-800";
-                                                    else if (status.id === 'Sakit') circleClass = "bg-sky-500 border-sky-500 text-white shadow-md shadow-sky-500/30 ring-2 ring-sky-500 ring-offset-2 dark:ring-offset-slate-800";
-                                                    else if (status.id === 'Izin') circleClass = "bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-500/30 ring-2 ring-amber-500 ring-offset-2 dark:ring-offset-slate-800";
-                                                    else if (status.id === 'Alpha') circleClass = "bg-rose-500 border-rose-500 text-white shadow-md shadow-rose-500/30 ring-2 ring-rose-500 ring-offset-2 dark:ring-offset-slate-800";
-                                                    else if (status.id === 'Libur') circleClass = "bg-purple-500 border-purple-500 text-white shadow-md shadow-purple-500/30 ring-2 ring-purple-500 ring-offset-2 dark:ring-offset-slate-800";
+                                                    if (status.id === 'Hadir') circleClass = "bg-emerald-500 border-emerald-500 text-white shadow-sm ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-slate-800";
+                                                    else if (status.id === 'Sakit') circleClass = "bg-sky-500 border-sky-500 text-white shadow-sm ring-2 ring-sky-500 ring-offset-2 dark:ring-offset-slate-800";
+                                                    else if (status.id === 'Izin') circleClass = "bg-amber-500 border-amber-500 text-white shadow-sm ring-2 ring-amber-500 ring-offset-2 dark:ring-offset-slate-800";
+                                                    else if (status.id === 'Alpha') circleClass = "bg-rose-500 border-rose-500 text-white shadow-sm ring-2 ring-rose-500 ring-offset-2 dark:ring-offset-slate-800";
+                                                    else if (status.id === 'Libur') circleClass = "bg-purple-500 border-purple-500 text-white shadow-sm ring-2 ring-purple-500 ring-offset-2 dark:ring-offset-slate-800";
                                                     textClass = "text-slate-800 dark:text-white font-bold";
                                                 } else {
                                                     circleClass = "bg-transparent border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 group-hover/btn:border-slate-400 dark:group-hover/btn:border-slate-400";

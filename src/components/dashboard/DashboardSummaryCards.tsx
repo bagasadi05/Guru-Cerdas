@@ -106,7 +106,7 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
           studentId: m.student.id,
           name: m.student.name,
           className: m.className,
-          reason: `Rata-rata nilai ${m.avgScore} — perlu remedial`,
+          reason: `Rata-rata nilai ${m.avgScore}, perlu remedial`,
           type: 'grade',
           severity: (m.avgScore ?? 0) < 60 ? 'high' : 'medium',
         });
@@ -192,7 +192,7 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
         if (classAvg < 70 && items.length < 3) {
           items.push({
             className: cls.name,
-            label: `Rata-rata nilai ${classAvg} — di bawah KKTP`,
+            label: `Rata-rata nilai ${classAvg} (di bawah KKTP)`,
             type: 'grade',
             link: '/analytics',
             color: 'text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-950/20 border-rose-200/50 dark:border-rose-900/30',

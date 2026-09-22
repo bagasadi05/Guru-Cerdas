@@ -92,7 +92,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
           className={`fixed ${posClasses} left-1/2 -translate-x-1/2 z-40 max-w-[calc(100vw-1.5rem)] sm:max-w-none flex items-center gap-2 sm:gap-3 rounded-2xl bg-slate-900/95 text-white backdrop-blur-xl px-3 py-2 sm:px-4 sm:py-2.5 shadow-2xl shadow-slate-950/60 border border-slate-700/80 ring-1 ring-white/10 ${className}`}
         >
           {/* Badge selection counter */}
-          <div className="flex items-center gap-1.5 sm:gap-2 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-brand-500/20 border border-brand-500/30 text-brand-300 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-brand-500/20 border border-brand-500/30 text-brand-700 shrink-0">
             <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-lg bg-brand-600 text-white text-xs sm:text-sm font-bold shadow-sm">
               {selectedCount}
             </span>

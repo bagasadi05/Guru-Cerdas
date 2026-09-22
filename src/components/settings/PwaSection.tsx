@@ -17,7 +17,7 @@ export const PwaSection: React.FC = () => {
                             <Smartphone className="w-7 h-7" />
                         </div>
                         <div>
-                            <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-emerald-400 dark:to-teal-400">
+                            <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-700 to-emerald-800 dark:from-emerald-400 dark:to-teal-400">
                                 Aplikasi PWA
                             </CardTitle>
                             <CardDescription className="text-base mt-0.5">

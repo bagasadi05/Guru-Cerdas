@@ -288,7 +288,7 @@ const NotificationsSection: React.FC = () => {
                 <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div>
-                            <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-cyan-600 dark:from-sky-400 dark:to-emerald-400">
+                            <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-cyan-700 dark:from-sky-400 dark:to-emerald-400">
                                 Status Sistem Notifikasi
                             </CardTitle>
                             <CardDescription className="text-base">
@@ -351,7 +351,7 @@ const NotificationsSection: React.FC = () => {
             {/* Schedule Notifications */}
             <SettingsCard className="overflow-hidden">
                 <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
-                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-green-400 dark:to-emerald-400">Preferensi Notifikasi</CardTitle>
+                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-700 to-emerald-800 dark:from-green-400 dark:to-emerald-400">Preferensi Notifikasi</CardTitle>
                     <CardDescription className="text-base">Kelola bagaimana Anda menerima pemberitahuan penting.</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6 sm:pt-8 space-y-3 sm:space-y-4">
@@ -443,7 +443,7 @@ const NotificationsSection: React.FC = () => {
             {/* Notification Sound Picker */}
             <SettingsCard className="overflow-hidden">
                 <CardHeader className="border-b border-slate-200/60 dark:border-slate-700/50 pb-6">
-                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
+                    <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-700 to-emerald-800 dark:from-green-400 dark:to-emerald-400">
                         Nada Notifikasi
                     </CardTitle>
                     <CardDescription className="text-base">

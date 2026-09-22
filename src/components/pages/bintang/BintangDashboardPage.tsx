@@ -22,6 +22,7 @@ import { BintangBulkExportModal } from './components/BintangBulkExportModal';
 import { type SeverityLevel } from '../student/violationMeta';
 import { ViolationFormValues, QuizFormValues } from '../student/schemas';
 import { ViolationRow, QuizPointRow } from '../student/types';
+import { dedupeViolations, dedupeQuizPoints } from '../../../utils/academicRecordUtils';
 import { violationList } from '../../../services/violations.data';
 import { writeAuditLog } from '../../../services/auditTrail';
 import { r2StorageService } from '../../../services/r2StorageService';
@@ -229,7 +230,7 @@ const BintangDashboardPage: React.FC = () => {
 
             setStudents(studentsRes.data || []);
             setEvaluations(evalsData || []);
-            setViolations(viosData || []);
+            setViolations(dedupeViolations(viosData || []) as any);
             setMentoringLogs(logsData || []);
             setDailyObservations(obsData || []);
             setStudentAttitudeMap(attitudeData || {});
@@ -250,7 +251,7 @@ const BintangDashboardPage: React.FC = () => {
                     .gte('quiz_date', monthStart)
                     .lt('quiz_date', monthEnd)
                     .limit(1000);
-                setQuizPoints(quizData || []);
+                setQuizPoints(dedupeQuizPoints((quizData || []) as any));
             } else {
                 setQuizPoints([]);
             }
@@ -532,7 +533,7 @@ const BintangDashboardPage: React.FC = () => {
     };
 
     const handleSaveViolation = async (data: ViolationFormValues & { evidence_file?: File }) => {
-        if (!user || !editingViolation) return;
+        if (!user || !editingViolation || isViolationSaving) return;
         setIsViolationSaving(true);
         try {
             const selectedViolation = violationList.find(v => v.description === data.description);
@@ -626,7 +627,7 @@ const BintangDashboardPage: React.FC = () => {
     };
 
     const handleAddViolation = async (data: ViolationFormValues & { evidence_file?: File }) => {
-        if (!user) return;
+        if (!user || isViolationSaving) return;
 
         const targetIds = violationInputMode === 'single'
             ? (violationStudentId ? [violationStudentId] : [])
@@ -640,46 +641,124 @@ const BintangDashboardPage: React.FC = () => {
             return;
         }
 
-        // Soft duplicate warning (harian) — scoped ke siswa-siswa yang dipilih
-        let duplicateStudentNames = targetIds
-            .filter(sid => violations.some(v => v.student_id === sid && v.date === data.date && v.description === data.description))
-            .map(sid => students.find(s => s.id === sid)?.name || 'Siswa');
+        setIsViolationSaving(true);
+        try {
+            const normalizedDesc = (data.description || '').trim().toLowerCase();
+            const localDuplicates = new Map<string, typeof violations[0]>();
+            for (const sid of targetIds) {
+                const match = violations.find(
+                    v => v.student_id === sid && v.date === data.date && (v.description || '').trim().toLowerCase() === normalizedDesc
+                );
+                if (match) localDuplicates.set(sid, match);
+            }
 
-        // Query database Supabase jika state lokal violations belum mencakup catatan terbaru
-        if (duplicateStudentNames.length === 0) {
-            const { data: dbVios } = await supabase
+            // Always query database across targetIds to prevent race conditions or missing other-session rows
+            const { data: dbVios, error: dbErr } = await supabase
                 .from('violations')
-                .select('student_id')
+                .select('id, student_id, date, description, points, severity, context_notes, evidence_url')
                 .in('student_id', targetIds)
                 .eq('date', data.date)
                 .eq('description', data.description)
                 .is('deleted_at', null);
 
-            if (dbVios && dbVios.length > 0) {
-                const dbIds = new Set(dbVios.map((r: any) => r.student_id));
-                duplicateStudentNames = targetIds
-                    .filter(sid => dbIds.has(sid))
-                    .map(sid => students.find(s => s.id === sid)?.name || 'Siswa');
-            }
-        }
+            if (dbErr) console.warn('Gagal memeriksa duplikasi pelanggaran di database:', dbErr);
 
-        if (duplicateStudentNames.length > 0) {
-            const msg = duplicateStudentNames.length === 1
-                ? `${duplicateStudentNames[0]} sudah memiliki catatan pelanggaran "${data.description}" pada hari ini (${data.date}).\n\nApakah Anda yakin ingin tetap mencatat pelanggaran ini?`
-                : `${duplicateStudentNames.length} siswa (${duplicateStudentNames.slice(0, 3).join(', ')}${duplicateStudentNames.length > 3 ? '...' : ''}) sudah memiliki catatan pelanggaran "${data.description}" pada hari ini (${data.date}).\n\nApakah Anda yakin ingin tetap mencatat pelanggaran ini?`;
-
-            const ok = await confirmDuplicateViolation({
-                title: 'Pelanggaran Sudah Tercatat Hari Ini',
-                message: msg,
-                confirmText: 'Tetap Tambahkan',
-                variant: 'warning',
-                onConfirm: async () => {},
+            const dbDuplicates = new Map<string, any>();
+            (dbVios || []).forEach((row: any) => {
+                dbDuplicates.set(row.student_id, row);
             });
-            if (!ok) return;
-        }
 
-        setIsViolationSaving(true);
-        try {
+            // Combine local and DB duplicates
+            const allDuplicateStudentIds = Array.from(new Set([
+                ...Array.from(localDuplicates.keys()),
+                ...Array.from(dbDuplicates.keys()),
+            ]));
+
+            // CASE 1: Single student mode
+            if (violationInputMode === 'single' || targetIds.length === 1) {
+                const singleStudentId = targetIds[0];
+                const studentObj = students.find(s => s.id === singleStudentId);
+                const studentName = studentObj?.name || 'Siswa';
+
+                if (allDuplicateStudentIds.includes(singleStudentId)) {
+                    const existingRow = dbDuplicates.get(singleStudentId) || localDuplicates.get(singleStudentId);
+                    const shouldUpdate = await confirmDuplicateViolation({
+                        title: 'Pelanggaran Sudah Tercatat Hari Ini',
+                        message: `${studentName} sudah memiliki catatan pelanggaran "${data.description}" pada hari ini (${data.date}).\n\nApakah Anda ingin memperbarui catatan tersebut dengan keterangan baru?`,
+                        confirmText: 'Perbarui Catatan',
+                        cancelText: 'Batal',
+                        variant: 'warning',
+                        onConfirm: async () => {},
+                    });
+
+                    if (!shouldUpdate) {
+                        return;
+                    }
+
+                    // Update existing violation instead of creating duplicate
+                    if (existingRow?.id) {
+                        const selectedViolation = violationList.find(v => v.description === data.description);
+                        let evidenceUrl = existingRow.evidence_url || null;
+                        if (data.evidence_file) {
+                            const result = await r2StorageService.uploadFile(data.evidence_file, 'violations');
+                            evidenceUrl = result.publicUrl;
+                        }
+                        const updatePayload = {
+                            date: data.date,
+                            description: data.description,
+                            context_notes: data.context_notes || existingRow.context_notes || null,
+                            points: selectedViolation?.points ?? existingRow.points ?? 0,
+                            severity: data.severity || getViolationSeverityFromCategory(selectedViolation?.category) || existingRow.severity || null,
+                            evidence_url: evidenceUrl,
+                        };
+                        await bintangService.updateViolation(existingRow.id, updatePayload);
+                        toast.success(`Catatan pelanggaran ${studentName} berhasil diperbarui`);
+                        setIsAddViolationModalOpen(false);
+                        setViolationStudentId('');
+                        await fetchAllData();
+                        return;
+                    }
+                }
+            }
+
+            // CASE 2: Bulk students mode
+            let idsToInsert = targetIds;
+            if (allDuplicateStudentIds.length > 0) {
+                const duplicateNames = allDuplicateStudentIds
+                    .map(sid => students.find(s => s.id === sid)?.name || 'Siswa');
+
+                // If ALL selected students already have this record
+                if (allDuplicateStudentIds.length >= targetIds.length) {
+                    toast.warning(
+                        targetIds.length === 1
+                            ? `${duplicateNames[0]} sudah memiliki catatan pelanggaran "${data.description}" pada hari ini (${data.date}).`
+                            : `Seluruh ${targetIds.length} siswa yang dipilih sudah memiliki catatan pelanggaran "${data.description}" pada hari ini (${data.date}).`
+                    );
+                    return;
+                }
+
+                // If SOME selected students already have this record
+                const nonDuplicateIds = targetIds.filter(id => !allDuplicateStudentIds.includes(id));
+                const confirmMsg = `${allDuplicateStudentIds.length} siswa (${duplicateNames.slice(0, 3).join(', ')}${allDuplicateStudentIds.length > 3 ? '...' : ''}) sudah memiliki catatan pelanggaran "${data.description}" pada hari ini dan akan dilewati.\n\nLanjutkan mencatat pelanggaran untuk ${nonDuplicateIds.length} siswa lainnya?`;
+
+                const shouldProceed = await confirmDuplicateViolation({
+                    title: 'Sebagian Siswa Sudah Tercatat Hari Ini',
+                    message: confirmMsg,
+                    confirmText: `Catat untuk ${nonDuplicateIds.length} Siswa Lainnya`,
+                    cancelText: 'Batal',
+                    variant: 'warning',
+                    onConfirm: async () => {},
+                });
+
+                if (!shouldProceed) {
+                    return;
+                }
+
+                idsToInsert = nonDuplicateIds;
+            }
+
+            if (idsToInsert.length === 0) return;
+
             const selectedViolation = violationList.find(v => v.description === data.description);
             let evidenceUrl: string | null = null;
             if (data.evidence_file) {
@@ -691,7 +770,7 @@ const BintangDashboardPage: React.FC = () => {
             const severity = data.severity || getViolationSeverityFromCategory(selectedViolation?.category) || null;
             const type = selectedViolation?.code || 'general';
 
-            const payloads = targetIds.map(student_id => ({
+            const payloads = idsToInsert.map(student_id => ({
                 date: data.date,
                 description: data.description,
                 context_notes: data.context_notes || null,
@@ -710,18 +789,21 @@ const BintangDashboardPage: React.FC = () => {
                     userId: user.id,
                     userEmail: user.email,
                     tableName: 'violations',
-                    recordId: targetIds.length === 1 ? targetIds[0] : 'bulk',
+                    recordId: idsToInsert.length === 1 ? idsToInsert[0] : 'bulk',
                     action: 'INSERT',
                     oldData: null,
-                    newData: { count: targetIds.length, description: data.description, points } as Record<string, unknown>,
+                    newData: { count: idsToInsert.length, description: data.description, points } as Record<string, unknown>,
                 });
             } catch (auditErr) {
                 console.warn('Gagal menulis audit log pelanggaran baru:', auditErr);
             }
+            const skippedCount = targetIds.length - idsToInsert.length;
             toast.success(
-                targetIds.length === 1
+                idsToInsert.length === 1
                     ? 'Pelanggaran berhasil dicatat'
-                    : `Pelanggaran berhasil dicatat untuk ${targetIds.length} siswa`
+                    : skippedCount > 0
+                        ? `Pelanggaran berhasil dicatat untuk ${idsToInsert.length} siswa (${skippedCount} siswa dilewati karena sudah tercatat)`
+                        : `Pelanggaran berhasil dicatat untuk ${idsToInsert.length} siswa`
             );
             setIsAddViolationModalOpen(false);
             setViolationStudentId('');

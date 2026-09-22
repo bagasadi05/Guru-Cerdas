@@ -133,7 +133,7 @@ export const StudentsStudentFormModal: React.FC<StudentsStudentFormModalProps> =
                 className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
                   genderSelection === 'Laki-laki'
                     ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                 }`}
               >
                 L
@@ -160,7 +160,7 @@ export const StudentsStudentFormModal: React.FC<StudentsStudentFormModalProps> =
                 className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
                   genderSelection === 'Perempuan'
                     ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                 }`}
               >
                 P

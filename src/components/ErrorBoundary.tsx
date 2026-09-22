@@ -2,7 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { logger } from '../services/logger';
 import { errorReporter } from '../services/errorHandling';
-import { AlertTriangleIcon, RefreshCwIcon, HomeIcon, SparklesIcon } from './Icons';
+import { AlertTriangleIcon, RefreshCwIcon, HomeIcon } from './Icons';
 import { idTranslations, enTranslations, type Language } from '../utils/i18n';
 
 interface ErrorContext {
@@ -321,11 +321,11 @@ class ErrorBoundary extends Component<Props, State> {
             <div className="relative flex justify-center mb-6">
               <div className={`w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl transition-transform duration-300 hover:scale-105 ${
                 isChunkError
-                  ? 'bg-gradient-to-tr from-emerald-500 via-teal-500 to-emerald-400 text-white shadow-emerald-500/30 dark:shadow-emerald-950/50'
-                  : 'bg-gradient-to-tr from-rose-500 via-red-500 to-amber-500 text-white shadow-rose-500/30 dark:shadow-rose-950/50'
+                  ? 'bg-gradient-to-tr from-emerald-700 via-teal-700 to-emerald-800 text-white shadow-emerald-900/30 dark:shadow-emerald-950/50'
+                  : 'bg-gradient-to-tr from-rose-700 via-red-700 to-rose-800 text-white shadow-rose-900/30 dark:shadow-rose-950/50'
               }`}>
                 {isChunkError ? (
-                  <SparklesIcon className="w-10 h-10 animate-pulse text-white drop-shadow-md" />
+                  <RefreshCwIcon className="w-10 h-10 animate-spin text-white drop-shadow-md" style={{ animationDuration: '6s' }} />
                 ) : (
                   <AlertTriangleIcon className="w-10 h-10 text-white drop-shadow-md" />
                 )}
@@ -373,7 +373,7 @@ class ErrorBoundary extends Component<Props, State> {
                 <button
                   type="button"
                   onClick={this.recoverFromChunkError}
-                  className="w-full sm:flex-1 py-3 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl shadow-lg shadow-emerald-600/25 dark:shadow-emerald-950/40 font-semibold text-sm transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 group cursor-pointer"
+                  className="w-full sm:flex-1 py-3 px-4 bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white rounded-xl shadow-lg shadow-emerald-900/25 dark:shadow-emerald-950/40 font-semibold text-sm transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 group cursor-pointer"
                 >
                   <RefreshCwIcon className="w-4 h-4 transition-transform duration-500 group-hover:rotate-180" />
                   <span className="whitespace-nowrap">

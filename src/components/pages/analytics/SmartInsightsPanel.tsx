@@ -85,7 +85,7 @@ const SEV: Record<
         bg: 'bg-gradient-to-br from-rose-50/80 via-white to-rose-50/30 dark:from-rose-950/20 dark:via-slate-900/80 dark:to-rose-950/10',
         hover: 'hover:border-rose-300 dark:hover:border-rose-700/60',
         title: 'text-rose-950 dark:text-rose-100',
-        iconBox: 'bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20',
+        iconBox: 'bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-500/20',
         badge: 'bg-rose-100/90 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/40',
         btn: 'bg-rose-600 hover:bg-rose-700 text-white shadow-sm shadow-rose-600/20',
     },
@@ -94,7 +94,7 @@ const SEV: Record<
         bg: 'bg-gradient-to-br from-amber-50/80 via-white to-amber-50/30 dark:from-amber-950/20 dark:via-slate-900/80 dark:to-amber-950/10',
         hover: 'hover:border-amber-300 dark:hover:border-amber-700/60',
         title: 'text-amber-950 dark:text-amber-100',
-        iconBox: 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/20',
+        iconBox: 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/20',
         badge: 'bg-amber-100/90 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40',
         btn: 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm shadow-amber-600/20',
     },
@@ -103,7 +103,7 @@ const SEV: Record<
         bg: 'bg-gradient-to-br from-sky-50/80 via-white to-sky-50/30 dark:from-sky-950/20 dark:via-slate-900/80 dark:to-sky-950/10',
         hover: 'hover:border-sky-300 dark:hover:border-sky-700/60',
         title: 'text-sky-950 dark:text-sky-100',
-        iconBox: 'bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/20',
+        iconBox: 'bg-sky-500/10 dark:bg-sky-500/20 text-sky-700 dark:text-sky-400 border border-sky-500/20',
         badge: 'bg-sky-100/90 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 border border-sky-200/60 dark:border-sky-800/40',
         btn: 'bg-sky-600 hover:bg-sky-700 text-white shadow-sm shadow-sky-600/20',
     },
@@ -112,7 +112,7 @@ const SEV: Record<
         bg: 'bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/30 dark:from-emerald-950/20 dark:via-slate-900/80 dark:to-emerald-950/10',
         hover: 'hover:border-emerald-300 dark:hover:border-emerald-700/60',
         title: 'text-emerald-950 dark:text-emerald-100',
-        iconBox: 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+        iconBox: 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20',
         badge: 'bg-emerald-100/90 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40',
         btn: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20',
     },
@@ -405,12 +405,12 @@ export const SmartInsightsPanel: React.FC = () => {
                         <RotateCw className={`w-4 h-4 ${isFetching ? 'animate-spin text-brand-600' : ''}`} />
                     </button>
                     {activeAlertCount > 0 ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-500/20">
                             <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
                             {activeAlertCount} Perlu Perhatian
                         </span>
                     ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                             Kondisi Normal
                         </span>
@@ -528,7 +528,7 @@ export const SmartInsightsPanel: React.FC = () => {
                                                     </div>
 
                                                     <div className="flex items-center gap-1.5 shrink-0">
-                                                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                                                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20">
                                                             {stu.count} pelanggaran
                                                         </span>
                                                         {stu.parentPhone && (
@@ -545,7 +545,7 @@ export const SmartInsightsPanel: React.FC = () => {
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
                                                                 onClick={(e) => e.stopPropagation()}
-                                                                className="p-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 transition-all cursor-pointer flex items-center justify-center hover:scale-105 active:scale-95"
+                                                                className="p-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 transition-all cursor-pointer flex items-center justify-center hover:scale-105 active:scale-95"
                                                                 title={`Hubungi Wali Santri via WhatsApp (${stu.parentPhone})`}
                                                                 aria-label={`Hubungi Wali Santri via WhatsApp (${stu.parentPhone})`}
                                                             >
@@ -579,7 +579,7 @@ export const SmartInsightsPanel: React.FC = () => {
                                                             <span className="text-sm font-black text-amber-600 dark:text-amber-400">
                                                                 {cls.score}
                                                             </span>
-                                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20">
                                                                 {cls.diff} pts
                                                             </span>
                                                         </div>
@@ -625,7 +625,7 @@ export const SmartInsightsPanel: React.FC = () => {
                                                             <span className="text-sm font-black text-amber-600 dark:text-amber-400">
                                                                 {cls.rate}%
                                                             </span>
-                                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20">
                                                                 {cls.diff}%
                                                             </span>
                                                         </div>
