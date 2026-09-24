@@ -401,7 +401,7 @@ const BintangDashboardPage: React.FC = () => {
 
     const handleMentoringSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!mentoringClass || !mentoringNotes) return;
+        if (!mentoringClass || !mentoringNotes || isMentoringSubmitting) return;
         if (mentoringTargetType === 'specific' && mentoringSelectedStudents.length === 0) {
             toast.error('Pilih minimal satu siswa untuk pembinaan');
             return;
@@ -449,7 +449,7 @@ const BintangDashboardPage: React.FC = () => {
 
     const handleObservationSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!obsStudentId || !obsNotes) return;
+        if (!obsStudentId || !obsNotes || isObsSubmitting) return;
 
         setIsObsSubmitting(true);
         try {
@@ -946,7 +946,7 @@ const BintangDashboardPage: React.FC = () => {
                 <div className="text-center py-16 text-slate-500 dark:text-slate-400">
                     <BarChart3 size={48} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
                     <p className="text-lg font-medium">Pilih kelas untuk memulai</p>
-                    <p className="text-sm mt-1">Semua data — ringkasan, poin, evaluasi, pembinaan — ada di satu halaman</p>
+                    <p className="text-sm mt-1">Semua data (ringkasan, poin, evaluasi, pembinaan) ada di satu halaman</p>
                 </div>
             )}
 

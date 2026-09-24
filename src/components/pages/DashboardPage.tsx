@@ -78,10 +78,10 @@ const DashboardPage: React.FC = () => {
 
   const randomQuote = useMemo(() => {
     const quotes = [
-      'Pendidikan adalah senjata paling mematikan di dunia, karena dengan itu Anda bisa mengubah dunia. — Nelson Mandela',
+      'Pendidikan adalah senjata paling mematikan di dunia, karena dengan itu Anda bisa mengubah dunia. - Nelson Mandela',
       'Tugas utama seorang pendidik bukan sekadar mengajar, melainkan menginspirasi sanubari.',
       'Setiap siswa memiliki bakat unik yang menunggu untuk Anda kembangkan dengan penuh kasih sayang.',
-      'Pendidik yang baik bagaikan lilin — ia menghabiskan dirinya sendiri untuk menerangi jalan orang lain.',
+      'Pendidik yang baik bagaikan lilin: ia menghabiskan dirinya sendiri untuk menerangi jalan orang lain.',
       'Terima kasih atas dedikasi luar biasa Anda hari ini dalam mencerdaskan anak bangsa!',
     ];
     const dateNum = new Date().getDate();

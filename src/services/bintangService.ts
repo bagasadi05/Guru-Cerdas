@@ -173,9 +173,19 @@ export const bintangService = {
   },
 
   async bulkInsertMentoringLogs(logs: BintangMentoringInsert[]) {
+    if (!logs || logs.length === 0) return [];
+    const seen = new Set<string>();
+    const sanitized = logs.filter(l => {
+      const key = `${l.student_id}::${l.date}::${(l.notes || '').trim()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    if (sanitized.length === 0) return [];
+
     const { data, error } = await supabase
       .from('bintang_mentoring_logs')
-      .insert(logs)
+      .insert(sanitized)
       .select();
 
     if (error) throw error;
@@ -517,11 +527,62 @@ export const bintangService = {
 
   // --- Quiz Points (poin keaktifan) management for the BINTANG dashboard ---
 
-  /** Insert quiz points (poin keaktifan) via the service layer with proper RLS adherence. */
-  async insertQuizPoints(inserts: Database['public']['Tables']['quiz_points']['Insert'][]) {
+  /**
+   * Insert quiz points (poin keaktifan) via the service layer with proper RLS adherence.
+   * Sanitizes payloads against internal batch duplicates and prevents duplicate insertion.
+   */
+  async insertQuizPoints(
+    inserts: Database['public']['Tables']['quiz_points']['Insert'][],
+    allowDuplicates = false
+  ) {
+    if (!inserts || inserts.length === 0) return [];
+
+    // 1. Sanitize internal duplicates in the incoming payload batch
+    const seen = new Set<string>();
+    const sanitizedPayloads = inserts.filter((p) => {
+      const key = `${p.student_id}::${p.quiz_date}::${(p.quiz_name || '').trim().toLowerCase()}::${(p.subject || '').trim().toLowerCase()}::${p.semester_id || 'no-sem'}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    if (sanitizedPayloads.length === 0) return [];
+
+    let payloadsToInsert = sanitizedPayloads;
+
+    // 2. Unless explicitly allowed, skip records that already exist in Supabase for the same student, date, activity, and subject
+    if (!allowDuplicates) {
+      const studentIds = Array.from(new Set(sanitizedPayloads.map(p => p.student_id)));
+      const quizDates = Array.from(new Set(sanitizedPayloads.map(p => p.quiz_date)));
+      const quizNames = Array.from(new Set(sanitizedPayloads.map(p => (p.quiz_name || '').trim())));
+
+      const { data: existingRows } = await supabase
+        .from('quiz_points')
+        .select('student_id, quiz_date, quiz_name, subject, semester_id')
+        .in('student_id', studentIds)
+        .in('quiz_date', quizDates)
+        .in('quiz_name', quizNames)
+        .is('deleted_at', null);
+
+      if (existingRows && existingRows.length > 0) {
+        const existingKeys = new Set(
+          existingRows.map(r =>
+            `${r.student_id}::${r.quiz_date}::${(r.quiz_name || '').trim().toLowerCase()}::${(r.subject || '').trim().toLowerCase()}::${r.semester_id || 'no-sem'}`
+          )
+        );
+
+        payloadsToInsert = sanitizedPayloads.filter(p => {
+          const key = `${p.student_id}::${p.quiz_date}::${(p.quiz_name || '').trim().toLowerCase()}::${(p.subject || '').trim().toLowerCase()}::${p.semester_id || 'no-sem'}`;
+          return !existingKeys.has(key);
+        });
+      }
+    }
+
+    if (payloadsToInsert.length === 0) return [];
+
     const { data, error } = await supabase
       .from('quiz_points')
-      .insert(inserts)
+      .insert(payloadsToInsert)
       .select();
 
     if (error) throw error;

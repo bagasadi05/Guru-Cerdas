@@ -261,7 +261,7 @@ export function useSemesterTransition(): SemesterTransitionState {
             if (error) throw error;
 
             toast.success(
-                `Berhasil beralih ke Semester ${target.semester.name} — ${target.academicYearName}! 🎉`
+                `Berhasil beralih ke Semester ${target.semester.name} - ${target.academicYearName}! 🎉`
             );
 
             // Clear dismiss state & auto-created target

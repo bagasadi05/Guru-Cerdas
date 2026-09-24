@@ -224,7 +224,7 @@ const AttendancePage: React.FC = () => {
                                 placeholder="Cari nama siswa..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10 h-12 text-base bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700 shadow-sm focus:ring-green-500 rounded-xl"
+                                className="pl-10 h-12 text-base bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700 shadow-sm focus:ring-emerald-500 rounded-xl"
                                 aria-label="Cari siswa berdasarkan nama"
                             />
                         </div>
@@ -234,7 +234,7 @@ const AttendancePage: React.FC = () => {
                             <Button
                                 onClick={markRestAsPresent}
                                 size="default"
-                                className="w-full sm:w-auto text-sm font-bold shadow-lg shadow-brand-600/20 bg-brand-600 hover:bg-brand-700 border-none transition-all cursor-pointer active:scale-95 duration-200 min-h-[42px] rounded-xl"
+                                className="w-full sm:w-auto text-sm font-bold shadow-md bg-brand-600 hover:bg-brand-700 border border-brand-500/30 transition-all cursor-pointer active:scale-95 duration-200 min-h-[44px] rounded-xl"
                             >
                                 <CheckCircleIcon className="w-4 h-4 mr-2" />
                                 Tandai Sisa Hadir ({unmarkedStudents.length})

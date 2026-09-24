@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { supabase } from '../../../../../services/supabase';
 import { AppUser } from '../../../../../hooks/useAuth';
 import { StudentRow, InputMode } from '../../types';
@@ -50,13 +50,20 @@ export function useDuplicateGuard({
 }: UseDuplicateGuardParams) {
     const [duplicateList, setDuplicateList] = useState<DuplicateItem[]>([]);
     const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+    const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
+    const isCheckingRef = useRef(false);
 
     const checkDuplicates = async (onProceed: () => void) => {
+        if (isCheckingRef.current) return;
         if (!user || selectedStudentIds.size === 0) {
             onProceed();
             return;
         }
-        const studentIds = Array.from(selectedStudentIds);
+
+        isCheckingRef.current = true;
+        setIsCheckingDuplicates(true);
+        try {
+            const studentIds = Array.from(selectedStudentIds);
 
         if (mode === 'violation') {
             if (!selectedViolation) {
@@ -152,7 +159,11 @@ export function useDuplicateGuard({
             return;
         }
 
-        onProceed();
+            onProceed();
+        } finally {
+            isCheckingRef.current = false;
+            setIsCheckingDuplicates(false);
+        }
     };
 
     return {
@@ -161,5 +172,6 @@ export function useDuplicateGuard({
         setShowDuplicateDialog,
         checkDuplicates,
         getDuplicateGuardWindowIso,
+        isCheckingDuplicates,
     };
 }

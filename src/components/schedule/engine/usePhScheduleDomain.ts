@@ -289,6 +289,7 @@ export function usePhScheduleDomain({
     const handleSubmit = useCallback(
         (e: React.FormEvent) => {
             e.preventDefault();
+            if (createMutation.isPending || updateMutation.isPending) return;
             if (!formData.subject.trim() || !formData.date || !formData.period_label.trim()) {
                 toast.warning('Semua kolom wajib diisi.');
                 return;

@@ -298,7 +298,7 @@ const SchedulePage: React.FC = () => {
 
     const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!user) return;
+        if (!user || scheduleMutation.isPending) return;
         const validationResult = ValidationService.validateForm({
             subject: formData.subject, class_id: formData.class_id, start_time: formData.start_time, end_time: formData.end_time
         }, scheduleRules);

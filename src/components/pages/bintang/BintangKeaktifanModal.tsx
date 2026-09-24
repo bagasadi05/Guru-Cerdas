@@ -1,11 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Modal } from '../../ui/Modal';
 import { CustomDropdown } from '../../ui/CustomDropdown';
 import { bintangService } from '../../../services/bintangService';
 import { useToast } from '../../../hooks/useToast';
-import { Star, Sparkles } from 'lucide-react';
+import { Star, Info } from 'lucide-react';
 
 // ─── Kategori Aktivitas ────────────────────────────────────────────────────
 
@@ -59,6 +59,7 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
     const [quizName, setQuizName] = useState('');
     const [quizDate, setQuizDate] = useState(new Date().toISOString().split('T')[0]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const isSubmittingRef = useRef(false);
     const [studentSearch, setStudentSearch] = useState('');
 
     // ── Filtered students for bulk selection ────────────────────────────────
@@ -87,9 +88,13 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const targetIds = inputMode === 'single'
+        // Synchronous re-entrancy lock to prevent duplicate submissions on double-click
+        if (isSubmittingRef.current || isSubmitting) return;
+
+        const rawTargetIds = inputMode === 'single'
             ? (selectedStudentId ? [selectedStudentId] : [])
             : selectedStudentIds;
+        const targetIds = Array.from(new Set(rawTargetIds));
 
         if (targetIds.length === 0) {
             toast.error(inputMode === 'single'
@@ -104,6 +109,7 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
             return;
         }
 
+        isSubmittingRef.current = true;
         setIsSubmitting(true);
         try {
             const inserts = targetIds.map(studentId => ({
@@ -119,13 +125,23 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
                 semester_id: semesterId || null,
             }));
 
-            await bintangService.insertQuizPoints(inserts);
+            const insertedRows = await bintangService.insertQuizPoints(inserts);
+            const insertedCount = insertedRows?.length ?? 0;
+            const skippedCount = targetIds.length - insertedCount;
 
-            toast.success(
-                inputMode === 'single'
-                    ? `Poin keaktifan berhasil ditambahkan (+1 ${quizName.trim()})`
-                    : `${targetIds.length} siswa berhasil mendapat poin keaktifan (+1 ${quizName.trim()})`
-            );
+            if (insertedCount === 0) {
+                toast.info('Poin keaktifan untuk siswa yang dipilih sudah pernah dicatat pada tanggal ini.');
+            } else if (skippedCount > 0) {
+                toast.success(
+                    `${insertedCount} siswa berhasil mendapat poin keaktifan (+1 ${quizName.trim()}). ${skippedCount} siswa dilewati karena sudah tercatat.`
+                );
+            } else {
+                toast.success(
+                    inputMode === 'single'
+                        ? `Poin keaktifan berhasil ditambahkan (+1 ${quizName.trim()})`
+                        : `${targetIds.length} siswa berhasil mendapat poin keaktifan (+1 ${quizName.trim()})`
+                );
+            }
 
             // Reset form
             setSelectedStudentId('');
@@ -138,6 +154,7 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
             console.error('Gagal menyimpan poin keaktifan:', error);
             toast.error('Gagal menyimpan poin keaktifan');
         } finally {
+            isSubmittingRef.current = false;
             setIsSubmitting(false);
         }
     };
@@ -153,7 +170,7 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
             <form onSubmit={handleSubmit} className="space-y-4 pt-2">
                 {/* ─── Info Banner ─────────────────────────────────── */}
                 <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
-                    <Sparkles size={18} className="text-emerald-500 mt-0.5 shrink-0" />
+                    <Info size={18} className="text-emerald-500 mt-0.5 shrink-0" />
                     <div className="text-xs text-emerald-700 dark:text-emerald-300">
                         <p className="font-medium mb-1">⚡ Bagaimana poin keaktifan bekerja?</p>
                         <p>Setiap <strong>+1 poin</strong> akan <strong>meng-offset poin pelanggaran</strong> siswa (Adab → Disiplin → Kerapian). Semakin banyak poin keaktifan, semakin baik grade BINTANG siswa.</p>
@@ -165,7 +182,7 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
                     <button
                         type="button"
                         onClick={() => setInputMode('single')}
-                        className={`flex-1 px-3 py-2 text-sm font-medium rounded-xl transition-all cursor-pointer active:scale-95 duration-150 ${
+                        className={`flex-1 min-h-[44px] px-4 py-2.5 text-sm font-medium rounded-xl transition-all cursor-pointer active:scale-95 duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
                             inputMode === 'single'
                                 ? 'bg-brand-600 text-white shadow-sm'
                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -176,7 +193,7 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
                     <button
                         type="button"
                         onClick={() => setInputMode('bulk')}
-                        className={`flex-1 px-3 py-2 text-sm font-medium rounded-xl transition-all cursor-pointer active:scale-95 duration-150 ${
+                        className={`flex-1 min-h-[44px] px-4 py-2.5 text-sm font-medium rounded-xl transition-all cursor-pointer active:scale-95 duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
                             inputMode === 'bulk'
                                 ? 'bg-brand-600 text-white shadow-sm'
                                 : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -205,10 +222,18 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
                             Pilih Siswa ({selectedStudentIds.length} dipilih)
                         </label>
                         <div className="flex gap-2 mb-2">
-                            <button type="button" onClick={selectAll} className="text-xs px-2.5 py-1 rounded-lg bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 hover:bg-brand-200 dark:hover:bg-brand-800/50 transition-colors font-medium cursor-pointer active:scale-95 duration-150">
+                            <button
+                                type="button"
+                                onClick={selectAll}
+                                className="min-h-[44px] sm:min-h-[36px] px-3.5 py-2 sm:py-1 inline-flex items-center text-xs rounded-lg bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 hover:bg-brand-200 dark:hover:bg-brand-800/50 transition-colors font-medium cursor-pointer active:scale-95 duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                            >
                                 Pilih Semua
                             </button>
-                            <button type="button" onClick={deselectAll} className="text-xs px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-medium cursor-pointer active:scale-95 duration-150">
+                            <button
+                                type="button"
+                                onClick={deselectAll}
+                                className="min-h-[44px] sm:min-h-[36px] px-3.5 py-2 sm:py-1 inline-flex items-center text-xs rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors font-medium cursor-pointer active:scale-95 duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                            >
                                 Hapus Semua
                             </button>
                         </div>
@@ -256,7 +281,7 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
                                 key={cat.value}
                                 type="button"
                                 onClick={() => setCategory(cat.value)}
-                                className={`flex items-center gap-2 px-3 py-2.5 text-xs font-semibold rounded-xl border transition-all text-left min-w-0 overflow-hidden cursor-pointer active:scale-95 duration-150 ${
+                                className={`flex items-center gap-2 px-3 py-2.5 min-h-[44px] text-xs font-semibold rounded-xl border transition-all text-left min-w-0 overflow-hidden cursor-pointer active:scale-95 duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
                                     category === cat.value
                                         ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 shadow-sm'
                                         : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
@@ -281,7 +306,7 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
                                     key={suggestion}
                                     type="button"
                                     onClick={() => setQuizName(suggestion)}
-                                    className={`px-2.5 py-1 text-xs rounded-full border transition-all cursor-pointer active:scale-95 duration-150 ${
+                                    className={`min-h-[44px] sm:min-h-[36px] px-3 py-2 sm:py-1 inline-flex items-center text-xs rounded-full border transition-all cursor-pointer active:scale-95 duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
                                         quizName === suggestion
                                             ? 'bg-brand-100 dark:bg-brand-900/30 border-brand-300 dark:border-brand-700 text-brand-700 dark:text-brand-300'
                                             : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -333,13 +358,18 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
 
                 {/* ─── Actions ──────────────────────────────────────── */}
                 <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
-                    <Button type="button" variant="outline" onClick={onClose} className="rounded-xl cursor-pointer active:scale-95 duration-150">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onClose}
+                        className="min-h-[44px] px-4 rounded-xl cursor-pointer active:scale-95 duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                    >
                         Batal
                     </Button>
                     <Button
                         type="submit"
                         disabled={isSubmitting}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl cursor-pointer active:scale-95 duration-150"
+                        className="min-h-[44px] px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl cursor-pointer active:scale-95 duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                     >
                         {isSubmitting ? 'Menyimpan...' : 'Simpan Poin Keaktifan'}
                     </Button>

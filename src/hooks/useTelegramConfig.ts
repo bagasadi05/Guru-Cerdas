@@ -109,7 +109,7 @@ export function useTelegramConfig() {
 
     const result = await sendTelegram({
       chatId: config.chatId,
-      message: testMessage || '✅ *Guru Cerdas* — Uji coba notifikasi Telegram berhasil! Sistem terhubung.',
+      message: testMessage || '✅ *Guru Cerdas* - Uji coba notifikasi Telegram berhasil! Sistem terhubung.',
     });
 
     if (result.ok) {

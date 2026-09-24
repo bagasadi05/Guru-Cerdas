@@ -18,6 +18,7 @@ export function useMassInputViewModel() {
     const toast = useToast();
 
     const state = useMassInputState();
+    const isSubmittingOrCheckingRef = useRef(false);
     const {
         settings: userSettings,
         isLoading: isLoadingUserSettings,
@@ -256,7 +257,7 @@ export function useMassInputViewModel() {
 
     const submitButtonTooltip = useMemo(() => {
         if (!mutations.isOnline) return 'Fitur ini memerlukan koneksi internet.';
-        if (mutations.isSubmitting || mutations.isExporting || mutations.isDeleting) return 'Sedang memproses...';
+        if (mutations.isSubmitting || mutations.isCheckingDuplicates || mutations.isExporting || mutations.isDeleting) return 'Sedang memproses...';
         if (!state.selectedClass) return 'Pilih kelas terlebih dahulu.';
         switch (state.mode) {
             case 'subject_grade': {
@@ -280,7 +281,7 @@ export function useMassInputViewModel() {
                 if (state.mode === 'academic_print' && !state.subjectGradeInfo.subject) return 'Pilih mata pelajaran untuk dicetak.'; break;
         }
         return '';
-    }, [mutations.isOnline, mutations.isSubmitting, mutations.isExporting, mutations.isDeleting, state.selectedClass, state.mode, state.subjectGradeInfo, state.validationErrors, gradedCount, state.attitudeName, state.selectedStudentIds, state.quizInfo, state.selectedViolationCode]);
+    }, [mutations.isOnline, mutations.isSubmitting, mutations.isCheckingDuplicates, mutations.isExporting, mutations.isDeleting, state.selectedClass, state.mode, state.subjectGradeInfo, state.validationErrors, gradedCount, state.attitudeName, state.selectedStudentIds, state.quizInfo, state.selectedViolationCode]);
 
     const isSubmitDisabled = !!submitButtonTooltip;
 
@@ -528,6 +529,7 @@ export function useMassInputViewModel() {
         isSubmitDisabled,
         submitButtonTooltip,
         isSubmitting: mutations.isSubmitting,
+        isCheckingDuplicates: mutations.isCheckingDuplicates,
         isDeleting: mutations.isDeleting,
         onDeleteSelected: mutations.handleDeleteSelected,
         studentsData: data.studentsData,
@@ -557,17 +559,26 @@ export function useMassInputViewModel() {
         showDuplicateDialog: mutations.showDuplicateDialog,
         setShowDuplicateDialog: mutations.setShowDuplicateDialog,
         onHandleSubmit: () => {
-            // Ketiga mode ini punya jalur skip duplikat; semuanya memberi tahu guru
-            // lebih dulu lewat dialog pratinjau yang sama.
+            // Guard against multi-clicks/double-taps while duplicate check or submission is in-flight
+            if (isSubmittingOrCheckingRef.current || mutations.isSubmitting || mutations.isCheckingDuplicates) {
+                return;
+            }
+
             const needsDuplicatePreview =
                 (state.mode === 'violation' && !!state.selectedViolationCode) ||
                 (state.mode === 'quiz' && !!state.quizInfo.name && !!state.quizInfo.subject) ||
                 (state.mode === 'attitude' && !!state.attitudeName?.trim());
 
+            isSubmittingOrCheckingRef.current = true;
             if (needsDuplicatePreview) {
-                mutations.checkDuplicates(() => mutations.handleSubmit());
+                mutations.checkDuplicates(() => {
+                    mutations.handleSubmit();
+                    setTimeout(() => { isSubmittingOrCheckingRef.current = false; }, 800);
+                });
+                setTimeout(() => { isSubmittingOrCheckingRef.current = false; }, 1200);
             } else {
                 mutations.handleSubmit();
+                setTimeout(() => { isSubmittingOrCheckingRef.current = false; }, 800);
             }
         },
         isScoresDirty: state.isScoresDirty,

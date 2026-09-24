@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../../services/supabase';
 import { useToast } from '../../../../hooks/useToast';
@@ -82,13 +83,24 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
         ...mutationOptions
     });
 
+    const inFlightReportMutationsRef = useRef(new Set<string>());
+
     const reportMutation = useMutation({
         mutationFn: async (vars: ReportMutationVars) => {
             const authUser = await getAuthUser();
             const userId = authUser.id;
             if (vars.operation === 'add') {
-                const { error } = await supabase.from('reports').insert(vars.data);
-                if (error) throw error;
+                const inFlightKey = `${userId}::${vars.data.student_id}::${vars.data.date}::${(vars.data.title || '').trim()}`;
+                if (inFlightReportMutationsRef.current.has(inFlightKey)) {
+                    return;
+                }
+                inFlightReportMutationsRef.current.add(inFlightKey);
+                try {
+                    const { error } = await supabase.from('reports').insert(vars.data);
+                    if (error) throw error;
+                } finally {
+                    inFlightReportMutationsRef.current.delete(inFlightKey);
+                }
             } else {
                 const oldData = await getAuditRecord('reports', vars.id, userId);
                 const { error } = await supabase.from('reports').update(vars.data).eq('id', vars.id).eq('user_id', userId);
@@ -107,51 +119,62 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
         ...mutationOptions
     });
 
+    const inFlightAcademicMutationsRef = useRef(new Set<string>());
+
     const academicMutation = useMutation({
         mutationFn: async (vars: AcademicMutationVars) => {
             const authUser = await getAuthUser();
             const userId = authUser.id;
             if (vars.operation === 'add') {
-                let existingRecordQuery = supabase
-                    .from('academic_records')
-                    .select('id, student_id, user_id, subject, assessment_name, notes, score, semester_id, created_at, version')
-                    .eq('student_id', vars.data.student_id)
-                    .eq('user_id', userId)
-                    .eq('subject', vars.data.subject)
-                    .eq('assessment_name', vars.data.assessment_name ?? '')
-                    .is('deleted_at', null);
-
-                existingRecordQuery = vars.data.semester_id
-                    ? existingRecordQuery.eq('semester_id', vars.data.semester_id)
-                    : existingRecordQuery.is('semester_id', null);
-
-                const { data: existingRecords, error: existingRecordsError } = await existingRecordQuery;
-                if (existingRecordsError) throw existingRecordsError;
-
-                const latestExistingRecord = dedupeAcademicRecords(
-                    (existingRecords || []) as Database['public']['Tables']['academic_records']['Row'][]
-                ).sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime())[0];
-
-                if (latestExistingRecord) {
-                    const { error } = await supabase
-                        .from('academic_records')
-                        .update(vars.data)
-                        .eq('id', latestExistingRecord.id);
-                    if (error) throw error;
-                    await writeAuditLog({
-                        userId,
-                        userEmail: authUser.email,
-                        tableName: 'academic_records',
-                        recordId: latestExistingRecord.id,
-                        action: 'UPDATE',
-                        oldData: latestExistingRecord as unknown as Record<string, unknown>,
-                        newData: vars.data as Record<string, unknown>,
-                    });
+                const inFlightKey = `${userId}::${vars.data.student_id}::${vars.data.subject}::${vars.data.assessment_name ?? ''}::${vars.data.semester_id || 'no-sem'}`;
+                if (inFlightAcademicMutationsRef.current.has(inFlightKey)) {
                     return;
                 }
+                inFlightAcademicMutationsRef.current.add(inFlightKey);
+                try {
+                    let existingRecordQuery = supabase
+                        .from('academic_records')
+                        .select('id, student_id, user_id, subject, assessment_name, notes, score, semester_id, created_at, version')
+                        .eq('student_id', vars.data.student_id)
+                        .eq('user_id', userId)
+                        .eq('subject', vars.data.subject)
+                        .eq('assessment_name', vars.data.assessment_name ?? '')
+                        .is('deleted_at', null);
 
-                const { error } = await supabase.from('academic_records').insert(vars.data);
-                if (error) throw error;
+                    existingRecordQuery = vars.data.semester_id
+                        ? existingRecordQuery.eq('semester_id', vars.data.semester_id)
+                        : existingRecordQuery.is('semester_id', null);
+
+                    const { data: existingRecords, error: existingRecordsError } = await existingRecordQuery;
+                    if (existingRecordsError) throw existingRecordsError;
+
+                    const latestExistingRecord = dedupeAcademicRecords(
+                        (existingRecords || []) as Database['public']['Tables']['academic_records']['Row'][]
+                    ).sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime())[0];
+
+                    if (latestExistingRecord) {
+                        const { error } = await supabase
+                            .from('academic_records')
+                            .update(vars.data)
+                            .eq('id', latestExistingRecord.id);
+                        if (error) throw error;
+                        await writeAuditLog({
+                            userId,
+                            userEmail: authUser.email,
+                            tableName: 'academic_records',
+                            recordId: latestExistingRecord.id,
+                            action: 'UPDATE',
+                            oldData: latestExistingRecord as unknown as Record<string, unknown>,
+                            newData: vars.data as Record<string, unknown>,
+                        });
+                        return;
+                    }
+
+                    const { error } = await supabase.from('academic_records').insert(vars.data);
+                    if (error) throw error;
+                } finally {
+                    inFlightAcademicMutationsRef.current.delete(inFlightKey);
+                }
             } else {
                 const oldData = await getAuditRecord('academic_records', vars.id, userId);
                 const { error } = await supabase.from('academic_records').update(vars.data).eq('id', vars.id);
@@ -170,58 +193,88 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
         ...mutationOptions
     });
 
+    const inFlightQuizMutationsRef = useRef(new Set<string>());
+
     const quizMutation = useMutation({
         mutationFn: async (vars: QuizMutationVars) => {
             const authUser = await getAuthUser();
             const userId = authUser.id;
+            const normalizedSubject = (vars.data.subject && vars.data.subject.trim()) || null;
+            const normalizedQuizName = (vars.data.quiz_name && vars.data.quiz_name.trim()) || '';
+
             if (vars.operation === 'add') {
-                let existingQuery = supabase
-                    .from('quiz_points')
-                    .select('id, student_id, user_id, quiz_date, quiz_name, subject, points, max_points, category, is_used, used_at, used_for_subject, semester_id, created_at')
-                    .eq('student_id', vars.data.student_id)
-                    .eq('user_id', userId)
-                    .eq('quiz_date', vars.data.quiz_date)
-                    .eq('quiz_name', vars.data.quiz_name)
-                    .gte('created_at', getDuplicateGuardWindowIso())
-                    .is('deleted_at', null)
-                    .order('created_at', { ascending: false })
-                    .limit(1);
+                const insertPayload: Database['public']['Tables']['quiz_points']['Insert'] = {
+                    ...vars.data,
+                    user_id: userId,
+                    subject: normalizedSubject,
+                    quiz_name: normalizedQuizName,
+                    max_points: vars.data.max_points ?? 100,
+                    points: vars.data.points ?? 0,
+                    quiz_date: vars.data.quiz_date,
+                    student_id: vars.data.student_id,
+                };
 
-                existingQuery = vars.data.subject != null
-                    ? existingQuery.eq('subject', vars.data.subject)
-                    : existingQuery.is('subject', null);
-
-                existingQuery = vars.data.semester_id
-                    ? existingQuery.eq('semester_id', vars.data.semester_id)
-                    : existingQuery.is('semester_id', null);
-
-                const { data: existingRows, error: existingError } = await existingQuery;
-                if (existingError) throw existingError;
-
-                const existingRow = existingRows?.[0];
-                if (existingRow) {
-                    const { error } = await supabase
-                        .from('quiz_points')
-                        .update(vars.data)
-                        .eq('id', existingRow.id);
-                    if (error) throw error;
-                    await writeAuditLog({
-                        userId,
-                        userEmail: authUser.email,
-                        tableName: 'quiz_points',
-                        recordId: existingRow.id,
-                        action: 'UPDATE',
-                        oldData: existingRow as unknown as Record<string, unknown>,
-                        newData: vars.data as Record<string, unknown>,
-                    });
+                const inFlightKey = `${userId}::${vars.data.student_id}::${vars.data.quiz_date}::${normalizedQuizName}::${normalizedSubject || 'null'}`;
+                if (inFlightQuizMutationsRef.current.has(inFlightKey)) {
                     return;
                 }
+                inFlightQuizMutationsRef.current.add(inFlightKey);
 
-                const { error } = await supabase.from('quiz_points').insert(vars.data);
-                if (error) throw error;
+                try {
+                    let existingQuery = supabase
+                        .from('quiz_points')
+                        .select('id, student_id, user_id, quiz_date, quiz_name, subject, points, max_points, category, is_used, used_at, used_for_subject, semester_id, created_at')
+                        .eq('student_id', vars.data.student_id)
+                        .eq('user_id', userId)
+                        .eq('quiz_date', vars.data.quiz_date)
+                        .eq('quiz_name', normalizedQuizName)
+                        .is('deleted_at', null)
+                        .order('created_at', { ascending: false })
+                        .limit(1);
+
+                    existingQuery = normalizedSubject != null
+                        ? existingQuery.eq('subject', normalizedSubject)
+                        : existingQuery.is('subject', null);
+
+                    existingQuery = vars.data.semester_id
+                        ? existingQuery.eq('semester_id', vars.data.semester_id)
+                        : existingQuery.is('semester_id', null);
+
+                    const { data: existingRows, error: existingError } = await existingQuery;
+                    if (existingError) throw existingError;
+
+                    const existingRow = existingRows?.[0];
+                    if (existingRow) {
+                        const { error } = await supabase
+                            .from('quiz_points')
+                            .update(insertPayload)
+                            .eq('id', existingRow.id);
+                        if (error) throw error;
+                        await writeAuditLog({
+                            userId,
+                            userEmail: authUser.email,
+                            tableName: 'quiz_points',
+                            recordId: existingRow.id,
+                            action: 'UPDATE',
+                            oldData: existingRow as unknown as Record<string, unknown>,
+                            newData: insertPayload as Record<string, unknown>,
+                        });
+                        return;
+                    }
+
+                    const { error } = await supabase.from('quiz_points').insert(insertPayload);
+                    if (error) throw error;
+                } finally {
+                    inFlightQuizMutationsRef.current.delete(inFlightKey);
+                }
             } else {
+                const updatePayload: Database['public']['Tables']['quiz_points']['Update'] = {
+                    ...vars.data,
+                    subject: normalizedSubject,
+                    quiz_name: normalizedQuizName,
+                };
                 const oldData = await getAuditRecord('quiz_points', vars.id, userId);
-                const { error } = await supabase.from('quiz_points').update(vars.data).eq('id', vars.id);
+                const { error } = await supabase.from('quiz_points').update(updatePayload).eq('id', vars.id);
                 if (error) throw error;
                 await writeAuditLog({
                     userId,
@@ -230,64 +283,74 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
                     recordId: vars.id,
                     action: 'UPDATE',
                     oldData,
-                    newData: vars.data as Record<string, unknown>,
+                    newData: updatePayload as Record<string, unknown>,
                 });
             }
         },
         ...mutationOptions
     });
 
+    const inFlightViolationMutationsRef = useRef(new Set<string>());
+
     const violationMutation = useMutation({
         mutationFn: async (vars: ViolationMutationVars) => {
             const authUser = await getAuthUser();
             const userId = authUser.id;
             if (vars.operation === 'add') {
-                if (!vars.allowDuplicate) {
-                    let existingQuery = supabase
-                        .from('violations')
-                        .select('id, student_id, user_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, deleted_at')
-                        .eq('student_id', vars.data.student_id)
-                        .eq('user_id', userId)
-                        .eq('date', vars.data.date)
-                        .eq('description', vars.data.description)
-                        .eq('points', vars.data.points)
-                        .gte('created_at', getDuplicateGuardWindowIso())
-                        .is('deleted_at', null)
-                        .order('created_at', { ascending: false })
-                        .limit(1);
-
-                    existingQuery = vars.data.semester_id
-                        ? existingQuery.eq('semester_id', vars.data.semester_id)
-                        : existingQuery.is('semester_id', null);
-                    existingQuery = vars.data.type
-                        ? existingQuery.eq('type', vars.data.type)
-                        : existingQuery.is('type', null);
-
-                    const { data: existingRows, error: existingError } = await existingQuery;
-                    if (existingError) throw existingError;
-
-                    const existingRow = existingRows?.[0];
-                    if (existingRow) {
-                        const { error } = await supabase
-                            .from('violations')
-                            .update(vars.data)
-                            .eq('id', existingRow.id);
-                        if (error) throw error;
-                        await writeAuditLog({
-                            userId,
-                            userEmail: authUser.email,
-                            tableName: 'violations',
-                            recordId: existingRow.id,
-                            action: 'UPDATE',
-                            oldData: existingRow as unknown as Record<string, unknown>,
-                            newData: vars.data as Record<string, unknown>,
-                        });
-                        return;
-                    }
+                const inFlightKey = `${vars.data.student_id}::${vars.data.date}::${(vars.data.description || '').trim()}::${vars.data.points}`;
+                if (inFlightViolationMutationsRef.current.has(inFlightKey)) {
+                    return;
                 }
+                inFlightViolationMutationsRef.current.add(inFlightKey);
+                try {
+                    if (!vars.allowDuplicate) {
+                        let existingQuery = supabase
+                            .from('violations')
+                            .select('id, student_id, user_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, deleted_at')
+                            .eq('student_id', vars.data.student_id)
+                            .eq('date', vars.data.date)
+                            .eq('description', vars.data.description)
+                            .eq('points', vars.data.points)
+                            .gte('created_at', getDuplicateGuardWindowIso())
+                            .is('deleted_at', null)
+                            .order('created_at', { ascending: false })
+                            .limit(1);
 
-                const { error } = await supabase.from('violations').insert(vars.data);
-                if (error) throw error;
+                        existingQuery = vars.data.semester_id
+                            ? existingQuery.eq('semester_id', vars.data.semester_id)
+                            : existingQuery.is('semester_id', null);
+                        existingQuery = vars.data.type
+                            ? existingQuery.eq('type', vars.data.type)
+                            : existingQuery.is('type', null);
+
+                        const { data: existingRows, error: existingError } = await existingQuery;
+                        if (existingError) throw existingError;
+
+                        const existingRow = existingRows?.[0];
+                        if (existingRow) {
+                            const { error } = await supabase
+                                .from('violations')
+                                .update(vars.data)
+                                .eq('id', existingRow.id);
+                            if (error) throw error;
+                            await writeAuditLog({
+                                userId,
+                                userEmail: authUser.email,
+                                tableName: 'violations',
+                                recordId: existingRow.id,
+                                action: 'UPDATE',
+                                oldData: existingRow as unknown as Record<string, unknown>,
+                                newData: vars.data as Record<string, unknown>,
+                            });
+                            return;
+                        }
+                    }
+
+                    const { error } = await supabase.from('violations').insert(vars.data);
+                    if (error) throw error;
+                } finally {
+                    inFlightViolationMutationsRef.current.delete(inFlightKey);
+                }
             } else {
                 const oldData = await getAuditRecord('violations', vars.id, userId);
                 const { error } = await supabase.from('violations').update(vars.data).eq('id', vars.id);

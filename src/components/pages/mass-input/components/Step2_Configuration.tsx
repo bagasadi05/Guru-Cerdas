@@ -4,6 +4,7 @@ import { CustomDropdown } from '../../../ui/CustomDropdown';
 import { Button } from '../../../ui/Button';
 import { Modal } from '../../../ui/Modal';
 import { XCircleIcon, ChevronDownIcon, SparklesIcon, ClipboardPasteIcon, SearchIcon, CheckIcon, UploadIcon } from '../../../Icons';
+import { SlidersHorizontal } from 'lucide-react';
 import { violationList } from '../../../../services/violations.data';
 import { InputMode, ClassRow } from '../types';
 import { QUIZ_ACTIVITY_CATEGORIES, QUIZ_CATEGORY_DEFAULT_NAMES, QUIZ_ACTIVITY_SUGGESTIONS, BINTANG_ATTITUDE_ASPECTS, ATTITUDE_SUGGESTIONS } from '../constants';
@@ -112,14 +113,14 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
     };
     return (
         <div className="lg:col-span-1 space-y-6 animate-fade-in-left">
-            <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl shadow-brand-600/10">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm">
                 <div
-                    className="p-5 sm:p-6 rounded-t-3xl border-b border-slate-200 dark:border-slate-700 flex justify-between items-center cursor-pointer bg-slate-50 dark:bg-slate-800/50 backdrop-blur-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="p-5 sm:p-6 rounded-t-3xl border-b border-slate-200 dark:border-slate-700 flex justify-between items-center cursor-pointer bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     onClick={() => setIsConfigOpen(!isConfigOpen)}
                 >
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-500/20 flex items-center justify-center border border-brand-200 dark:border-white/10">
-                            <SparklesIcon className="w-5 h-5 text-brand-600 dark:text-brand-300" />
+                            <SlidersHorizontal className="w-5 h-5 text-brand-600 dark:text-brand-300" />
                         </div>
                         <h3 className="font-bold text-xl text-slate-900 dark:text-white tracking-wide">Konfigurasi</h3>
                     </div>
@@ -727,7 +728,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
             </div>
 
             {mode === 'subject_grade' && isOnline && (
-                <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 p-6 shadow-xl shadow-brand-600/10">
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
                     <h3 className="font-bold text-lg mb-4 border-b border-slate-200 dark:border-slate-700 pb-3 flex items-center gap-2 text-slate-900 dark:text-white">
                         <ClipboardPasteIcon className="w-5 h-5 text-brand-600 dark:text-brand-300" />
                         Tempel Data Nilai

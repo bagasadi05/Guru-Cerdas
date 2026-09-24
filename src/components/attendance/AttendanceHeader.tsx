@@ -10,7 +10,7 @@ interface AttendanceHeaderProps {
 
 export const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({ onAnalyze, onExport, isOnline }) => {
     return (
-        <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 p-6 md:p-8 shadow-xl shadow-green-500/20 mb-6">
+        <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 p-6 md:p-8 shadow-xl shadow-slate-900/15 mb-6">
             {/* Decorative background elements */}
             <div className="absolute top-0 right-0 -mt-20 -mr-20 w-72 h-72 bg-emerald-500/30 rounded-full blur-[80px] pointer-events-none mix-blend-screen"></div>
             <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-72 h-72 bg-green-500/30 rounded-full blur-[80px] pointer-events-none mix-blend-screen"></div>
@@ -19,8 +19,8 @@ export const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({ onAnalyze, o
             <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left z-10">
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6">
                     <div className="flex-shrink-0 group hidden md:block">
-                        <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center border border-white/30 shadow-lg ring-1 ring-white/30 backdrop-blur-md group-hover:scale-105 transition-transform duration-300">
-                            <BrainCircuitIcon className="w-8 h-8 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                        <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center border border-white/30 shadow-lg ring-1 ring-white/30 group-hover:scale-105 transition-transform duration-300">
+                            <BrainCircuitIcon className="w-8 h-8 text-white" />
                         </div>
                     </div>
                     <div className="flex-1 space-y-1.5 mt-1">
@@ -38,7 +38,7 @@ export const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({ onAnalyze, o
                         <BrainCircuitIcon className="w-4 h-4 mr-2" />
                         Analisis Cerdas
                     </Button>
-                    <Button onClick={onExport} variant="outline" className="flex-1 sm:flex-none justify-center bg-emerald-900/40 hover:bg-emerald-900/60 text-white border-emerald-400/30 backdrop-blur-md shadow-lg shadow-black/10 transition-all duration-200 font-medium px-5 h-11 rounded-xl cursor-pointer active:scale-95">
+                    <Button onClick={onExport} variant="outline" className="flex-1 sm:flex-none justify-center bg-emerald-900/40 hover:bg-emerald-900/60 text-white border-emerald-400/30 shadow-lg shadow-black/10 transition-all duration-200 font-medium px-5 h-11 rounded-xl cursor-pointer active:scale-95">
                         <DownloadCloudIcon className="w-4 h-4 mr-2" />
                         Ekspor Data
                     </Button>

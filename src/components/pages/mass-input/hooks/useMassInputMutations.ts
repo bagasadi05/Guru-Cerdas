@@ -78,6 +78,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         showDuplicateDialog,
         setShowDuplicateDialog,
         checkDuplicates,
+        isCheckingDuplicates,
     } = useDuplicateGuard({
         mode,
         user,
@@ -228,6 +229,11 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
             setIsScoresDirty?.(false);
             clearSubjectGradeDraft();
 
+            // Clear student selections after successful submission to prevent accidental duplicate submission
+            if (mode === 'quiz' || mode === 'attitude' || mode === 'violation') {
+                setSelectedStudentIds(new Set());
+            }
+
             // Fire-and-forget: log input untuk laporan harian WhatsApp
             if (mode != null) {
                 try {
@@ -274,7 +280,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
     };
 
     return {
-        submitData, isSubmitting,
+        submitData, isSubmitting, isCheckingDuplicates,
         deleteGrades, deleteGradesAsync, isDeleting,
         handleAiParse, isParsing,
         handlePrintBulkReports, handlePrintGrades,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, CalendarClock, Loader2, XIcon, CheckCircle2 } from 'lucide-react';
+import { CalendarClock, Loader2, XIcon, CheckCircle2 } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 interface AttendanceAssistantBannersProps {
@@ -29,8 +29,8 @@ export const AttendanceAssistantBanners: React.FC<AttendanceAssistantBannersProp
             {missingWeekdays.length > 0 && !isAssistantDismissed && (
                 <div className="mb-4 p-3.5 sm:p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 animate-fade-in">
                     <div className="flex items-start gap-3">
-                        <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5">
-                            <Sparkles size={18} />
+                        <div className="p-2.5 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5">
+                            <CalendarClock size={20} />
                         </div>
                         <div>
                             <div className="flex items-center gap-2 flex-wrap">
@@ -53,7 +53,7 @@ export const AttendanceAssistantBanners: React.FC<AttendanceAssistantBannersProp
                             size="sm"
                             onClick={() => handleAutoFillWeekdays()}
                             disabled={isAutoFilling}
-                            className="bg-amber-600 hover:bg-amber-700 text-white shadow-sm border-none font-semibold text-xs px-3 py-1.5 h-auto min-h-[36px] rounded-xl cursor-pointer active:scale-95 transition-all"
+                            className="bg-amber-600 hover:bg-amber-700 text-white shadow-sm border-none font-semibold text-xs px-3.5 py-2 h-auto min-h-[44px] rounded-xl cursor-pointer active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
                         >
                             {isAutoFilling ? (
                                 <>
@@ -70,11 +70,11 @@ export const AttendanceAssistantBanners: React.FC<AttendanceAssistantBannersProp
                         <button
                             type="button"
                             onClick={() => setIsAssistantDismissed(true)}
-                            className="p-1.5 text-amber-700 dark:text-amber-400 hover:bg-amber-200/60 dark:hover:bg-amber-900/40 rounded-lg transition-colors cursor-pointer active:scale-90"
+                            className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-amber-700 dark:text-amber-400 hover:bg-amber-200/60 dark:hover:bg-amber-900/40 rounded-xl transition-colors cursor-pointer active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
                             title="Tutup pengingat"
                             aria-label="Tutup pengingat"
                         >
-                            <XIcon size={16} />
+                            <XIcon size={18} />
                         </button>
                     </div>
                 </div>
@@ -92,11 +92,11 @@ export const AttendanceAssistantBanners: React.FC<AttendanceAssistantBannersProp
                     <button
                         type="button"
                         onClick={() => setIsAutoFillBannerDismissed(true)}
-                        className="p-1 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200/50 dark:hover:bg-emerald-900/40 rounded-lg transition-colors shrink-0 cursor-pointer active:scale-90"
+                        className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200/50 dark:hover:bg-emerald-900/40 rounded-xl transition-colors shrink-0 cursor-pointer active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                         title="Tutup pemberitahuan"
                         aria-label="Tutup pemberitahuan"
                     >
-                        <XIcon size={15} />
+                        <XIcon size={18} />
                     </button>
                 </div>
             )}

@@ -65,7 +65,7 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
         <Modal
             isOpen={isOpen}
             onClose={handleClose}
-            title={`🎙️ Dikte Suara Nilai ${subjectName ? `— ${subjectName}` : ''} ${assessmentName ? `(${assessmentName})` : ''}`}
+            title={`🎙️ Dikte Suara Nilai ${subjectName ? `: ${subjectName}` : ''} ${assessmentName ? `(${assessmentName})` : ''}`}
             maxWidth="max-w-4xl"
         >
             <div className="space-y-4 pt-1">
@@ -321,9 +321,9 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                     type="button"
                                     onClick={engine.toggleListening}
                                     title={engine.isListening ? 'Jeda Mendengar (Spasi)' : 'Mulai Mendengar (Spasi)'}
-                                    className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-lg sm:rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                                    className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2 sm:py-2.5 min-h-[44px] sm:min-h-[40px] rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
                                         engine.isListening
-                                            ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse'
+                                            ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse focus-visible:ring-rose-500'
                                             : 'bg-brand-600 hover:bg-brand-700 text-white'
                                     }`}
                                 >
@@ -367,7 +367,7 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                     size="sm"
                                     onClick={engine.navigatePrev}
                                     disabled={engine.currentIndex === 0}
-                                    className="h-8 sm:h-9 text-xs font-semibold px-2.5 sm:px-3 rounded-lg sm:rounded-xl"
+                                    className="min-h-[44px] sm:min-h-[36px] h-11 sm:h-9 text-xs font-semibold px-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                                     title="Siswa Sebelumnya (Panah Kiri)"
                                 >
                                     <SkipBack className="w-3.5 h-3.5 mr-1" /> Prev
@@ -378,7 +378,7 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                     size="sm"
                                     onClick={engine.navigateNext}
                                     disabled={engine.currentIndex >= students.length - 1}
-                                    className="h-8 sm:h-9 text-xs font-semibold px-2.5 sm:px-3 rounded-lg sm:rounded-xl"
+                                    className="min-h-[44px] sm:min-h-[36px] h-11 sm:h-9 text-xs font-semibold px-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                                     title="Siswa Berikutnya (Panah Kanan)"
                                 >
                                     Next <SkipForward className="w-3.5 h-3.5 ml-1" />
@@ -391,7 +391,7 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                     variant="outline"
                                     size="sm"
                                     onClick={engine.clearCurrentScore}
-                                    className="h-8 sm:h-9 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 px-2.5 sm:px-3 rounded-lg sm:rounded-xl font-medium"
+                                    className="min-h-[44px] sm:min-h-[36px] h-11 sm:h-9 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 px-3 rounded-xl font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
                                     title="Kosongkan nilai siswa saat ini"
                                 >
                                     <Trash2 className="w-3.5 h-3.5 mr-1" /> Hapus Nilai
@@ -402,7 +402,7 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                     variant="primary"
                                     size="sm"
                                     onClick={handleClose}
-                                    className="h-8 sm:h-9 text-xs px-3 sm:px-4 rounded-lg sm:rounded-xl font-bold bg-brand-600 hover:bg-brand-700 text-white"
+                                    className="min-h-[44px] sm:min-h-[36px] h-11 sm:h-9 text-xs px-4 rounded-xl font-bold bg-brand-600 hover:bg-brand-700 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                                 >
                                     Selesai
                                 </Button>
@@ -449,9 +449,9 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                         type="button"
                                         onClick={engine.isListening ? engine.stopListening : engine.startListening}
                                         disabled={!engine.isSupported}
-                                        className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs font-bold transition-all ${
+                                        className={`flex items-center gap-1.5 sm:gap-2 px-4 py-2.5 min-h-[44px] sm:min-h-[40px] rounded-xl text-xs sm:text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
                                             engine.isListening
-                                                ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse'
+                                                ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse focus-visible:ring-rose-500'
                                                 : 'bg-brand-600 hover:bg-brand-700 text-white'
                                         }`}
                                     >
@@ -466,7 +466,7 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                     <button
                                         type="button"
                                         onClick={engine.clearPairs}
-                                        className="text-xs text-slate-500 hover:text-rose-600 font-semibold"
+                                        className="min-h-[44px] px-3 inline-flex items-center text-xs text-slate-500 hover:text-rose-600 font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-lg"
                                     >
                                         Bersihkan
                                     </button>
@@ -496,9 +496,9 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                         type="button"
                                         onClick={engine.undoBatchApply}
                                         aria-label="Urungkan Penerapan"
-                                        className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1"
+                                        className="px-3 py-2 min-h-[44px] sm:min-h-[36px] rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                                     >
-                                        <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Urungkan Penerapan
+                                        <RotateCcw className="w-3.5 h-3.5" /> Urungkan Penerapan
                                     </button>
                                 </div>
                             </div>
@@ -517,7 +517,7 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                         variant="primary"
                                         size="sm"
                                         onClick={engine.applyFreeformPairs}
-                                        className="rounded-lg sm:rounded-xl text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-8 px-2.5 sm:px-3"
+                                        className="rounded-xl text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold min-h-[44px] sm:min-h-[36px] h-11 sm:h-9 px-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                                     >
                                         <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Terapkan ke Tabel ({engine.recognizedPairs.length})
                                     </Button>

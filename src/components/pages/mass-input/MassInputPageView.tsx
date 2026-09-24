@@ -140,6 +140,7 @@ export interface MassInputPageViewProps {
     showDuplicateDialog: boolean;
     setShowDuplicateDialog: (v: boolean) => void;
     onHandleSubmit: () => void;
+    isCheckingDuplicates?: boolean;
     isScoresDirty?: boolean | React.MutableRefObject<boolean>;
     setIsScoresDirty?: (v: boolean) => void;
     saveSubjectGradeDraft?: (draft: any) => void;
@@ -179,7 +180,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         bypassDuplicateGuard, setBypassDuplicateGuard,
         onDeleteSelected,
         duplicateList, showDuplicateDialog,
-        setShowDuplicateDialog, onHandleSubmit,
+        setShowDuplicateDialog, onHandleSubmit, isCheckingDuplicates,
         isScoresDirty, setIsScoresDirty, saveSubjectGradeDraft,
     } = props;
 
@@ -576,7 +577,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                 {step === 2 && mode !== 'violation_export' && (mode === 'subject_grade' ? gradedCount > 0 : selectedStudentIds.size > 0) && typeof document !== 'undefined' && createPortal(
                     <div
                         role="status" aria-live="polite"
-                        className="fixed bottom-20 lg:bottom-6 inset-x-0 z-50 pointer-events-none flex justify-center lg:pl-72 px-4 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5"
+                        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] lg:bottom-6 inset-x-0 z-50 pointer-events-none flex justify-center lg:pl-72 px-4 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5"
                     >
                         <div className="pointer-events-auto shadow-2xl bg-slate-900/95 dark:bg-slate-800/95 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl flex items-center gap-3 sm:gap-4 backdrop-blur-md border border-slate-700/60 dark:border-slate-600 shadow-black/40 max-w-[95vw]">
                             <div className="flex items-center gap-2">
@@ -600,11 +601,11 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                 <button
                                     type="button"
                                     onClick={requestClear}
-                                    className="p-1 text-slate-400 hover:text-rose-400 hover:bg-white/10 rounded-lg transition-colors ml-1"
+                                    className="min-w-[44px] min-h-[44px] p-2 inline-flex items-center justify-center text-slate-400 hover:text-rose-400 hover:bg-white/10 rounded-lg transition-colors ml-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                                     title={mode === 'subject_grade' ? 'Bersihkan nilai yang diketik' : 'Batalkan pilihan'}
                                     aria-label={mode === 'subject_grade' ? 'Bersihkan nilai yang diketik' : 'Batalkan pilihan'}
                                 >
-                                    <XIcon size={14} />
+                                    <XIcon size={16} />
                                 </button>
                             </div>
 
@@ -622,15 +623,14 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
 
                             <Button
                                 onClick={onHandleSubmit}
-                                disabled={isSubmitDisabled || isSubmitting}
+                                disabled={isSubmitDisabled || isSubmitting || isCheckingDuplicates}
                                 title={submitButtonTooltip}
-                                size="sm"
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm px-3.5 sm:px-4 py-1.5 h-8 sm:h-9 rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm px-3.5 sm:px-4 min-h-[44px] sm:min-h-[40px] h-11 sm:h-10 rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                             >
-                                {isSubmitting ? (
+                                {isSubmitting || isCheckingDuplicates ? (
                                     <>
                                         <Loader2 size={14} className="animate-spin" />
-                                        Menyimpan...
+                                        {isCheckingDuplicates ? 'Memeriksa...' : 'Menyimpan...'}
                                     </>
                                 ) : (
                                     <>

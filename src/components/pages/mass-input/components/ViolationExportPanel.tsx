@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '../../../ui/Button';
 import { CustomDropdown } from '../../../ui/CustomDropdown';
-import { DownloadIcon, FileTextIcon, FileSpreadsheetIcon, ShieldAlertIcon, SearchIcon, SparklesIcon } from '../../../Icons';
+import { DownloadIcon, FileTextIcon, FileSpreadsheetIcon, ShieldAlertIcon, SearchIcon } from '../../../Icons';
+import { SlidersHorizontal } from 'lucide-react';
 import { ClassRow, ViolationRow, StudentRow, StudentFilter } from '../types';
 import { exportBulkViolationsToExcel } from '../../../../services/violationExport';
 import { useToast } from '../../../../hooks/useToast';
@@ -185,7 +186,7 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
                 <div className="lg:col-span-1 space-y-6">
                     <div className="bg-white dark:bg-slate-900 rounded-xl transition-all border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
                         <h3 className="font-bold text-lg mb-4 text-slate-900 dark:text-white flex items-center gap-2">
-                            <SparklesIcon className="w-5 h-5 text-brand-500" />
+                            <SlidersHorizontal className="w-5 h-5 text-brand-500" />
                             Konfigurasi
                         </h3>
 
@@ -269,12 +270,12 @@ export const ViolationExportPanel: React.FC<ViolationExportPanelProps> = ({
                                 className="w-full h-10 pl-10 pr-4 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
                             />
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                             {filterTabs.map(tab => (
                                 <button type="button"
                                     key={tab.value}
                                     onClick={() => setStudentFilter(tab.value)}
-                                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${studentFilter === tab.value ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+                                    className={`min-h-[44px] px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${studentFilter === tab.value ? 'bg-brand-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
                                 >
                                     {tab.label}
                                 </button>

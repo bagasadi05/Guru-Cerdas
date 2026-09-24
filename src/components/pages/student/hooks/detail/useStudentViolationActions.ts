@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { QueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../../../services/supabase';
 import { r2StorageService } from '../../../../../services/r2StorageService';
@@ -51,6 +51,7 @@ export function useStudentViolationActions({
         pendingData: ViolationFormValues & { evidence_file?: File };
     } | null>(null);
     const [violationConflictFields, setViolationConflictFields] = useState<string[]>([]);
+    const isSubmittingViolationRef = useRef(false);
 
     const executeViolationSubmit = async (
         data: ViolationFormValues & { evidence_file?: File },
@@ -96,63 +97,68 @@ export function useStudentViolationActions({
     };
 
     const handleViolationSubmit = async (data: ViolationFormValues & { evidence_file?: File }) => {
-        if (!user || !studentId) return;
+        if (!user || !studentId || isSubmittingViolationRef.current || violationMutation.isPending) return;
+        isSubmittingViolationRef.current = true;
 
-        if (modalState.type === 'violation' && !modalState.data?.id) {
-            const localList = studentDetails?.violations || filteredViolations || [];
-            let existingViolation: {
-                date: string;
-                description: string;
-                points: number;
-                user_id?: string;
-                recorded_by_name?: string | null;
-            } | undefined = localList.find(
-                v => v.date === data.date && v.description === data.description
-            );
+        try {
+            if (modalState.type === 'violation' && !modalState.data?.id) {
+                const localList = studentDetails?.violations || filteredViolations || [];
+                let existingViolation: {
+                    date: string;
+                    description: string;
+                    points: number;
+                    user_id?: string;
+                    recorded_by_name?: string | null;
+                } | undefined = localList.find(
+                    v => v.date === data.date && v.description === data.description
+                );
 
-            if (!existingViolation) {
-                const { data: dbRows } = await supabase
-                    .from('violations')
-                    .select('id, student_id, user_id, date, description, points')
-                    .eq('student_id', studentId)
-                    .eq('date', data.date)
-                    .eq('description', data.description)
-                    .is('deleted_at', null)
-                    .order('created_at', { ascending: false })
-                    .limit(1);
+                if (!existingViolation) {
+                    const { data: dbRows } = await supabase
+                        .from('violations')
+                        .select('id, student_id, user_id, date, description, points')
+                        .eq('student_id', studentId)
+                        .eq('date', data.date)
+                        .eq('description', data.description)
+                        .is('deleted_at', null)
+                        .order('created_at', { ascending: false })
+                        .limit(1);
 
-                if (dbRows && dbRows.length > 0) {
-                    existingViolation = dbRows[0];
+                    if (dbRows && dbRows.length > 0) {
+                        existingViolation = dbRows[0];
+                    }
+                }
+
+                if (existingViolation) {
+                    let recordedByName = existingViolation.recorded_by_name || null;
+                    if (existingViolation.user_id === user.id) {
+                        recordedByName = 'Anda';
+                    } else if (!recordedByName && existingViolation.user_id) {
+                        const { data: roleRow } = await supabase
+                            .from('user_roles')
+                            .select('full_name')
+                            .eq('user_id', existingViolation.user_id)
+                            .maybeSingle();
+                        recordedByName = roleRow?.full_name || 'Guru lain';
+                    }
+
+                    setDuplicateDialog({
+                        existingViolation: {
+                            recorded_by_name: recordedByName,
+                            date: existingViolation.date,
+                            description: existingViolation.description,
+                            points: existingViolation.points,
+                        },
+                        pendingData: data,
+                    });
+                    return;
                 }
             }
 
-            if (existingViolation) {
-                let recordedByName = existingViolation.recorded_by_name || null;
-                if (existingViolation.user_id === user.id) {
-                    recordedByName = 'Anda';
-                } else if (!recordedByName && existingViolation.user_id) {
-                    const { data: roleRow } = await supabase
-                        .from('user_roles')
-                        .select('full_name')
-                        .eq('user_id', existingViolation.user_id)
-                        .maybeSingle();
-                    recordedByName = roleRow?.full_name || 'Guru lain';
-                }
-
-                setDuplicateDialog({
-                    existingViolation: {
-                        recorded_by_name: recordedByName,
-                        date: existingViolation.date,
-                        description: existingViolation.description,
-                        points: existingViolation.points,
-                    },
-                    pendingData: data,
-                });
-                return;
-            }
+            await executeViolationSubmit(data);
+        } finally {
+            isSubmittingViolationRef.current = false;
         }
-
-        await executeViolationSubmit(data);
     };
 
     const handleDuplicateConfirm = () => {

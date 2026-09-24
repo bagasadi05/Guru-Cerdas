@@ -314,7 +314,7 @@ const StudentDetailPage = () => {
                                 navigate('/siswa');
                             }
                         }}
-                        className="gap-2 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 shadow-sm rounded-xl font-semibold text-xs sm:text-sm min-h-[40px] cursor-pointer active:scale-95 transition-all duration-200"
+                        className="gap-2 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 shadow-sm rounded-xl font-semibold text-xs sm:text-sm min-h-[44px] cursor-pointer active:scale-95 transition-all duration-200"
                     >
                         <ArrowLeftIcon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                         <span>Kembali ke Data Siswa</span>
@@ -345,9 +345,9 @@ const StudentDetailPage = () => {
                                         onClick={() => photoInputRef.current?.click()}
                                         disabled={isUploadingPhoto || !isOnline}
                                         aria-label="Unggah foto profil siswa"
-                                        className="absolute -bottom-1 -right-1 p-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md shadow-md transition-transform hover:scale-110 cursor-pointer active:scale-90"
+                                        className="absolute -bottom-2 -right-2 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-md transition-transform hover:scale-110 cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
                                     >
-                                        <CameraIcon className="w-3 h-3" />
+                                        <CameraIcon className="w-5 h-5" />
                                     </button>
                                 ) : null}
                             </div>
@@ -442,44 +442,44 @@ const StudentDetailPage = () => {
                 </div>
 
                 <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 f-gap-grid">
-                    <StatCard icon={CheckCircleIcon} label="Hadir" value={`${attendanceSummary.Hadir} hari`} color="from-green-500 to-emerald-400" />
-                    <StatCard icon={AlertCircleIcon} label="Izin" value={`${attendanceSummary.Izin} hari`} color="from-blue-500 to-cyan-400" />
-                    <StatCard icon={AlertCircleIcon} label="Sakit" value={`${attendanceSummary.Sakit} hari`} color="from-yellow-500 to-amber-400" />
-                    <StatCard icon={XCircleIcon} label="Alpha" value={`${attendanceSummary.Alpha} hari`} color="from-orange-500 to-red-400" />
-                    <StatCard icon={ShieldAlertIcon} label="Poin Pelanggaran" value={totalViolationPoints} color="from-red-500 to-rose-400" className="col-span-2 sm:col-span-1" />
+                    <StatCard icon={CheckCircleIcon} label="Hadir" value={`${attendanceSummary.Hadir} hari`} color="from-emerald-600 to-emerald-700" />
+                    <StatCard icon={AlertCircleIcon} label="Izin" value={`${attendanceSummary.Izin} hari`} color="from-blue-600 to-blue-700" />
+                    <StatCard icon={AlertCircleIcon} label="Sakit" value={`${attendanceSummary.Sakit} hari`} color="from-amber-500 to-amber-600" />
+                    <StatCard icon={XCircleIcon} label="Alpha" value={`${attendanceSummary.Alpha} hari`} color="from-rose-600 to-rose-700" />
+                    <StatCard icon={ShieldAlertIcon} label="Poin Pelanggaran" value={totalViolationPoints} color="from-rose-700 to-red-800" className="col-span-2 sm:col-span-1" />
                 </section>
 
 
                 <Card>
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                         {/* Sticky Tab Navigation */}
-                        <div className="border-b border-gray-200 dark:border-white/10 sticky top-0 z-20 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl">
+                        <div className="border-b border-gray-200 dark:border-white/10 sticky top-0 z-20 bg-white/95 dark:bg-gray-900/95">
                             <div className="relative">
                                 <div className={`absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white dark:from-gray-900 to-transparent pointer-events-none z-10 transition-opacity duration-300 ${tabScrollState.left ? 'opacity-100' : 'opacity-0'}`} />
                                 <div className={`absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-gray-900 to-transparent pointer-events-none z-10 transition-opacity duration-300 ${tabScrollState.right ? 'opacity-100' : 'opacity-0'}`} />
                                 <div ref={tabsScrollRef} className="flex justify-start px-2 sm:px-4 py-2 overflow-x-auto scrollbar-hide">
                                     <TabsList className="bg-gray-100/70 dark:bg-black/30 p-1 rounded-xl w-full flex justify-between gap-1 min-w-max lg:min-w-0 flex-nowrap lg:flex-wrap xl:flex-nowrap">
-                                        <TabsTrigger value="grades" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">Nilai</TabsTrigger>
-                                        <TabsTrigger value="activity" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">Keaktifan</TabsTrigger>
-                                        <TabsTrigger value="violations" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">Pelanggaran</TabsTrigger>
-                                        <TabsTrigger value="bintang" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">
+                                        <TabsTrigger value="grades" className="min-h-[44px] h-11 px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">Nilai</TabsTrigger>
+                                        <TabsTrigger value="activity" className="min-h-[44px] h-11 px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">Keaktifan</TabsTrigger>
+                                        <TabsTrigger value="violations" className="min-h-[44px] h-11 px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">Pelanggaran</TabsTrigger>
+                                        <TabsTrigger value="bintang" className="min-h-[44px] h-11 px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">
                                             <StarIcon className="w-3.5 h-3.5 mr-1 inline text-amber-500 fill-amber-500/20" />
                                             BINTANG
                                         </TabsTrigger>
-                                        <TabsTrigger value="extracurricular" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">
+                                        <TabsTrigger value="extracurricular" className="min-h-[44px] h-11 px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">
                                             <Trophy className="w-3.5 h-3.5 mr-1 inline" />
                                             Ekstra
                                         </TabsTrigger>
-                                        <TabsTrigger value="achievements" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">
+                                        <TabsTrigger value="achievements" className="min-h-[44px] h-11 px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">
                                             <Trophy className="w-3.5 h-3.5 mr-1 inline" />
                                             Prestasi
                                         </TabsTrigger>
-                                        <TabsTrigger value="reports" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">Catatan Guru</TabsTrigger>
-                                        <TabsTrigger value="development" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">
+                                        <TabsTrigger value="reports" className="min-h-[44px] h-11 px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">Catatan Guru</TabsTrigger>
+                                        <TabsTrigger value="development" className="min-h-[44px] h-11 px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">
                                             <BrainCircuitIcon className="w-3.5 h-3.5 mr-1 inline" />
                                             Perkembangan
                                         </TabsTrigger>
-                                        <TabsTrigger value="communication" className="h-10 px-2.5 lg:px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">
+                                        <TabsTrigger value="communication" className="min-h-[44px] h-11 px-3 text-xs xl:text-sm flex-1 lg:flex-none cursor-pointer active:scale-95 transition-all duration-150 select-none">
                                             <div className="relative">
                                                 Komunikasi
                                                 {unreadMessagesCount > 0 && (

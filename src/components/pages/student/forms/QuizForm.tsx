@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { quizRules, QuizFormValues } from '../schemas';
 import { validationResolver } from '../../../../utils/formValidation';
@@ -65,6 +65,7 @@ const ACTIVITY_SUGGESTIONS: Record<PointCategory, string[]> = {
 };
 
 export const QuizForm: React.FC<QuizFormProps> = ({ defaultValues, onSubmit, onClose, isPending }) => {
+    const isSubmittingRef = useRef(false);
     const { register, handleSubmit, control, setValue, formState: { errors } } = useForm<QuizFormValues>({
         resolver: validationResolver<QuizFormValues>(quizRules),
         defaultValues: {
@@ -82,8 +83,18 @@ export const QuizForm: React.FC<QuizFormProps> = ({ defaultValues, onSubmit, onC
         setValue('quiz_name', suggestion);
     };
 
+    const handleFormSubmit = (data: QuizFormValues) => {
+        if (isSubmittingRef.current || isPending) return;
+        isSubmittingRef.current = true;
+        try {
+            onSubmit(data);
+        } finally {
+            setTimeout(() => { isSubmittingRef.current = false; }, 800);
+        }
+    };
+
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
             {/* Category Selection */}
             <div>
                 <label className="block text-sm font-medium mb-2">Kategori Aktivitas</label>
@@ -91,7 +102,7 @@ export const QuizForm: React.FC<QuizFormProps> = ({ defaultValues, onSubmit, onC
                     {CATEGORY_OPTIONS.map((cat) => (
                         <label
                             key={cat.value}
-                            className={`flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${selectedCategory === cat.value
+                            className={`flex items-center gap-2 p-3 min-h-[44px] rounded-lg border-2 cursor-pointer transition-all focus-within:ring-2 focus-within:ring-brand-500 ${selectedCategory === cat.value
                                     ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30'
                                     : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                                 }`}
@@ -119,7 +130,7 @@ export const QuizForm: React.FC<QuizFormProps> = ({ defaultValues, onSubmit, onC
                                 key={suggestion}
                                 type="button"
                                 onClick={() => handleSuggestionClick(suggestion)}
-                                className="px-3 py-1.5 text-xs rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-brand-100 dark:hover:bg-brand-900/30 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+                                className="min-h-[44px] sm:min-h-[36px] px-3.5 py-2 sm:py-1 inline-flex items-center text-xs rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-brand-100 dark:hover:bg-brand-900/30 hover:text-brand-600 dark:hover:text-brand-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 cursor-pointer active:scale-95"
                             >
                                 {suggestion}
                             </button>
@@ -152,8 +163,8 @@ export const QuizForm: React.FC<QuizFormProps> = ({ defaultValues, onSubmit, onC
             </div>
 
             <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="ghost" onClick={onClose}>Batal</Button>
-                <Button type="submit" disabled={isPending}>{isPending ? 'Menyimpan...' : 'Simpan'}</Button>
+                <Button type="button" variant="ghost" onClick={onClose} className="min-h-[44px] px-4">Batal</Button>
+                <Button type="submit" disabled={isPending} className="min-h-[44px] px-4">{isPending ? 'Menyimpan...' : 'Simpan'}</Button>
             </div>
         </form>
     );

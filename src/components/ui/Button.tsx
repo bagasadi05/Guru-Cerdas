@@ -22,23 +22,23 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const { playClick } = useSound();
     const [ripples, setRipples] = useState<Ripple[]>([]);
 
-    const baseClasses = "relative overflow-hidden inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-200 ease-out min-w-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed transform-gpu active:scale-[0.98]";
+    const baseClasses = "relative overflow-hidden inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-200 ease-out min-w-[44px] min-h-[44px] sm:min-h-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed transform-gpu active:scale-[0.98]";
 
     const variantClasses = {
       default: componentStyles.buttonPrimary,
       primary: componentStyles.buttonPrimary,
       secondary: 'bg-slate-700 text-white hover:bg-slate-600 hover:shadow-md',
       success: componentStyles.buttonPrimary,
-      destructive: 'bg-red-600 text-white shadow-sm shadow-red-500/20 hover:bg-red-700 hover:shadow-md hover:shadow-red-500/25',
+      destructive: 'bg-red-600 text-white shadow-sm hover:bg-red-700 hover:shadow-md',
       outline: 'ripple-dark bg-transparent border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800',
       ghost: componentStyles.buttonGhost,
     };
 
     const sizeClasses = {
-      default: 'h-11 sm:h-10 px-5 text-base',
-      sm: 'h-10 px-3 text-sm',
-      lg: 'h-12 px-6 text-base',
-      icon: 'h-11 w-11 sm:h-10 sm:w-10 p-0',
+      default: 'min-h-[44px] sm:min-h-[40px] h-11 sm:h-10 px-5 text-base',
+      sm: 'min-h-[44px] sm:min-h-[36px] h-11 sm:h-9 px-3 text-sm',
+      lg: 'min-h-[48px] h-12 px-6 text-base',
+      icon: 'min-h-[44px] min-w-[44px] sm:min-h-[40px] sm:min-w-[40px] h-11 w-11 sm:h-10 sm:w-10 p-0',
     };
 
     const handleRipple = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {

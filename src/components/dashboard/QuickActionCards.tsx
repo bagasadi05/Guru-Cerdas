@@ -78,10 +78,10 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3 mb-2">
-        <div className="p-2 bg-gradient-to-br from-brand-500/10 to-brand-600/10 dark:from-brand-500/20 dark:to-brand-600/20 rounded-xl border border-brand-500/20">
+        <div className="p-2 bg-brand-50 dark:bg-brand-950/40 rounded-xl border border-brand-500/20">
           <ClockIcon className="w-5 h-5 text-brand-600 dark:text-brand-400" />
         </div>
-        <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-800 dark:from-white dark:to-slate-300">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
           Aksi Cepat
         </h2>
       </div>
@@ -91,17 +91,12 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
           <Link
             key={action.id}
             to={action.link}
-            className={`group relative flex flex-col items-start h-full p-6 lg:p-8 rounded-3xl overflow-hidden bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${
-              'border-slate-200/80 dark:border-white/10 shadow-sm'
-            }`}
+            className="group relative flex flex-col items-start h-full p-6 lg:p-8 rounded-3xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
           >
-            {/* Animated Glow Background on Hover */}
-            <div className={`absolute inset-0 bg-gradient-to-br ${action.glowColor} opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none blur-xl`} />
-            
             <div className="relative z-10 flex flex-col w-full">
               <div className="flex items-center justify-between mb-4 w-full">
-                {/* Icon Container with bouncy pop */}
-                <div className={`p-4 rounded-2xl ${action.iconBg} ${action.iconColor} shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3`}>
+                {/* Icon Container */}
+                <div className={`p-4 rounded-2xl ${action.iconBg} ${action.iconColor} shadow-xs transition-transform duration-300 group-hover:scale-105`}>
                   {React.cloneElement(action.icon as React.ReactElement, { className: 'w-6 h-6' })}
                 </div>
 
@@ -112,10 +107,10 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({
                       <span className="absolute -inset-1 rounded-full bg-red-400 dark:bg-red-500 opacity-50 animate-ping"></span>
                     )}
                     <div
-                      className={`relative flex items-center justify-center min-w-[28px] h-7 px-2.5 rounded-full text-xs font-bold text-white shadow-lg ${
+                      className={`relative flex items-center justify-center min-w-[28px] h-7 px-2.5 rounded-full text-xs font-bold text-white shadow-sm ${
                         action.urgent 
-                          ? 'bg-gradient-to-r from-rose-500 to-red-600 shadow-red-500/30' 
-                          : 'bg-gradient-to-r from-blue-500 to-cyan-600 shadow-blue-500/30'
+                          ? 'bg-rose-600' 
+                          : 'bg-brand-600'
                       }`}
                     >
                       {action.count}

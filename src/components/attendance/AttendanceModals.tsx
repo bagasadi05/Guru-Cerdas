@@ -138,7 +138,7 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
                     <textarea
                         value={noteText}
                         onChange={(e) => setNoteText(e.target.value)}
-                        className="w-full h-32 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                        className="w-full h-32 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
                         placeholder="Contoh: Pulang cepat karena urusan keluarga..."
                         aria-label="Catatan absensi siswa"
                     />
@@ -171,9 +171,9 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
 
             <BottomSheet isOpen={isDatePickerOpen} onClose={() => setDatePickerOpen(false)} title="Pilih Tanggal Absensi">
                 <div className="space-y-6 pb-6">
-                    <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl border border-green-100 dark:border-green-800/50 flex items-start gap-3">
-                        <InfoIcon className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm text-green-800 dark:text-green-200">
+                    <div className="bg-emerald-50 dark:bg-emerald-950/30 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800/50 flex items-start gap-3">
+                        <InfoIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-emerald-900 dark:text-emerald-200">
                             Anda sedang melihat data absensi untuk tanggal <span className="font-bold">{new Date(selectedDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>.
                         </p>
                     </div>
@@ -187,8 +187,8 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
                                     setSelectedDate(today);
                                     setDatePickerOpen(false);
                                 }}
-                                className={`flex items-center justify-center gap-2 p-4 rounded-xl border transition-all ${selectedDate === today
-                                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-500/30'
+                                className={`flex items-center justify-center gap-2 p-4 min-h-[44px] rounded-xl border transition-all cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${selectedDate === today
+                                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
                                     : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-500 text-slate-700 dark:text-slate-200'
                                     }`}
                             >
@@ -201,8 +201,8 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
                                     setSelectedDate(yesterday);
                                     setDatePickerOpen(false);
                                 }}
-                                className={`flex items-center justify-center gap-2 p-4 rounded-xl border transition-all ${selectedDate === yesterday
-                                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-500/30'
+                                className={`flex items-center justify-center gap-2 p-4 min-h-[44px] rounded-xl border transition-all cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${selectedDate === yesterday
+                                    ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
                                     : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-500 text-slate-700 dark:text-slate-200'
                                     }`}
                             >
@@ -238,13 +238,13 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
             >
                 <div className="space-y-4">
                     <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
-                        <AlertTriangle className="w-6 h-6 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <AlertTriangle className="w-6 h-6 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                         <div>
-                            <h4 className="font-bold text-amber-700 dark:text-amber-300">Siswa Belum Diabsen</h4>
-                            <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
+                            <h4 className="font-bold text-amber-900 dark:text-amber-200">Siswa Belum Diabsen</h4>
+                            <p className="text-sm text-amber-800 dark:text-amber-300 mt-1">
                                 Masih ada <strong>{unmarkedStudentsCount} siswa</strong> yang belum diabsen.
                             </p>
-                            <p className="text-sm text-amber-600 dark:text-amber-400 mt-2">
+                            <p className="text-sm text-amber-800 dark:text-amber-300 mt-2">
                                 Mereka akan otomatis ditandai <strong>"Hadir"</strong> saat disimpan.
                             </p>
                         </div>
@@ -254,7 +254,7 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
                         <Button
                             onClick={() => setIsSaveConfirmOpen(false)}
                             variant="outline"
-                            className="flex-1"
+                            className="flex-1 min-h-[44px]"
                         >
                             Batal
                         </Button>
@@ -263,7 +263,7 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
                                 setIsSaveConfirmOpen(false);
                                 performSave();
                             }}
-                            className="flex-1 bg-brand-700 hover:bg-brand-800 text-white"
+                            className="flex-1 bg-brand-700 hover:bg-brand-800 text-white min-h-[44px]"
                         >
                             {isSaving ? 'Menyimpan...' : 'Simpan & Tandai Hadir'}
                         </Button>
@@ -278,14 +278,14 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
                 title="Reset Absensi"
             >
                 <div className="space-y-4">
-                    <div className="flex items-start gap-3 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
-                        <AlertTriangle className="w-6 h-6 text-orange-500 flex-shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-3 p-4 bg-orange-50 dark:bg-orange-950/30 rounded-xl border border-orange-200 dark:border-orange-800">
+                        <AlertTriangle className="w-6 h-6 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
                         <div>
-                            <h4 className="font-bold text-orange-700 dark:text-orange-300">Peringatan</h4>
-                            <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">
+                            <h4 className="font-bold text-orange-900 dark:text-orange-200">Peringatan</h4>
+                            <p className="text-sm text-orange-800 dark:text-orange-300 mt-1">
                                 Anda akan menghapus <strong>semua data absensi</strong> untuk kelas <strong>{selectedClassName}</strong> pada tanggal <strong>{new Date(selectedDate).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</strong>.
                             </p>
-                            <p className="text-sm text-orange-600 dark:text-orange-400 mt-2">
+                            <p className="text-sm text-orange-800 dark:text-orange-300 mt-2">
                                 Tindakan ini tidak dapat dibatalkan!
                             </p>
                         </div>
@@ -295,14 +295,14 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
                         <Button
                             onClick={() => setIsResetModalOpen(false)}
                             variant="outline"
-                            className="flex-1"
+                            className="flex-1 min-h-[44px]"
                         >
                             Batal
                         </Button>
                         <Button
                             onClick={confirmResetAttendance}
                             variant="destructive"
-                            className="flex-1"
+                            className="flex-1 min-h-[44px]"
                             disabled={isResetting}
                         >
                             {isResetting ? (

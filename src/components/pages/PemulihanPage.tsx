@@ -20,7 +20,6 @@ import ActionHistoryPage from './ActionHistoryPage';
 import {
     Database,
     Trash2,
-    RotateCcw,
     History,
     Download,
     Upload,

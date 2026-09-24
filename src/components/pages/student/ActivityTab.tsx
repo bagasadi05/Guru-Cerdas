@@ -50,7 +50,7 @@ const CategoryFilter: React.FC<{
         <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4">
             <button type="button"
                 onClick={() => onSelect('all')}
-                className={`px-3 py-1.5 sm:px-4 sm:py-2 min-h-[36px] sm:min-h-[40px] text-xs sm:text-sm font-medium rounded-full transition-all ${selectedCategory === 'all'
+                className={`px-3.5 py-2 sm:px-4 sm:py-2 min-h-[44px] text-xs sm:text-sm font-medium rounded-full transition-all cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${selectedCategory === 'all'
                     ? 'bg-indigo-600 text-white shadow-sm'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                     }`}
@@ -61,7 +61,7 @@ const CategoryFilter: React.FC<{
                 <button type="button"
                     key={key}
                     onClick={() => onSelect(key as PointCategory)}
-                    className={`px-3 py-1.5 sm:px-4 sm:py-2 min-h-[36px] sm:min-h-[40px] text-xs sm:text-sm font-medium rounded-full transition-all flex items-center gap-1.5 ${selectedCategory === key
+                    className={`px-3.5 py-2 sm:px-4 sm:py-2 min-h-[44px] text-xs sm:text-sm font-medium rounded-full transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${selectedCategory === key
                         ? 'bg-indigo-600 text-white shadow-sm'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}

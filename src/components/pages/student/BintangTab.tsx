@@ -8,6 +8,7 @@ import { useToast } from '../../../hooks/useToast';
 import { useAuth } from '../../../hooks/useAuth';
 import { supabase } from '../../../services/supabase';
 import { downloadBintangReportAction } from '../../../services/bintangPdfGenerator';
+import { dedupeQuizPoints } from '../../../utils/academicRecordUtils';
 
 const GRADE_COLORS: Record<BintangGrade, string> = {
     A: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
@@ -62,13 +63,14 @@ export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: 
                 const lastDay = new Date(parseInt(selectedMonth.split('-')[0]), parseInt(selectedMonth.split('-')[1]), 0).getDate();
                 const { data, error } = await supabase
                     .from('quiz_points')
-                    .select('points')
+                    .select('id, student_id, quiz_name, subject, points, quiz_date, semester_id, created_at')
                     .eq('student_id', studentId)
                     .is('deleted_at', null)
                     .gte('quiz_date', `${selectedMonth}-01`)
                     .lte('quiz_date', `${selectedMonth}-${lastDay}`);
                 if (active && !error) {
-                    const total = (data || []).reduce((sum: number, q: any) => sum + (q.points || 0), 0);
+                    const deduped = dedupeQuizPoints((data || []) as any);
+                    const total = deduped.reduce((sum: number, q: any) => sum + (q.points || 0), 0);
                     setQuizPoints(total);
                 }
             } catch {
@@ -139,7 +141,7 @@ export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: 
                     <select
                         value={selectedMonth}
                         onChange={(e) => setSelectedMonth(e.target.value)}
-                        className="h-10 px-3.5 text-sm font-medium rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 cursor-pointer shadow-sm flex-1 sm:flex-none"
+                        className="min-h-[44px] sm:min-h-[40px] h-11 sm:h-10 px-3.5 text-sm font-medium rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 cursor-pointer shadow-sm flex-1 sm:flex-none"
                     >
                         {monthOptions.map(m => (
                             <option key={m.value} value={m.value}>{m.label}</option>
@@ -149,7 +151,7 @@ export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: 
                     <Button 
                         onClick={handleDownloadPdf}
                         disabled={isDownloadingPdf}
-                        className="h-10 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-medium rounded-xl shadow-sm cursor-pointer active:scale-95 transition-all flex items-center gap-2 text-sm justify-center flex-1 sm:flex-none"
+                        className="min-h-[44px] sm:min-h-[40px] h-11 sm:h-10 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-medium rounded-xl shadow-sm cursor-pointer active:scale-95 transition-all flex items-center gap-2 text-sm justify-center flex-1 sm:flex-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                     >
                         {isDownloadingPdf ? (
                             <span className="flex items-center gap-2">

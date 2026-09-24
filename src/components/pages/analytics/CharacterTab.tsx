@@ -393,7 +393,7 @@ const StudentRekapTable: React.FC<{
                                                             </p>
                                                         </div>
                                                     ) : (
-                                                        <span className="text-xs text-slate-400 italic">—</span>
+                                                        <span className="text-xs text-slate-400 italic">-</span>
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3">
@@ -417,7 +417,7 @@ const StudentRekapTable: React.FC<{
                                                             {row.activityPoints} pt
                                                         </span>
                                                     ) : (
-                                                        <span className="text-xs text-slate-400 italic">—</span>
+                                                        <span className="text-xs text-slate-400 italic">-</span>
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3">
@@ -504,7 +504,7 @@ const StudentRekapTable: React.FC<{
                                         <div className="grid grid-cols-3 gap-2">
                                             <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-2.5 text-center">
                                                 <p className={`text-sm font-bold ${attColor}`}>
-                                                    {row.totalAttendance > 0 ? `${row.attendanceRate.toFixed(0)}%` : '—'}
+                                                    {row.totalAttendance > 0 ? `${row.attendanceRate.toFixed(0)}%` : '-'}
                                                 </p>
                                                 <p className="text-xxs text-slate-400 mt-0.5">Hadir</p>
                                             </div>
@@ -516,7 +516,7 @@ const StudentRekapTable: React.FC<{
                                             </div>
                                             <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-2.5 text-center">
                                                 <p className="text-sm font-bold text-amber-600 dark:text-amber-400">
-                                                    {row.activityPoints > 0 ? `${row.activityPoints}pt` : '—'}
+                                                    {row.activityPoints > 0 ? `${row.activityPoints}pt` : '-'}
                                                 </p>
                                                 <p className="text-xxs text-slate-400 mt-0.5">Aktif</p>
                                             </div>

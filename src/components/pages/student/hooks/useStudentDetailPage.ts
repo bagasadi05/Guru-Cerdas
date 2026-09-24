@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '../../../../hooks/useToast';
 import { supabase } from '../../../../services/supabase';
@@ -63,17 +63,19 @@ export const useStudentDetailPage = () => {
         ? `${selectedSemester.academic_years?.name || 'Tahun Ajaran'} - ${getSemesterDisplayName(selectedSemester.name, selectedSemester.start_date, 'full')}`
         : 'Semua Semester';
 
-    useEffect(() => {
-        if (activeSemester && !selectedSemesterId) {
+    const [prevActiveSemesterId, setPrevActiveSemesterId] = useState(activeSemester?.id);
+    if (activeSemester?.id && activeSemester.id !== prevActiveSemesterId) {
+        setPrevActiveSemesterId(activeSemester.id);
+        if (!selectedSemesterId) {
             setSelectedSemesterId(activeSemester.id);
         }
-    }, [activeSemester, selectedSemesterId]);
+    }
 
-    useEffect(() => {
-        if (location.state?.openTab) {
-            setActiveTab(location.state.openTab);
-        }
-    }, [location.state]);
+    const [prevOpenTab, setPrevOpenTab] = useState(location.state?.openTab);
+    if (location.state?.openTab && location.state.openTab !== prevOpenTab) {
+        setPrevOpenTab(location.state.openTab);
+        setActiveTab(location.state.openTab);
+    }
 
     useEffect(() => {
         const container = tabsScrollRef.current;
@@ -289,8 +291,8 @@ export const useStudentDetailPage = () => {
         if (!user || !studentId) return;
         const quizPayload = {
             quiz_date: data.quiz_date,
-            subject: data.subject,
-            quiz_name: data.quiz_name,
+            subject: data.subject?.trim() || null,
+            quiz_name: data.quiz_name.trim(),
             points: 1,
             max_points: 1,
             category: data.category || null,
@@ -353,14 +355,16 @@ export const useStudentDetailPage = () => {
     }, [studentDetails?.communications]);
 
     // Apply Points
-    useEffect(() => {
+    const [prevModalType, setPrevModalType] = useState(modalState.type);
+    if (modalState.type !== prevModalType) {
+        setPrevModalType(modalState.type);
         if (modalState.type === 'applyPoints') {
             const firstSubject = uniqueSubjectsForGrades.length > 0 ? uniqueSubjectsForGrades[0] : '';
             setSubjectToApply(firstSubject || '');
         } else {
             setSubjectToApply('');
         }
-    }, [modalState.type, uniqueSubjectsForGrades]);
+    }
 
     const { triggerConfetti } = useConfetti();
 

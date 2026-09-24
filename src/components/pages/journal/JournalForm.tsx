@@ -174,7 +174,10 @@ export const JournalForm: React.FC<JournalFormProps> = ({
     }
   };
 
+  const isPending = createJournal.isPending || updateJournal.isPending;
+
   const onSubmit = (data: JournalFormValues) => {
+    if (isPending || isUploading || isRemoving) return;
     const payload = {
       ...data,
       schedule_id: prefillValues?.schedule_id || journal?.schedule_id || null,
@@ -186,8 +189,6 @@ export const JournalForm: React.FC<JournalFormProps> = ({
       createJournal.mutate(payload);
     }
   };
-
-  const isPending = createJournal.isPending || updateJournal.isPending;
 
   return (
     <Modal

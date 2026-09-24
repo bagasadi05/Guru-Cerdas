@@ -87,7 +87,7 @@ const SEV: Record<
         title: 'text-rose-950 dark:text-rose-100',
         iconBox: 'bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-500/20',
         badge: 'bg-rose-100/90 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/40',
-        btn: 'bg-rose-600 hover:bg-rose-700 text-white shadow-sm shadow-rose-600/20',
+        btn: 'bg-rose-600 hover:bg-rose-700 text-white shadow-sm',
     },
     warning: {
         ring: 'border-amber-200/80 dark:border-amber-800/40',
@@ -96,7 +96,7 @@ const SEV: Record<
         title: 'text-amber-950 dark:text-amber-100',
         iconBox: 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/20',
         badge: 'bg-amber-100/90 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40',
-        btn: 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm shadow-amber-600/20',
+        btn: 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm',
     },
     info: {
         ring: 'border-sky-200/80 dark:border-sky-800/40',
@@ -105,7 +105,7 @@ const SEV: Record<
         title: 'text-sky-950 dark:text-sky-100',
         iconBox: 'bg-sky-500/10 dark:bg-sky-500/20 text-sky-700 dark:text-sky-400 border border-sky-500/20',
         badge: 'bg-sky-100/90 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 border border-sky-200/60 dark:border-sky-800/40',
-        btn: 'bg-sky-600 hover:bg-sky-700 text-white shadow-sm shadow-sky-600/20',
+        btn: 'bg-sky-600 hover:bg-sky-700 text-white shadow-sm',
     },
     good: {
         ring: 'border-emerald-200/80 dark:border-emerald-800/40',
@@ -114,7 +114,7 @@ const SEV: Record<
         title: 'text-emerald-950 dark:text-emerald-100',
         iconBox: 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20',
         badge: 'bg-emerald-100/90 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40',
-        btn: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20',
+        btn: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm',
     },
 };
 
