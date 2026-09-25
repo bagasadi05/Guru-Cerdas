@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSemester } from '../../../../contexts/SemesterContext';
 import { InputMode, Step, StudentFilter } from '../types';
@@ -191,7 +191,7 @@ export function useMassInputState() {
         saveSubjectGradeDraft(draft);
     }, [mode, selectedClass, subjectGradeInfo, kkm, scores, selectedStudentIds, validationErrors]);
 
-    const handleModeSelect = (selectedMode: InputMode) => {
+    const handleModeSelect = useCallback((selectedMode: InputMode) => {
         if (selectedMode === 'subject_grade') {
             const draft = readSubjectGradeDraft();
             if (draft && draft.step === 2 && draft.mode === 'subject_grade') {
@@ -212,9 +212,9 @@ export function useMassInputState() {
         setMode(selectedMode);
         setStep(2);
         setIsCustomSubject(false);
-    };
+    }, []);
 
-    const handleBack = () => {
+    const handleBack = useCallback(() => {
         clearSubjectGradeDraft();
         setStep(1);
         setMode(null);
@@ -240,24 +240,26 @@ export function useMassInputState() {
         setBypassDuplicateGuard(false);
         isScoresDirtyRef.current = false;
         setIsScoresDirtyState(false);
-    };
+    }, []);
 
-    const handleScoreChange = (studentId: string, value: string) => {
+    const handleScoreChange = useCallback((studentId: string, value: string) => {
         isScoresDirtyRef.current = true;
         setIsScoresDirtyState(true);
         const normalized = value.trim().replace(',', '.');
         const numValue = Number(normalized);
-        const errors = { ...validationErrors };
-        if (value.trim() !== '' && (isNaN(numValue) || numValue < 0 || numValue > 100)) {
-            errors[studentId] = 'Nilai harus antara 0-100';
-        } else {
-            delete errors[studentId];
-        }
-        setValidationErrors(errors);
+        setValidationErrors(prev => {
+            const next = { ...prev };
+            if (value.trim() !== '' && (isNaN(numValue) || numValue < 0 || numValue > 100)) {
+                next[studentId] = 'Nilai harus antara 0-100';
+            } else {
+                delete next[studentId];
+            }
+            return next;
+        });
         setScores(prev => ({ ...prev, [studentId]: value }));
-    };
+    }, []);
 
-    const handleBatchScoreChange = (newScores: Record<string, string>) => {
+    const handleBatchScoreChange = useCallback((newScores: Record<string, string>) => {
         isScoresDirtyRef.current = true;
         setIsScoresDirtyState(true);
         setValidationErrors(prev => {
@@ -274,9 +276,9 @@ export function useMassInputState() {
             return next;
         });
         setScores(prev => ({ ...prev, ...newScores }));
-    };
+    }, []);
 
-    const handleAttitudePredicateChange = (
+    const handleAttitudePredicateChange = useCallback((
         studentId: string,
         field: 'spiritual' | 'social',
         value: string
@@ -294,9 +296,9 @@ export function useMassInputState() {
                 },
             };
         });
-    };
+    }, []);
 
-    const handleQuickFillAttitude = (
+    const handleQuickFillAttitude = useCallback((
         studentIds: string[],
         predicate: string,
         target: 'both' | 'spiritual' | 'social' = 'both'
@@ -315,20 +317,20 @@ export function useMassInputState() {
             });
             return next;
         });
-    };
+    }, []);
 
-    const handleStudentSelect = (studentId: string) => {
+    const handleStudentSelect = useCallback((studentId: string) => {
         setSelectedStudentIds(prev => {
             const newSet = new Set(prev);
             if (newSet.has(studentId)) { newSet.delete(studentId); } else { newSet.add(studentId); }
             return newSet;
         });
-    };
+    }, []);
 
-    const setIsScoresDirty = (val: boolean) => {
+    const setIsScoresDirty = useCallback((val: boolean) => {
         isScoresDirtyRef.current = val;
         setIsScoresDirtyState(val);
-    };
+    }, []);
 
     return {
         step, setStep,

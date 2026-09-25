@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { User } from '@supabase/supabase-js';
 import type { AppUser } from '../../../hooks/useAuth';
@@ -109,12 +110,12 @@ export const useAttendanceActions = ({
         toast.success('Catatan berhasil disimpan');
     };
 
-    const handleStatusChange = (studentId: string, status: AttendanceStatus) => {
+    const handleStatusChange = useCallback((studentId: string, status: AttendanceStatus) => {
         if (isSaving) { toast.warning('Tunggu sampai proses simpan selesai.'); return; }
         localDirtyRef.current = true;
         setIsDirty(true);
         setAttendanceRecords(prev => ({ ...prev, [studentId]: { ...prev[studentId], status, note: prev[studentId]?.note || '' } }));
-    };
+    }, [isSaving, toast, localDirtyRef, setIsDirty, setAttendanceRecords]);
 
     const markRestAsPresent = () => {
         if (isSaving) { toast.warning('Tunggu sampai proses simpan selesai.'); return; }

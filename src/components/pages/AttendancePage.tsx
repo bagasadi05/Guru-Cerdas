@@ -140,6 +140,12 @@ const AttendancePage: React.FC = () => {
         setSelectedStudents(new Set());
     }, [selectedStudents, handleStatusChange, setSelectedStudents]);
 
+    const handleNoteClick = useCallback((studentId: string, currentNote: string) => {
+        setNoteText(currentNote);
+        setSelectedStudents(new Set([studentId]));
+        setIsNoteModalOpen(true);
+    }, [setNoteText, setSelectedStudents, setIsNoteModalOpen]);
+
     // Keep the selected class and page controls visible while its students load.
     if (isLoadingClasses) return <AttendancePageSkeleton />;
 
@@ -288,11 +294,7 @@ const AttendancePage: React.FC = () => {
                             selectedStudents={selectedStudents}
                             onStatusChange={handleStatusChange}
                             highlightedStudentId={highlightedStudentId}
-                            onNoteClick={(studentId, currentNote) => {
-                                setNoteText(currentNote);
-                                setSelectedStudents(new Set([studentId]));
-                                setIsNoteModalOpen(true);
-                            }}
+                            onNoteClick={handleNoteClick}
                             onToggleSelect={handleToggleSelect}
                             onSelectAll={handleSelectAll}
                         />

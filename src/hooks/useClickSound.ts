@@ -20,19 +20,8 @@ export function useClickSound() {
       ) as HTMLElement | null;
 
       if (!interactiveElement) return;
-      if (interactiveElement.dataset.isAnimating === 'true') return;
 
       playClick();
-
-      if (!interactiveElement.classList.contains('animate-subtle-pop')) {
-        interactiveElement.dataset.isAnimating = 'true';
-        interactiveElement.classList.add('animate-subtle-pop');
-
-        setTimeout(() => {
-          interactiveElement.classList.remove('animate-subtle-pop');
-          delete interactiveElement.dataset.isAnimating;
-        }, 400);
-      }
     };
 
     window.addEventListener('click', handleGlobalClick);
