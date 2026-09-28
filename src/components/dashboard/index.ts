@@ -38,4 +38,6 @@ export { DashboardSummaryCards } from './DashboardSummaryCards';
 export { WallOfFameWidget } from './WallOfFameWidget';
 export { DashboardAlertStack } from './DashboardAlertStack';
 export { DashboardSection } from './DashboardSection';
+export { TodayAgendaCard } from './TodayAgendaCard';
+export { TodayActionPanel } from './TodayActionPanel';
 

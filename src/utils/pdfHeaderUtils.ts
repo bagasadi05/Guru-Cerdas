@@ -200,32 +200,115 @@ export function addPdfHeader(
     return 46;
 }
 
+export interface OfficialKopOptions {
+    ministryName?: string;
+    regionalOffice?: string;
+    schoolName?: string;
+    schoolAddress?: string;
+    schoolContact?: string;
+    orientation?: 'portrait' | 'landscape';
+    margin?: number;
+    showLogos?: boolean;
+}
+
 /**
- * Add simple header without logos (fallback)
+ * Add official Madrasah Kop Surat (Standard Kemenag Format with Double Rule)
+ * Compact and authentic official header for Prota, Promes, SK, etc.
+ * Height is ~22mm, leaving maximal vertical space for single-page documents.
+ * 
+ * @param doc - jsPDF instance
+ * @param options - Official Kop options
+ * @returns Y position after header double-line where body content should start
  */
-export function addSimplePdfHeader(
+export function addOfficialMadrasahKop(
     doc: jsPDF,
-    schoolName: string = 'MI AL IRSYAD KOTA MADIUN',
-    orientation: 'portrait' | 'landscape' = 'portrait'
+    options: OfficialKopOptions = {}
 ): number {
+    const {
+        ministryName = 'KEMENTERIAN AGAMA REPUBLIK INDONESIA',
+        regionalOffice = 'KANTOR KEMENTERIAN AGAMA KOTA MADIUN',
+        schoolName = 'MADRASAH IBTIDAIYAH AL IRSYAD KOTA MADIUN',
+        schoolAddress = 'Jl. Diponegoro No. 112B, Madiun Lor, Kec. Manguharjo, Kota Madiun, Jawa Timur 63122',
+        schoolContact = 'Telp: (0351) 463765 | Email: mialirsyadkotamadiun@gmail.com | Website: mialirsyadkotamadiun.sch.id',
+        orientation = 'landscape',
+        margin = 10,
+        showLogos = true,
+    } = options;
+
     const pageWidth = orientation === 'portrait' ? 210 : 297;
-    const margin = 15;
-    let y = 15;
+    const startY = 6;
+    const logoHeight = 16;
+    const logoSchoolWidth = 16;
+    const logoKemenagWidth = 15;
+    const logoKemenagHeight = 15 * (323 / 360);
 
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('KEMENTERIAN AGAMA REPUBLIK INDONESIA', pageWidth / 2, y, { align: 'center' });
-    y += 6;
+    // Left Logo (Madrasah)
+    if (showLogos && logoSekolah) {
+        try {
+            addContainedLogo(doc, logoSekolah, 'PNG', {
+                x: margin,
+                y: startY,
+                width: logoSchoolWidth,
+                height: logoHeight,
+            });
+        } catch (e) {
+            console.warn('Failed to add school logo:', e);
+        }
+    }
 
-    doc.setFontSize(14);
+    // Right Logo (Kemenag)
+    if (showLogos && logoKemenag) {
+        try {
+            addContainedLogo(doc, logoKemenag, 'PNG', {
+                x: pageWidth - margin - logoKemenagWidth,
+                y: startY + (logoHeight - logoKemenagHeight) / 2,
+                width: logoKemenagWidth,
+                height: logoKemenagHeight,
+            });
+        } catch (e) {
+            console.warn('Failed to add kemenag logo:', e);
+        }
+    }
+
+    // Center Official Text
+    const centerX = pageWidth / 2;
+    doc.setTextColor(15, 23, 42);
+
     doc.setFont('helvetica', 'bold');
-    doc.text(schoolName.toUpperCase(), pageWidth / 2, y, { align: 'center' });
-    y += 6;
+    doc.setFontSize(8.5);
+    doc.text(ministryName.toUpperCase(), centerX, startY + 3.5, { align: 'center' });
 
-    doc.setLineWidth(0.5);
-    doc.line(margin, y, pageWidth - margin, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.text(regionalOffice.toUpperCase(), centerX, startY + 7.2, { align: 'center' });
 
-    return y + 8;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text(schoolName.toUpperCase(), centerX, startY + 11.5, { align: 'center' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.text(schoolAddress, centerX, startY + 15, { align: 'center' });
+
+    if (schoolContact) {
+        doc.setFontSize(6.5);
+        doc.text(schoolContact, centerX, startY + 18, { align: 'center' });
+    }
+
+    // Official Double Line (Garis Ganda Kop Surat)
+    const lineY = startY + 20;
+    doc.setDrawColor(15, 23, 42);
+    doc.setLineWidth(0.6); // Top thick line
+    doc.line(margin, lineY, pageWidth - margin, lineY);
+
+    doc.setLineWidth(0.2); // Bottom thin line
+    doc.line(margin, lineY + 0.8, pageWidth - margin, lineY + 0.8);
+
+    // Reset styles
+    doc.setTextColor(0, 0, 0);
+    doc.setDrawColor(0, 0, 0);
+
+    return lineY + 0.8; // Exactly at the bottom edge of the double line (~26.8 mm)
 }
 
 /**

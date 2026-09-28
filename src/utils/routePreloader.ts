@@ -53,7 +53,9 @@ export const preloadRoute = (path: string): void => {
     case '/bintang':
       void import('@/components/pages/bintang/BintangDashboardPage');
       break;
+    case '/perangkat-ajar':
     case '/modul-ajar':
+      void import('@/components/pages/perangkat-ajar/PerangkatAjarPage');
       void import('@/components/pages/modul-ajar/ModulAjarCreatorPage');
       break;
   }

@@ -48,6 +48,7 @@ interface ModulAjarFormProps {
   onResetForm?: () => void;
   onApplyPreset?: (presetData: Partial<FormState>) => void;
   autoDistributeTime?: () => void;
+  className?: string;
 }
 
 export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
@@ -67,6 +68,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
   onResetForm,
   onApplyPreset,
   autoDistributeTime,
+  className = '',
 }) => {
   const { t } = useTranslation();
   const isAiEnabled = import.meta.env.VITE_ENABLE_AI_MODUL_AJAR === 'true';
@@ -199,7 +201,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
   };
 
   return (
-    <div className="w-full lg:w-[46%] bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-[calc(100dvh-6rem)] lg:h-[calc(100dvh-8rem)] overflow-hidden">
+    <div className={`w-full lg:w-[46%] bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col h-[calc(100dvh-6rem)] lg:h-[calc(100dvh-8rem)] overflow-hidden ${className}`}>
       
       {/* Header with Title & Reset Action */}
       <div className="p-4 lg:px-5 lg:pt-4 lg:pb-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/30 shrink-0">
@@ -219,10 +221,10 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
               type="button"
               onClick={onResetForm}
               className="p-1.5 lg:px-2.5 lg:py-1 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors flex items-center gap-1 cursor-pointer active:scale-95 duration-150"
-              title="Reset Form / Buat Draf Baru"
+              title="Reset Formulir ke Pengaturan Awal"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Reset</span>
+              <span className="hidden sm:inline">Reset Formulir</span>
             </button>
           )}
         </div>
@@ -346,7 +348,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
           >
             <ChevronLeft className="w-4 h-4" />
             <span className="hidden xs:inline">{t.lessonPlan.previous}</span>
-            <span className="xs:hidden">Prev</span>
+            <span className="xs:hidden">Kembali</span>
           </button>
         ) : (
           <div />

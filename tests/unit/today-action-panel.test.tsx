@@ -90,7 +90,7 @@ describe('TodayActionPanel', () => {
         // 3 items needed: attendance + overdue task + unread message
         expect(screen.getByText(/3 Tindakan Diperlukan/i)).toBeInTheDocument();
         expect(screen.getByText('Absensi belum lengkap')).toBeInTheDocument();
-        expect(screen.getByText('Tugas melewati deadline')).toBeInTheDocument();
-        expect(screen.getByText('Pesan wali belum dibaca')).toBeInTheDocument();
+        expect(screen.getByText('Tugas lewat batas waktu')).toBeInTheDocument();
+        expect(screen.getByText('Pesan wali murid belum dibaca')).toBeInTheDocument();
     });
 });

@@ -23,7 +23,42 @@ export const COMMON_SUBJECT_SUGGESTIONS = [
     'Bahasa Arab',
 ];
 
+/**
+ * Normalizes subject names to official school title formats.
+ * e.g. "Ass. Bhs Arab" -> "Bahasa Arab"
+ * e.g. "BHS INDONESIA" -> "Bahasa Indonesia"
+ */
+export function normalizeSubjectDisplay(raw: string): string {
+    if (!raw) return '';
+    let cleaned = raw.trim();
+
+    // Strip leading "Ass." or "Ass " (Assessment / Assistant prefix)
+    cleaned = cleaned.replace(/^Ass\.?\s+/i, '');
+
+    // Common abbreviations
+    const lower = cleaned.toLowerCase();
+    if (lower === 'bhs arab' || lower === 'bhs. arab' || lower === 'bahasa arab') return 'Bahasa Arab';
+    if (lower === 'bhs indonesia' || lower === 'bhs. indonesia' || lower === 'bahasa indonesia') return 'Bahasa Indonesia';
+    if (lower === 'bhs inggris' || lower === 'bhs. inggris' || lower === 'bahasa inggris') return 'Bahasa Inggris';
+    if (lower === 'bhs jawa' || lower === 'bhs. jawa' || lower === 'bahasa jawa') return 'Bahasa Jawa';
+    if (lower === 'ipas' || lower === 'i.p.a.s') return 'IPAS';
+    if (lower === 'ipa') return 'IPA';
+    if (lower === 'ips') return 'IPS';
+    if (lower === 'pjok') return 'PJOK';
+    if (lower === 'ppkn' || lower === 'pkn') return 'PPKn';
+    if (lower === 'pai') return 'PAI';
+
+    // Standardize title case if all caps (e.g. "MATEMATIKA" -> "Matematika")
+    if (cleaned === cleaned.toUpperCase() && cleaned.length > 4) {
+        return cleaned.charAt(0) + cleaned.slice(1).toLowerCase();
+    }
+
+    return cleaned;
+}
+
 export const PERIOD_PRESETS = ['1-2', '3-4', '5-6', '7-8'];
+
+export type PhViewMode = 'weekly' | 'cards' | 'table';
 
 export interface UsePhScheduleDomainOptions {
     externalSelectedClassId?: string;
@@ -55,7 +90,7 @@ export function usePhScheduleDomain({
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [statusFilter, setStatusFilter] = useState<ExamStatus | 'all'>('all');
     const [selectedMonth, setSelectedMonth] = useState<string>('all');
-    const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+    const [viewMode, setViewMode] = useState<PhViewMode>('weekly');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -139,7 +174,10 @@ export function usePhScheduleDomain({
     const subjectSuggestions = useMemo(() => {
         const set = new Set<string>();
         classSchedules.forEach((s: { subject?: string | null }) => {
-            if (s.subject && s.subject.trim()) set.add(s.subject.trim());
+            if (s.subject && s.subject.trim()) {
+                const normalized = normalizeSubjectDisplay(s.subject);
+                if (normalized) set.add(normalized);
+            }
         });
         COMMON_SUBJECT_SUGGESTIONS.forEach((s) => set.add(s));
         return Array.from(set);
@@ -257,9 +295,10 @@ export function usePhScheduleDomain({
         onError: (err: Error) => toast.error(`Gagal menghapus: ${err.message}`),
     });
 
-    const openAdd = useCallback(() => {
+    const openAdd = useCallback((initialDate?: unknown) => {
         setEditingSchedule(null);
-        setFormData({ subject: '', date: todayStr, period_label: '1-2' });
+        const dateToUse = typeof initialDate === 'string' ? initialDate : todayStr;
+        setFormData({ subject: '', date: dateToUse, period_label: '1-2' });
         setDialogOpen(true);
     }, [todayStr]);
 

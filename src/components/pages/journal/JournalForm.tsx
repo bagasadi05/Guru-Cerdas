@@ -268,7 +268,7 @@ export const JournalForm: React.FC<JournalFormProps> = ({
             <Input
               type="number"
               min="1"
-              placeholder="cth. 1, 2, 3"
+              placeholder="Contoh: 1, 2, 3"
               {...register('meeting_number', {
                 setValueAs: (v) => (v === '' ? null : Number(v)),
               })}
@@ -279,11 +279,11 @@ export const JournalForm: React.FC<JournalFormProps> = ({
 
         <div>
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-            Topik Pembahasan <span className="text-rose-500">*</span>
+            Materi / Topik Pelajaran <span className="text-rose-500">*</span>
           </label>
           <Input
             type="text"
-            placeholder="cth. Pola Bilangan, Tenses Review"
+            placeholder="Contoh: Bab 2 Aljabar - Operasi Hitung Suku Banyak"
             {...register('topic')}
             error={errors.topic?.message}
           />
@@ -295,7 +295,7 @@ export const JournalForm: React.FC<JournalFormProps> = ({
           </label>
           <Textarea
             rows={2}
-            placeholder="Siswa dapat memahami dan memecahkan..."
+            placeholder="Contoh: Siswa memahami konsep perkalian suku banyak dan mampu menyelesaikan soal cerita dengan benar"
             {...register('objectives')}
           />
           {errors.objectives?.message && (
@@ -305,7 +305,7 @@ export const JournalForm: React.FC<JournalFormProps> = ({
 
         <div>
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-            Aktivitas Kegiatan Pembelajaran (Opsional)
+            Aktivitas Kegiatan Pembelajaran di Kelas (Opsional)
           </label>
           <div className="flex flex-col">
             <MarkdownToolbar 
@@ -314,7 +314,7 @@ export const JournalForm: React.FC<JournalFormProps> = ({
             />
             <Textarea
               rows={3}
-              placeholder="Menjelaskan konsep, diskusi kelompok, latihan soal..."
+              placeholder="Contoh: Apersepsi materi sebelumnya, kerja kelompok menyelesaikan lembar kerja (LKS), presentasi kelompok dan kuis singkat"
               {...activitiesRegisterProps}
               ref={(e) => {
                 activitiesRegisterRef(e);
@@ -330,7 +330,7 @@ export const JournalForm: React.FC<JournalFormProps> = ({
 
         <div>
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-            Catatan Kejadian Khusus (Opsional)
+            Catatan Khusus / Kejadian di Kelas (Opsional)
           </label>
           <div className="flex flex-col">
             <MarkdownToolbar 
@@ -339,7 +339,7 @@ export const JournalForm: React.FC<JournalFormProps> = ({
             />
             <Textarea
               rows={2}
-              placeholder="cth. Siswa A terlambat masuk kelas, listrik padam 10 menit..."
+              placeholder="Contoh: 2 siswa izin sakit ke UKS, sebagian besar siswa aktif bertanya pada bagian pembagian suku banyak"
               {...notesRegisterProps}
               ref={(e) => {
                 notesRegisterRef(e);
@@ -355,7 +355,7 @@ export const JournalForm: React.FC<JournalFormProps> = ({
 
         <div>
           <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-            Dokumen Lampiran (Opsional)
+            Lampiran File / Foto KBM (Opsional)
           </label>
           {getValues('attachment_url') ? (
             <div className="flex items-center justify-between p-3 border border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/50 dark:bg-emerald-950/10 rounded-xl">
@@ -402,10 +402,10 @@ export const JournalForm: React.FC<JournalFormProps> = ({
                   <>
                     <Upload className="w-6 h-6 mb-1 text-slate-400" />
                     <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                      Klik untuk mengunggah lampiran
+                      Klik untuk memilih file lampiran atau foto KBM
                     </p>
                     <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                      PDF, JPG, PNG, DOC (maks. 5MB)
+                      Format: PDF, JPG, PNG, DOC (maks. 5MB)
                     </p>
                   </>
                 )}

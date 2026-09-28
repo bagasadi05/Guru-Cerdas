@@ -26,7 +26,7 @@ export const ScheduleViewToolbar: React.FC<ScheduleViewToolbarProps> = ({
       <div className="flex items-center gap-3 flex-wrap">
         <h2 className="flex items-center gap-2">
           <span className="inline-flex items-center px-2.5 py-1 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-sm font-medium rounded-lg">
-            {viewMode === 'daily' ? `${currentDaySessions} Sesi` : 'Mingguan'}
+            {viewMode === 'daily' ? `${currentDaySessions} Jam Mengajar` : 'Mingguan'}
           </span>
           <span className="w-1 h-1 bg-slate-300 dark:bg-slate-600 rounded-full" />
           <span className="text-lg font-semibold text-slate-800 dark:text-white">
@@ -35,7 +35,7 @@ export const ScheduleViewToolbar: React.FC<ScheduleViewToolbarProps> = ({
         </h2>
 
         {onClassChange && classes.length > 0 && (
-          <div className="w-44 sm:w-52 min-w-[160px]">
+          <div className="w-full sm:w-52">
             <CustomDropdown
               value={selectedClassId}
               onChange={onClassChange}
@@ -49,15 +49,16 @@ export const ScheduleViewToolbar: React.FC<ScheduleViewToolbarProps> = ({
         )}
       </div>
 
-      <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl self-end sm:self-auto">
+      <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl self-end sm:self-auto" role="group" aria-label="Pilihan Tampilan Jadwal">
         {scheduleViewModeOptions.map((option) => {
           const Icon = option.icon;
           const isActive = viewMode === option.mode;
           return (
-            <button type="button"
+            <button
+              type="button"
               key={option.mode}
               onClick={() => onViewModeChange(option.mode)}
-              className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all cursor-pointer active:scale-95 ${
+              className={`w-10 h-10 sm:w-9 sm:h-9 min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px] flex items-center justify-center rounded-lg transition-all cursor-pointer active:scale-95 ${
                 isActive
                   ? 'bg-white dark:bg-slate-700 shadow-xs text-emerald-600 dark:text-emerald-400 font-bold'
                   : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'

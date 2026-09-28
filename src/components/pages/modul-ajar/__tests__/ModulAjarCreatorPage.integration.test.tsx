@@ -108,10 +108,13 @@ describe('ModulAjarCreatorPage', () => {
           subtitle: 'Buat modul ajar lengkap. {br}',
           preview: 'Preview',
           history: 'History',
-          performaGuru: 'Performa Guru',
-          lembarSiswa: 'Lembar Siswa',
+          performaGuru: 'Guru (Lengkap)',
+          lembarSiswa: 'Siswa (LKPD)',
           saveSuccess: 'Tersimpan',
           saveFailed: 'Gagal',
+          copy: 'Salin Teks',
+          pdf: 'Cetak / PDF',
+          word: 'Unduh Word',
         }
       }
     });
@@ -121,7 +124,7 @@ describe('ModulAjarCreatorPage', () => {
     vi.unstubAllGlobals();
   });
 
-  it('renders without crashing', async () => {
+  it('renders without crashing and displays proportional toolbar controls', async () => {
     await act(async () => {
       render(
         <QueryClientProvider client={queryClient}>
@@ -131,5 +134,9 @@ describe('ModulAjarCreatorPage', () => {
     });
     expect(screen.getByText('Preview')).toBeInTheDocument();
     expect(screen.getByText('History')).toBeInTheDocument();
+    expect(screen.getByTitle('Salin Teks')).toBeInTheDocument();
+    expect(screen.getByTitle('Langsung Unduh Dokumen ke Format PDF')).toBeInTheDocument();
+    expect(screen.getByTitle('Unduh Dokumen ke Format Microsoft Word (.doc)')).toBeInTheDocument();
+    expect(screen.getByTitle('Cetak Fisik / Buka Dialog Cetak Printer')).toBeInTheDocument();
   });
 });

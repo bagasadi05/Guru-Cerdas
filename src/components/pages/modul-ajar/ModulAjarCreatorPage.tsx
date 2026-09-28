@@ -10,13 +10,16 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
-  Minimize2
+  Minimize2,
+  Download,
+  Loader2
 } from 'lucide-react';
 import { useTranslation } from '../../../utils/i18n';
 import { useAuth } from '../../../hooks/useAuth';
 import { supabase } from '../../../services/supabase';
 import { FormState } from './types';
-import { extractStudentHtml } from './utils/template';
+import { extractStudentHtml, cleanHtmlForWordExport } from './utils/template';
+import { exportModulAjarToPdf } from './utils/pdfExport';
 import { useModulAjarAiJob } from './hooks/useModulAjarAiJob';
 import {
   generateTujuanPembelajaran,
@@ -64,6 +67,7 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   const [generatedDocument, setGeneratedDocument] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'preview' | 'history'>('preview');
+  const [mobileActiveView, setMobileActiveView] = useState<'form' | 'preview'>('form');
   const [previewMode, setPreviewMode] = useState<'guru' | 'siswa'>('guru');
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -77,6 +81,7 @@ const ModulAjarCreatorPage: React.FC = () => {
   const [fieldLoading, setFieldLoading] = useState<Record<string, boolean>>({});
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [resetConfirmOpen, setResetConfirmOpen] = useState<boolean>(false);
+  const [isExportingPdf, setIsExportingPdf] = useState<boolean>(false);
 
   const previewRef = useRef<HTMLDivElement>(null);
   const fullscreenPreviewRef = useRef<HTMLDivElement>(null);
@@ -167,6 +172,7 @@ const ModulAjarCreatorPage: React.FC = () => {
       toast.error(t.lessonPlan.validateSubject);
       return;
     }
+    setMobileActiveView('preview');
     if (isAiEnabled) {
       queueHookResult.startJob();
     } else {
@@ -279,6 +285,35 @@ const ModulAjarCreatorPage: React.FC = () => {
     }
   };
 
+  const handleExportPdf = async () => {
+    const targetRef = isFullscreen ? fullscreenPreviewRef : previewRef;
+    const documentToExport = previewMode === 'siswa'
+      ? (extractStudentHtml(generatedDocument, formState, logoBase64) || targetRef.current?.innerHTML)
+      : (generatedDocument || targetRef.current?.innerHTML);
+
+    if (!documentToExport) return;
+
+    setIsExportingPdf(true);
+    toast.info('Menyiapkan file PDF, mohon tunggu sebentar...', { duration: 3000 });
+    try {
+      const typeSuffix = previewMode === 'siswa' ? 'LKPD_Siswa' : formState.documentType;
+      const fileName = `${typeSuffix}_${formState.mataPelajaran}_Kelas${formState.kelas}`
+        .replace(/[/\\?%*:|"<>]/g, '_')
+        .replace(/\s+/g, '_');
+      await exportModulAjarToPdf({
+        htmlContent: documentToExport,
+        fileName,
+        paperSize: formState.paperSize,
+      });
+      toast.success('PDF berhasil diunduh!');
+    } catch (err: any) {
+      console.error('Failed to export PDF:', err);
+      toast.error(`Gagal mengunduh PDF: ${err.message || 'Terjadi kesalahan'}`);
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
   const handlePrint = () => {
     const targetRef = isFullscreen ? fullscreenPreviewRef : previewRef;
     const printContent = generatedDocument || targetRef.current?.innerHTML;
@@ -293,15 +328,69 @@ const ModulAjarCreatorPage: React.FC = () => {
       <style>
         @page {
           size: ${isF4 ? '215mm 330mm' : 'A4'};
-          margin: 1.8cm 1.5cm;
+          margin: 1.4cm 1.5cm;
         }
-        body { font-family: 'Times New Roman', Times, serif; padding: 15px; color: #000; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
-        th, td { border: 1px solid #000000; padding: 8px; text-align: left; }
+        body {
+          font-family: 'Times New Roman', Times, serif;
+          padding: 0;
+          margin: 0;
+          color: #000000;
+          background-color: #ffffff;
+          line-height: 1.5;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 0.8rem;
+        }
+        tr {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
+        .signature-block {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+          margin-top: 16px !important;
+        }
+        .keep-with-next, h1, h2, h3, h4, .section-header {
+          page-break-after: avoid !important;
+          break-after: avoid !important;
+        }
         @media print {
-          body { font-family: 'Times New Roman', Times, serif; background-color: #ffffff; color: #000000; padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          td[style*="background-color: #0d6b3e"], div[style*="background-color: #0d6b3e"] { background-color: #0d6b3e !important; color: #ffffff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          td[style*="background-color: #f5f0d0"], div[style*="background-color: #f5f0d0"] { background-color: #f5f0d0 !important; color: #000000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          body {
+            font-family: 'Times New Roman', Times, serif;
+            background-color: #ffffff;
+            color: #000000;
+            padding: 0;
+            margin: 0;
+            line-height: 1.5;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          .signature-block {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          .keep-with-next, h1, h2, h3, h4 {
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+          }
+          td[style*="background-color: #0d6b3e"], div[style*="background-color: #0d6b3e"] {
+            background-color: #0d6b3e !important;
+            color: #ffffff !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          td[style*="background-color: #f5f0d0"], div[style*="background-color: #f5f0d0"] {
+            background-color: #f5f0d0 !important;
+            color: #000000 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
         }
       </style>
     `);
@@ -343,11 +432,34 @@ const ModulAjarCreatorPage: React.FC = () => {
         }
         table {
           border-collapse: collapse;
+          width: 100%;
           mso-table-lspace: 0pt;
           mso-table-rspace: 0pt;
+          margin-bottom: 8pt;
         }
-        p, li {
-          mso-line-height-rule: exactly;
+        tr {
+          page-break-inside: avoid;
+          mso-line-break-rule: exactly;
+        }
+        .signature-block {
+          page-break-inside: avoid;
+          margin-top: 14pt;
+        }
+        .keep-with-next, h1, h2, h3, h4 {
+          page-break-after: avoid;
+        }
+        td, th {
+          vertical-align: top;
+          padding: 4pt 6pt;
+        }
+        p {
+          margin-top: 0pt;
+          margin-bottom: 4pt;
+          line-height: 1.45;
+        }
+        h1, h2, h3, h4 {
+          margin-top: 6pt;
+          margin-bottom: 3pt;
         }
         -->
       </style>
@@ -362,7 +474,8 @@ const ModulAjarCreatorPage: React.FC = () => {
 <body>
 <div class="WordSection1">`;
     const footer = `</div></body></html>`;
-    const sourceHTML = header + printContent + footer;
+    const cleanedContent = cleanHtmlForWordExport(printContent);
+    const sourceHTML = header + cleanedContent + footer;
     
     const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
     const url = URL.createObjectURL(blob);
@@ -406,6 +519,7 @@ const ModulAjarCreatorPage: React.FC = () => {
     resetFormToDraft(plan);
     setGeneratedDocument(plan.generated_content);
     setActiveTab('preview');
+    setMobileActiveView('preview');
     toast.success(t.lessonPlan.restoreSuccess);
   };
 
@@ -424,23 +538,51 @@ const ModulAjarCreatorPage: React.FC = () => {
     toast.success(`Draf ${item.identity?.mapel || 'Modul Ajar'} berhasil disalin ke formulir!`);
   };
 
+  const handleExportHistoryPdf = async (item: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!item.generated_content) return;
+
+    toast.info('Menyiapkan file PDF, mohon tunggu sebentar...', { duration: 3000 });
+    try {
+      const fileName = `${item.document_type || 'ModulAjar'}_${item.identity?.mapel || 'Mapel'}_Kelas${item.identity?.kelas || ''}`
+        .replace(/[/\\?%*:|"<>]/g, '_')
+        .replace(/\s+/g, '_');
+      await exportModulAjarToPdf({
+        htmlContent: item.generated_content,
+        fileName,
+        paperSize: 'A4',
+      });
+      toast.success('PDF berhasil diunduh!');
+    } catch (err: any) {
+      console.error('Failed to export history PDF:', err);
+      toast.error(`Gagal mengunduh PDF: ${err.message || 'Terjadi kesalahan'}`);
+    }
+  };
+
   const handleExportHistoryWord = (item: any, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!item.generated_content) return;
     
     const wordStyles = `
       <style>
+        <!--
         @page WordSection1 {
-          size: 21.0cm 29.7cm;
+          size: 595.3pt 841.9pt; /* A4 */
           margin: 56.7pt 56.7pt 56.7pt 56.7pt;
           mso-header-margin: 35.4pt;
           mso-footer-margin: 35.4pt;
           mso-paper-source: 0;
         }
         div.WordSection1 { page: WordSection1; }
-        body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.4; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 10pt; }
-        td, th { padding: 4pt 6pt; }
+        body { font-family: 'Times New Roman', serif; font-size: 11pt; line-height: 1.45; color: #000000; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 8pt; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        tr { page-break-inside: avoid; mso-line-break-rule: exactly; }
+        .signature-block { page-break-inside: avoid; margin-top: 14pt; }
+        .keep-with-next, h1, h2, h3, h4 { page-break-after: avoid; }
+        td, th { padding: 4pt 6pt; vertical-align: top; }
+        p { margin-top: 0pt; margin-bottom: 4pt; line-height: 1.45; }
+        h1, h2, h3, h4 { margin-top: 6pt; margin-bottom: 3pt; }
+        -->
       </style>
     `;
     const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -452,7 +594,8 @@ const ModulAjarCreatorPage: React.FC = () => {
 <body>
 <div class="WordSection1">`;
     const footer = `</div></body></html>`;
-    const sourceHTML = header + item.generated_content + footer;
+    const cleanedContent = cleanHtmlForWordExport(item.generated_content);
+    const sourceHTML = header + cleanedContent + footer;
     
     const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
     const url = URL.createObjectURL(blob);
@@ -516,6 +659,37 @@ const ModulAjarCreatorPage: React.FC = () => {
         </div>
       )}
       
+      {/* Mobile Segmented View Switcher (< lg) */}
+      <div className="lg:hidden flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700 shrink-0">
+        <button
+          type="button"
+          onClick={() => setMobileActiveView('form')}
+          className={`flex-1 min-h-[42px] flex items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            mobileActiveView === 'form'
+              ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-sm'
+              : 'text-slate-600 dark:text-slate-400'
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          <span>1. Formulir Modul</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileActiveView('preview')}
+          className={`flex-1 min-h-[42px] flex items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            mobileActiveView === 'preview'
+              ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-sm'
+              : 'text-slate-600 dark:text-slate-400'
+          }`}
+        >
+          <BookOpen className="w-4 h-4" />
+          <span>2. Pratinjau & Riwayat</span>
+          {generatedDocument && (
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          )}
+        </button>
+      </div>
+      
       {/* Left Column: Form & Step Wizard */}
       <ModulAjarForm
         formState={formState}
@@ -537,36 +711,41 @@ const ModulAjarCreatorPage: React.FC = () => {
         onResetForm={() => setResetConfirmOpen(true)}
         onApplyPreset={handleApplyPreset}
         autoDistributeTime={autoDistributeTime}
+        className={mobileActiveView === 'form' ? 'flex' : 'hidden lg:flex'}
       />
 
       {/* Right Column: Preview & History Workspace */}
-      <div className="flex-1 bg-slate-100 dark:bg-slate-950/50 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 overflow-hidden flex flex-col h-[calc(100dvh-6rem)] lg:h-[calc(100dvh-8rem)]">
+      <div className={`flex-1 bg-slate-100 dark:bg-slate-950/50 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 overflow-hidden h-[calc(100dvh-6rem)] lg:h-[calc(100dvh-8rem)] ${
+        mobileActiveView === 'preview' ? 'flex flex-col' : 'hidden lg:flex lg:flex-col'
+      }`}>
         
         {/* Workspace Toolbar Header */}
-        <div className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-2.5 sm:px-4 shrink-0 shadow-xs z-10 gap-2">
+        <div className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-4 shrink-0 shadow-xs z-20 gap-2">
           
           {/* Left Tabs: Preview vs Riwayat */}
-          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl shrink-0">
             <button 
+              type="button"
               onClick={() => setActiveTab('preview')}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 duration-150 ${
+              className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 duration-150 whitespace-nowrap ${
                 activeTab === 'preview' 
                 ? 'bg-white text-slate-800 dark:bg-slate-900 dark:text-white shadow-xs'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
               }`}
             >
-              <BookOpen className="w-3.5 h-3.5" />
+              <BookOpen className="w-3.5 h-3.5 shrink-0" />
               <span>{t.lessonPlan.preview}</span>
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('history')}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 duration-150 ${
+              className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 duration-150 whitespace-nowrap ${
                 activeTab === 'history'
                 ? 'bg-white text-slate-800 dark:bg-slate-900 dark:text-white shadow-xs'
                 : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
               }`}
             >
-              <History className="w-3.5 h-3.5" />
+              <History className="w-3.5 h-3.5 shrink-0" />
               <span>{t.lessonPlan.history}</span>
               {history.length > 0 && (
                 <span className="px-1.5 py-0.2 bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300 rounded-full text-[10px] font-bold">
@@ -576,131 +755,174 @@ const ModulAjarCreatorPage: React.FC = () => {
             </button>
           </div>
 
-          {/* Center Mode Selector: Guru vs Siswa (Only in Preview with generated doc) */}
-          {activeTab === 'preview' && generatedDocument && (
-            <div className="flex bg-brand-50/80 dark:bg-brand-950/40 p-0.5 rounded-lg border border-brand-200 dark:border-brand-900/40">
-              <button
-                onClick={() => setPreviewMode('guru')}
-                className={`px-2.5 sm:px-3 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer active:scale-95 duration-150 ${
-                  previewMode === 'guru'
-                  ? 'bg-brand-600 text-white shadow-xs'
-                  : 'text-brand-600 dark:text-brand-400 hover:bg-brand-100/50'
-                }`}
-              >
-                {t.lessonPlan.performaGuru}
-              </button>
-              <button
-                onClick={() => setPreviewMode('siswa')}
-                className={`px-2.5 sm:px-3 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer active:scale-95 duration-150 ${
-                  previewMode === 'siswa'
-                  ? 'bg-brand-600 text-white shadow-xs'
-                  : 'text-brand-600 dark:text-brand-400 hover:bg-brand-100/50'
-                }`}
-              >
-                {t.lessonPlan.lembarSiswa}
-              </button>
-            </div>
-          )}
-          
-          {/* Right Action Tools: Paper Size, Zoom, Copy, PDF, Word, Fullscreen */}
+          {/* Right Action Tools: Salin, Cetak/PDF, Unduh Word, Layar Penuh */}
           {activeTab === 'preview' && (
-            <div className="flex items-center gap-1 shrink-0">
-              {/* Paper Size Switcher */}
-              {generatedDocument && (
-                <div className="hidden sm:flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 mr-1 text-slate-600 dark:text-slate-300">
-                  <button
-                    onClick={() => handleInputChange('paperSize', 'A4')}
-                    className={`px-2 py-1 rounded text-[10px] font-bold transition-all cursor-pointer active:scale-95 duration-150 ${
-                      (formState.paperSize || 'A4') === 'A4'
-                        ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-white shadow-xs'
-                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                    }`}
-                    title="Format Kertas A4 (210 × 297 mm)"
-                  >
-                    A4
-                  </button>
-                  <button
-                    onClick={() => handleInputChange('paperSize', 'F4')}
-                    className={`px-2 py-1 rounded text-[10px] font-bold transition-all cursor-pointer active:scale-95 duration-150 ${
-                      formState.paperSize === 'F4'
-                        ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-white shadow-xs'
-                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                    }`}
-                    title="Format Kertas F4 / Folio (215 × 330 mm)"
-                  >
-                    F4
-                  </button>
-                </div>
-              )}
-
-              {/* Zoom Controls */}
-              {generatedDocument && (
-                <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 mr-1 text-slate-600 dark:text-slate-300">
-                  <button
-                    onClick={() => setZoomLevel(prev => Math.max(70, prev - 10))}
-                    className="p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded transition-all cursor-pointer active:scale-90"
-                    title="Perkecil (Zoom Out)"
-                  >
-                    <ZoomOut className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => setZoomLevel(100)}
-                    className="px-1.5 text-[10px] font-semibold hover:bg-white dark:hover:bg-slate-700 rounded transition-all cursor-pointer active:scale-95"
-                    title="Reset Skala 100%"
-                  >
-                    {zoomLevel}%
-                  </button>
-                  <button
-                    onClick={() => setZoomLevel(prev => Math.min(150, prev + 10))}
-                    className="p-1.5 hover:bg-white dark:hover:bg-slate-700 rounded transition-all cursor-pointer active:scale-90"
-                    title="Perbesar (Zoom In)"
-                  >
-                    <ZoomIn className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
-
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
+                type="button"
                 onClick={handleCopy}
                 disabled={!generatedDocument}
-                className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-500 hover:text-brand-600 transition-all disabled:opacity-50 cursor-pointer active:scale-95 duration-150"
+                className="w-9 h-9 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-500 hover:text-brand-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95 duration-150 shrink-0 border border-slate-200/50 dark:border-slate-800"
                 title={t.lessonPlan.copy}
+                aria-label={t.lessonPlan.copy}
               >
-                <Copy className="w-4 h-4" />
-              </button>
-              
-              <button
-                onClick={handlePrint}
-                disabled={!generatedDocument}
-                className="p-2 min-h-[36px] min-w-[36px] hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-all disabled:opacity-50 flex items-center justify-center gap-1 text-xs font-medium cursor-pointer active:scale-95 duration-150"
-                title={t.lessonPlan.pdf}
-              >
-                <Printer className="w-4 h-4" />
-                <span className="hidden xl:inline">{t.lessonPlan.pdf}</span>
+                <Copy className="w-4 h-4 shrink-0" />
               </button>
 
               <button
+                type="button"
+                onClick={handleExportPdf}
+                disabled={!generatedDocument || isExportingPdf}
+                className="h-9 px-3 hover:bg-red-100 dark:hover:bg-red-900/40 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 rounded-xl border border-red-200/80 dark:border-red-900/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 text-xs font-semibold cursor-pointer active:scale-95 duration-150 shrink-0"
+                title="Langsung Unduh Dokumen ke Format PDF"
+                aria-label={t.lessonPlan.pdf}
+              >
+                {isExportingPdf ? (
+                  <Loader2 className="w-4 h-4 shrink-0 animate-spin text-red-500 dark:text-red-400" />
+                ) : (
+                  <Download className="w-4 h-4 shrink-0 text-red-500 dark:text-red-400" />
+                )}
+                <span className="whitespace-nowrap">{t.lessonPlan.pdf}</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={handleExportWord}
                 disabled={!generatedDocument}
-                className="p-2 min-h-[36px] min-w-[36px] hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-all disabled:opacity-50 flex items-center justify-center gap-1 text-xs font-medium cursor-pointer active:scale-95 duration-150"
-                title={t.lessonPlan.word}
+                className="h-9 px-3 hover:bg-blue-100 dark:hover:bg-blue-900/40 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 rounded-xl border border-blue-200/80 dark:border-blue-900/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 text-xs font-semibold cursor-pointer active:scale-95 duration-150 shrink-0"
+                title="Unduh Dokumen ke Format Microsoft Word (.doc)"
+                aria-label={t.lessonPlan.word}
               >
-                <FileText className="w-4 h-4" />
-                <span className="hidden xl:inline">{t.lessonPlan.word}</span>
+                <FileText className="w-4 h-4 shrink-0 text-blue-500 dark:text-blue-400" />
+                <span className="whitespace-nowrap">{t.lessonPlan.word}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePrint}
+                disabled={!generatedDocument}
+                className="h-9 px-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 rounded-xl border border-slate-200 dark:border-slate-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 text-xs font-medium cursor-pointer active:scale-95 duration-150 shrink-0"
+                title="Cetak Fisik / Buka Dialog Cetak Printer"
+                aria-label={t.lessonPlan.print}
+              >
+                <Printer className="w-4 h-4 shrink-0 text-slate-500 dark:text-slate-400" />
+                <span className="hidden sm:inline whitespace-nowrap">{t.lessonPlan.print}</span>
               </button>
 
               {generatedDocument && (
                 <button
+                  type="button"
                   onClick={() => setIsFullscreen(true)}
-                  className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-500 hover:text-brand-600 transition-all cursor-pointer active:scale-95 duration-150"
+                  className="w-9 h-9 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-all cursor-pointer active:scale-95 duration-150 shrink-0 border border-slate-200/60 dark:border-slate-800"
                   title="Mode Layar Penuh (Fokus)"
+                  aria-label="Mode Layar Penuh (Fokus)"
                 >
-                  <Maximize2 className="w-4 h-4" />
+                  <Maximize2 className="w-4 h-4 shrink-0" />
                 </button>
               )}
             </div>
           )}
         </div>
+
+        {/* Secondary Document Control Strip: Target Dokumen & Canvas Format */}
+        {activeTab === 'preview' && generatedDocument && (
+          <div className="min-h-11 py-1.5 bg-slate-50/95 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between px-3 sm:px-4 shrink-0 z-10 gap-2">
+            
+            {/* Left: Mode Switcher (Target Dokumen) */}
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 hidden md:inline">
+                Target Dokumen:
+              </span>
+              <div className="flex bg-slate-200/70 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700/60">
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode('guru')}
+                  className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer active:scale-95 duration-150 whitespace-nowrap flex items-center gap-1.5 ${
+                    previewMode === 'guru'
+                      ? 'bg-brand-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'
+                  }`}
+                  title="Dokumen Lengkap Guru (Modul Ajar + Asesmen)"
+                >
+                  <span>{t.lessonPlan.performaGuru}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode('siswa')}
+                  className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer active:scale-95 duration-150 whitespace-nowrap flex items-center gap-1.5 ${
+                    previewMode === 'siswa'
+                      ? 'bg-brand-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'
+                  }`}
+                  title="Lembar Kerja Peserta Didik (LKPD) Khusus Siswa"
+                >
+                  <span>{t.lessonPlan.lembarSiswa}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Right: Paper Size & Zoom Level */}
+            <div className="flex items-center gap-2 shrink-0 ml-auto">
+              {/* Paper Size Switcher */}
+              <div className="flex items-center bg-slate-200/70 dark:bg-slate-800 rounded-lg p-0.5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60">
+                <button
+                  type="button"
+                  onClick={() => handleInputChange('paperSize', 'A4')}
+                  className={`px-2.5 py-0.5 rounded text-[11px] font-bold transition-all cursor-pointer active:scale-95 duration-150 ${
+                    (formState.paperSize || 'A4') === 'A4'
+                      ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-white shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                  title="Format Kertas A4 (210 × 297 mm)"
+                >
+                  A4
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleInputChange('paperSize', 'F4')}
+                  className={`px-2.5 py-0.5 rounded text-[11px] font-bold transition-all cursor-pointer active:scale-95 duration-150 ${
+                    formState.paperSize === 'F4'
+                      ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-white shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                  title="Format Kertas F4 / Folio (215 × 330 mm)"
+                >
+                  F4
+                </button>
+              </div>
+
+              {/* Zoom Controls */}
+              <div className="flex items-center bg-slate-200/70 dark:bg-slate-800 rounded-lg p-0.5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60">
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel(prev => Math.max(70, prev - 10))}
+                  className="p-1 hover:bg-white dark:hover:bg-slate-700 rounded transition-all cursor-pointer active:scale-90"
+                  title="Perkecil (Zoom Out)"
+                  aria-label="Perkecil Skala"
+                >
+                  <ZoomOut className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel(100)}
+                  className="px-1.5 text-[10px] font-semibold hover:bg-white dark:hover:bg-slate-700 rounded transition-all cursor-pointer active:scale-95 min-w-[36px] text-center"
+                  title="Reset Skala 100%"
+                >
+                  {zoomLevel}%
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel(prev => Math.min(150, prev + 10))}
+                  className="p-1 hover:bg-white dark:hover:bg-slate-700 rounded transition-all cursor-pointer active:scale-90"
+                  title="Perbesar (Zoom In)"
+                  aria-label="Perbesar Skala"
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Workspace Canvas Body */}
         <div className="relative flex-1 overflow-y-auto p-4 md:p-8 flex justify-center bg-slate-200/50 dark:bg-slate-950/50 scrollbar-thin">
@@ -777,6 +999,7 @@ const ModulAjarCreatorPage: React.FC = () => {
               error={historyError}
               onRestore={restoreParameters}
               onDelete={deleteHistoryItem}
+              onExportPdf={handleExportHistoryPdf}
               onExportWord={handleExportHistoryWord}
               onDuplicate={handleDuplicateHistory}
             />
@@ -812,22 +1035,26 @@ const ModulAjarCreatorPage: React.FC = () => {
               {/* Center Switcher */}
               <div className="flex bg-slate-800 p-1 rounded-xl border border-slate-700">
                 <button
+                  type="button"
                   onClick={() => setPreviewMode('guru')}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95 duration-150 ${
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95 duration-150 whitespace-nowrap ${
                     previewMode === 'guru'
                     ? 'bg-brand-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-white'
                   }`}
+                  title="Dokumen Lengkap Guru (Modul Ajar + Asesmen)"
                 >
                   {t.lessonPlan.performaGuru}
                 </button>
                 <button
+                  type="button"
                   onClick={() => setPreviewMode('siswa')}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95 duration-150 ${
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95 duration-150 whitespace-nowrap ${
                     previewMode === 'siswa'
                     ? 'bg-brand-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-white'
                   }`}
+                  title="Lembar Kerja Peserta Didik (LKPD) Khusus Siswa"
                 >
                   {t.lessonPlan.lembarSiswa}
                 </button>
@@ -843,18 +1070,33 @@ const ModulAjarCreatorPage: React.FC = () => {
                   <Copy className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={handlePrint}
-                  className="px-3 py-1.5 min-h-[36px] bg-red-600 hover:bg-red-700 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 duration-150"
+                  onClick={handleExportPdf}
+                  disabled={isExportingPdf}
+                  className="px-3 py-1.5 min-h-[36px] bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 duration-150"
+                  title="Langsung Unduh Dokumen ke Format PDF"
                 >
-                  <Printer className="w-4 h-4" />
+                  {isExportingPdf ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
                   <span>{t.lessonPlan.pdf}</span>
                 </button>
                 <button
                   onClick={handleExportWord}
                   className="px-3 py-1.5 min-h-[36px] bg-blue-600 hover:bg-blue-700 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 duration-150"
+                  title="Unduh Dokumen ke Format Microsoft Word (.doc)"
                 >
                   <FileText className="w-4 h-4" />
                   <span>{t.lessonPlan.word}</span>
+                </button>
+                <button
+                  onClick={handlePrint}
+                  className="px-3 py-1.5 min-h-[36px] bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-medium text-slate-200 flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 duration-150 border border-slate-700"
+                  title="Cetak Fisik / Buka Dialog Cetak Printer"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>{t.lessonPlan.print}</span>
                 </button>
                 <button
                   onClick={() => setIsFullscreen(false)}

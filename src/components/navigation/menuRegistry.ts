@@ -7,10 +7,9 @@ import {
   SettingsIcon,
   CheckSquareIcon,
   ClipboardPenIcon,
-  BookOpenIcon,
   BarChart3Icon,
 } from '../Icons';
-import { Trash2, BarChart3, ShieldCheck, Trophy, Archive, Star } from 'lucide-react';
+import { Trash2, BarChart3, ShieldCheck, Trophy, Archive, Star, CalendarRange } from 'lucide-react';
 
 /**
  * Single source of truth for every navigation destination.
@@ -73,7 +72,7 @@ export const MENU_ENTRIES: MenuEntry[] = [
     label: 'Input Penilaian',
     icon: ClipboardPenIcon,
     section: 'primary',
-    moreOrder: 7,
+    moreOrder: 6,
     inEasyMode: true,
     barLabel: 'Penilaian',
     bar: { teacher: 1 },
@@ -105,9 +104,9 @@ export const MENU_ENTRIES: MenuEntry[] = [
     inEasyMode: true,
   },
   { href: '/jadwal', label: 'Jadwal & Jurnal', icon: CalendarIcon, section: 'academic', moreOrder: 3 },
-  { href: '/modul-ajar', label: 'Modul Ajar', icon: BookOpenIcon, section: 'academic', moreOrder: 4 },
+  { href: '/perangkat-ajar', label: 'Perangkat Ajar', icon: CalendarRange, section: 'academic', moreOrder: 4 },
   { href: '/tugas', label: 'Penugasan', icon: CheckSquareIcon, section: 'academic', moreOrder: 5 },
-  { href: '/brankas', label: 'Arsip Kelas', icon: Archive, section: 'academic', moreOrder: 6 },
+  { href: '/brankas', label: 'Arsip Kelas', icon: Archive, section: 'academic', moreOrder: 7 },
   {
     href: '/analytics',
     label: 'Analitik Akademik',

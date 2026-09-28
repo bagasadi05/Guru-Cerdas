@@ -279,4 +279,73 @@ export class PhScheduleEngine {
         message += `_Semoga pelaksanaan Penilaian Harian berjalan lancar dan sukses. Aamiin._ 🤲`;
         return message;
     }
+
+    /**
+     * Calculates the Monday-to-Friday dates for a given reference date and week offset.
+     * offset: 0 for reference week, +1 for next week, -1 for previous week, etc.
+     */
+    public static getSchoolWeekDays(referenceDate: Date = new Date(), weekOffset: number = 0): SchoolWeekDayInfo[] {
+        const today = new Date(referenceDate);
+        const day = today.getDay(); // 0 is Sunday, 1 is Monday, ..., 6 is Saturday
+        // If Sunday (0), the upcoming school week begins tomorrow (Monday). Otherwise target Monday of this week.
+        const diffToMonday = day === 0 ? 1 : 1 - day;
+        const monday = new Date(today);
+        monday.setDate(today.getDate() + diffToMonday + (weekOffset * 7));
+        monday.setHours(0, 0, 0, 0);
+
+        const realTodayStr = new Date().toLocaleDateString('sv-SE');
+        const dayNames: ('Senin' | 'Selasa' | 'Rabu' | 'Kamis' | 'Jumat')[] = [
+            'Senin',
+            'Selasa',
+            'Rabu',
+            'Kamis',
+            'Jumat',
+        ];
+
+        return dayNames.map((dayName, index) => {
+            const d = new Date(monday);
+            d.setDate(monday.getDate() + index);
+            const dateStr = d.toLocaleDateString('sv-SE');
+            const dayNumber = d.getDate();
+            const monthShort = d.toLocaleDateString('id-ID', { month: 'short' });
+            return {
+                dayName,
+                dateStr,
+                dateFormatted: `${dayNumber} ${monthShort}`,
+                dayNumber,
+                isToday: dateStr === realTodayStr,
+                rawDate: d,
+            };
+        });
+    }
+
+    /**
+     * Formats week range label, e.g. "28 September – 2 Oktober 2026".
+     */
+    public static formatWeekRangeLabel(mondayDate: Date, fridayDate: Date): string {
+        const d1 = mondayDate.getDate();
+        const d2 = fridayDate.getDate();
+        const m1 = mondayDate.toLocaleDateString('id-ID', { month: 'long' });
+        const m2 = fridayDate.toLocaleDateString('id-ID', { month: 'long' });
+        const y1 = mondayDate.getFullYear();
+        const y2 = fridayDate.getFullYear();
+
+        if (y1 !== y2) {
+            return `${d1} ${m1} ${y1} – ${d2} ${m2} ${y2}`;
+        }
+        if (m1 !== m2) {
+            return `${d1} ${m1} – ${d2} ${m2} ${y1}`;
+        }
+        return `${d1} – ${d2} ${m1} ${y1}`;
+    }
 }
+
+export interface SchoolWeekDayInfo {
+    dayName: 'Senin' | 'Selasa' | 'Rabu' | 'Kamis' | 'Jumat';
+    dateStr: string;
+    dateFormatted: string;
+    dayNumber: number;
+    isToday: boolean;
+    rawDate: Date;
+}
+

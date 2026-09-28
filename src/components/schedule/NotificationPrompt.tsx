@@ -15,12 +15,12 @@ export const NotificationPrompt: React.FC<NotificationPromptProps> = ({ onEnable
                     <BellIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-300" />
                 </div>
                 <div>
-                    <h4 className="font-semibold text-slate-800 dark:text-white text-sm">Jangan Lewatkan Jadwal</h4>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">Aktifkan notifikasi untuk pengingat sekitar 5–20 menit sebelum kelas.</p>
+                    <h4 className="font-semibold text-slate-800 dark:text-white text-sm">Pengingat Jam Mengajar</h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">Dapatkan pemberitahuan 5–20 menit sebelum jam pelajaran dimulai agar Bapak/Ibu tidak terlewat.</p>
                 </div>
             </div>
             <Button onClick={onEnable} disabled={isLoading} size="sm" className="w-full sm:w-auto flex-shrink-0">
-                {isLoading ? 'Mengaktifkan...' : 'Aktifkan Notifikasi'}
+                {isLoading ? 'Menyalakan...' : 'Nyalakan Pengingat'}
             </Button>
         </div>
     );

@@ -6,6 +6,7 @@ import { triggerSubtleConfetti } from '../../utils/confetti';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { PlusIcon, ClockIcon, CalendarIcon, BookOpenIcon, GraduationCapIcon, BrainCircuitIcon, DownloadCloudIcon, AlertCircleIcon, CheckCircleIcon, ClipboardPenIcon } from '../Icons';
+import { ArrowLeft } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { MarkdownText } from '../ui/MarkdownText';
 import { generateGeminiJson } from '../../services/geminiService';
@@ -15,6 +16,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import JurnalMengajarPage from './JurnalMengajarPage';
 import PhScheduleTab from '../schedule/PhScheduleTab';
+import { ScheduleHubMenu } from '../schedule/ScheduleHubMenu';
 import { useToast } from '../../hooks/useToast';
 import { Database } from '../../services/database.types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -84,8 +86,8 @@ const SchedulePage: React.FC = () => {
 
     const handleIsiJurnal = (item: ScheduleRow) => {
         const dateStr = getLocalDateStringForDay(item.day);
-        const params = new URLSearchParams({ classId: item.class_id || '', subject: item.subject, date: dateStr, scheduleId: item.id });
-        navigate(`/jurnal?${params.toString()}`);
+        const params = new URLSearchParams({ classId: item.class_id || '', subject: item.subject, date: dateStr, scheduleId: item.id, tab: 'jurnal' });
+        navigate(`/jadwal?${params.toString()}`);
     };
     const [modalState, setModalState] = useState<{ isOpen: boolean; mode: 'add' | 'edit'; data: ScheduleRow | null }>({ isOpen: false, mode: 'add', data: null });
     const [formData, setFormData] = useState<Omit<Database['public']['Tables']['schedules']['Insert'], 'id' | 'created_at' | 'user_id'>>({ day: 'Senin', start_time: '08:00', end_time: '09:30', subject: '', class_id: '' });
@@ -425,110 +427,156 @@ const SchedulePage: React.FC = () => {
 
     const [searchParams, setSearchParams] = useSearchParams();
     const rawTab = searchParams.get('tab');
-    const activeMainTab = rawTab === 'jurnal' ? 'jurnal' : rawTab === 'ph' ? 'ph' : 'jadwal';
+    const activeMainTab =
+        rawTab === 'jurnal'
+            ? 'jurnal'
+            : rawTab === 'ph'
+            ? 'ph'
+            : rawTab === 'mengajar' || rawTab === 'jadwal'
+            ? 'jadwal'
+            : null;
 
     if (authLoading || pageLoading) return <SchedulePageSkeleton />;
 
     const currentDaySchedule = scheduleByDay[selectedDay] || [];
 
     return (
-        <div className="w-full min-h-full bg-slate-50 dark:bg-[#080d16] text-slate-800 dark:text-white pb-24">
+        <div className="w-full min-h-full text-slate-800 dark:text-white pb-24">
             <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
-                {/* Main Section Header */}
-                <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        {/* Stitch Intro Badge */}
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-950/60 border border-emerald-500/30 dark:border-emerald-500/40 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 mb-1.5 sm:mb-2 whitespace-nowrap">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-[#00d284] animate-pulse shrink-0" />
-                            <span>Menu Utama</span>
-                        </div>
-                        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight font-serif">
-                            <span className="relative inline-block">
-                                <span className="relative z-10 bg-gradient-to-r from-slate-900 via-emerald-800 to-emerald-700 dark:from-white dark:via-emerald-100 dark:to-[#00d284] bg-clip-text text-transparent">
-                                    Jadwal & Jurnal Mengajar
-                                </span>
-                                <span className="absolute left-0 bottom-0.5 sm:bottom-1 w-full h-[5px] sm:h-[6px] bg-emerald-500/20 dark:bg-emerald-500/30 rounded-full -z-0 blur-[1px]" />
-                            </span>
-                        </h1>
-                        <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-2xl font-sans">
-                            Kelola jadwal pelajaran, penilaian harian (PH), dan catat jurnal harian mengajar dalam satu tempat.
-                        </p>
-                    </div>
+                {activeMainTab === null ? (
+                    <ScheduleHubMenu
+                        onSelectMenu={(key) => setSearchParams({ tab: key })}
+                        scheduleCount={rawSchedule.length}
+                        todayPhCount={todayPhSchedules.length}
+                        classesCount={classes.length}
+                    />
+                ) : (
+                    <>
+                        {/* Sub-Navigation Bar with Back to Menu & Quick Switcher */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 sm:px-5 rounded-2xl shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setSearchParams({})}
+                                    className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer min-h-[42px] active:scale-95"
+                                    title="Kembali ke pilihan menu Jadwal & Jurnal"
+                                    aria-label="Kembali ke Pilihan Menu"
+                                >
+                                    <ArrowLeft className="w-4 h-4 shrink-0" />
+                                    <span>Pilihan Menu</span>
+                                </button>
+                                <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
+                                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                                    Jadwal & Jurnal <span className="mx-1">/</span>{' '}
+                                    <strong className="text-slate-800 dark:text-slate-200">
+                                        {activeMainTab === 'ph'
+                                            ? 'Jadwal PH'
+                                            : activeMainTab === 'jurnal'
+                                            ? 'Jurnal Mengajar'
+                                            : 'Jadwal Mengajar'}
+                                    </strong>
+                                </div>
+                            </div>
 
-                    {activeMainTab === 'jadwal' && (
-                        <div className="flex items-center gap-1.5 sm:gap-2 self-start sm:self-auto flex-wrap sm:flex-nowrap">
-                            <Button onClick={() => handleOpenAddModal()} variant="primary" size="sm"
-                                className="h-9 sm:h-10 px-3 sm:px-4 rounded-xl shadow-sm text-xs sm:text-sm font-semibold cursor-pointer active:scale-95 transition-all"
-                                title="Tambah Jadwal Mengajar Baru"
-                                aria-label="Tambah Jadwal">
-                                <PlusIcon className="w-4 h-4 sm:mr-1.5 shrink-0" />
-                                <span className="hidden sm:inline">Tambah Jadwal</span>
-                                <span className="sm:hidden">Tambah</span>
-                            </Button>
-                            <Button onClick={handleAnalyzeSchedule} variant="outline" size="sm" disabled={!isOnline || schedule.length === 0}
-                                className="h-9 sm:h-10 px-2.5 sm:px-3.5 rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white text-xs sm:text-sm font-medium cursor-pointer active:scale-95 transition-all"
-                                title="Analisis Beban Mengajar dengan AI"
-                                aria-label="Analisis AI">
-                                <BrainCircuitIcon className="w-4 h-4 sm:mr-1.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
-                                <span className="hidden md:inline">Analisis AI</span>
-                            </Button>
-                            <Button onClick={handleExportPdf} variant="outline" size="sm"
-                                className="h-9 sm:h-10 px-2.5 sm:px-3.5 rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white text-xs font-medium cursor-pointer active:scale-95 transition-all"
-                                title="Ekspor Jadwal ke PDF"
-                                aria-label="Ekspor PDF">
-                                <DownloadCloudIcon className="w-4 h-4 sm:mr-1.5 shrink-0" />
-                                <span className="hidden md:inline">PDF</span>
-                            </Button>
-                            <Button onClick={handleExportToIcs} variant="outline" size="sm"
-                                className="h-9 sm:h-10 px-2.5 sm:px-3.5 rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white text-xs font-medium cursor-pointer active:scale-95 transition-all"
-                                title="Ekspor ke Kalender (ICS)"
-                                aria-label="Ekspor Kalender ICS">
-                                <CalendarIcon className="w-4 h-4 sm:mr-1.5 shrink-0" />
-                                <span className="hidden md:inline">ICS</span>
-                            </Button>
+                            {/* Quick Switcher */}
+                            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0d1524] p-1.5 rounded-2xl w-full sm:w-auto border border-slate-200/80 dark:border-[#1c2b44] overflow-x-auto scrollbar-none" role="tablist" aria-label="Pilihan Tab Jadwal">
+                                <button
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={activeMainTab === 'jadwal'}
+                                    onClick={() => setSearchParams({ tab: 'mengajar' })}
+                                    className={`flex-1 sm:flex-none min-h-[42px] sm:min-h-[36px] px-3.5 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer active:scale-95 ${
+                                        activeMainTab === 'jadwal'
+                                            ? 'bg-white dark:bg-[#111c2e] text-emerald-600 dark:text-[#00d284] shadow-sm'
+                                            : 'text-slate-600 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <CalendarIcon className="w-4 h-4 shrink-0" />
+                                    <span>Jadwal Mengajar</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={activeMainTab === 'ph'}
+                                    onClick={() => setSearchParams({ tab: 'ph' })}
+                                    className={`flex-1 sm:flex-none min-h-[42px] sm:min-h-[36px] px-3.5 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer active:scale-95 ${
+                                        activeMainTab === 'ph'
+                                            ? 'bg-white dark:bg-[#111c2e] text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                            : 'text-slate-600 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <ClipboardPenIcon className="w-4 h-4 shrink-0" />
+                                    <span>Jadwal PH</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={activeMainTab === 'jurnal'}
+                                    onClick={() => setSearchParams({ tab: 'jurnal' })}
+                                    className={`flex-1 sm:flex-none min-h-[42px] sm:min-h-[36px] px-3.5 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer active:scale-95 ${
+                                        activeMainTab === 'jurnal'
+                                            ? 'bg-white dark:bg-[#111c2e] text-sky-600 dark:text-sky-400 shadow-sm'
+                                            : 'text-slate-600 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    <BookOpenIcon className="w-4 h-4 shrink-0" />
+                                    <span>Jurnal</span>
+                                </button>
+                            </div>
                         </div>
-                    )}
-                </header>
 
-                {/* Segmented Navigation Tabs (Stitch Style) */}
-                <nav aria-label="Navigasi Jadwal dan Jurnal" className="grid grid-cols-3 gap-1 p-1 bg-slate-100 dark:bg-[#0d1524] border border-slate-200/80 dark:border-[#1c2b44] rounded-2xl w-full sm:w-fit text-[12px] font-medium shadow-sm">
-                    <button
-                        type="button"
-                        onClick={() => setSearchParams({})}
-                        className={`py-2 px-1.5 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                            activeMainTab === 'jadwal'
-                                ? 'bg-white dark:bg-[#111c2e] border border-slate-300/80 dark:border-[#1c2b44] text-emerald-600 dark:text-[#00d284] font-bold shadow-sm'
-                                : 'text-slate-600 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white'
-                        }`}
-                    >
-                        <CalendarIcon className={`w-4 h-4 shrink-0 ${activeMainTab === 'jadwal' ? 'text-emerald-500 dark:text-[#00d284]' : 'text-slate-400 dark:text-[#64748b]'}`} />
-                        <span>Jadwal</span>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setSearchParams({ tab: 'ph' })}
-                        className={`py-2 px-1.5 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                            activeMainTab === 'ph'
-                                ? 'bg-white dark:bg-[#111c2e] border border-slate-300/80 dark:border-[#1c2b44] text-emerald-600 dark:text-[#00d284] font-bold shadow-sm'
-                                : 'text-slate-600 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white'
-                        }`}
-                    >
-                        <ClipboardPenIcon className={`w-4 h-4 shrink-0 ${activeMainTab === 'ph' ? 'text-emerald-500 dark:text-[#00d284]' : 'text-slate-400 dark:text-[#64748b]'}`} />
-                        <span>Jadwal PH</span>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setSearchParams({ tab: 'jurnal' })}
-                        className={`py-2 px-1.5 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                            activeMainTab === 'jurnal'
-                                ? 'bg-white dark:bg-[#111c2e] border border-slate-300/80 dark:border-[#1c2b44] text-emerald-600 dark:text-[#00d284] font-bold shadow-sm'
-                                : 'text-slate-600 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white'
-                        }`}
-                    >
-                        <BookOpenIcon className={`w-4 h-4 shrink-0 ${activeMainTab === 'jurnal' ? 'text-emerald-500 dark:text-[#00d284]' : 'text-slate-400 dark:text-[#64748b]'}`} />
-                        <span>Jurnal</span>
-                    </button>
-                </nav>
+                        {/* Main Section Header */}
+                        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <h1 className="text-xl sm:text-2xl font-bold tracking-tight font-serif text-slate-900 dark:text-white">
+                                    {activeMainTab === 'ph'
+                                        ? 'Jadwal Penilaian Harian (PH)'
+                                        : activeMainTab === 'jurnal'
+                                        ? 'Jurnal Harian Mengajar'
+                                        : 'Jadwal Mengajar Mingguan'}
+                                </h1>
+                                <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-2xl font-sans">
+                                    {activeMainTab === 'ph'
+                                        ? 'Susun agenda ulangan harian, catat materi penilaian, dan bagikan jadwal ke siswa atau orang tua.'
+                                        : activeMainTab === 'jurnal'
+                                        ? 'Catat pelaksanaan belajar mengajar, kehadiran kelas, dan catatan penting setiap pertemuan.'
+                                        : 'Atur jam pelajaran mingguan, pantau jam tatap muka kelas, dan pastikan tidak ada jadwal bentrok.'}
+                                </p>
+                            </div>
+
+                            {activeMainTab === 'jadwal' && (
+                                <div className="flex items-center gap-2 self-stretch sm:self-auto flex-wrap sm:flex-nowrap">
+                                    <Button onClick={() => handleOpenAddModal()} variant="primary" size="sm"
+                                        className="min-h-[42px] sm:min-h-[38px] px-3.5 sm:px-4 rounded-xl shadow-sm text-xs sm:text-sm font-semibold cursor-pointer active:scale-95 transition-all flex-1 sm:flex-none justify-center"
+                                        title="Tambah Jadwal Mengajar Baru"
+                                        aria-label="Tambah Jadwal">
+                                        <PlusIcon className="w-4 h-4 mr-1.5 shrink-0" />
+                                        <span>Tambah Jadwal</span>
+                                    </Button>
+                                    <Button onClick={handleAnalyzeSchedule} variant="outline" size="sm" disabled={!isOnline || schedule.length === 0}
+                                        className="min-h-[42px] sm:min-h-[38px] px-3 sm:px-3.5 rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white text-xs sm:text-sm font-medium cursor-pointer active:scale-95 transition-all"
+                                        title="Periksa Beban Mengajar dengan AI"
+                                        aria-label="Analisis Beban Mengajar dengan AI">
+                                        <BrainCircuitIcon className="w-4 h-4 sm:mr-1.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
+                                        <span className="hidden md:inline">Analisis AI</span>
+                                    </Button>
+                                    <Button onClick={handleExportPdf} variant="outline" size="sm"
+                                        className="min-h-[42px] sm:min-h-[38px] px-3 sm:px-3.5 rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white text-xs font-medium cursor-pointer active:scale-95 transition-all"
+                                        title="Cetak atau Simpan PDF Jadwal"
+                                        aria-label="Ekspor Jadwal ke PDF">
+                                        <DownloadCloudIcon className="w-4 h-4 sm:mr-1.5 shrink-0" />
+                                        <span className="hidden md:inline">PDF</span>
+                                    </Button>
+                                    <Button onClick={handleExportToIcs} variant="outline" size="sm"
+                                        className="min-h-[42px] sm:min-h-[38px] px-3 sm:px-3.5 rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white text-xs font-medium cursor-pointer active:scale-95 transition-all"
+                                        title="Simpan ke Kalender HP (Google Calendar/ICS)"
+                                        aria-label="Ekspor Jadwal ke Kalender ICS">
+                                        <CalendarIcon className="w-4 h-4 sm:mr-1.5 shrink-0" />
+                                        <span className="hidden md:inline">ICS</span>
+                                    </Button>
+                                </div>
+                            )}
+                        </header>
 
                 {activeMainTab === 'jurnal' ? (
                     <JurnalMengajarPage embedded={true} />
@@ -547,7 +595,7 @@ const SchedulePage: React.FC = () => {
                         <div className="flex items-start gap-3">
                             <AlertCircleIcon className="w-6 h-6 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />
                             <div>
-                                <h4 className="font-bold text-red-700 dark:text-red-200 mb-1">Konflik Jadwal Terdeteksi!</h4>
+                                <h4 className="font-bold text-red-700 dark:text-red-200 mb-1">Perhatian: Ada Jadwal yang Bentrok!</h4>
                                 <ul className="list-disc list-inside text-sm text-red-600 dark:text-red-300 space-y-1">
                                     {conflictWarnings.map((conflict, idx) => (
                                         <li key={idx}>
@@ -562,7 +610,7 @@ const SchedulePage: React.FC = () => {
                     <div className="bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 p-4 animate-fade-in">
                         <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 text-sm font-medium">
                             <CheckCircleIcon className="w-5 h-5" />
-                            Tidak ada konflik jadwal.
+                            Jadwal aman, tidak ada jam yang bentrok.
                         </div>
                     </div>
                 ) : null}
@@ -588,9 +636,9 @@ const SchedulePage: React.FC = () => {
                                     <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800/50 rounded-2xl flex items-center justify-center mb-4">
                                         <CalendarIcon className="w-7 h-7 text-slate-400 dark:text-slate-600" />
                                     </div>
-                                    <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-1">Tidak Ada Jadwal</h3>
+                                    <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-1">Belum Ada Jadwal Pelajaran</h3>
                                     <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[240px] mx-auto mb-4">
-                                        Belum ada jadwal untuk hari {selectedDay}. Tambahkan jadwal pertama Anda.
+                                        Belum ada jadwal mengajar pada hari {selectedDay}. Klik tombol di bawah untuk menambahkan jadwal kelas.
                                     </p>
                                     <Button onClick={() => handleOpenAddModal()} variant="outline" size="sm" className="rounded-full border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
                                         <PlusIcon className="w-4 h-4 mr-1.5" /> Tambah Jadwal
@@ -631,6 +679,8 @@ const SchedulePage: React.FC = () => {
                     )}
                 </div>
                 </>
+                )}
+                    </>
                 )}
             </div>
 
@@ -677,7 +727,7 @@ const SchedulePage: React.FC = () => {
                 </form>
             </Modal>
 
-            <Modal isOpen={isAnalysisModalOpen} onClose={() => setAnalysisModalOpen(false)} title="Analisis Jadwal AI" icon={<BrainCircuitIcon className="h-5 w-5" />}>
+            <Modal isOpen={isAnalysisModalOpen} onClose={() => setAnalysisModalOpen(false)} title="Bantuan AI: Analisis Beban Mengajar" icon={<BrainCircuitIcon className="h-5 w-5" />}>
                 {isAnalysisLoading ? (
                     <div className="flex flex-col items-center py-12">
                         <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4" />
@@ -703,8 +753,8 @@ const SchedulePage: React.FC = () => {
                 )}
             </Modal>
 
-            <Modal isOpen={confirmModalState.isOpen} onClose={() => setConfirmModalState({ isOpen: false, data: null })} title="Konfirmasi Hapus">
-                <p>Anda yakin ingin menghapus jadwal <strong className="text-white">"{confirmModalState.data?.subject}"</strong> pada hari <strong className="text-white">{confirmModalState.data?.day}</strong>?</p>
+            <Modal isOpen={confirmModalState.isOpen} onClose={() => setConfirmModalState({ isOpen: false, data: null })} title="Hapus Jadwal Mengajar?">
+                <p>Apakah Bapak/Ibu yakin ingin menghapus jadwal <strong className="text-white">"{confirmModalState.data?.subject}"</strong> pada hari <strong className="text-white">{confirmModalState.data?.day}</strong>?</p>
                 <div className="flex justify-end gap-2 pt-4 mt-4">
                     <Button variant="ghost" onClick={() => setConfirmModalState({ isOpen: false, data: null })} disabled={deleteScheduleMutation.isPending}>Batal</Button>
                     <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleteScheduleMutation.isPending}>{deleteScheduleMutation.isPending ? 'Menghapus...' : 'Ya, Hapus'}</Button>

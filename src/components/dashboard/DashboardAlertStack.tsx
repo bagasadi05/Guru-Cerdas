@@ -67,7 +67,7 @@ export const DashboardAlertStack: React.FC<DashboardAlertStackProps> = ({ data, 
         id: 'attendance-incomplete',
         severity: attendanceMissing > Math.max(totalStudents * 0.25, 1) ? 'danger' : 'warning',
         icon: AlertTriangleIcon,
-        title: 'Tunggakan Absensi Hari Ini',
+        title: 'Absensi Siswa Belum Lengkap',
         description: `Ada ${attendanceMissing} siswa yang belum dicatat kehadirannya hari ini.`,
         cta: { label: 'Isi Sekarang', href: '/absensi' },
       });
@@ -79,9 +79,9 @@ export const DashboardAlertStack: React.FC<DashboardAlertStackProps> = ({ data, 
         id: 'journal-unfilled',
         severity: 'warning',
         icon: BookOpenIcon,
-        title: 'Jurnal Hari Ini Belum Diisi',
-        description: `Ada ${journalStatus.unfilled} agenda KBM hari ini yang belum dicatat ke jurnal mengajar.`,
-        cta: { label: 'Isi Sekarang', href: '/jadwal' },
+        title: 'Jurnal Mengajar Belum Diisi',
+        description: `Ada ${journalStatus.unfilled} jam mengajar hari ini yang belum dicatat ke jurnal.`,
+        cta: { label: 'Isi Sekarang', href: '/jadwal?tab=jurnal' },
       });
     }
 
@@ -95,8 +95,8 @@ export const DashboardAlertStack: React.FC<DashboardAlertStackProps> = ({ data, 
         id: 'overdue-tasks',
         severity: overdueTasks.length >= 3 ? 'danger' : 'warning',
         icon: ClockIcon,
-        title: `${overdueTasks.length} Tugas Terlambat`,
-        description: `Tugas yang melewati deadline perlu segera ditindaklanjuti.`,
+        title: `${overdueTasks.length} Tugas Lewat Batas Waktu`,
+        description: `Batas waktu pengumpulan tugas sudah lewat, silakan periksa kelengkapan siswa.`,
         cta: { label: 'Lihat Tugas', href: '/tugas' },
       });
     }

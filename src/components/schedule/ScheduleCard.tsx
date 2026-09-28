@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { ScheduleRow } from '../../types';
 import { formatTimeRange, getColorForSubject, resolveClassName } from '../../utils/scheduleUtils';
-import { ClockIcon, UsersIcon, BookOpenIcon, EditIcon, CopyIcon, TrashIcon, MoreVerticalIcon } from '../Icons';
+import { ClockIcon, UsersIcon, BookOpenIcon, EditIcon, CopyIcon, TrashIcon, MoreVerticalIcon, ClipboardPenIcon } from '../Icons';
 import { Button } from '../ui/Button';
 import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../ui/DropdownMenu';
 
@@ -41,14 +41,18 @@ export const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, classNameLabel
                             </span>
                         </div>
                         {hasPhToday && (
-                            <span className="inline-flex items-center gap-1 text-xxs font-extrabold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 animate-pulse">
-                                📝 PH Hari Ini
+                            <span className="inline-flex items-center gap-1 text-[11px] font-extrabold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 animate-pulse">
+                                <ClipboardPenIcon className="w-3 h-3 text-amber-700 dark:text-amber-300 shrink-0" />
+                                <span>PH Hari Ini</span>
                             </span>
                         )}
                     </div>
 
                     <DropdownMenu>
-                        <DropdownTrigger className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-white transition-colors">
+                        <DropdownTrigger
+                            className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
+                            aria-label="Menu opsi jadwal"
+                        >
                             <MoreVerticalIcon className="w-4 h-4" />
                         </DropdownTrigger>
                         <DropdownContent>
@@ -89,10 +93,11 @@ export const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, classNameLabel
                                 e.stopPropagation();
                                 onIsiJurnal?.(item);
                             }}
-                            className="text-xxs px-2 py-0.5 h-6 border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-lg flex items-center gap-1 shrink-0"
+                            aria-label={`Isi Jurnal untuk ${item.subject}`}
+                            className="text-xs px-2.5 py-1 min-h-[36px] sm:min-h-[28px] border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-lg flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95 font-semibold"
                         >
-                            <BookOpenIcon className="w-2.5 h-2.5 text-emerald-500" />
-                            Isi Jurnal
+                            <BookOpenIcon className="w-3 h-3 text-emerald-500 shrink-0" />
+                            <span>Isi Jurnal</span>
                         </Button>
                     </div>
                 </div>

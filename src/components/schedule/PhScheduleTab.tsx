@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
 import { useAuth } from '../../hooks/useAuth';
-import { usePhScheduleDomain, PERIOD_PRESETS } from './engine/usePhScheduleDomain';
+import { usePhScheduleDomain } from './engine/usePhScheduleDomain';
 import { PhScheduleEngine } from './engine/PhScheduleEngine';
+import { PhWeeklyScheduleView } from './PhWeeklyScheduleView';
+import { PhScheduleFormModal } from './PhScheduleFormModal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
@@ -58,6 +60,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
 }) => {
     const { loading: authLoading } = useAuth();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const printSheetRef = useRef<HTMLDivElement>(null);
 
     const domain = usePhScheduleDomain({
@@ -65,6 +68,16 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
         onSelectClassId,
         onCanManageChange,
     });
+
+    // Handle URL action=add (e.g. navigation from Dashboard TodayPhScheduleWidget)
+    useEffect(() => {
+        if (searchParams.get('action') === 'add') {
+            domain.openAdd();
+            const nextParams = new URLSearchParams(searchParams);
+            nextParams.delete('action');
+            setSearchParams(nextParams, { replace: true });
+        }
+    }, [searchParams, setSearchParams, domain.openAdd]);
 
     const handleExecutePrint = useReactToPrint({
         contentRef: printSheetRef,
@@ -247,7 +260,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                             type="button"
                             onClick={() => domain.setIsWaModalOpen(true)}
                             disabled={domain.rawSchedules.length === 0}
-                            className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-[#111c2e] disabled:opacity-40 transition-colors"
+                            className="w-10 h-10 sm:w-9 sm:h-9 min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px] rounded-lg flex items-center justify-center text-slate-500 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-[#111c2e] disabled:opacity-40 transition-colors cursor-pointer active:scale-95"
                             title="Salin Jadwal untuk WhatsApp"
                             aria-label="Bagikan WhatsApp"
                         >
@@ -257,7 +270,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                             type="button"
                             onClick={handleTriggerPrint}
                             disabled={domain.rawSchedules.length === 0}
-                            className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-[#111c2e] disabled:opacity-40 transition-colors"
+                            className="w-10 h-10 sm:w-9 sm:h-9 min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px] rounded-lg flex items-center justify-center text-slate-500 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-[#111c2e] disabled:opacity-40 transition-colors cursor-pointer active:scale-95"
                             title="Cetak Jadwal PH"
                             aria-label="Cetak"
                         >
@@ -267,7 +280,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                             type="button"
                             onClick={domain.handleExportIcs}
                             disabled={domain.rawSchedules.length === 0}
-                            className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-[#111c2e] disabled:opacity-40 transition-colors"
+                            className="w-10 h-10 sm:w-9 sm:h-9 min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px] rounded-lg flex items-center justify-center text-slate-500 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-[#111c2e] disabled:opacity-40 transition-colors cursor-pointer active:scale-95"
                             title="Ekspor Jadwal PH ke Kalender (.ics)"
                             aria-label="Kalender ICS"
                         >
@@ -278,8 +291,8 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                     {domain.canManage && (
                         <button
                             type="button"
-                            onClick={domain.openAdd}
-                            className="flex-1 h-10 bg-[#00d284] hover:bg-[#00ba74] text-slate-950 font-bold text-[13px] rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-[0_4px_14px_0_rgba(0,210,132,0.25)] active:scale-[0.98] whitespace-nowrap px-3"
+                            onClick={() => domain.openAdd()}
+                            className="flex-1 min-h-[42px] sm:min-h-[40px] h-10 bg-[#00d284] hover:bg-[#00ba74] text-slate-950 font-bold text-xs sm:text-[13px] rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-[0_4px_14px_0_rgba(0,210,132,0.25)] active:scale-[0.98] whitespace-nowrap px-3 cursor-pointer"
                         >
                             <PlusIcon className="w-4 h-4 stroke-[2.5] shrink-0" />
                             <span className="whitespace-nowrap">Tambah PH</span>
@@ -296,13 +309,14 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                             placeholder="Cari mata pelajaran PH..."
                             value={domain.searchQuery}
                             onChange={(e) => domain.setSearchQuery(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-[#0f1828] border border-slate-200 dark:border-[#1f314d] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-[#64748b] text-[13px] rounded-xl py-2.5 pl-10 pr-8 focus:outline-none focus:border-emerald-500 dark:focus:border-[#00d284]/80 transition-colors h-10"
+                            className="w-full bg-slate-50 dark:bg-[#0f1828] border border-slate-200 dark:border-[#1f314d] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-[#64748b] text-[13px] rounded-xl py-2.5 pl-10 pr-8 focus:outline-none focus:border-emerald-500 dark:focus:border-[#00d284]/80 transition-colors min-h-[42px] h-10"
                         />
                         {domain.searchQuery && (
                             <button
                                 type="button"
                                 onClick={() => domain.setSearchQuery('')}
-                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-md cursor-pointer"
+                                aria-label="Hapus kata kunci pencarian"
                             >
                                 <XIcon className="w-4 h-4" />
                             </button>
@@ -321,12 +335,14 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                 </div>
 
                 {/* Filter Pills & View Mode */}
-                <div className="flex items-center justify-between pt-0.5">
-                    <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide py-0.5 min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-0.5">
+                    <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 min-w-0" role="tablist" aria-label="Filter status PH">
                         <button
                             type="button"
+                            role="tab"
+                            aria-selected={domain.statusFilter === 'all'}
                             onClick={() => domain.setStatusFilter('all')}
-                            className={`px-2.5 py-1.5 rounded-lg font-semibold text-[11px] whitespace-nowrap shadow-sm shrink-0 transition-all ${
+                            className={`min-h-[36px] sm:min-h-[30px] px-3 py-1.5 rounded-lg font-semibold text-xs whitespace-nowrap shadow-xs shrink-0 transition-all cursor-pointer active:scale-95 ${
                                 domain.statusFilter === 'all'
                                     ? 'bg-slate-700/80 dark:bg-slate-700/90 text-white border border-slate-600'
                                     : 'text-slate-600 dark:text-[#94a3b8] hover:bg-slate-100 dark:hover:bg-[#0f1828]'
@@ -336,10 +352,12 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                         </button>
                         <button
                             type="button"
+                            role="tab"
+                            aria-selected={domain.statusFilter === 'today'}
                             onClick={() => domain.setStatusFilter('today')}
-                            className={`px-2.5 py-1.5 rounded-lg font-medium text-[11px] whitespace-nowrap shrink-0 transition-colors ${
+                            className={`min-h-[36px] sm:min-h-[30px] px-3 py-1.5 rounded-lg font-semibold text-xs whitespace-nowrap shrink-0 transition-all cursor-pointer active:scale-95 ${
                                 domain.statusFilter === 'today'
-                                    ? 'bg-emerald-500 text-white shadow-sm font-semibold'
+                                    ? 'bg-emerald-500 text-white shadow-xs font-semibold'
                                     : 'text-emerald-600 dark:text-[#00d284] hover:bg-slate-100 dark:hover:bg-[#0f1828]'
                             }`}
                         >
@@ -347,10 +365,12 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                         </button>
                         <button
                             type="button"
+                            role="tab"
+                            aria-selected={domain.statusFilter === 'upcoming'}
                             onClick={() => domain.setStatusFilter('upcoming')}
-                            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-medium text-[11px] whitespace-nowrap shrink-0 transition-colors ${
+                            className={`min-h-[36px] sm:min-h-[30px] flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-xs whitespace-nowrap shrink-0 transition-all cursor-pointer active:scale-95 ${
                                 domain.statusFilter === 'upcoming'
-                                    ? 'bg-blue-500 text-white shadow-sm font-semibold'
+                                    ? 'bg-blue-500 text-white shadow-xs font-semibold'
                                     : 'text-blue-500 dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-[#0f1828]'
                             }`}
                         >
@@ -359,10 +379,12 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                         </button>
                         <button
                             type="button"
+                            role="tab"
+                            aria-selected={domain.statusFilter === 'past'}
                             onClick={() => domain.setStatusFilter('past')}
-                            className={`px-2.5 py-1.5 rounded-lg font-medium text-[11px] whitespace-nowrap shrink-0 transition-colors ${
+                            className={`min-h-[36px] sm:min-h-[30px] px-3 py-1.5 rounded-lg font-semibold text-xs whitespace-nowrap shrink-0 transition-all cursor-pointer active:scale-95 ${
                                 domain.statusFilter === 'past'
-                                    ? 'bg-slate-400 text-white shadow-sm font-semibold'
+                                    ? 'bg-slate-400 text-white shadow-xs font-semibold'
                                     : 'text-slate-500 dark:text-[#64748b] hover:bg-slate-100 dark:hover:bg-[#0f1828]'
                             }`}
                         >
@@ -370,29 +392,46 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
                         <button
                             type="button"
                             onClick={() => domain.setSortOrder(domain.sortOrder === 'asc' ? 'desc' : 'asc')}
                             title={domain.sortOrder === 'asc' ? 'Urutan: Tanggal Terdekat' : 'Urutan: Tanggal Terjauh'}
-                            className="h-7 px-2 rounded-lg bg-slate-100 dark:bg-[#0f1828] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-[11px] font-semibold flex items-center gap-1 whitespace-nowrap shrink-0 border border-slate-200 dark:border-[#1c2b44]/80 transition-colors"
+                            aria-label={domain.sortOrder === 'asc' ? 'Urutan: Tanggal Terdekat' : 'Urutan: Tanggal Terjauh'}
+                            className="min-h-[36px] sm:min-h-[30px] px-2.5 rounded-xl bg-slate-100 dark:bg-[#0f1828] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap shrink-0 border border-slate-200 dark:border-[#1c2b44]/80 transition-colors cursor-pointer active:scale-95"
                         >
-                            <span className="font-bold">{domain.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                            <span className="font-bold text-sm">{domain.sortOrder === 'asc' ? '↑' : '↓'}</span>
                             <span className="hidden sm:inline">{domain.sortOrder === 'asc' ? 'Terdekat' : 'Terjauh'}</span>
                         </button>
 
-                        <div className="flex items-center bg-slate-100 dark:bg-[#0f1828] border border-slate-200 dark:border-[#1c2b44]/80 rounded-lg p-0.5 shrink-0">
+                        <div className="flex items-center bg-slate-100 dark:bg-[#0f1828] border border-slate-200 dark:border-[#1c2b44]/80 rounded-xl p-0.5 shrink-0" role="group" aria-label="Pilihan Tampilan PH">
                             <button
                                 type="button"
-                                onClick={() => domain.setViewMode('cards')}
-                                title="Tampilan Grid / Kartu"
-                                className={`w-7 h-7 rounded flex items-center justify-center transition-all ${
-                                    domain.viewMode === 'cards'
-                                        ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-cyan-300 shadow-sm'
+                                onClick={() => domain.setViewMode('weekly')}
+                                title="Tampilan Mingguan Menyamping (Senin - Jumat)"
+                                aria-label="Tampilan Mingguan"
+                                aria-pressed={domain.viewMode === 'weekly'}
+                                className={`w-9 h-9 sm:w-8 sm:h-8 min-w-[36px] min-h-[36px] sm:min-w-[32px] sm:min-h-[32px] rounded-lg flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+                                    domain.viewMode === 'weekly'
+                                        ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-cyan-300 shadow-sm font-bold'
                                         : 'text-slate-400 dark:text-[#64748b] hover:text-slate-700 dark:hover:text-white'
                                 }`}
                             >
-                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 16 16">
+                                <CalendarIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => domain.setViewMode('cards')}
+                                title="Tampilan Semua Kartu Vertikal"
+                                aria-label="Tampilan Kartu"
+                                aria-pressed={domain.viewMode === 'cards'}
+                                className={`w-9 h-9 sm:w-8 sm:h-8 min-w-[36px] min-h-[36px] sm:min-w-[32px] sm:min-h-[32px] rounded-lg flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+                                    domain.viewMode === 'cards'
+                                        ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-cyan-300 shadow-sm font-bold'
+                                        : 'text-slate-400 dark:text-[#64748b] hover:text-slate-700 dark:hover:text-white'
+                                }`}
+                            >
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16">
                                     <rect height="5.5" rx="1.2" width="5.5" x="1" y="1" />
                                     <rect height="5.5" rx="1.2" width="5.5" x="9.5" y="1" />
                                     <rect height="5.5" rx="1.2" width="5.5" x="1" y="9.5" />
@@ -403,19 +442,21 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                 type="button"
                                 onClick={() => domain.setViewMode('table')}
                                 title="Tampilan Tabel / Daftar"
-                                className={`w-7 h-7 rounded flex items-center justify-center transition-all ${
+                                aria-label="Tampilan Tabel"
+                                aria-pressed={domain.viewMode === 'table'}
+                                className={`w-9 h-9 sm:w-8 sm:h-8 min-w-[36px] min-h-[36px] sm:min-w-[32px] sm:min-h-[32px] rounded-lg flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
                                     domain.viewMode === 'table'
-                                        ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-cyan-300 shadow-sm'
+                                        ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-cyan-300 shadow-sm font-bold'
                                         : 'text-slate-400 dark:text-[#64748b] hover:text-slate-700 dark:hover:text-white'
                                 }`}
                             >
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                     <line x1="8" x2="21" y1="6" y2="6" />
                                     <line x1="8" x2="21" y1="12" y2="12" />
                                     <line x1="8" x2="21" y1="18" y2="18" />
-                                    <line x1="3" x2="3.01" y1="6" y2="6" />
-                                    <line x1="3" x2="3.01" y1="12" y2="12" />
-                                    <line x1="3" x2="3.01" y1="18" y2="18" />
+                                    <circle cx="3.5" cy="6" r="1.5" />
+                                    <circle cx="3.5" cy="12" r="1.5" />
+                                    <circle cx="3.5" cy="18" r="1.5" />
                                 </svg>
                             </button>
                         </div>
@@ -451,7 +492,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                     {domain.canManage && (
                         <button
                             type="button"
-                            onClick={domain.openAdd}
+                            onClick={() => domain.openAdd()}
                             className="w-full max-w-[280px] py-3 px-3 bg-[#00d284] hover:bg-[#00ba74] text-slate-950 font-bold text-[13px] rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-[0_4px_14px_0_rgba(0,210,132,0.25)] active:scale-[0.98] mt-2 whitespace-nowrap"
                         >
                             <PlusIcon className="w-4 h-4 stroke-[2.5]" />
@@ -459,6 +500,17 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                         </button>
                     )}
                 </div>
+            ) : domain.viewMode === 'weekly' ? (
+                /* Weekly 5-Column View (Senin - Jumat) */
+                <PhWeeklyScheduleView
+                    schedules={domain.filteredSchedules}
+                    canManage={domain.canManage}
+                    onAdd={(initialDate) => domain.openAdd(initialDate)}
+                    onEdit={domain.openEdit}
+                    onDuplicate={domain.handleDuplicate}
+                    onDelete={(item) => domain.setDeleteConfirm(item)}
+                    onInputNilai={handleInputNilai}
+                />
             ) : domain.filteredSchedules.length === 0 ? (
                 <div className="bg-white dark:bg-[#111c2e]/70 rounded-2xl border border-slate-200 dark:border-[#1c2b44] p-8 text-center text-slate-400 space-y-2">
                     <SearchIcon className="w-8 h-8 mx-auto opacity-50 text-slate-400" />
@@ -669,97 +721,19 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
             )}
 
             {/* Add / Edit Modal */}
-            <Modal
+            <PhScheduleFormModal
                 isOpen={domain.dialogOpen}
                 onClose={domain.closeModal}
-                title={domain.editingSchedule ? 'Edit Jadwal Penilaian Harian' : 'Tambah Jadwal Penilaian Harian'}
-            >
-                <form onSubmit={domain.handleSubmit} className="space-y-4 pt-2">
-                    <div>
-                        <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                            Tanggal Pelaksanaan
-                        </label>
-                        <Input
-                            type="date"
-                            value={domain.formData.date}
-                            onChange={(e) => domain.setFormData({ ...domain.formData, date: e.target.value })}
-                            className="h-11 rounded-xl"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <div className="flex justify-between items-center mb-1.5">
-                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                                Mata Pelajaran & Materi PH
-                            </label>
-                            <span className="text-xxs text-slate-400">Pilih saran atau ketik manual</span>
-                        </div>
-                        <Input
-                            type="text"
-                            value={domain.formData.subject}
-                            onChange={(e) => domain.setFormData({ ...domain.formData, subject: e.target.value })}
-                            placeholder="cth. Matematika (Pecahan & Desimal)"
-                            className="h-11 rounded-xl mb-2"
-                            required
-                        />
-                        <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
-                            {domain.subjectSuggestions.map((s) => (
-                                <button
-                                    key={s}
-                                    type="button"
-                                    onClick={() => domain.setFormData({ ...domain.formData, subject: `${s} ` })}
-                                    className="px-2 py-0.5 text-xxs font-medium rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-brand-900/30 transition-colors"
-                                >
-                                    + {s}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                            Jam Pelajaran Ke-
-                        </label>
-                        <Input
-                            type="text"
-                            value={domain.formData.period_label}
-                            onChange={(e) => domain.setFormData({ ...domain.formData, period_label: e.target.value })}
-                            placeholder="cth. 1-2 atau 7-8"
-                            className="h-11 rounded-xl"
-                            required
-                        />
-                        <div className="flex flex-wrap gap-1.5 mt-2">
-                            {PERIOD_PRESETS.map((label) => {
-                                const isSelected = domain.formData.period_label === label;
-                                return (
-                                    <button
-                                        key={label}
-                                        type="button"
-                                        onClick={() => domain.setFormData({ ...domain.formData, period_label: label })}
-                                        className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-                                            isSelected
-                                                ? 'bg-brand-600 text-white shadow-sm font-bold scale-105'
-                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-brand-900/30'
-                                        }`}
-                                    >
-                                        Jam {label}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
-                        <Button type="button" variant="ghost" onClick={domain.closeModal} disabled={isPending} className="rounded-xl">
-                            Batal
-                        </Button>
-                        <Button type="submit" variant="primary" disabled={isPending} className="rounded-xl font-bold px-5">
-                            {isPending ? 'Menyimpan...' : domain.editingSchedule ? 'Simpan Perubahan' : 'Tambah Jadwal PH'}
-                        </Button>
-                    </div>
-                </form>
-            </Modal>
+                editingSchedule={domain.editingSchedule}
+                formData={domain.formData}
+                setFormData={domain.setFormData}
+                handleSubmit={domain.handleSubmit}
+                isPending={isPending}
+                subjectSuggestions={domain.subjectSuggestions}
+                rawSchedules={domain.rawSchedules}
+                currentClassName={domain.currentClassName}
+                currentSemesterName={domain.currentSemesterName}
+            />
 
             {/* WhatsApp Share Options Modal */}
             <Modal

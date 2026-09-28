@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { supabase } from '../../../../../services/supabase';
-import { AppUser } from '../../../../../hooks/useAuth';
+import type { AppUser } from '../../../../../hooks/useAuth';
 import { StudentRow, InputMode } from '../../types';
 import { ViolationItem } from '../../../../../services/violations.data';
 

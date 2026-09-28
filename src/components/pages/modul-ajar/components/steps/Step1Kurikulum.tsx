@@ -34,7 +34,7 @@ export const Step1Kurikulum: React.FC<Step1KurikulumProps> = ({
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-brand-900 dark:text-brand-200 flex items-center gap-1.5">
               <Zap className="w-4 h-4 text-amber-500 fill-amber-400" />
-              Preset Cepat (Muat Contoh Lengkap 1-Klik)
+              Contoh Lengkap 1-Klik (Pilih Contoh Siap Pakai)
             </span>
             <span className="text-[10px] bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 px-2 py-0.5 rounded-full font-bold">
               Praktis
@@ -57,7 +57,7 @@ export const Step1Kurikulum: React.FC<Step1KurikulumProps> = ({
 
       <div className="flex items-center justify-between border-b pb-2 border-slate-100 dark:border-slate-800">
         <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
-          Langkah 1: Jenis & Pendekatan Kurikulum
+          Langkah 1: Jenis Dokumen & Pendekatan Kurikulum
         </h3>
         <span className="text-[10px] bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 font-bold px-2 py-0.5 rounded-full">
           Wajib
@@ -66,11 +66,11 @@ export const Step1Kurikulum: React.FC<Step1KurikulumProps> = ({
 
       <div className="space-y-5">
         <div>
-          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Metode Penyusunan</label>
+          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Metode Penyusunan Dokumen</label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
-              { id: 'Manual', label: '⚡ Database (Non-AI)', desc: 'Penyusunan instan dari Bank Data & Template (Sangat Cepat & Ringan)' },
-              ...(isAiEnabled ? [{ id: 'AI', label: '✨ Generatif AI', desc: 'Disusun otomatis oleh AI (Perlu Koneksi)' }] : [])
+              { id: 'Manual', label: '⚡ Isian Standar (Tanpa AI)', desc: 'Disusun langsung dari isian Anda dan referensi resmi. Cepat, stabil, dan hemat kuota.' },
+              ...(isAiEnabled ? [{ id: 'AI', label: '✨ Bantuan Cerdas AI', desc: 'Disusun dan dilengkapi ide-ide kreatif secara otomatis oleh kecerdasan buatan.' }] : [])
             ].map(method => (
               <button
                 key={method.id}
@@ -143,7 +143,7 @@ export const Step1Kurikulum: React.FC<Step1KurikulumProps> = ({
               <div className="flex items-center gap-2">
                 <Heart className="w-4 h-4 text-emerald-600 dark:text-emerald-400 fill-emerald-500/20" />
                 <h4 className="text-xs font-bold text-emerald-900 dark:text-emerald-200 uppercase tracking-wide">
-                  Integrasi Kurikulum Berbasis Cinta (KBC 2025)
+                  Integrasi Kurikulum Berbasis Cinta (KBC Kemenag)
                 </h4>
               </div>
               <span className="text-[10px] bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 px-2 py-0.5 rounded-full font-semibold">
@@ -154,7 +154,7 @@ export const Step1Kurikulum: React.FC<Step1KurikulumProps> = ({
             {/* Topik Panca Cinta Selection */}
             <div>
               <label className="block text-xs font-semibold text-emerald-800 dark:text-emerald-300 mb-1.5">
-                Topik Panca Cinta (Pilih 1-2 Topik Wajib)
+                Pilar Nilai Panca Cinta (Pilih 1 atau 2 Pilar Utama)
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {topicsToDisplay.map(topic => {
@@ -201,13 +201,13 @@ export const Step1Kurikulum: React.FC<Step1KurikulumProps> = ({
             {/* Materi Insersi Preset & Custom */}
             <div>
               <label className="block text-xs font-semibold text-emerald-800 dark:text-emerald-300 mb-1">
-                Materi Insersi Nilai Cinta (Butir Spesifik)
+                Uraian Insersi Nilai Cinta pada Pembelajaran
               </label>
               
               {formState.temaKbc.length > 0 && (
                 <div className="mb-2 space-y-1">
                   <span className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold block">
-                    Preset Insersi dari Kemenag (Klik + untuk memilih otomatis):
+                    Contoh Kalimat Insersi Kemenag (Klik untuk menerapkan langsung):
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {materiToDisplay.map((kontenText, idx) => (
@@ -228,7 +228,7 @@ export const Step1Kurikulum: React.FC<Step1KurikulumProps> = ({
                 rows={2}
                 value={formState.materiInsersi}
                 onChange={(e) => onChange('materiInsersi', e.target.value)}
-                placeholder="Contoh: Meneladani Asmaul Husna Ar-Rahman dalam berinteraksi dengan sesama teman..."
+                placeholder="Contoh: Membiasakan sikap saling menghargai dan bertutur kata santun saat berdiskusi..."
                 className="w-full p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-800 text-xs bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none resize-none"
               />
             </div>
@@ -236,7 +236,7 @@ export const Step1Kurikulum: React.FC<Step1KurikulumProps> = ({
         )}
 
         <div>
-          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Satuan Pendidikan</label>
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nama Satuan Pendidikan (Sekolah / Madrasah)</label>
           <input 
             type="text" 
             value={formState.satuanPendidikan}
@@ -248,7 +248,7 @@ export const Step1Kurikulum: React.FC<Step1KurikulumProps> = ({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs text-slate-500 dark:text-slate-400 font-medium">Tahun Ajaran</label>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Tahun Ajaran</label>
               {formState.tahunAjaran === currentActiveYearName ? (
                 <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
                   <Check className="w-3 h-3" /> TA Aktif
@@ -260,7 +260,7 @@ export const Step1Kurikulum: React.FC<Step1KurikulumProps> = ({
                   className="text-[10px] text-brand-600 dark:text-brand-400 hover:underline font-semibold"
                   title={`Set ke Tahun Ajaran Aktif (${currentActiveYearName})`}
                 >
-                  Set TA Aktif
+                  Gunakan TA Aktif
                 </button>
               )}
             </div>
@@ -274,7 +274,7 @@ export const Step1Kurikulum: React.FC<Step1KurikulumProps> = ({
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs text-slate-500 dark:text-slate-400 font-medium">Semester</label>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Semester</label>
               {formState.semester === currentActiveSemName && (
                 <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold px-1.5 py-0.2 rounded-full flex items-center gap-0.5">
                   <Check className="w-3 h-3" /> Aktif
@@ -295,3 +295,4 @@ export const Step1Kurikulum: React.FC<Step1KurikulumProps> = ({
     </div>
   );
 };
+

@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { QueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../../../services/supabase';
 import { r2StorageService } from '../../../../../services/r2StorageService';
-import { AppUser } from '../../../../../hooks/useAuth';
+import type { AppUser } from '../../../../../hooks/useAuth';
 import { useToast } from '../../../../../hooks/useToast';
 import { violationList } from '../../../../../services/violations.data';
 import { writeAuditLog } from '../../../../../services/auditTrail';

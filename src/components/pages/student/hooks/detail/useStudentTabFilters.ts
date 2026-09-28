@@ -13,7 +13,7 @@ import {
     getLatestRecordForSubject,
 } from '../../studentDetailHelpers';
 import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../../../../utils/academicRecordUtils';
-import { AppUser } from '../../../../../hooks/useAuth';
+import type { AppUser } from '../../../../../hooks/useAuth';
 
 interface StudentDetailsComposite {
     student: StudentWithClass;

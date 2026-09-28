@@ -249,7 +249,7 @@ const JurnalMengajarPage: React.FC<JurnalMengajarPageProps> = ({ embedded = true
             <Button
               onClick={handleOpenAdd}
               size="sm"
-              className="rounded-xl shadow-sm hover:shadow-md text-xs sm:text-sm font-semibold h-9 sm:h-10 px-3 sm:px-4 cursor-pointer"
+              className="rounded-xl shadow-sm hover:shadow-md text-xs sm:text-sm font-semibold min-h-[42px] sm:min-h-[38px] px-3.5 sm:px-4 cursor-pointer active:scale-95 transition-all"
             >
               <Plus className="w-4 h-4 sm:mr-1.5 shrink-0" />
               <span className="hidden sm:inline">Tambah Jurnal</span>
@@ -326,7 +326,7 @@ const JurnalMengajarPage: React.FC<JurnalMengajarPageProps> = ({ embedded = true
                         Mata Pelajaran
                       </label>
                   <Input
-                    placeholder="cth: Matematika"
+                    placeholder="Contoh: Matematika"
                     value={subjectInput}
                     onChange={(e) => setSubjectInput(e.target.value)}
                     aria-label="Filter mata pelajaran"
@@ -406,7 +406,7 @@ const JurnalMengajarPage: React.FC<JurnalMengajarPageProps> = ({ embedded = true
                         className="rounded-xl border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
                         aria-label="Reset filter"
                       >
-                        <RefreshCw className="w-4 h-4 mr-2" /> Reset Filter
+                        <RefreshCw className="w-4 h-4 mr-2" /> Atur Ulang Filter
                       </Button>
                     </div>
                   </div>
@@ -444,9 +444,9 @@ const JurnalMengajarPage: React.FC<JurnalMengajarPageProps> = ({ embedded = true
                 <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4 text-slate-600 dark:text-slate-500 shadow-inner">
                   <BookOpen className="w-8 h-8" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Belum Ada Jurnal</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Belum Ada Catatan Jurnal</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-sm">
-                  Tidak ada jurnal yang cocok dengan filter saat ini. Coba ubah filter atau tambah jurnal baru.
+                  Belum ada catatan jurnal mengajar yang sesuai filter. Ubah filter atau klik tombol di bawah untuk membuat catatan baru.
                 </p>
                 <Button onClick={handleOpenAdd} className="rounded-xl shadow-sm hover:shadow-md">
                   <Plus className="w-4 h-4 mr-2" /> Tambah Jurnal
@@ -499,13 +499,13 @@ const JurnalMengajarPage: React.FC<JurnalMengajarPageProps> = ({ embedded = true
                               </div>
                             )}
                           </div>
-                          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
                             {j.attachment_url && (
                               <a
                                 href={j.attachment_url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="inline-flex items-center justify-center w-9 h-9 rounded-xl text-emerald-600 bg-emerald-50 hover:bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                                className="inline-flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px] rounded-xl text-emerald-600 bg-emerald-50 hover:bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 transition-colors cursor-pointer active:scale-95"
                                 aria-label="Buka lampiran"
                                 title="Buka lampiran"
                               >
@@ -516,7 +516,7 @@ const JurnalMengajarPage: React.FC<JurnalMengajarPageProps> = ({ embedded = true
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-9 w-9 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                              className="h-10 w-10 sm:h-9 sm:w-9 min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer active:scale-95 transition-all"
                               onClick={() => handleOpenEdit(j)}
                               aria-label="Edit Jurnal"
                             >
@@ -526,7 +526,7 @@ const JurnalMengajarPage: React.FC<JurnalMengajarPageProps> = ({ embedded = true
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-9 w-9 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl cursor-pointer"
+                              className="h-10 w-10 sm:h-9 sm:w-9 min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px] text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl cursor-pointer active:scale-95 transition-all"
                               onClick={() => handleDelete(j.id)}
                               disabled={deleteJournal.isPending && deletingId === j.id}
                               aria-label="Hapus Jurnal"
@@ -593,9 +593,9 @@ const JurnalMengajarPage: React.FC<JurnalMengajarPageProps> = ({ embedded = true
         isOpen={confirmDeleteId !== null}
         onClose={() => setConfirmDeleteId(null)}
         onConfirm={confirmDelete}
-        title="Hapus Jurnal Mengajar"
-        message="Apakah Anda yakin ingin menghapus jurnal mengajar ini? Tindakan ini tidak dapat dibatalkan."
-        confirmText="Hapus"
+        title="Hapus Jurnal Mengajar?"
+        message="Apakah Bapak/Ibu yakin ingin menghapus catatan jurnal ini? Catatan yang dihapus tidak dapat dikembalikan."
+        confirmText="Hapus Jurnal"
         cancelText="Batal"
         variant="danger"
         isPending={deleteJournal.isPending}

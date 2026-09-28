@@ -163,7 +163,7 @@ coverage/
 lcov-report/
 
 # Local data files
-data/
+/data/
 
 graphify-out/
 

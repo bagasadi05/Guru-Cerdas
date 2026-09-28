@@ -75,14 +75,14 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
     <div className="space-y-5">
       <div className="flex items-center justify-between border-b pb-2 border-slate-100 dark:border-slate-800">
         <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">
-          Langkah 5: Model Pembelajaran, Waktu & Rubrik
+          Langkah 5: Model Pembelajaran, Alokasi Waktu & Rubrik Penilaian
         </h3>
       </div>
       
       <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.lessonPlan.pertemuan}</label>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Jumlah Pertemuan (KBM)</label>
             <input 
               type="number" 
               value={formState.jumlahPertemuan}
@@ -91,7 +91,7 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
             />
           </div>
           <div>
-            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.lessonPlan.jpPerTemu}</label>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Jam Pelajaran (JP) / Pertemuan</label>
             <input 
               type="number" 
               value={formState.jpPerPertemuan}
@@ -100,7 +100,7 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
             />
           </div>
           <div>
-            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.lessonPlan.durasi}</label>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Durasi 1 JP (Menit)</label>
             <input 
               type="number" 
               value={formState.durasiPerJp}
@@ -112,26 +112,26 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
 
         {/* Pilihan Ukuran Kertas Cetak & Dokumen */}
         <div>
-          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5 font-medium">
-            Ukuran Kertas Cetak & Dokumen Word
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            Pilihan Ukuran Kertas Dokumen
           </label>
           <div className="grid grid-cols-2 gap-2">
             {[
               { id: 'A4', label: '📄 A4 (210 × 297 mm)', desc: 'Standar Nasional & Printer Biasa' },
-              { id: 'F4', label: '📑 F4 / Folio (215 × 330 mm)', desc: 'Standar Arsip Sekolah Indonesia' }
+              { id: 'F4', label: '📑 F4 / Folio (215 × 330 mm)', desc: 'Format Populer Arsip Perangkat Guru' }
             ].map(paper => (
               <button
                 key={paper.id}
                 type="button"
                 onClick={() => onChange('paperSize', paper.id)}
-                className={`p-2.5 rounded-lg border text-left transition-all ${
+                className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
                   (formState.paperSize || 'A4') === paper.id
                     ? 'bg-brand-50 border-brand-500 text-brand-700 dark:bg-brand-950/40 dark:border-brand-500 dark:text-brand-300 shadow-xs'
                     : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:border-slate-300'
                 }`}
               >
                 <div className="text-xs font-bold">{paper.label}</div>
-                <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{paper.desc}</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{paper.desc}</div>
               </button>
             ))}
           </div>
@@ -139,24 +139,24 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
 
         {/* Pendekatan Pembelajaran */}
         <div>
-          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1.5 font-medium">Pendekatan Pembelajaran</label>
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Fokus Pendekatan Pembelajaran</label>
           <div className="grid grid-cols-2 gap-2">
             {[
-              { id: 'Student Centered', label: 'Student Centered', desc: 'Berpusat pada keaktifan siswa' },
-              { id: 'Teacher Centered', label: 'Teacher Centered', desc: 'Berpusat pada pengarahan guru' }
+              { id: 'Student Centered', label: 'Student Centered', desc: 'Berpusat pada keaktifan dan eksplorasi siswa' },
+              { id: 'Teacher Centered', label: 'Teacher Centered', desc: 'Berpusat pada pengarahan dan bimbingan guru' }
             ].map(p => (
               <button
                 key={p.id}
                 type="button"
                 onClick={() => onChange('pendekatanPembelajaran', p.id)}
-                className={`p-2.5 rounded-lg border text-left transition-all ${
+                className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
                   (formState.pendekatanPembelajaran || 'Student Centered') === p.id
-                    ? 'bg-brand-50 border-brand-500 text-brand-700 dark:bg-brand-950/40 dark:border-brand-500 dark:text-brand-300'
-                    : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'
+                    ? 'bg-brand-50 border-brand-500 text-brand-700 dark:bg-brand-950/40 dark:border-brand-500 dark:text-brand-300 shadow-xs'
+                    : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:border-slate-300'
                 }`}
               >
                 <div className="text-xs font-bold">{p.label}</div>
-                <div className="text-[10px] text-slate-400 dark:text-slate-500">{p.desc}</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400">{p.desc}</div>
               </button>
             ))}
           </div>
@@ -166,10 +166,10 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-              Model Pembelajaran & Sintaksis Wajib
+              Model Pembelajaran & Sintaks (Langkah Kegiatan)
             </label>
             <span className="text-[10px] text-brand-600 dark:text-brand-400 font-semibold bg-brand-50 dark:bg-brand-950/50 px-2 py-0.5 rounded">
-              Katalog Modern
+              Pilihan Model
             </span>
           </div>
 
@@ -179,13 +179,13 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
               { id: 'hots', label: '🔥 HOTS', count: LEARNING_MODELS.filter(m => m.kategori === 'hots').length },
               { id: 'retensi', label: '💡 Retensi', count: LEARNING_MODELS.filter(m => m.kategori === 'retensi').length },
               { id: 'sosial', label: '👥 Kooperatif', count: LEARNING_MODELS.filter(m => m.kategori === 'sosial').length },
-              { id: 'kbc', label: '❤️ KBC/Karakter', count: LEARNING_MODELS.filter(m => m.kategori === 'kbc').length },
+              { id: 'kbc', label: '❤️ KBC (Karakter)', count: LEARNING_MODELS.filter(m => m.kategori === 'kbc').length },
             ].map(tab => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveCategoryTab(tab.id as ModelCategory)}
-                className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all text-center ${
+                className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all text-center cursor-pointer ${
                   activeCategoryTab === tab.id
                     ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-white shadow-sm'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
@@ -235,7 +235,7 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
               <div className="flex items-center justify-between border-b border-brand-200/60 dark:border-brand-800/40 pb-2">
                 <span className="font-bold text-brand-900 dark:text-brand-200 flex items-center gap-1.5">
                   <Compass className="w-4 h-4 text-brand-600 dark:text-brand-400" />
-                  Sintaksis Wajib: {selectedModelObj.nama} ({selectedModelObj.sumber})
+                  Langkah Sintaks Model: {selectedModelObj.nama} ({selectedModelObj.sumber})
                 </span>
               </div>
               
@@ -253,13 +253,13 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
 
               <div className="grid grid-cols-2 gap-2 pt-2 border-t border-brand-200/60 dark:border-brand-800/40 text-[10px]">
                 <div>
-                  <span className="font-bold text-emerald-700 dark:text-emerald-400 block mb-0.5">✓ Kelebihan:</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400 block mb-0.5">✓ Kelebihan Model:</span>
                   <ul className="list-disc pl-3 space-y-0.5 text-slate-600 dark:text-slate-400">
                     {selectedModelObj.kelebihan.map((k, i) => <li key={i}>{k}</li>)}
                   </ul>
                 </div>
                 <div>
-                  <span className="font-bold text-amber-700 dark:text-amber-400 block mb-0.5">⚠️ Risiko / Tantangan:</span>
+                  <span className="font-bold text-amber-700 dark:text-amber-400 block mb-0.5">⚠️ Catatan Pelaksanaan:</span>
                   <ul className="list-disc pl-3 space-y-0.5 text-slate-600 dark:text-slate-400">
                     {selectedModelObj.kekurangan.map((k, i) => <li key={i}>{k}</li>)}
                   </ul>
@@ -271,16 +271,18 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
 
         {/* Metode Pembelajaran */}
         <div>
-          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-2 font-medium">{t.lessonPlan.metodePembelajaran}</label>
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 font-medium">
+            Metode Pembelajaran (Pilih yang Digunakan)
+          </label>
           <div className="flex flex-wrap gap-2">
             {METODE_OPTIONS.map(metode => (
               <button
                 key={metode}
                 type="button"
                 onClick={() => onMetodeToggle(metode)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
                   formState.metodePembelajaran.includes(metode)
-                    ? 'bg-emerald-100 border-emerald-300 text-emerald-800 dark:bg-emerald-900/40 dark:border-emerald-700/60 dark:text-emerald-200'
+                    ? 'bg-emerald-100 border-emerald-300 text-emerald-800 dark:bg-emerald-900/40 dark:border-emerald-700/60 dark:text-emerald-200 shadow-xs'
                     : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400'
                 }`}
               >
@@ -294,9 +296,9 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
             <div className="mt-2.5 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
               <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <div className="font-bold mb-0.5">Saran Pedagogis: Risiko Verbalisme</div>
+                <div className="font-bold mb-0.5">Saran Pedagogis: Variasi Metode Pembelajaran</div>
                 <div className="text-[11px] text-amber-800 dark:text-amber-300 leading-snug">
-                  Metode <strong>Ceramah</strong> secara tunggal berisiko tinggi membuat siswa menghafal tanpa memahami makna secara konkrit. Disarankan menambah metode pendamping seperti <strong>Diskusi</strong>, <strong>Tanya Jawab</strong>, atau <strong>Demonstrasi</strong>.
+                  Metode <strong>Ceramah</strong> secara tunggal berisiko membuat siswa pasif. Disarankan memadukan dengan metode interaktif seperti <strong>Diskusi Kelompok</strong>, <strong>Tanya Jawab</strong>, atau <strong>Demonstrasi</strong>.
                 </div>
               </div>
             </div>
@@ -309,7 +311,7 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
             <div>
               <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                 <Clock className="w-4 h-4 text-brand-600" />
-                Kalkulator Alokasi Waktu Pembelajaran
+                Kalkulator & Pembagian Waktu Pembelajaran
               </h4>
               <span className="text-[11px] text-slate-500 dark:text-slate-400">
                 {formState.jpPerPertemuan} JP × {formState.durasiPerJp} Menit = <strong>{totalMeetingMinutes} Menit / Pertemuan</strong>
@@ -361,10 +363,10 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
             <button
               type="button"
               onClick={autoDistributeTime}
-              className="w-full py-2 px-3 bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/50 dark:hover:bg-brand-900/60 border border-brand-200 dark:border-brand-800/80 rounded-lg text-xs font-bold text-brand-700 dark:text-brand-300 flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+              className="w-full py-2 px-3 bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/50 dark:hover:bg-brand-900/60 border border-brand-200 dark:border-brand-800/80 rounded-lg text-xs font-bold text-brand-700 dark:text-brand-300 flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
             >
               <Zap className="w-3.5 h-3.5 text-brand-600" />
-              ⚡ Auto-Distribusi Proporsional Standar (15% - 70% - 15%)
+              ⚡ Bagi Waktu Otomatis (Pendahuluan 15% - Inti 70% - Penutup 15%)
             </button>
           )}
           
@@ -428,21 +430,21 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
               <button
                 type="button"
                 onClick={() => handleSelectRubrik(rubrikDiskusi)}
-                className="px-2 py-1 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 rounded text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-100 transition-colors"
+                className="px-2 py-1 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 rounded text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-100 transition-colors cursor-pointer"
               >
                 {t.lessonPlan.rubricDiskusi}
               </button>
               <button
                 type="button"
                 onClick={() => handleSelectRubrik(rubrikPresentasi)}
-                className="px-2 py-1 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/30 rounded text-xs font-semibold text-blue-700 dark:text-blue-300 hover:bg-blue-100 transition-colors"
+                className="px-2 py-1 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/30 rounded text-xs font-semibold text-blue-700 dark:text-blue-300 hover:bg-blue-100 transition-colors cursor-pointer"
               >
                 {t.lessonPlan.rubricPresentasi}
               </button>
               <button
                 type="button"
                 onClick={() => handleSelectRubrik(rubrikSikap)}
-                className="px-2 py-1 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 rounded text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 transition-colors"
+                className="px-2 py-1 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 rounded text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 transition-colors cursor-pointer"
               >
                 {t.lessonPlan.rubricSikap}
               </button>
@@ -462,7 +464,7 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
                         updated[idx] = { ...updated[idx], kriteria: e.target.value };
                         onChange('rubrikAsesmen', updated);
                       }}
-                      placeholder="Nama Kriteria..."
+                      placeholder="Nama Kriteria Penilaian..."
                       className="w-full mr-2 p-1 font-bold text-xs border-b border-slate-200 dark:border-slate-700 dark:bg-transparent dark:text-white outline-none focus:border-brand-500"
                     />
                     <button
@@ -471,7 +473,8 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
                         const updated = formState.rubrikAsesmen.filter((_, i) => i !== idx);
                         onChange('rubrikAsesmen', updated);
                       }}
-                      className="text-red-500 hover:text-red-700 text-xs px-1"
+                      className="text-red-500 hover:text-red-700 text-xs px-1 cursor-pointer"
+                      title="Hapus Kriteria"
                     >
                       &times;
                     </button>
@@ -546,7 +549,7 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
               const newRow: RubrikRow = { kriteria: '', sangatBaik: '', baik: '', cukup: '', perluBimbingan: '' };
               onChange('rubrikAsesmen', [...(formState.rubrikAsesmen || []), newRow]);
             }}
-            className="w-full py-2 bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/20 dark:hover:bg-brand-950/40 text-brand-700 dark:text-brand-400 rounded-lg text-[11px] font-semibold transition-colors"
+            className="w-full py-2 bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/20 dark:hover:bg-brand-950/40 text-brand-700 dark:text-brand-400 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer"
           >
             {t.lessonPlan.rubricAddCustom}
           </button>
@@ -556,10 +559,10 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
         <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
-              Lampiran & Sumber Referensi
+              Lampiran Dokumen: Glosarium & Sumber Referensi
             </h4>
             <span className="text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold px-2 py-0.5 rounded-full">
-              Standar Kemendikbud & Kemenag
+              Kemendikbudristek & Kemenag
             </span>
           </div>
 
@@ -567,32 +570,32 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
             <div>
               <div className="flex flex-wrap justify-between items-end mb-1">
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  📖 Glosarium (Istilah Kunci)
+                  📖 Glosarium (Daftar Istilah Kunci)
                 </label>
-                <AiButton field="manualGlosarium" label="Isi AI" {...aiProps} />
+                <AiButton field="manualGlosarium" label="Bantu Tulis AI" {...aiProps} />
               </div>
               <textarea
                 value={formState.manualGlosarium || ''}
                 onChange={(e) => onChange('manualGlosarium', e.target.value)}
                 rows={3}
                 className="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs dark:bg-slate-800 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
-                placeholder="Istilah 1: Penjelasan istilah...&#10;Istilah 2: Penjelasan istilah..."
+                placeholder="Tuliskan istilah kunci beserta penjelasan singkatnya..."
               />
             </div>
 
             <div>
               <div className="flex flex-wrap justify-between items-end mb-1">
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  📚 Daftar Pustaka Resmi
+                  📚 Sumber / Daftar Pustaka
                 </label>
-                <AiButton field="manualDaftarPustaka" label="Isi AI" {...aiProps} />
+                <AiButton field="manualDaftarPustaka" label="Bantu Tulis AI" {...aiProps} />
               </div>
               <textarea
                 value={formState.manualDaftarPustaka || ''}
                 onChange={(e) => onChange('manualDaftarPustaka', e.target.value)}
                 rows={3}
                 className="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs dark:bg-slate-800 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 outline-none"
-                placeholder="Buku Guru & Buku Siswa Kemendikbudristek & Kemenag..."
+                placeholder="Contoh: Buku Siswa dan Buku Panduan Guru Matematika Kelas 3 Kemendikbudristek..."
               />
             </div>
           </div>

@@ -92,7 +92,16 @@ export const WeeklyScheduleView: React.FC<WeeklyScheduleViewProps> = ({ schedule
                                 {daySchedule.map(item => (
                                     <div
                                         key={item.id}
+                                        role="button"
+                                        tabIndex={0}
                                         onClick={() => onEdit(item)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                onEdit(item);
+                                            }
+                                        }}
+                                        aria-label={`Jadwal ${item.subject} jam ${item.start_time}`}
                                         className={`
                                             bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 
                                             hover:shadow-md transition-all cursor-pointer group
@@ -118,9 +127,10 @@ export const WeeklyScheduleView: React.FC<WeeklyScheduleViewProps> = ({ schedule
                                                         e.stopPropagation();
                                                         onIsiJurnal(item);
                                                     }}
-                                                    className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5"
+                                                    aria-label={`Isi jurnal untuk ${item.subject}`}
+                                                    className="text-xs font-semibold text-emerald-700 dark:text-[#00d284] bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 py-1 px-2.5 rounded-lg flex items-center gap-1 min-h-[36px] cursor-pointer active:scale-95 transition-all"
                                                 >
-                                                    Isi Jurnal
+                                                    <span>Isi Jurnal</span>
                                                 </button>
                                             )}
                                         </div>

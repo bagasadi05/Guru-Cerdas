@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, QueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../../../services/supabase';
-import { AppUser } from '../../../../../hooks/useAuth';
+import type { AppUser } from '../../../../../hooks/useAuth';
 import { AcademicRecordRow } from '../../types';
 import { recordAction } from '../../../../../services/UndoManager';
 import { useToast } from '../../../../../hooks/useToast';

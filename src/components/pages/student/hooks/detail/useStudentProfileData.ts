@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../../../../services/supabase';
-import { AppUser } from '../../../../../hooks/useAuth';
+import type { AppUser } from '../../../../../hooks/useAuth';
 import { Database } from '../../../../../services/database.types';
 import { StudentWithClass, ViolationRow, AttendanceRow } from '../../types';
 

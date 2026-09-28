@@ -231,3 +231,67 @@ export type {
     TeachingJournalFilters,
     TeachingJournalRekap,
 } from './teachingJournal';
+
+// =============================================================================
+// PERANGKAT AJAR TYPES (Prota, Promes, Kaldik, & RME)
+// =============================================================================
+
+export type {
+    WeekType,
+    WeekTypeStyle,
+    MonthMeta,
+    KaldikWeek,
+    AcademicYearConfig,
+    RmeSummary,
+    CurriculumType,
+    PhaseType,
+    ProtaBalanceStatus,
+    ProtaItem,
+    ProtaValidationResult,
+    ProtaHeader,
+    AllocationMatchStatus,
+    MatrixCell,
+    MatrixRowStatus,
+    AutoDistributeInput,
+    ColumnWeeklySum,
+    PromesHeader,
+    DocumentIdentity,
+    ExportDocumentType,
+    ExportFileFormat,
+    ExportPerangkatAjarOptions,
+    KaldikEntryRow,
+    KaldikEntryInsert,
+    KaldikEntryUpdate,
+    ProtaHeaderRow,
+    ProtaHeaderInsert,
+    ProtaHeaderUpdate,
+    ProtaItemRow,
+    ProtaItemInsert,
+    ProtaItemUpdate,
+    PromesHeaderRow,
+    PromesHeaderInsert,
+    PromesHeaderUpdate,
+    PromesWeeklyAllocationRow,
+    PromesWeeklyAllocationInsert,
+    PromesWeeklyAllocationUpdate,
+} from './perangkatAjar';
+
+export {
+    WEEK_TYPES,
+    WEEK_TYPE_LABELS,
+    WEEK_TYPE_SHORT_LABELS,
+    WEEK_TYPE_STYLES,
+    isEffectiveWeek,
+    ACADEMIC_MONTHS,
+    createDefaultAcademicYearConfig,
+    CURRICULUM_TYPES,
+    PHASE_TYPES,
+    PROTA_BALANCE_STATUS_LABELS,
+    kaldikWeekToRowInsert,
+    rowToKaldikWeek,
+    protaItemToRowInsert,
+    rowToProtaItem,
+    matrixCellToRowInsert,
+    rowToMatrixCell,
+} from './perangkatAjar';
+

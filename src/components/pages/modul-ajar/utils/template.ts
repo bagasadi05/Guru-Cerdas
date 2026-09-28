@@ -346,9 +346,6 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
         </div>
       </div>
 
-      <!-- MAIN CONTENT PAGE BREAK -->
-      <br style="page-break-before: always; clear: both;" />
-
       <!-- CONTENT HEADER -->
       <div style="text-align: center; margin-bottom: 20px; padding-top: 5px;">
         <h1 style="font-size: 14pt; margin: 0; font-weight: bold; font-family: 'Times New Roman'; text-transform: uppercase;">${formState.documentType.toUpperCase()} KURIKULUM MERDEKA</h1>
@@ -356,7 +353,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
       </div>
 
       <!-- 1. INFORMASI UMUM -->
-      <div style="border: 1.5px solid #000000; margin-bottom: 18px; border-radius: 4px; overflow: hidden; page-break-inside: avoid;">
+      <div style="border: 1.5px solid #000000; margin-bottom: 18px; border-radius: 4px; overflow: hidden;">
         <div style="background-color: #0d6b3e; color: #ffffff; padding: 8px 12px; font-weight: bold; font-size: 11.5pt; text-align: center;">
           INFORMASI UMUM
         </div>
@@ -391,24 +388,32 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
           C. KOMPETENSI AWAL & PROFIL PELAJAR PANCASILA
         </div>
         <div style="padding: 10px; font-size: 10.5pt;">
-          <p style="margin: 0 0 4px 0;"><strong>1. Kompetensi Awal (Prasyarat):</strong></p>
-          <div style="margin: 0 0 12px 12px; text-align: justify; line-height: 1.45;">
-            ${sanitize(formState.kompetensiAwal) || 'Peserta didik sebaiknya sudah memiliki pemahaman awal terkait topik pembelajaran ini.'}
+          <div style="margin-bottom: 10px; page-break-inside: avoid; break-inside: avoid;">
+            <p style="margin: 0 0 4px 0; page-break-after: avoid; break-after: avoid;"><strong>1. Kompetensi Awal (Prasyarat):</strong></p>
+            <div style="margin: 0 0 0 12px; text-align: justify; line-height: 1.5;">
+              ${sanitize(formState.kompetensiAwal) || 'Peserta didik sebaiknya sudah memiliki pemahaman awal terkait topik pembelajaran ini.'}
+            </div>
           </div>
 
-          <p style="margin: 0 0 4px 0;"><strong>2. Profil Pelajar Pancasila:</strong></p>
-          <ul style="margin: 0 0 12px 0; padding-left: 25px; line-height: 1.45;">
-            ${listToHtml(formState.profilPelajar)}
-          </ul>
-
-          <p style="margin: 0 0 4px 0;"><strong>3. Sarana dan Prasarana:</strong></p>
-          <div style="margin: 0 0 12px 12px; text-align: justify; line-height: 1.45;">
-            ${sanitize(formState.saranaPrasarana) || 'Ruang kelas, Papan Tulis, Spidol, Proyektor/Laptop, Alat Peraga Nyata, dan LKPD.'}
+          <div style="margin-bottom: 10px; page-break-inside: avoid; break-inside: avoid;">
+            <p style="margin: 0 0 4px 0; page-break-after: avoid; break-after: avoid;"><strong>2. Profil Pelajar Pancasila:</strong></p>
+            <ul style="margin: 0; padding-left: 25px; line-height: 1.5;">
+              ${listToHtml(formState.profilPelajar)}
+            </ul>
           </div>
 
-          <p style="margin: 0 0 4px 0;"><strong>4. Target Peserta Didik:</strong></p>
-          <div style="margin: 0 0 4px 12px; line-height: 1.45;">
-            ${sanitize(formState.targetPeserta)}
+          <div style="margin-bottom: 10px; page-break-inside: avoid; break-inside: avoid;">
+            <p style="margin: 0 0 4px 0; page-break-after: avoid; break-after: avoid;"><strong>3. Sarana dan Prasarana:</strong></p>
+            <div style="margin: 0 0 0 12px; text-align: justify; line-height: 1.5;">
+              ${sanitize(formState.saranaPrasarana) || 'Ruang kelas, Papan Tulis, Spidol, Proyektor/Laptop, Alat Peraga Nyata, dan LKPD.'}
+            </div>
+          </div>
+
+          <div style="margin-bottom: 4px; page-break-inside: avoid; break-inside: avoid;">
+            <p style="margin: 0 0 4px 0; page-break-after: avoid; break-after: avoid;"><strong>4. Target Peserta Didik:</strong></p>
+            <div style="margin: 0 0 0 12px; line-height: 1.5;">
+              ${sanitize(formState.targetPeserta)}
+            </div>
           </div>
         </div>
 
@@ -493,31 +498,37 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
 
         </div>
 
-        <div style="background-color: #f5f0d0; color: #000000; padding: 6px 12px; font-weight: bold; border-top: 1px solid #000000; border-bottom: 1px solid #000000; font-size: 10.5pt;">
+        <div style="background-color: #f5f0d0; color: #000000; padding: 6px 12px; font-weight: bold; border-top: 1px solid #000000; border-bottom: 1px solid #000000; font-size: 10.5pt; break-after: avoid; page-break-after: avoid;">
           E. RANCANGAN ASESMEN
         </div>
         <div style="padding: 10px; font-size: 10.5pt;">
-          <p style="margin: 0 0 4px 0;"><strong>1. Penilaian Sikap (Spiritual & Sosial):</strong></p>
-          <div style="margin: 0 0 10px 12px; line-height: 1.45; text-align: justify;">
-            ${sanitize(data.asesmenSikap) || 'Observasi sikap peserta didik selama kegiatan pembelajaran berlangsung.'}
+          <div style="margin-bottom: 10px; page-break-inside: avoid; break-inside: avoid;">
+            <p style="margin: 0 0 4px 0; break-after: avoid; page-break-after: avoid;"><strong>1. Penilaian Sikap (Spiritual & Sosial):</strong></p>
+            <div style="margin: 0 0 0 12px; line-height: 1.5; text-align: justify;">
+              ${sanitize(data.asesmenSikap) || 'Observasi sikap peserta didik selama kegiatan pembelajaran berlangsung.'}
+            </div>
           </div>
 
-          <p style="margin: 0 0 4px 0;"><strong>2. Penilaian Keterampilan (Unjuk Kerja / Proyek):</strong></p>
-          <div style="margin: 0 0 10px 12px; line-height: 1.45; text-align: justify;">
-            ${sanitize(data.asesmenKeterampilan) || 'Penilaian performa diskusi kelompok, keaktifan kolaborasi, dan presentasi hasil karya.'}
+          <div style="margin-bottom: 10px; page-break-inside: avoid; break-inside: avoid;">
+            <p style="margin: 0 0 4px 0; break-after: avoid; page-break-after: avoid;"><strong>2. Penilaian Keterampilan (Unjuk Kerja / Proyek):</strong></p>
+            <div style="margin: 0 0 0 12px; line-height: 1.5; text-align: justify;">
+              ${sanitize(data.asesmenKeterampilan) || 'Penilaian performa diskusi kelompok, keaktifan kolaborasi, dan presentasi hasil karya.'}
+            </div>
           </div>
 
-          <p style="margin: 0 0 4px 0;"><strong>3. Penilaian Pengetahuan:</strong></p>
-          <div style="margin: 0 0 10px 12px; line-height: 1.45; text-align: justify;">
-            ${sanitize(data.asesmenPengetahuan) || 'Tes tertulis/lisan pemahaman konsep pada lembar evaluasi di akhir pembelajaran.'}
+          <div style="margin-bottom: 10px; page-break-inside: avoid; break-inside: avoid;">
+            <p style="margin: 0 0 4px 0; break-after: avoid; page-break-after: avoid;"><strong>3. Penilaian Pengetahuan:</strong></p>
+            <div style="margin: 0 0 0 12px; line-height: 1.5; text-align: justify;">
+              ${sanitize(data.asesmenPengetahuan) || 'Tes tertulis/lisan pemahaman konsep pada lembar evaluasi di akhir pembelajaran.'}
+            </div>
           </div>
 
           ${formState.rubrikAsesmen && formState.rubrikAsesmen.length > 0 ? `
           <div style="margin-top: 12px;">
-            <p style="margin: 0 0 6px 0;"><strong>4. Rubrik Penilaian Aktivitas Pembelajaran:</strong></p>
+            <p style="margin: 0 0 6px 0; break-after: avoid; page-break-after: avoid;"><strong>4. Rubrik Penilaian Aktivitas Pembelajaran:</strong></p>
             <table style="width: 100%; border-collapse: collapse; border: 1px solid #000000; font-size: 9.5pt; font-family: 'Times New Roman'; table-layout: fixed;">
               <thead>
-                <tr style="background-color: #f2f2f2;">
+                <tr style="background-color: #f2f2f2; page-break-inside: avoid; break-inside: avoid;">
                   <th style="border: 1px solid #000000; padding: 5px; width: 20%; text-align: center; font-weight: bold;">Kriteria</th>
                   <th style="border: 1px solid #000000; padding: 5px; width: 20%; text-align: center; font-weight: bold;">Sangat Baik (4)</th>
                   <th style="border: 1px solid #000000; padding: 5px; width: 20%; text-align: center; font-weight: bold;">Baik (3)</th>
@@ -527,7 +538,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
               </thead>
               <tbody>
                 ${formState.rubrikAsesmen.map(row => `
-                  <tr>
+                  <tr style="page-break-inside: avoid; break-inside: avoid;">
                     <td style="border: 1px solid #000000; padding: 5px; font-weight: bold;">${sanitize(row.kriteria)}</td>
                     <td style="border: 1px solid #000000; padding: 5px; text-align: justify; line-height: 1.35;">${sanitize(row.sangatBaik)}</td>
                     <td style="border: 1px solid #000000; padding: 5px; text-align: justify; line-height: 1.35;">${sanitize(row.baik)}</td>
@@ -541,38 +552,48 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
           ` : ''}
         </div>
 
-        <div style="background-color: #f5f0d0; color: #000000; padding: 6px 12px; font-weight: bold; border-top: 1px solid #000000; border-bottom: 1px solid #000000; font-size: 10.5pt;">
+        <div style="background-color: #f5f0d0; color: #000000; padding: 6px 12px; font-weight: bold; border-top: 1px solid #000000; border-bottom: 1px solid #000000; font-size: 10.5pt; break-after: avoid; page-break-after: avoid;">
           F. KEGIATAN PENGAYAAN DAN REMEDIAL
         </div>
         <div style="padding: 10px; font-size: 10.5pt;">
-          <p style="margin: 0 0 4px 0;"><strong>1. Program Pengayaan (Bagi siswa berprestasi / tuntas):</strong></p>
-          <ul style="margin: 0 0 10px 0; padding-left: 25px; line-height: 1.45; text-align: justify;">
-            ${listToHtml(data.pengayaan)}
-          </ul>
+          <div style="margin-bottom: 10px; page-break-inside: avoid; break-inside: avoid;">
+            <p style="margin: 0 0 4px 0; break-after: avoid; page-break-after: avoid;"><strong>1. Program Pengayaan (Bagi siswa berprestasi / tuntas):</strong></p>
+            <ul style="margin: 0; padding-left: 25px; line-height: 1.5; text-align: justify;">
+              ${listToHtml(data.pengayaan)}
+            </ul>
+          </div>
 
-          <p style="margin: 0 0 4px 0;"><strong>2. Program Remedial (Bagi siswa yang membutuhkan bimbingan):</strong></p>
-          <ul style="margin: 0 0 4px 0; padding-left: 25px; line-height: 1.45; text-align: justify;">
-            ${listToHtml(data.remedial)}
-          </ul>
+          <div style="page-break-inside: avoid; break-inside: avoid;">
+            <p style="margin: 0 0 4px 0; break-after: avoid; page-break-after: avoid;"><strong>2. Program Remedial (Bagi siswa yang membutuhkan bimbingan):</strong></p>
+            <ul style="margin: 0; padding-left: 25px; line-height: 1.5; text-align: justify;">
+              ${listToHtml(data.remedial)}
+            </ul>
+          </div>
         </div>
 
-        <div style="background-color: #f5f0d0; color: #000000; padding: 6px 12px; font-weight: bold; border-top: 1px solid #000000; border-bottom: 1px solid #000000; font-size: 10.5pt;">
+        <div style="background-color: #f5f0d0; color: #000000; padding: 6px 12px; font-weight: bold; border-top: 1px solid #000000; border-bottom: 1px solid #000000; font-size: 10.5pt; break-after: avoid; page-break-after: avoid;">
           G. RENCANA PEMBELAJARAN BERDIFERENSIASI
         </div>
         <div style="padding: 10px; font-size: 10.5pt;">
-          <p style="margin: 0 0 4px 0;"><strong>1. Diferensiasi Konten:</strong></p>
-          <div style="margin: 0 0 8px 12px; line-height: 1.45; text-align: justify;">
-            Menyediakan variasi sumber belajar materi ${formState.topik || formState.mataPelajaran} (benda konkret/alat peraga manipulatif bagi pembelajar kinestetik, infografis/gambar visual bagi pembelajar visual, serta teks bacaan terstruktur).
+          <div style="margin-bottom: 8px; page-break-inside: avoid; break-inside: avoid;">
+            <p style="margin: 0 0 4px 0; break-after: avoid; page-break-after: avoid;"><strong>1. Diferensiasi Konten:</strong></p>
+            <div style="margin: 0 0 0 12px; line-height: 1.5; text-align: justify;">
+              Menyediakan variasi sumber belajar materi ${formState.topik || formState.mataPelajaran} (benda konkret/alat peraga manipulatif bagi pembelajar kinestetik, infografis/gambar visual bagi pembelajar visual, serta teks bacaan terstruktur).
+            </div>
           </div>
 
-          <p style="margin: 0 0 4px 0;"><strong>2. Diferensiasi Proses:</strong></p>
-          <div style="margin: 0 0 8px 12px; line-height: 1.45; text-align: justify;">
-            Memberikan bimbingan bertahap (scaffolding intensif) bagi peserta didik yang masih berkembang dan memberikan ruang eksplorasi mandiri serta tantangan pemecahan masalah tingkat tinggi (HOTS) bagi peserta didik yang telah mahir.
+          <div style="margin-bottom: 8px; page-break-inside: avoid; break-inside: avoid;">
+            <p style="margin: 0 0 4px 0; break-after: avoid; page-break-after: avoid;"><strong>2. Diferensiasi Proses:</strong></p>
+            <div style="margin: 0 0 0 12px; line-height: 1.5; text-align: justify;">
+              Memberikan bimbingan bertahap (scaffolding intensif) bagi peserta didik yang masih berkembang dan memberikan ruang eksplorasi mandiri serta tantangan pemecahan masalah tingkat tinggi (HOTS) bagi peserta didik yang telah mahir.
+            </div>
           </div>
 
-          <p style="margin: 0 0 4px 0;"><strong>3. Diferensiasi Produk:</strong></p>
-          <div style="margin: 0 0 4px 12px; line-height: 1.45; text-align: justify;">
-            Peserta didik diberikan keleluasaan dalam menyajikan hasil pemecahan masalah ${formState.topik || formState.mataPelajaran} (dapat berupa lembar kerja tertulis, peta konsep/diagram alur, maupun demonstrasi peragaan lisan di depan kelas).
+          <div style="page-break-inside: avoid; break-inside: avoid;">
+            <p style="margin: 0 0 4px 0; break-after: avoid; page-break-after: avoid;"><strong>3. Diferensiasi Produk:</strong></p>
+            <div style="margin: 0 0 0 12px; line-height: 1.5; text-align: justify;">
+              Peserta didik diberikan keleluasaan dalam menyajikan hasil pemecahan masalah ${formState.topik || formState.mataPelajaran} (dapat berupa lembar kerja tertulis, peta konsep/diagram alur, maupun demonstrasi peragaan lisan di depan kelas).
+            </div>
           </div>
         </div>
       </div>
@@ -659,73 +680,73 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
         ` : ''}
 
         <!-- LEMBAR REFLEKSI GURU & PESERTA DIDIK -->
-        <div style="background-color: #f5f0d0; color: #000000; padding: 6px 12px; font-weight: bold; border-top: 1px solid #000000; border-bottom: 1px solid #000000; font-size: 10.5pt;">
+        <div style="background-color: #f5f0d0; color: #000000; padding: 6px 12px; font-weight: bold; border-top: 1px solid #000000; border-bottom: 1px solid #000000; font-size: 10.5pt; break-after: avoid; page-break-after: avoid;">
           ${data.materiAjar ? 'C' : 'B'}. LEMBAR REFLEKSI GURU & PESERTA DIDIK
         </div>
-        <div style="padding: 10px; font-size: 10pt;">
-          <p style="margin: 0 0 4px 0; font-weight: bold;">1. Refleksi Guru:</p>
-          <table style="width: 100%; border-collapse: collapse; border: 1px solid #000000; margin-bottom: 10px; font-size: 9.5pt;">
-            <tr style="background-color: #f2f2f2;">
-              <th style="border: 1px solid #000000; padding: 5px; width: 8%; text-align: center;">No</th>
-              <th style="border: 1px solid #000000; padding: 5px; width: 52%; text-align: left;">Pertanyaan Refleksi</th>
-              <th style="border: 1px solid #000000; padding: 5px; width: 40%; text-align: left;">Catatan Guru</th>
+        <div style="padding: 8px 10px; font-size: 9.5pt;">
+          <p style="margin: 0 0 4px 0; font-weight: bold; break-after: avoid; page-break-after: avoid;">1. Refleksi Guru:</p>
+          <table style="width: 100%; border-collapse: collapse; border: 1px solid #000000; margin-bottom: 8px; font-size: 9pt;">
+            <tr style="background-color: #f2f2f2; page-break-inside: avoid; break-inside: avoid;">
+              <th style="border: 1px solid #000000; padding: 4px 6px; width: 8%; text-align: center;">No</th>
+              <th style="border: 1px solid #000000; padding: 4px 6px; width: 52%; text-align: left;">Pertanyaan Refleksi</th>
+              <th style="border: 1px solid #000000; padding: 4px 6px; width: 40%; text-align: left;">Catatan Guru</th>
             </tr>
-            <tr>
-              <td style="border: 1px solid #000000; padding: 5px; text-align: center;">1</td>
-              <td style="border: 1px solid #000000; padding: 5px;">Apakah seluruh peserta didik mencapai tujuan pembelajaran?</td>
-              <td style="border: 1px solid #000000; padding: 5px;">.......................................................</td>
+            <tr style="page-break-inside: avoid; break-inside: avoid;">
+              <td style="border: 1px solid #000000; padding: 4px 6px; text-align: center;">1</td>
+              <td style="border: 1px solid #000000; padding: 4px 6px;">Apakah seluruh peserta didik mencapai tujuan pembelajaran?</td>
+              <td style="border: 1px solid #000000; padding: 4px 6px;">.......................................................</td>
             </tr>
-            <tr>
-              <td style="border: 1px solid #000000; padding: 5px; text-align: center;">2</td>
-              <td style="border: 1px solid #000000; padding: 5px;">Kendala apa yang dialami selama proses aktivitas pembelajaran?</td>
-              <td style="border: 1px solid #000000; padding: 5px;">.......................................................</td>
+            <tr style="page-break-inside: avoid; break-inside: avoid;">
+              <td style="border: 1px solid #000000; padding: 4px 6px; text-align: center;">2</td>
+              <td style="border: 1px solid #000000; padding: 4px 6px;">Kendala apa yang dialami selama proses aktivitas pembelajaran?</td>
+              <td style="border: 1px solid #000000; padding: 4px 6px;">.......................................................</td>
             </tr>
-            <tr>
-              <td style="border: 1px solid #000000; padding: 5px; text-align: center;">3</td>
-              <td style="border: 1px solid #000000; padding: 5px;">Langkah perbaikan apa yang disiapkan untuk pertemuan berikutnya?</td>
-              <td style="border: 1px solid #000000; padding: 5px;">.......................................................</td>
+            <tr style="page-break-inside: avoid; break-inside: avoid;">
+              <td style="border: 1px solid #000000; padding: 4px 6px; text-align: center;">3</td>
+              <td style="border: 1px solid #000000; padding: 4px 6px;">Langkah perbaikan apa yang disiapkan untuk pertemuan berikutnya?</td>
+              <td style="border: 1px solid #000000; padding: 4px 6px;">.......................................................</td>
             </tr>
           </table>
 
-          <p style="margin: 8px 0 4px 0; font-weight: bold;">2. Refleksi Peserta Didik:</p>
-          <table style="width: 100%; border-collapse: collapse; border: 1px solid #000000; font-size: 9.5pt;">
-            <tr style="background-color: #f2f2f2;">
-              <th style="border: 1px solid #000000; padding: 5px; width: 8%; text-align: center;">No</th>
-              <th style="border: 1px solid #000000; padding: 5px; width: 62%; text-align: left;">Pernyataan</th>
-              <th style="border: 1px solid #000000; padding: 5px; width: 30%; text-align: center;">Jawaban (Ya / Tidak)</th>
+          <p style="margin: 6px 0 4px 0; font-weight: bold; break-after: avoid; page-break-after: avoid;">2. Refleksi Peserta Didik:</p>
+          <table style="width: 100%; border-collapse: collapse; border: 1px solid #000000; margin-bottom: 6px; font-size: 9pt;">
+            <tr style="background-color: #f2f2f2; page-break-inside: avoid; break-inside: avoid;">
+              <th style="border: 1px solid #000000; padding: 4px 6px; width: 8%; text-align: center;">No</th>
+              <th style="border: 1px solid #000000; padding: 4px 6px; width: 62%; text-align: left;">Pernyataan</th>
+              <th style="border: 1px solid #000000; padding: 4px 6px; width: 30%; text-align: center;">Jawaban (Ya / Tidak)</th>
             </tr>
-            <tr>
-              <td style="border: 1px solid #000000; padding: 5px; text-align: center;">1</td>
-              <td style="border: 1px solid #000000; padding: 5px;">Saya merasa senang dengan kegiatan belajar dan diskusi hari ini.</td>
-              <td style="border: 1px solid #000000; padding: 5px; text-align: center;">[ &nbsp; &nbsp; ]</td>
+            <tr style="page-break-inside: avoid; break-inside: avoid;">
+              <td style="border: 1px solid #000000; padding: 4px 6px; text-align: center;">1</td>
+              <td style="border: 1px solid #000000; padding: 4px 6px;">Saya merasa senang dengan kegiatan belajar dan diskusi hari ini.</td>
+              <td style="border: 1px solid #000000; padding: 4px 6px; text-align: center;">[ &nbsp; &nbsp; ]</td>
             </tr>
-            <tr>
-              <td style="border: 1px solid #000000; padding: 5px; text-align: center;">2</td>
-              <td style="border: 1px solid #000000; padding: 5px;">Saya dapat memahami materi pelajaran yang disampaikan guru.</td>
-              <td style="border: 1px solid #000000; padding: 5px; text-align: center;">[ &nbsp; &nbsp; ]</td>
+            <tr style="page-break-inside: avoid; break-inside: avoid;">
+              <td style="border: 1px solid #000000; padding: 4px 6px; text-align: center;">2</td>
+              <td style="border: 1px solid #000000; padding: 4px 6px;">Saya dapat memahami materi pelajaran yang disampaikan guru.</td>
+              <td style="border: 1px solid #000000; padding: 4px 6px; text-align: center;">[ &nbsp; &nbsp; ]</td>
             </tr>
-            <tr>
-              <td style="border: 1px solid #000000; padding: 5px; text-align: center;">3</td>
-              <td style="border: 1px solid #000000; padding: 5px;">Saya aktif bekerjasama dalam kelompok selama menyelesaikan tugas.</td>
-              <td style="border: 1px solid #000000; padding: 5px; text-align: center;">[ &nbsp; &nbsp; ]</td>
+            <tr style="page-break-inside: avoid; break-inside: avoid;">
+              <td style="border: 1px solid #000000; padding: 4px 6px; text-align: center;">3</td>
+              <td style="border: 1px solid #000000; padding: 4px 6px;">Saya aktif bekerjasama dalam kelompok selama menyelesaikan tugas.</td>
+              <td style="border: 1px solid #000000; padding: 4px 6px; text-align: center;">[ &nbsp; &nbsp; ]</td>
             </tr>
           </table>
         </div>
 
         <!-- GLOSARIUM -->
-        <div style="background-color: #f5f0d0; color: #000000; padding: 6px 12px; font-weight: bold; border-top: 1px solid #000000; border-bottom: 1px solid #000000; font-size: 10.5pt;">
+        <div style="background-color: #f5f0d0; color: #000000; padding: 6px 12px; font-weight: bold; border-top: 1px solid #000000; border-bottom: 1px solid #000000; font-size: 10.5pt; break-after: avoid; page-break-after: avoid;">
           ${data.materiAjar ? 'D' : 'C'}. GLOSARIUM
         </div>
-        <div style="padding: 10px; font-size: 10pt; line-height: 1.5;">
+        <div style="padding: 6px 10px; font-size: 9.5pt; line-height: 1.35; margin-bottom: 6px;">
           ${formatGlosariumContent(data.glosarium, formState.topik)}
         </div>
 
         <!-- DAFTAR PUSTAKA -->
-        <div style="background-color: #f5f0d0; color: #000000; padding: 6px 12px; font-weight: bold; border-top: 1px solid #000000; border-bottom: 1px solid #000000; font-size: 10.5pt;">
+        <div style="background-color: #f5f0d0; color: #000000; padding: 6px 12px; font-weight: bold; border-top: 1px solid #000000; border-bottom: 1px solid #000000; font-size: 10.5pt; break-after: avoid; page-break-after: avoid;">
           ${data.materiAjar ? 'E' : 'D'}. DAFTAR PUSTAKA & REFERENSI
         </div>
-        <div style="padding: 10px; font-size: 10.5pt; line-height: 1.5;">
-          <ul style="margin: 0; padding-left: 25px;">
+        <div style="padding: 6px 10px; font-size: 9.5pt; line-height: 1.35; margin-bottom: 6px;">
+          <ul style="margin: 0; padding-left: 20px;">
             ${listToHtml(data.daftarPustaka)}
           </ul>
         </div>
@@ -733,17 +754,17 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
       </div>
 
       <!-- SIGNATURE BLOCK -->
-      <table style="width: 100%; margin-top: 35px; font-size: 10.5pt; border: none; page-break-inside: avoid; font-family: 'Times New Roman';">
-        <tr style="border: none;">
-          <td style="width: 50%; text-align: center; border: none; padding: 10px; vertical-align: top;">
+      <table class="signature-block" style="width: 100%; margin-top: 16px; font-size: 10pt; border: none; page-break-inside: avoid; break-inside: avoid; font-family: 'Times New Roman';">
+        <tr style="border: none; page-break-inside: avoid; break-inside: avoid;">
+          <td style="width: 50%; text-align: center; border: none; padding: 6px 10px; vertical-align: top;">
             Mengetahui,<br/>
-            Kepala ${formState.satuanPendidikan}<br/><br/><br/><br/><br/>
+            Kepala ${formState.satuanPendidikan}<br/><br/><br/>
             <strong><u>(......................................................)</u></strong><br/>
             NIP. ....................................................
           </td>
-          <td style="width: 50%; text-align: center; border: none; padding: 10px; vertical-align: top;">
+          <td style="width: 50%; text-align: center; border: none; padding: 6px 10px; vertical-align: top;">
             ........................, ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}<br/>
-            Guru Kelas / Mata Pelajaran<br/><br/><br/><br/><br/>
+            Guru Kelas / Mata Pelajaran<br/><br/><br/>
             <strong><u>${formState.guru || 'Guru Mata Pelajaran'}</u></strong><br/>
             NIP/NIM. ....................................................
           </td>
@@ -948,9 +969,6 @@ export const buildStudentHtmlTemplate = (formState: FormState, data: any, logoBa
         </div>
       </div>
 
-      <!-- PAGE BREAK -->
-      <br style="page-break-before: always; clear: both;" />
-
       ${data.materiAjar ? `
       <!-- BAHAN BACAAN SISWA -->
       <div style="border: 2px solid #0d6b3e; padding: 20px; margin-bottom: 25px; border-radius: 8px; font-family: 'Times New Roman'; page-break-inside: avoid;">
@@ -1013,17 +1031,17 @@ export const buildStudentHtmlTemplate = (formState: FormState, data: any, logoBa
       </div>
 
       <!-- SIGNATURE BLOCK -->
-      <div style="margin-top: 40px; page-break-inside: avoid; font-family: 'Times New Roman'; font-size: 10.5pt;">
-        <table style="width: 100%; border: none;">
-          <tr style="border: none;">
-            <td style="width: 50%; text-align: center; border: none; vertical-align: top;">
+      <div class="signature-block" style="margin-top: 20px; page-break-inside: avoid; break-inside: avoid; font-family: 'Times New Roman'; font-size: 10pt;">
+        <table class="signature-block" style="width: 100%; border: none; page-break-inside: avoid; break-inside: avoid;">
+          <tr style="border: none; page-break-inside: avoid; break-inside: avoid;">
+            <td style="width: 50%; text-align: center; border: none; vertical-align: top; padding: 6px 10px;">
               Mengetahui,<br/>
-              Kepala ${formState.satuanPendidikan}<br/><br/><br/><br/><br/>
+              Kepala ${formState.satuanPendidikan}<br/><br/><br/>
               <strong><u>.......................................................</u></strong><br/>
               NIP. ...................................................
             </td>
-            <td style="width: 50%; text-align: center; border: none; vertical-align: top;">
-              Guru Mata Pelajaran,<br/><br/><br/><br/><br/>
+            <td style="width: 50%; text-align: center; border: none; vertical-align: top; padding: 6px 10px;">
+              Guru Mata Pelajaran,<br/><br/><br/>
               <strong><u>${formState.guru || '...................................................'}</u></strong><br/>
               NIP. ...................................................
             </td>
@@ -1031,9 +1049,9 @@ export const buildStudentHtmlTemplate = (formState: FormState, data: any, logoBa
         </table>
       </div>
 
-      <div style="margin-top: 30px; font-size: 10pt; line-height: 1.4; font-family: 'Times New Roman'; text-align: left;">
+      <div style="margin-top: 18px; font-size: 9.5pt; line-height: 1.35; font-family: 'Times New Roman'; text-align: left; page-break-inside: avoid; break-inside: avoid;">
         <strong>Daftar Pustaka & Referensi Belajar:</strong>
-        <ul style="margin: 5px 0 0 0; padding-left: 20px;">
+        <ul style="margin: 4px 0 0 0; padding-left: 20px;">
           ${listToHtml(data.daftarPustaka)}
         </ul>
       </div>
@@ -1102,9 +1120,6 @@ export const extractStudentHtml = (fullHtml: string, formState: FormState, logoB
                 "Semangat Belajar! Lakukan yang Terbaik."
               </div>
             </div>
-
-            <!-- PAGE BREAK -->
-            <br style="page-break-before: always; clear: both;" />
             
             <div style="padding: 15px; border: 1px solid #000000;">
               ${lkpdHtml}
@@ -1128,4 +1143,56 @@ export const extractStudentHtml = (fullHtml: string, formState: FormState, logoB
     }
   }
   return fullHtml;
+};
+
+/**
+ * Sanitizes and optimizes HTML content specifically for Microsoft Word export (.doc).
+ * 
+ * Microsoft Word's legacy HTML import parser interprets CSS differently from modern web/PDF engines:
+ * 1. `page-break-inside: avoid` on `<div>` causes Word to prematurely insert a hard page break
+ *    for almost every card, step, and question, ballooning an 11-page PDF to 39+ pages in Word.
+ * 2. `overflow: hidden` on bordered containers forces Word to treat them as disconnected floating frames.
+ * 3. `border-radius` is unsupported in Word and creates bloated shape markup.
+ * 4. Duplicate page breaks create completely empty pages in Word.
+ * 5. Empty spacer divs with fixed heights expand into bloated paragraph blocks in Word.
+ */
+export const cleanHtmlForWordExport = (html: string): string => {
+  if (!html) return '';
+
+  let cleaned = html;
+
+  // 1. Remove duplicate/consecutive page breaks:
+  // e.g. <div style="...page-break-after: always..."></div> followed by <br style="...page-break-before: always..."/>
+  cleaned = cleaned.replace(
+    /(page-break-after:\s*always;?[^"]*">[\s\S]*?<\/div>)\s*<br\s+style="[^"]*page-break-before:\s*always[^"]*"[^>]*\/>/gi,
+    '$1'
+  );
+  cleaned = cleaned.replace(
+    /<br\s+style="[^"]*page-break-before:\s*always[^"]*"[^>]*\/>\s*<br\s+style="[^"]*page-break-before:\s*always[^"]*"[^>]*\/>/gi,
+    '<br style="page-break-before: always; clear: both;" />'
+  );
+
+  // 2. Remove page-break-inside: avoid specifically from <div> containers.
+  // In Word, <div> with page-break-inside: avoid causes massive pagination bloat (e.g. 39+ pages).
+  // However, Word DOES respect page-break-inside: avoid on <tr> (translating to cantSplit),
+  // which keeps table rows and signature blocks intact.
+  cleaned = cleaned.replace(/<div\b[^>]*>/gi, (match) => {
+    return match
+      .replace(/page-break-inside:\s*avoid;?/gi, '')
+      .replace(/break-inside:\s*avoid;?/gi, '');
+  });
+
+  // 3. Remove overflow: hidden from inline styles
+  cleaned = cleaned.replace(/overflow:\s*hidden;?/gi, '');
+
+  // 4. Remove border-radius from inline styles
+  cleaned = cleaned.replace(/border-radius:\s*[^;"]+;?/gi, '');
+
+  // 5. Transform empty dotted-line height containers to standard Word-friendly dotted lines
+  cleaned = cleaned.replace(
+    /<div style="border-bottom:\s*1px dotted #888888;\s*height:\s*\d+px;\s*width:\s*[^"]+"><\/div>/gi,
+    '<p style="margin: 2pt 0; color: #888888; font-family: \'Times New Roman\'; font-size: 10pt;">........................................................................................................................</p>'
+  );
+
+  return cleaned;
 };

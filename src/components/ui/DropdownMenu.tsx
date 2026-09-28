@@ -5,10 +5,10 @@ interface DropdownMenuProps {
     children: React.ReactNode;
 }
 
-interface DropdownTriggerProps {
+interface DropdownTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     children: React.ReactNode;
     className?: string;
-    onClick?: () => void;
+    onClick?: (e?: React.MouseEvent) => void;
 }
 
 interface DropdownContentProps {
@@ -110,14 +110,14 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({ children }) => {
     );
 };
 
-export const DropdownTrigger: React.FC<DropdownTriggerProps> = ({ children, className = '', onClick }) => {
+export const DropdownTrigger: React.FC<DropdownTriggerProps> = ({ children, className = '', onClick, ...rest }) => {
     const context = React.useContext(DropdownContext);
     if (!context) throw new Error('DropdownTrigger must be used within DropdownMenu');
 
     const handleClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         context.setIsOpen(!context.isOpen);
-        if (onClick) onClick();
+        if (onClick) onClick(e);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -136,6 +136,7 @@ export const DropdownTrigger: React.FC<DropdownTriggerProps> = ({ children, clas
             onKeyDown={handleKeyDown}
             aria-haspopup="true"
             aria-expanded={context.isOpen}
+            {...rest}
         >
             {children}
         </button>

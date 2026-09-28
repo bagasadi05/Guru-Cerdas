@@ -14,6 +14,223 @@ export type Database = {
   }
   public: {
     Tables: {
+      kaldik_entries: {
+        Row: {
+          academic_year: string
+          created_at: string
+          id: string
+          month: number
+          notes: string | null
+          updated_at: string
+          user_id: string
+          week_number: number
+          week_type: string
+        }
+        Insert: {
+          academic_year: string
+          created_at?: string
+          id?: string
+          month: number
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+          week_number: number
+          week_type: string
+        }
+        Update: {
+          academic_year?: string
+          created_at?: string
+          id?: string
+          month?: number
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+          week_number?: number
+          week_type?: string
+        }
+        Relationships: []
+      }
+      prota_headers: {
+        Row: {
+          academic_year: string
+          created_at: string
+          curriculum: string
+          grade_level: string
+          id: string
+          phase: string | null
+          reserve_jp_sem1: number
+          reserve_jp_sem2: number
+          subject: string
+          updated_at: string
+          user_id: string
+          weekly_jp_quota: number
+        }
+        Insert: {
+          academic_year: string
+          created_at?: string
+          curriculum?: string
+          grade_level: string
+          id?: string
+          phase?: string | null
+          reserve_jp_sem1?: number
+          reserve_jp_sem2?: number
+          subject: string
+          updated_at?: string
+          user_id: string
+          weekly_jp_quota?: number
+        }
+        Update: {
+          academic_year?: string
+          created_at?: string
+          curriculum?: string
+          grade_level?: string
+          id?: string
+          phase?: string | null
+          reserve_jp_sem1?: number
+          reserve_jp_sem2?: number
+          subject?: string
+          updated_at?: string
+          user_id?: string
+          weekly_jp_quota?: number
+        }
+        Relationships: []
+      }
+      prota_items: {
+        Row: {
+          core_topic: string
+          created_at: string
+          element_or_domain: string
+          id: string
+          learning_objective_code: string
+          learning_objective_text: string
+          order_index: number
+          prota_id: string
+          semester_number: number
+          target_jp: number
+          updated_at: string
+        }
+        Insert: {
+          core_topic?: string
+          created_at?: string
+          element_or_domain?: string
+          id?: string
+          learning_objective_code?: string
+          learning_objective_text?: string
+          order_index?: number
+          prota_id: string
+          semester_number: number
+          target_jp?: number
+          updated_at?: string
+        }
+        Update: {
+          core_topic?: string
+          created_at?: string
+          element_or_domain?: string
+          id?: string
+          learning_objective_code?: string
+          learning_objective_text?: string
+          order_index?: number
+          prota_id?: string
+          semester_number?: number
+          target_jp?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prota_items_prota_id_fkey"
+            columns: ["prota_id"]
+            isOneToOne: false
+            referencedRelation: "prota_headers"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      promes_headers: {
+        Row: {
+          created_at: string
+          id: string
+          prota_id: string
+          semester_number: number
+          updated_at: string
+          user_id: string
+          weekly_jp_limit: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          prota_id: string
+          semester_number: number
+          updated_at?: string
+          user_id: string
+          weekly_jp_limit?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          prota_id?: string
+          semester_number?: number
+          updated_at?: string
+          user_id?: string
+          weekly_jp_limit?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promes_headers_prota_id_fkey"
+            columns: ["prota_id"]
+            isOneToOne: false
+            referencedRelation: "prota_headers"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      promes_week_allocations: {
+        Row: {
+          allocated_jp: number
+          created_at: string
+          id: string
+          month_index: number
+          promes_id: string
+          prota_item_id: string
+          updated_at: string
+          week_number: number
+        }
+        Insert: {
+          allocated_jp?: number
+          created_at?: string
+          id?: string
+          month_index: number
+          promes_id: string
+          prota_item_id: string
+          updated_at?: string
+          week_number: number
+        }
+        Update: {
+          allocated_jp?: number
+          created_at?: string
+          id?: string
+          month_index?: number
+          promes_id?: string
+          prota_item_id?: string
+          updated_at?: string
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promes_week_allocations_promes_id_fkey"
+            columns: ["promes_id"]
+            isOneToOne: false
+            referencedRelation: "promes_headers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promes_week_allocations_prota_item_id_fkey"
+            columns: ["prota_item_id"]
+            isOneToOne: false
+            referencedRelation: "prota_items"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       academic_records: {
         Row: {
           assessment_name: string | null

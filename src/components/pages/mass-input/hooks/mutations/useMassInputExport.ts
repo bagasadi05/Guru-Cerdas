@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../../../../../services/supabase';
-import { AppUser } from '../../../../../hooks/useAuth';
+import type { AppUser } from '../../../../../hooks/useAuth';
 import { ClassRow, StudentRow } from '../../types';
 import { formatExportDate } from '../../../../../utils/exportFormatUtils';
 import { generateStudentReport, ReportData as ReportDataType } from '../../../../../services/pdfGenerator';

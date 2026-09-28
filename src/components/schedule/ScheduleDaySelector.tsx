@@ -16,19 +16,27 @@ export const ScheduleDaySelector: React.FC<ScheduleDaySelectorProps> = ({
   const todayName = new Date().toLocaleDateString('id-ID', { weekday: 'long' });
 
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory sm:grid sm:grid-cols-6 sm:gap-3 lg:gap-4 sm:overflow-visible sm:pb-0">
+    <div
+      role="tablist"
+      aria-label="Pilih Hari Jadwal Mengajar"
+      className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory sm:grid sm:grid-cols-6 sm:gap-3 lg:gap-4 sm:overflow-visible sm:pb-0 scrollbar-none"
+    >
       {days.map((day) => {
         const isToday = day === todayName;
         const isSelected = selectedDay === day;
+        const dayNumber = getDayNumber(day);
 
         return (
-          <button type="button"
+          <button
+            type="button"
+            role="tab"
+            aria-selected={isSelected}
+            aria-label={`${day}, tanggal ${dayNumber}${isToday ? ' (Hari ini)' : ''}`}
             key={day}
             onClick={() => onSelectDay(day)}
             className={`
               relative flex flex-col items-center justify-center gap-1.5 cursor-pointer active:scale-95
-              min-w-0 flex-1 sm:flex-none sm:min-w-0 h-16 flex-shrink-0 snap-center rounded-2xl transition-all duration-200
-              sm:min-w-0 sm:w-full sm:h-[72px] lg:h-[80px]
+              min-w-[62px] sm:min-w-0 flex-1 h-[68px] sm:h-[72px] lg:h-[80px] flex-shrink-0 snap-center rounded-2xl transition-all duration-200
               ${
                 isSelected
                   ? 'bg-[#10B981] text-white shadow-lg shadow-green-500/30'
@@ -41,10 +49,11 @@ export const ScheduleDaySelector: React.FC<ScheduleDaySelectorProps> = ({
             >
               {day.substring(0, 3)}
             </span>
-            <span className="text-xl sm:text-2xl font-bold">{getDayNumber(day)}</span>
+            <span className="text-xl sm:text-2xl font-bold leading-none">{dayNumber}</span>
             {isToday && (
               <span
                 className={`absolute top-2 right-2 w-2 h-2 rounded-full ${isSelected ? 'bg-white' : 'bg-green-500'}`}
+                aria-hidden="true"
               />
             )}
           </button>

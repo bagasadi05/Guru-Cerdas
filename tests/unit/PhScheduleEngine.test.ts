@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { PhScheduleEngine, PhScheduleItem } from '../../src/components/schedule/engine/PhScheduleEngine';
+import { normalizeSubjectDisplay } from '../../src/components/schedule/engine/usePhScheduleDomain';
 
 const createMockSchedule = (
     partial: Partial<PhScheduleItem> & { id: string; subject: string; date: string; period_label: string }
@@ -113,5 +114,74 @@ describe('PhScheduleEngine (Pure Domain Engine)', () => {
         expect(counts.today).toBe(3);
         expect(counts.upcoming).toBe(1);
         expect(counts.past).toBe(0);
+    });
+
+    it('calculates Monday-to-Friday school week days and shifts with weekOffset', () => {
+        // Test with a known Sunday: 2026-09-27
+        const refSunday = new Date('2026-09-27T10:00:00');
+        const days = PhScheduleEngine.getSchoolWeekDays(refSunday, 0);
+
+        expect(days.length).toBe(5);
+        expect(days[0].dayName).toBe('Senin');
+        expect(days[0].dateStr).toBe('2026-09-28');
+        expect(days[0].dateFormatted).toContain('28');
+
+        expect(days[1].dayName).toBe('Selasa');
+        expect(days[1].dateStr).toBe('2026-09-29');
+
+        expect(days[2].dayName).toBe('Rabu');
+        expect(days[2].dateStr).toBe('2026-09-30');
+
+        expect(days[3].dayName).toBe('Kamis');
+        expect(days[3].dateStr).toBe('2026-10-01');
+
+        expect(days[4].dayName).toBe('Jumat');
+        expect(days[4].dateStr).toBe('2026-10-02');
+
+        // Test week offset +1 (next week)
+        const nextWeekDays = PhScheduleEngine.getSchoolWeekDays(refSunday, 1);
+        expect(nextWeekDays[0].dateStr).toBe('2026-10-05');
+        expect(nextWeekDays[4].dateStr).toBe('2026-10-09');
+
+        // Test week offset -1 (previous week)
+        const prevWeekDays = PhScheduleEngine.getSchoolWeekDays(refSunday, -1);
+        expect(prevWeekDays[0].dateStr).toBe('2026-09-21');
+        expect(prevWeekDays[4].dateStr).toBe('2026-09-25');
+    });
+
+    it('formats week range label cleanly across months and within the same month', () => {
+        const d1 = new Date('2026-09-28T00:00:00');
+        const d2 = new Date('2026-10-02T00:00:00');
+        const range1 = PhScheduleEngine.formatWeekRangeLabel(d1, d2);
+        expect(range1).toBe('28 September – 2 Oktober 2026');
+
+        const d3 = new Date('2026-10-05T00:00:00');
+        const d4 = new Date('2026-10-09T00:00:00');
+        const range2 = PhScheduleEngine.formatWeekRangeLabel(d3, d4);
+        expect(range2).toBe('5 – 9 Oktober 2026');
+    });
+
+    describe('normalizeSubjectDisplay', () => {
+        it('normalizes Ass. Bhs Arab and variations to Bahasa Arab', () => {
+            expect(normalizeSubjectDisplay('Ass. Bhs Arab')).toBe('Bahasa Arab');
+            expect(normalizeSubjectDisplay('Ass Bhs Arab')).toBe('Bahasa Arab');
+            expect(normalizeSubjectDisplay('Bhs Arab')).toBe('Bahasa Arab');
+            expect(normalizeSubjectDisplay('bhs. arab')).toBe('Bahasa Arab');
+            expect(normalizeSubjectDisplay('Bahasa Arab')).toBe('Bahasa Arab');
+        });
+
+        it('normalizes BHS INDONESIA and abbreviations to Bahasa Indonesia', () => {
+            expect(normalizeSubjectDisplay('BHS INDONESIA')).toBe('Bahasa Indonesia');
+            expect(normalizeSubjectDisplay('Ass. Bhs Indonesia')).toBe('Bahasa Indonesia');
+            expect(normalizeSubjectDisplay('Bhs Indonesia')).toBe('Bahasa Indonesia');
+        });
+
+        it('normalizes other common subject names', () => {
+            expect(normalizeSubjectDisplay('Bhs Inggris')).toBe('Bahasa Inggris');
+            expect(normalizeSubjectDisplay('Bhs Jawa')).toBe('Bahasa Jawa');
+            expect(normalizeSubjectDisplay('ipas')).toBe('IPAS');
+            expect(normalizeSubjectDisplay('MATEMATIKA')).toBe('Matematika');
+            expect(normalizeSubjectDisplay('Fikih')).toBe('Fikih');
+        });
     });
 });

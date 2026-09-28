@@ -33,7 +33,7 @@ export const ModulAjarPreview: React.FC<ModulAjarPreviewProps> = ({
           <div className="w-full max-w-[850px] mb-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm px-3.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs">
             <span className="flex items-center gap-1.5 font-medium text-brand-700 dark:text-brand-300">
               <Edit3 className="w-3.5 h-3.5 text-brand-500" />
-              Mode Editor Aktif: Klik teks langsung di bawah untuk mengedit sebelum cetak / ekspor
+              Mode Edit Langsung: Klik dan ubah teks dokumen secara leluasa di bawah sebelum diunduh atau dicetak
             </span>
             <div className="flex items-center gap-2 text-[10px] text-slate-400">
               <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded font-bold text-slate-600 dark:text-slate-300">

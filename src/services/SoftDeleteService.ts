@@ -57,26 +57,26 @@ const tableQuery = (entity: SoftDeleteEntity): SoftDeleteQuery =>
 async function cascadeStudentSoftDelete(studentIds: string[], deletedAt: string): Promise<void> {
     if (studentIds.length === 0) return;
     await Promise.allSettled([
-        (supabase.from('attendance') as any).update({ deleted_at: deletedAt }).in('student_id', studentIds),
-        (supabase.from('academic_records') as any).update({ deleted_at: deletedAt }).in('student_id', studentIds),
-        (supabase.from('violations') as any).update({ deleted_at: deletedAt }).in('student_id', studentIds),
-        (supabase.from('quiz_points') as any).update({ deleted_at: deletedAt }).in('student_id', studentIds),
-        (supabase.from('student_achievements') as any).update({ deleted_at: deletedAt }).in('student_id', studentIds),
-        (supabase.from('reports') as any).update({ deleted_at: deletedAt }).in('student_id', studentIds),
-        (supabase.from('attitude_records') as any).update({ deleted_at: deletedAt }).in('student_id', studentIds),
+        tableQuery('attendance').update({ deleted_at: deletedAt }).in('student_id', studentIds),
+        tableQuery('academic_records').update({ deleted_at: deletedAt }).in('student_id', studentIds),
+        tableQuery('violations').update({ deleted_at: deletedAt }).in('student_id', studentIds),
+        tableQuery('quiz_points').update({ deleted_at: deletedAt }).in('student_id', studentIds),
+        tableQuery('student_achievements').update({ deleted_at: deletedAt }).in('student_id', studentIds),
+        tableQuery('reports').update({ deleted_at: deletedAt }).in('student_id', studentIds),
+        tableQuery('attitude_records').update({ deleted_at: deletedAt }).in('student_id', studentIds),
     ]);
 }
 
 async function cascadeStudentRestore(studentIds: string[]): Promise<void> {
     if (studentIds.length === 0) return;
     await Promise.allSettled([
-        (supabase.from('attendance') as any).update({ deleted_at: null }).in('student_id', studentIds),
-        (supabase.from('academic_records') as any).update({ deleted_at: null }).in('student_id', studentIds),
-        (supabase.from('violations') as any).update({ deleted_at: null }).in('student_id', studentIds),
-        (supabase.from('quiz_points') as any).update({ deleted_at: null }).in('student_id', studentIds),
-        (supabase.from('student_achievements') as any).update({ deleted_at: null }).in('student_id', studentIds),
-        (supabase.from('reports') as any).update({ deleted_at: null }).in('student_id', studentIds),
-        (supabase.from('attitude_records') as any).update({ deleted_at: null }).in('student_id', studentIds),
+        tableQuery('attendance').update({ deleted_at: null }).in('student_id', studentIds),
+        tableQuery('academic_records').update({ deleted_at: null }).in('student_id', studentIds),
+        tableQuery('violations').update({ deleted_at: null }).in('student_id', studentIds),
+        tableQuery('quiz_points').update({ deleted_at: null }).in('student_id', studentIds),
+        tableQuery('student_achievements').update({ deleted_at: null }).in('student_id', studentIds),
+        tableQuery('reports').update({ deleted_at: null }).in('student_id', studentIds),
+        tableQuery('attitude_records').update({ deleted_at: null }).in('student_id', studentIds),
     ]);
 }
 

@@ -69,7 +69,7 @@ const BrankasPage = lazy(() => import('@/components/pages/BrankasPage'));
 const PemulihanPage = lazy(() => import('@/components/pages/PemulihanPage'));
 
 const BintangDashboardPage = lazy(() => import('@/components/pages/bintang/BintangDashboardPage'));
-const ModulAjarCreatorPage = lazy(() => import('@/components/pages/modul-ajar/ModulAjarCreatorPage'));
+const PerangkatAjarPage = lazy(() => import('@/components/pages/perangkat-ajar/PerangkatAjarPage'));
 
 const SimpleHelpCenter = lazy(() => import('./components/SimpleHelpCenter').then(m => ({ default: m.SimpleHelpCenter })));
 const GlobalSearchModal = lazy(() => import('./components/SearchSystem').then(m => ({ default: m.GlobalSearchModal })));
@@ -143,6 +143,7 @@ const routeSkeletonMap: Record<string, React.ComponentType> = {
   '/pemulihan': PemulihanPageSkeleton,
   '/bintang': BintangDashboardPageSkeleton,
   '/modul-ajar': ModulAjarCreatorPageSkeleton,
+  '/perangkat-ajar': ModulAjarCreatorPageSkeleton,
   '/ekstrakurikuler': ExtracurricularPageSkeleton,
 };
 
@@ -253,7 +254,9 @@ function AppContent() {
 
               <Route path="/pemulihan" element={<AsyncErrorBoundary context="PemulihanPage"><PemulihanPage /></AsyncErrorBoundary>} />
               <Route path="/bintang" element={<AsyncErrorBoundary context="BintangDashboardPage"><BintangDashboardPage /></AsyncErrorBoundary>} />
-              <Route path="/modul-ajar" element={<AsyncErrorBoundary context="ModulAjarCreatorPage"><ModulAjarCreatorPage /></AsyncErrorBoundary>} />
+              <Route path="/modul-ajar" element={<Navigate to="/perangkat-ajar?mode=modul-ajar" replace />} />
+              <Route path="/perangkat-ajar" element={<AsyncErrorBoundary context="PerangkatAjarPage"><PerangkatAjarPage /></AsyncErrorBoundary>} />
+              <Route path="/prota-promes" element={<Navigate to="/perangkat-ajar?mode=prota-promes" replace />} />
 
               <Route element={<AdminRoutes />}>
                 <Route path="/admin" element={<AsyncErrorBoundary context="AdminPage"><AdminPage /></AsyncErrorBoundary>} />

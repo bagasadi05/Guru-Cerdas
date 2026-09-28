@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Trash2, Clock, RefreshCw, AlertTriangle, Search, Filter, Heart, Eye, Copy, Download } from 'lucide-react';
+import { Trash2, Clock, RefreshCw, AlertTriangle, Search, Filter, Heart, Eye, Copy, Download, FileDown } from 'lucide-react';
 import { useTranslation } from '../../../../utils/i18n';
 
 interface ModulAjarHistoryProps {
@@ -8,6 +8,7 @@ interface ModulAjarHistoryProps {
   error?: string | null;
   onRestore: (plan: any) => void;
   onDelete: (id: string, e: React.MouseEvent) => void;
+  onExportPdf?: (item: any, e: React.MouseEvent) => void;
   onExportWord?: (item: any, e: React.MouseEvent) => void;
   onDuplicate?: (item: any, e: React.MouseEvent) => void;
 }
@@ -18,6 +19,7 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
   error,
   onRestore,
   onDelete,
+  onExportPdf,
   onExportWord,
   onDuplicate
 }) => {
@@ -56,7 +58,7 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Cari mapel, topik, kelas, atau model pembelajaran..."
+              placeholder="Cari mata pelajaran, topik materi, kelas, atau model pembelajaran..."
               className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 outline-none"
             />
           </div>
@@ -70,7 +72,7 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
                 key={type}
                 type="button"
                 onClick={() => setFilterType(type)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors shrink-0 ${
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors shrink-0 cursor-pointer ${
                   filterType === type
                     ? 'bg-brand-600 text-white shadow-2xs'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
@@ -111,7 +113,7 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
           <button
             type="button"
             onClick={() => { setSearchTerm(''); setFilterType('all'); }}
-            className="text-xs text-brand-600 font-semibold hover:underline"
+            className="text-xs text-brand-600 font-semibold hover:underline cursor-pointer"
           >
             Reset Filter Pencarian
           </button>
@@ -154,10 +156,24 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
                             e.stopPropagation();
                             onDuplicate(item, e);
                           }}
-                          className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-brand-600 rounded-lg transition-colors"
-                          title="Duplikasi / Salin Draf Baru"
+                          className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-brand-600 rounded-lg transition-colors cursor-pointer"
+                          title="Salin sebagai Draf Baru"
                         >
                           <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
+                      {onExportPdf && item.generated_content && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onExportPdf(item, e);
+                          }}
+                          className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer"
+                          title="Unduh Dokumen PDF Langsung"
+                        >
+                          <FileDown className="w-3.5 h-3.5" />
                         </button>
                       )}
 
@@ -168,8 +184,8 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
                             e.stopPropagation();
                             onExportWord(item, e);
                           }}
-                          className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-slate-400 hover:text-blue-600 rounded-lg transition-colors"
-                          title="Unduh Word (.doc) Langsung"
+                          className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-slate-400 hover:text-blue-600 rounded-lg transition-colors cursor-pointer"
+                          title="Unduh Dokumen Word"
                         >
                           <Download className="w-3.5 h-3.5" />
                         </button>
@@ -178,8 +194,8 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
                       <button
                         onClick={(e) => onDelete(item.id, e)}
                         aria-label={t.lessonPlan.rubricHapus}
-                        className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-500 rounded-lg transition-colors opacity-80 group-hover:opacity-100"
-                        title="Hapus riwayat"
+                        className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-500 rounded-lg transition-colors opacity-80 group-hover:opacity-100 cursor-pointer"
+                        title="Hapus dari Riwayat"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

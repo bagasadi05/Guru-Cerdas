@@ -6,13 +6,10 @@ import { useDashboardData } from '../../hooks/useDashboardData';
 import { useClock } from '../../hooks/useClock';
 import { useDashboardActivities } from '../../hooks/useDashboardActivities';
 import { useTodayJournalStatus } from '../../hooks/useTodayJournalStatus';
-import { isTaskOverdue, formatTaskDueDate } from '../../utils/dateHelpers';
 import { resolveClassName } from '../../utils/scheduleUtils';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   CalendarIcon,
-  ClockIcon,
-  BookOpenIcon,
   SearchIcon,
   BrainCircuitIcon,
   SettingsIcon,
@@ -25,14 +22,13 @@ import { AIInsightWidget } from '../dashboard/AIInsightWidget';
 import StatsGrid from '../dashboard/StatsGrid';
 import DashboardPageSkeleton from '../skeletons/DashboardPageSkeleton';
 import { CardSkeleton } from '../skeletons';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import DashboardGreeting from '../dashboard/DashboardGreeting';
 import SemesterTransitionBanner from '../dashboard/SemesterTransitionBanner';
 import GradeAuditWidget from '../dashboard/GradeAuditWidget';
-import ScheduleTimeline from '../dashboard/ScheduleTimeline';
 import FloatingActionButton from '../ui/FloatingActionButton';
 import { LeaderboardCard } from '../gamification/LeaderboardCard';
 import TodayActionPanel from '../dashboard/TodayActionPanel';
+import TodayAgendaCard from '../dashboard/TodayAgendaCard';
 import { DashboardSummaryCards } from '../dashboard';
 import { DashboardAlertStack } from '../dashboard/DashboardAlertStack';
 import { DashboardSection } from '../dashboard/DashboardSection';
@@ -117,7 +113,6 @@ const DashboardPage: React.FC = () => {
 
   const {
     students = [],
-    tasks = [],
     schedule = [],
     classes = [],
     weeklyAttendance = [],
@@ -182,73 +177,27 @@ const DashboardPage: React.FC = () => {
           data && <StatsGrid data={data} currentTime={currentTime} />
         )}
 
-        {/* Action Panel + Schedule side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4 items-stretch">
-          {/* Today Action Panel */}
-          <div className="lg:col-span-2 space-y-4">
-            {isGlobalRole ? (
-              <>
-                <Suspense fallback={<CardSkeleton />}>
-                  <LazySmartInsightsPanel />
-                </Suspense>
-                <TodayActionPanel data={data} isLoading={isLoading} isCombined={true} />
-              </>
-            ) : (
-              <TodayActionPanel data={data} isLoading={isLoading} />
+        {/* Unified 2-Column Command Center: Agenda Hari Ini vs Aksi Cepat & Tugas */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4 items-stretch">
+          {/* Kolom Kiri: Agenda Hari Ini (Jadwal Mengajar + Jadwal PH) */}
+          <TodayAgendaCard
+            schedule={todaySchedule}
+            currentTime={currentTime}
+            classes={classes}
+          />
+
+          {/* Kolom Kanan: Aksi Cepat & Tugas Mendesak */}
+          <div className="space-y-4">
+            {isGlobalRole && (
+              <Suspense fallback={<CardSkeleton />}>
+                <LazySmartInsightsPanel />
+              </Suspense>
             )}
-          </div>
-
-          {/* Schedule + Tasks Tabs */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-sm flex flex-col h-full min-h-[360px]">
-            <Tabs defaultValue="schedule" className="w-full flex flex-col flex-1 min-h-0">
-              <div className="px-3 py-2.5 border-b border-slate-200/80 dark:border-slate-700/60 bg-slate-100/50 dark:bg-slate-800/40">
-                <TabsList className="w-full grid grid-cols-2">
-                  <TabsTrigger value="schedule">Jadwal</TabsTrigger>
-                  <TabsTrigger value="tasks">Tugas ({tasks.length})</TabsTrigger>
-                </TabsList>
-              </div>
-
-              <TabsContent value="schedule" className="flex-1 overflow-y-auto p-0 m-0 custom-scrollbar min-h-0">
-                <ScheduleTimeline schedule={todaySchedule} currentTime={currentTime} />
-              </TabsContent>
-              <TabsContent value="tasks" className="flex-1 flex flex-col overflow-y-auto p-0 m-0 custom-scrollbar min-h-0">
-                <div className="p-3 space-y-2 flex-1">
-                  {tasks.length > 0 ? (
-                    tasks.slice(0, 5).map((task) => (
-                      <div
-                        key={task.id}
-                        className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/60 rounded-xl hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] transition-all duration-200 group cursor-pointer"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-semibold text-sm text-slate-800 dark:text-white line-clamp-1 group-hover:text-amber-500 transition-colors">
-                              {task.title}
-                            </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
-                              <ClockIcon className="w-3.5 h-3.5" />
-                              {task.due_date ? formatTaskDueDate(task.due_date) : 'Tidak ada deadline'}
-                            </p>
-                          </div>
-                          <div className={`w-2.5 h-2.5 rounded-full mt-1.5 ${isTaskOverdue(task.due_date, currentTime) ? 'bg-red-500' : 'bg-blue-500'}`} />
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full py-8 text-center text-slate-400">
-                      <BookOpenIcon className="w-10 h-10 mb-3 opacity-30" />
-                      <p className="font-medium text-sm">Tidak ada tugas aktif</p>
-                    </div>
-                  )}
-                </div>
-                {tasks.length > 0 && (
-                  <div className="p-2.5 border-t border-slate-200/60 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/40">
-                    <Button variant="outline" size="sm" onClick={() => navigate('/tugas')} className="w-full rounded-xl cursor-pointer active:scale-95 duration-150">
-                      Lihat Semua Tugas
-                    </Button>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+            <TodayActionPanel
+              data={data}
+              isLoading={isLoading}
+              currentTime={currentTime}
+            />
           </div>
         </div>
       </DashboardSection>
@@ -260,6 +209,8 @@ const DashboardPage: React.FC = () => {
         title="Wawasan & Analisis"
         icon={<BrainCircuitIcon className="w-5 h-5 text-brand-600 dark:text-brand-400" />}
         dataTutorial="ai-insight"
+        collapsible
+        defaultOpen={true}
       >
         <div className={`grid grid-cols-1 ${isLeadershipOnly ? 'lg:grid-cols-1' : 'lg:grid-cols-2'} gap-4 items-stretch`}>
           {/* AI Insight */}
@@ -286,6 +237,8 @@ const DashboardPage: React.FC = () => {
       <DashboardSection
         title="Performa Kelas & Siswa"
         icon={<BarChart3Icon className="w-5 h-5 text-emerald-500" />}
+        collapsible
+        defaultOpen={true}
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
           {/* Attendance Chart */}
