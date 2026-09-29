@@ -174,13 +174,19 @@ export class BrowserSpeechRecognitionAdapter implements SpeechRecognitionPort {
 
             rec.onerror = (event: SpeechRecognitionErrorEvent) => {
                 const err = event.error || '';
-                if (err === 'not-allowed') {
+                if (err === 'not-allowed' || err === 'service-not-allowed') {
+                    // Fatal: user denied mic permission — stop forever, don't restart
+                    this.shouldStayListening = false;
                     this.handlers?.onError('not-allowed', event.message);
                 } else if (err === 'audio-capture') {
+                    // Fatal: mic device missing — stop forever
+                    this.shouldStayListening = false;
                     this.handlers?.onError('audio-capture', event.message);
                 } else if (err === 'network') {
+                    // Transient: browser STT network hiccup — let onEnd restart handle it
                     this.handlers?.onError('network', event.message);
                 }
+                // 'no-speech' and 'aborted' are benign — onEnd will restart automatically
             };
 
             rec.onend = () => {

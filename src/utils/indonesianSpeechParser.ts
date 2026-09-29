@@ -3,61 +3,138 @@ import { findStudentMatch, MinimStudent } from './studentMatcher';
 export type VoiceCommand = 'next' | 'prev' | 'clear' | 'stop' | 'first' | 'last' | 'undo';
 
 export const BASIC_NUMBERS: Record<string, number> = {
+    // 0
     'nol': 0,
     'kosong': 0,
+    'enol': 0,
+    'nihil': 0,
+    // Fractions
+    'setengah': 0.5,
+    'separuh': 0.5,
+    'seperempat': 0.25,
+    // 1
     'satu': 1,
     'se': 1,
+    'sa': 1,
     'siji': 1,
     'hiji': 1,
     'pertama': 1,
     'kesatu': 1,
+    // 2
     'dua': 2,
     'loro': 2,
+    'ro': 2,
     'duo': 2,
+    'due': 2,
+    'rong': 2,
     'kedua': 2,
+    // 3
     'tiga': 3,
     'telu': 3,
     'tilu': 3,
+    'tigo': 3,
+    'tige': 3,
+    'telung': 3,
     'ketiga': 3,
+    // 4
     'empat': 4,
     'papat': 4,
+    'pat': 4,
     'opat': 4,
     'ampat': 4,
+    'patang': 4,
     'keempat': 4,
+    // 5
     'lima': 5,
     'limo': 5,
     'lime': 5,
     'kelima': 5,
+    // 6
     'enam': 6,
     'nem': 6,
     'genep': 6,
     'anam': 6,
+    'onam': 6,
     'keenam': 6,
+    // 7
     'tujuh': 7,
     'pitu': 7,
     'tuju': 7,
+    'tujoh': 7,
+    'pitung': 7,
     'ketujuh': 7,
+    // 8
     'delapan': 8,
     'lapan': 8,
     'dapan': 8,
     'wolu': 8,
     'dalapan': 8,
+    'wolung': 8,
     'kedelapan': 8,
+    // 9
     'sembilan': 9,
     'songo': 9,
     'salapan': 9,
     'sambilan': 9,
+    'sembilang': 9,
+    'sangang': 9,
+    'songong': 9,
     'kesembilan': 9,
+    // 10
     'sepuluh': 10,
     'sedasa': 10,
+    'sapuluh': 10,
     'kesepuluh': 10,
+    // Teens (11-19)
     'sewelas': 11,
     'sebelas': 11,
     'kesebelas': 11,
+    'duabelas': 12,
+    'tigabelas': 13,
+    'empatbelas': 14,
+    'limabelas': 15,
+    'enambelas': 16,
+    'tujuhbelas': 17,
+    'delapanbelas': 18,
+    'sembilanbelas': 19,
+    // Javanese Likur (21-29)
+    'selikur': 21,
+    'salikur': 21,
+    'rolikur': 22,
+    'lorolikur': 22,
+    'ronglikur': 22,
+    'telulikur': 23,
+    'patlikur': 24,
+    'papatlikur': 24,
+    'slawe': 25,
+    'selawe': 25,
+    'nemlikur': 26,
+    'pitulikur': 27,
+    'wolulikur': 28,
+    'songolikur': 29,
+    'sanganglikur': 29,
+    // Unspaced & regional tens
+    'duapuluh': 20,
+    'rongpuluh': 20,
+    'tigapuluh': 30,
+    'telungpuluh': 30,
+    'empatpuluh': 40,
+    'patangpuluh': 40,
+    'limapuluh': 50,
     'seket': 50,
+    'gocap': 50,
+    'enampuluh': 60,
     'suwidak': 60,
+    'tujuhpuluh': 70,
+    'pitungpuluh': 70,
+    'delapanpuluh': 80,
+    'wolungpuluh': 80,
+    'sembilanpuluh': 90,
+    'sangangpuluh': 90,
+    // 100
     'cepek': 100,
     'seratus': 100,
+    'saratus': 100,
     'satus': 100,
     'atus': 100,
 };
@@ -120,6 +197,7 @@ export const ROLL_PREFIX_REGEX =
 const NUMBER_KEYWORDS = new Set([
     ...Object.keys(BASIC_NUMBERS),
     'belas', 'welas', 'puluh', 'ngpuluh', 'ratus', 'atus', 'ribu',
+    'koma', 'per', 'perempat', 'likur',
 ]);
 
 const PREFIX_GRADE_KEYWORDS = new Set([
@@ -127,19 +205,76 @@ const PREFIX_GRADE_KEYWORDS = new Set([
     'dapat', 'dapet', 'kasih', 'kasihkan', 'berikan', 'diberi'
 ]);
 
-const CORRECTION_KEYWORDS = new Set([
-    'ralat', 'ganti', 'ubah', 'salah', 'bukan'
+export const CORRECTION_KEYWORDS = new Set([
+    'ralat', 'ganti', 'ubah', 'salah', 'bukan', 'keliru', 'revisi', 'maksudnya', 'maksud'
 ]);
 
+export const CORRECTION_PREAMBLE_REGEX =
+    /^(?:(?:eh|aduh|waduh|oalah|alah|astaga|ups|oops|maaf|sorry|sebentar|bentar|tunggu|loh|lah|wah)\s+)*(?:ralat|ganti|ubah|salah|bukan|keliru|revisi|maksudnya|maksud\s+saya|maksudku)(?:\s+(?:bukan|salah|ralat|keliru))?(?:\s+(?:tapi|jadi|ke|menjadi|dong|ya))?\s*/i;
+
+export const INLINE_CORRECTION_SPLIT_REGEX =
+    /\s+(?:(?:eh|aduh|waduh|oalah|alah|astaga|ups|oops|maaf|sorry|sebentar|bentar|tunggu|loh|lah|wah)\s+)?(?:ralat|ganti|ubah|salah|bukan|keliru|revisi|maksudnya|maksud\s+saya|maksudku)(?:\s+(?:bukan|salah|ralat|keliru))?(?:\s+(?:tapi|jadi|ke|menjadi))?\s+/i;
+
 /**
- * Normalizes spoken Indonesian text by trimming, lowercasing, and removing punctuation.
+ * Expands concatenated compound numbers into space-separated tokens.
+ * Handles three-word concatenations (e.g. "delapanpuluhlima" -> "delapan puluh lima")
+ * and two-word concatenations (e.g. "delapanpuluh" -> "delapan puluh", "duabelas" -> "dua belas").
+ */
+export function expandUnspacedNumbers(text: string): string {
+    const prefixes =
+        'dua|loro|ro|duo|tiga|telu|tilu|tigo|tige|empat|papat|pat|opat|ampat|lima|limo|lime|enam|nem|genep|anam|onam|tujuh|pitu|tuju|tujoh|delapan|lapan|dapan|wolu|dalapan|sembilan|songo|salapan|sambilan|sembilang|rong|telung|patang|pitung|wolung|sangang|songong';
+    const tensUnits = 'puluh|ngpuluh|belas|welas|ratus|atus';
+    const singleDigits =
+        'satu|dua|loro|ro|duo|due|tiga|telu|tilu|tigo|empat|papat|pat|opat|ampat|lima|limo|lime|enam|nem|genep|anam|tujuh|pitu|tuju|tujoh|delapan|lapan|dapan|wolu|sembilan|songo|siji|hiji';
+
+    // 1. Compound three-word concatenated: e.g. "delapanpuluhlima" -> "delapan puluh lima"
+    const threeWordRegex = new RegExp(`\\b(${prefixes})(${tensUnits})(${singleDigits})\\b`, 'gi');
+    let res = text.replace(threeWordRegex, '$1 $2 $3');
+
+    // 2. Compound two-word concatenated: e.g. "delapanpuluh" -> "delapan puluh", "duabelas" -> "dua belas"
+    const twoWordRegex = new RegExp(`\\b(${prefixes})(${tensUnits})\\b`, 'gi');
+    res = res.replace(twoWordRegex, '$1 $2');
+
+    return res;
+}
+
+/**
+ * Normalizes spoken Indonesian text by preserving numeric decimals (dots and commas between digits),
+ * expanding written fractions, segmenting unspaced STT numbers, and removing irrelevant punctuation.
  */
 export function normalizeSpeechText(text: string): string {
-    return text
-        .toLowerCase()
-        .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
+    if (!text) return '';
+
+    let s = text.toLowerCase();
+
+    // 1. Expand written fraction notations before stripping slashes
+    s = s.replace(/(\d+)\s+1\/2\b/g, '$1.5')
+         .replace(/(\d+)\s+1\/4\b/g, '$1.25')
+         .replace(/(\d+)\s+3\/4\b/g, '$1.75')
+         .replace(/\b1\/2\b/g, '0.5')
+         .replace(/\b1\/4\b/g, '0.25')
+         .replace(/\b3\/4\b/g, '0.75');
+
+    // 2. Normalize decimal comma between digits to dot (e.g. "85,5" -> "85.5", "8,5" -> "8.5")
+    s = s.replace(/(\d+),(\d+)/g, '$1.$2');
+
+    // 3. Handle standalone leading decimal dot/comma (e.g. ".5" or ",5" -> "0.5")
+    s = s.replace(/(^|\s)[.,](\d+)/g, '$10.$2');
+
+    // 4. Protect dots that are between digits by replacing with temporary placeholder
+    s = s.replace(/(?<=\d)\.(?=\d)/g, 'XDOTX');
+
+    // 5. Replace all other punctuation with spaces
+    s = s.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, ' ');
+
+    // 6. Restore protected decimal dots
+    s = s.replace(/XDOTX/g, '.');
+
+    // 7. Expand unspaced numbers
+    s = expandUnspacedNumbers(s);
+
+    // 8. Collapse multiple whitespace and trim
+    return s.replace(/\s+/g, ' ').trim();
 }
 
 /**
@@ -166,9 +301,9 @@ export function parseVoiceCommand(text: string): VoiceCommand | null {
     }
 
     // Strip polite conversational affixes (e.g. "tolong lanjut ya", "skip aja", "kembali dulu")
-    const trimmedCommand = normalized
+        const trimmedCommand = normalized
         .replace(/^(?:tolong|coba|silakan|mohon|klik|bisa|ayo)\s+/i, '')
-        .replace(/\s+(?:ya|dong|dulu|aja|saja|deh|lah|nih|tuh|oke)$/i, '')
+        .replace(/\s+(?:ya|dong|dulu|aja|saja|deh|lah|nih|tuh|oke|rek|euy|atuh|yo|nggih)$/i, '')
         .trim();
 
     if (COMMAND_MAP[trimmedCommand]) {
@@ -186,49 +321,178 @@ export function getSingleDigitValue(token: string): number | null {
         return Number(token);
     }
     const val = BASIC_NUMBERS[token];
-    if (val !== undefined && val >= 0 && val <= 9) {
+    if (val !== undefined && Number.isInteger(val) && val >= 0 && val <= 9) {
         return val;
     }
     return null;
 }
 
 /**
- * Evaluates a sequence of contiguous number tokens into an integer (0-100+).
+ * Evaluates a sequence of contiguous number tokens into an integer or decimal score (0-100+).
  * Returns null if unparseable, or a number.
  */
 export function evaluateNumberTokens(words: string[]): number | null {
     if (words.length === 0) return null;
 
-    // Direct multi-digit numeric string e.g. "85" or "100"
-    if (words.length === 1 && /^\d+$/.test(words[0])) {
+    // Direct multi-digit or decimal numeric string e.g. "85", "8.5", "100"
+    if (words.length === 1 && /^\d+(?:\.\d+)?$/.test(words[0])) {
         return Number(words[0]);
+    }
+
+    // A. Spoken decimal with "koma" (e.g. "delapan puluh koma lima" -> 80.5, "tujuh koma lima" -> 7.5, "koma lima" -> 0.5)
+    const komaIndex = words.indexOf('koma');
+    if (komaIndex !== -1) {
+        if (words.lastIndexOf('koma') !== komaIndex) {
+            return null; // Reject multiple "koma" in one number
+        }
+
+        const integerWords = words.slice(0, komaIndex);
+        const fractionWords = words.slice(komaIndex + 1);
+
+        if (fractionWords.length === 0) {
+            return null;
+        }
+
+        let integerVal = 0;
+        if (integerWords.length > 0) {
+            const parsedInt = evaluateNumberTokens(integerWords);
+            if (parsedInt === null) return null;
+            integerVal = parsedInt;
+        }
+
+        let fractionVal = 0;
+        if (fractionWords.length === 1 && /^\d+$/.test(fractionWords[0])) {
+            fractionVal = Number(`0.${fractionWords[0]}`);
+        } else {
+            let allSingleDigits = true;
+            let digitStr = '';
+            for (const fw of fractionWords) {
+                const d = getSingleDigitValue(fw);
+                if (d !== null) {
+                    digitStr += String(d);
+                } else {
+                    allSingleDigits = false;
+                    break;
+                }
+            }
+
+            if (allSingleDigits && digitStr.length > 0) {
+                fractionVal = Number(`0.${digitStr}`);
+            } else {
+                const parsedFrac = evaluateNumberTokens(fractionWords);
+                if (parsedFrac === null) return null;
+                fractionVal = Number(`0.${parsedFrac}`);
+            }
+        }
+
+        const total = integerVal + fractionVal;
+        return Math.round(total * 1000) / 1000;
+    }
+
+    // B. Spoken fractions ("setengah", "separuh", "seperempat", "tiga per empat", "tiga perempat")
+    let fractionSuffixVal: number | null = null;
+    let prefixTokenCount = 0;
+
+    if (words.length >= 1 && (words[words.length - 1] === 'setengah' || words[words.length - 1] === 'separuh')) {
+        fractionSuffixVal = 0.5;
+        prefixTokenCount = 1;
+    } else if (words.length >= 1 && words[words.length - 1] === 'seperempat') {
+        fractionSuffixVal = 0.25;
+        prefixTokenCount = 1;
+    } else if (
+        words.length >= 3 &&
+        words[words.length - 3] === 'tiga' &&
+        words[words.length - 2] === 'per' &&
+        words[words.length - 1] === 'empat'
+    ) {
+        fractionSuffixVal = 0.75;
+        prefixTokenCount = 3;
+    } else if (
+        words.length >= 2 &&
+        words[words.length - 2] === 'tiga' &&
+        words[words.length - 1] === 'perempat'
+    ) {
+        fractionSuffixVal = 0.75;
+        prefixTokenCount = 2;
+    } else if (
+        words.length >= 3 &&
+        words[words.length - 3] === 'satu' &&
+        words[words.length - 2] === 'per' &&
+        words[words.length - 1] === 'empat'
+    ) {
+        fractionSuffixVal = 0.25;
+        prefixTokenCount = 3;
+    } else if (
+        words.length >= 2 &&
+        words[words.length - 2] === 'satu' &&
+        words[words.length - 1] === 'perempat'
+    ) {
+        fractionSuffixVal = 0.25;
+        prefixTokenCount = 2;
+    }
+
+    if (fractionSuffixVal !== null) {
+        const prefixWords = words.slice(0, words.length - prefixTokenCount);
+        if (prefixWords.length === 0) {
+            return fractionSuffixVal;
+        }
+        const prefixVal = evaluateNumberTokens(prefixWords);
+        if (prefixVal !== null) {
+            return Math.round((prefixVal + fractionSuffixVal) * 1000) / 1000;
+        }
+        return null;
     }
 
     const joined = words.join(' ');
 
-    // 1. Single-word direct lookup ("seratus", "cepek", "seket", "sembilan", etc.)
+    // 1. Single-word / full phrase direct lookup ("seratus", "cepek", "seket", "sembilan", "slawe", "selikur", etc.)
     if (BASIC_NUMBERS[joined] !== undefined) {
         return BASIC_NUMBERS[joined];
     }
 
-    // 2. Contains "ribu" -> at least 1000 (> 100)
+    // 2. Javanese Likur (21 - 29): "X likur" e.g. "se likur", "ro likur", "telu likur", "pitu likur"
+    if (words.length === 2 && words[1] === 'likur') {
+        const base = getSingleDigitValue(words[0]);
+        if (base !== null && base >= 1 && base <= 9) {
+            return 20 + base;
+        }
+        return null;
+    }
+
+    // 3. Regional / slang base tens followed by unit digit:
+    // e.g. "gocap lima" (55), "seket lima" (55), "suwidak lima" (65)
+    if (words.length === 2) {
+        if (words[0] === 'gocap' || words[0] === 'seket') {
+            const unit = getSingleDigitValue(words[1]);
+            if (unit !== null && unit >= 1 && unit <= 9) {
+                return 50 + unit;
+            }
+        } else if (words[0] === 'suwidak') {
+            const unit = getSingleDigitValue(words[1]);
+            if (unit !== null && unit >= 1 && unit <= 9) {
+                return 60 + unit;
+            }
+        }
+    }
+
+    // 4. Contains "ribu" -> at least 1000 (> 100)
     if (words.includes('ribu')) {
         return 1000;
     }
 
-    // 3. Contains "ratus" or "atus"
+    // 5. Contains "ratus" or "atus"
     if (words.includes('ratus') || words.includes('atus')) {
         return 150;
     }
 
-    // 4. "seratus" / "cepek" followed by other words -> strictly > 100 (e.g. "seratus lima")
+    // 6. "seratus" / "cepek" followed by other words -> strictly > 100 (e.g. "seratus lima")
     if (words[0] === 'seratus' || words[0] === 'cepek' || words[0] === 'atus' || words[0] === 'satus') {
         if (words.length > 1) {
             return 150;
         }
     }
 
-    // 5. "X belas" / "X welas" (11 - 19) e.g. "dua belas", "5 belas", "tujuh welas"
+    // 7. "X belas" / "X welas" (11 - 19) e.g. "dua belas", "5 belas", "tujuh welas"
     if (words.length === 2 && (words[1] === 'belas' || words[1] === 'welas')) {
         const base = getSingleDigitValue(words[0]);
         if (base !== null && base >= 1 && base <= 9) {
@@ -237,7 +501,7 @@ export function evaluateNumberTokens(words: string[]): number | null {
         return null;
     }
 
-    // 6. "X puluh [Y]" (e.g., "delapan puluh lima" -> 85, "8 puluh 5" -> 85, "tujuh puluh" -> 70, "8 puluh" -> 80)
+    // 8. "X puluh [Y]" (e.g., "delapan puluh lima" -> 85, "8 puluh 5" -> 85, "tujuh puluh" -> 70, "8 puluh" -> 80)
     const puluhIndex = words.findIndex(w => w === 'puluh' || w === 'ngpuluh');
     if (puluhIndex !== -1) {
         if (puluhIndex === 0) return null;
@@ -259,7 +523,7 @@ export function evaluateNumberTokens(words: string[]): number | null {
         return tens + units;
     }
 
-    // 7. Casual shorthand 2 digits: e.g. "delapan lima", "8 5", "8 lima", "lapan lima", "sembilan nol", "9 0"
+    // 9. Casual shorthand 2 digits: e.g. "delapan lima", "8 5", "8 lima", "lapan lima", "sembilan nol", "9 0"
     if (words.length === 2) {
         const d1 = getSingleDigitValue(words[0]);
         const d2 = getSingleDigitValue(words[1]);
@@ -268,7 +532,7 @@ export function evaluateNumberTokens(words: string[]): number | null {
         }
     }
 
-    // 8. Casual shorthand 3 digits: e.g. "satu nol nol", "1 0 0", "1 nol nol", "satu kosong kosong" -> 100
+    // 10. Casual shorthand 3 digits: e.g. "satu nol nol", "1 0 0", "1 nol nol", "satu kosong kosong" -> 100
     if (words.length === 3) {
         const d1 = getSingleDigitValue(words[0]);
         const d2 = getSingleDigitValue(words[1]);
@@ -285,7 +549,7 @@ export function evaluateNumberTokens(words: string[]): number | null {
  * Checks whether a word is considered a number token (digits or number word).
  */
 function isNumberToken(word: string): boolean {
-    return /^\d+$/.test(word) || NUMBER_KEYWORDS.has(word);
+    return /^\d+(?:\.\d+)?$/.test(word) || NUMBER_KEYWORDS.has(word);
 }
 
 /**
@@ -309,7 +573,7 @@ export function parseIndonesianNumber(
     const words = normalized.split(' ').filter(Boolean);
     if (words.length === 0) return null;
 
-    const isDirectDigits = /^\d+$/.test(normalized);
+    const isDirectDigits = /^\d+(?:\.\d+)?$/.test(normalized);
     const hasGradePrefix = words.some(w => PREFIX_GRADE_KEYWORDS.has(w) || CORRECTION_KEYWORDS.has(w));
     const allowSingleDigit = options.allowSingleDigitWithoutPrefix || hasGradePrefix || isDirectDigits;
 
@@ -351,8 +615,8 @@ export function parseIndonesianNumber(
                 return 0;
             }
 
-            // Single digit 1-9 requires explicit context
-            if (val >= 1 && val <= 9) {
+            // Single integer digit 1-9 requires explicit context; float scores (e.g. 7.5, 8.5) are valid grades
+            if (Number.isInteger(val) && val >= 1 && val <= 9) {
                 if (!allowSingleDigit) {
                     continue;
                 }

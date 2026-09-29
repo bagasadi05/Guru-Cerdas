@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Modal } from '../../../ui/Modal';
 import { Button } from '../../../ui/Button';
 import { StudentRow } from '../types';
@@ -50,6 +50,41 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
         onScoreChange,
         kkm: effectiveKkm,
     });
+
+    // Keyboard ref to avoid stale closure
+    const engineRef = useRef(engine);
+    engineRef.current = engine;
+
+    // Global keyboard shortcuts (modal-level)
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const onKeyDown = (e: KeyboardEvent) => {
+            const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+            const isTyping = tag === 'input' || tag === 'textarea' || tag === 'select';
+
+            if (e.code === 'Space' && !isTyping) {
+                e.preventDefault();
+                engineRef.current.toggleListening();
+            } else if (e.code === 'ArrowLeft' && !isTyping) {
+                e.preventDefault();
+                engineRef.current.navigatePrev();
+            } else if (e.code === 'ArrowRight' && !isTyping) {
+                e.preventDefault();
+                engineRef.current.navigateNext();
+            } else if (e.code === 'KeyZ' && (e.ctrlKey || e.metaKey) && !isTyping) {
+                e.preventDefault();
+                if (engineRef.current.lastOverwrittenRecord) {
+                    engineRef.current.undoLastOverwrite();
+                } else if (engineRef.current.canUndoBatch) {
+                    engineRef.current.undoBatchApply();
+                }
+            }
+        };
+
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
@@ -570,7 +605,7 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
                                                             max={100}
                                                             value={pair.score}
                                                             onChange={(e) => {
-                                                                const val = parseInt(e.target.value, 10);
+                                                                const val = parseFloat(e.target.value);
                                                                 engine.updatePairScore(idx, isNaN(val) ? 0 : val);
                                                             }}
                                                             aria-label={`Nilai untuk ${pair.studentName}`}

@@ -74,7 +74,7 @@ describe('indonesianSpeechParser', () => {
             expect(parseIndonesianNumber('8 puluh 5')).toBe(85);
             expect(parseIndonesianNumber('8 puluh')).toBe(80);
             expect(parseIndonesianNumber('5 belas')).toBe(15);
-            expect(parseIndonesianNumber('8.5')).toBe(85);
+            expect(parseIndonesianNumber('8.5')).toBe(8.5); // decimal score, not shorthand
             expect(parseIndonesianNumber('8 lima')).toBe(85);
         });
 
