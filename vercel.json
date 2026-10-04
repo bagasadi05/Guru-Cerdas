@@ -8,6 +8,12 @@
         "api/document-export/docx.ts": {
             "memory": 1024,
             "maxDuration": 30
+        },
+        "api/gemini.ts": {
+            "maxDuration": 60
+        },
+        "api/groq.ts": {
+            "maxDuration": 60
         }
     },
     "rewrites": [

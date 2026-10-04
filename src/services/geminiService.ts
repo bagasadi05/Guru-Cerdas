@@ -15,6 +15,7 @@ import {
   aiRouter,
   type AiTaskType,
   type AiProvider,
+  type AiRequestTimeout,
   type GeminiMessage,
   type GeminiResponse,
 } from './aiProvider';
@@ -171,7 +172,7 @@ export async function generateGeminiContent(
 export class GeminiProvider implements AiProvider {
   readonly name = 'gemini' as const;
 
-  async generateContent(messages: GeminiMessage[], model: string): Promise<GeminiResponse> {
+  async generateContent(messages: GeminiMessage[], model: string, options: AiRequestTimeout = {}): Promise<GeminiResponse> {
     if (isDev() && !import.meta.env.VITE_GEMINI_PROXY_URL && !devApiKey()) {
       throw new Error('Gemini API key tidak dikonfigurasi. Tambahkan VITE_GEMINI_API_KEY di .env.');
     }
@@ -184,10 +185,10 @@ export class GeminiProvider implements AiProvider {
       throw new Error('Layanan Gemini sedang dalam masa pemulihan.');
     }
 
-    return this.callWithRetry(messages, model);
+    return this.callWithRetry(messages, model, options.timeoutMs);
   }
 
-  private async callWithRetry(messages: GeminiMessage[], model: string): Promise<GeminiResponse> {
+  private async callWithRetry(messages: GeminiMessage[], model: string, timeoutMs = BASE_TIMEOUT): Promise<GeminiResponse> {
     let lastError: Error | null = null;
     const defaultEnvModel = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_MODEL) || 'gemini-2.5-flash';
     const candidateModels = [
@@ -201,7 +202,7 @@ export class GeminiProvider implements AiProvider {
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       const currentModel = candidateModels[(attempt - 1) % candidateModels.length];
       try {
-        return await this.callOnce(messages, currentModel);
+        return await this.callOnce(messages, currentModel, timeoutMs);
       } catch (err: any) {
         lastError = err;
         const isTransient = isTransientError(err);
@@ -226,7 +227,7 @@ export class GeminiProvider implements AiProvider {
     throw lastError || new Error('Gemini gagal setelah beberapa percobaan.');
   }
 
-  private async callOnce(messages: GeminiMessage[], model: string): Promise<GeminiResponse> {
+  private async callOnce(messages: GeminiMessage[], model: string, timeoutMs = BASE_TIMEOUT): Promise<GeminiResponse> {
     const endpoint = getEndpoint();
 
     const contents = messages
@@ -247,7 +248,7 @@ export class GeminiProvider implements AiProvider {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), BASE_TIMEOUT);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       let url: string;

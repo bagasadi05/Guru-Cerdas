@@ -5,13 +5,59 @@ import { resolveModelId } from '../../../../services/modelIdResolver';
 import {
   generateModulAjarAiContent,
   normalizeSoalEvaluasi,
+  type AiModulAjarContent,
 } from '../../../../services/modulAjarAiGenerator';
+import type { RefBoilerplateTopik } from '../../../../services/modulAjarContentService';
 import { resolveLearningSyntax } from '../utils/syntaxResolver';
 import { buildHtmlTemplate } from '../utils/template';
 import { FormState, RubrikRow } from '../types';
 import type { Json } from '../../../../services/database.types';
 import type { ContentField, ContentValues } from './useModulAjarForm';
 import { buildAiPromptContext } from '../utils/aiPromptContext';
+
+/** A row of the Kegiatan Inti table. */
+interface ScenarioRow {
+  name: string;
+  fase: string;
+  kegiatanGuru: string;
+  kegiatanSiswa: string;
+}
+
+/** AI output as it reaches the page; models use several names for the same parts. */
+type AiDraftOutput = Partial<AiModulAjarContent> & {
+  kegiatanInti?: object[];
+  konteksSintaks?: object[];
+  _resolvedSyntax?: ReturnType<typeof resolveLearningSyntax>;
+  materiAjar?: string;
+  glosarium?: string[];
+  asesmenKeterampilan?: string;
+  asesmenPengetahuan?: string;
+};
+
+/** Bank rows may carry these columns; the shared type does not list them. */
+type BoilerplateRow = RefBoilerplateTopik & { capaian_pembelajaran?: string; kompetensi_awal?: string };
+
+const text = (value: unknown) => (typeof value === 'string' ? value : '');
+
+/** Maps a scenario step in any of the spellings models and the bank use. */
+const toScenarioRow = (step: object, idx: number): ScenarioRow => {
+  const s = step as Record<string, unknown>;
+  const name = text(s.name) || text(s.fase) || (s.urutan ? `Langkah ${s.urutan}` : `Langkah ${idx + 1}`);
+  return {
+    name,
+    fase: name,
+    kegiatanGuru: text(s.guru) || text(s.kegiatanGuru) || text(s.kegiatan_guru),
+    kegiatanSiswa: text(s.siswa) || text(s.kegiatanSiswa) || text(s.kegiatan_siswa),
+  };
+};
+
+const fromResolvedSyntax = (syntax: ReturnType<typeof resolveLearningSyntax>): ScenarioRow[] =>
+  syntax.steps.map((s) => ({
+    name: s.name,
+    fase: s.name,
+    kegiatanGuru: s.teacherActivity,
+    kegiatanSiswa: s.studentActivity,
+  }));
 
 const splitLines = (value: string | undefined, sep: string) =>
   (value || '').split(sep).map((line) => line.trim()).filter(Boolean);
@@ -100,9 +146,9 @@ const buildDefaultRubric = (formState: FormState): RubrikRow[] => {
 interface GeneratorProps {
   formState: FormState;
   setFormState: React.Dispatch<React.SetStateAction<FormState>>;
-  user: any;
-  models: any[];
-  t: any;
+  user: { id: string } | null | undefined;
+  models: Array<{ id: string; nama_model?: string; sintaks_inti?: string[] }>;
+  t: { lessonPlan: { validateSubject: string; saveSuccess: string; saveFailed: string } };
   isAiEnabled: boolean;
   logoBase64: string;
   fetchHistory: () => void;
@@ -164,13 +210,13 @@ export const useModulAjarGenerator = ({
     setAiCacheWarning(null);
 
     try {
-      let bp = await modulAjarContentService.getBoilerplate(
+      let bp: BoilerplateRow | null = await modulAjarContentService.getBoilerplate(
         formState.mataPelajaran,
         formState.topik,
         formState.fase,
       );
 
-      let aiGeneratedData: any = null;
+      let aiGeneratedData: AiModulAjarContent | null = null;
 
       if (!bp && isAiEnabled) {
         setIsAiGenerating(true);
@@ -205,10 +251,10 @@ export const useModulAjarGenerator = ({
             sumber_regulasi: null,
             konten_json: aiContent,
           };
-        } catch (aiErr: any) {
+        } catch (aiErr: unknown) {
           console.warn(
             '[AI Fallback] AI generation failed, continuing with template:',
-            aiErr.message,
+            aiErr instanceof Error ? aiErr.message : aiErr,
           );
           setAiCacheWarning(
             'AI gagal menghasilkan konten. Modul dibuat dengan template generik — periksa koneksi/kuota AI lalu coba lagi.',
@@ -237,17 +283,12 @@ export const useModulAjarGenerator = ({
           })
         : [];
 
-      let kegiatanIntiData: any[] = [];
-      const aiSteps =
+      let kegiatanIntiData: ScenarioRow[] = [];
+      const aiSteps: unknown =
         aiGeneratedData?.skenarioPembelajaran || bp?.konten_json?.skenarioPembelajaran;
 
-      if (aiSteps && Array.isArray(aiSteps) && aiSteps.length > 0) {
-        kegiatanIntiData = aiSteps.map((s: any, idx: number) => ({
-          name: s.name || s.fase || `Langkah ${idx + 1}`,
-          fase: s.name || s.fase || `Langkah ${idx + 1}`,
-          kegiatanGuru: s.guru || s.kegiatanGuru || s.kegiatan_guru || '',
-          kegiatanSiswa: s.siswa || s.kegiatanSiswa || s.kegiatan_siswa || '',
-        }));
+      if (Array.isArray(aiSteps) && aiSteps.length > 0) {
+        kegiatanIntiData = aiSteps.map(toScenarioRow);
       } else {
         const resolvedSyntax = resolveLearningSyntax(
           sintaksList,
@@ -258,12 +299,7 @@ export const useModulAjarGenerator = ({
           formState.mataPelajaran,
         );
 
-        kegiatanIntiData = resolvedSyntax.steps.map((s: any) => ({
-          name: s.name,
-          fase: s.name,
-          kegiatanGuru: s.teacherActivity,
-          kegiatanSiswa: s.studentActivity,
-        }));
+        kegiatanIntiData = fromResolvedSyntax(resolvedSyntax);
       }
 
       let tujuanPembelajaranList: string[] = formState.manualTujuanPembelajaran
@@ -369,7 +405,7 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
       tujuanPembelajaranList = withMateriInsersi(tujuanPembelajaranList, formState);
 
       // Build rich structured Pendahuluan & Penutup
-      let pendahuluanData: any =
+      let pendahuluanData: unknown =
         aiGeneratedData?.kegiatanPendahuluan || bp?.konten_json?.kegiatanPendahuluan;
       if (!pendahuluanData || (Array.isArray(pendahuluanData) && pendahuluanData.length === 0)) {
         if (formState.isKbcIntegrated || formState.curriculumApproach === 'Berbasis Cinta') {
@@ -391,7 +427,7 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
         }
       }
 
-      let penutupData: any = aiGeneratedData?.kegiatanPenutup || bp?.konten_json?.kegiatanPenutup;
+      let penutupData: unknown = aiGeneratedData?.kegiatanPenutup || bp?.konten_json?.kegiatanPenutup;
       if (!penutupData || (Array.isArray(penutupData) && penutupData.length === 0)) {
         if (formState.isKbcIntegrated || formState.curriculumApproach === 'Berbasis Cinta') {
           penutupData = [
@@ -454,13 +490,13 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
           '',
         lkpdTugas: lkpdText,
         soalEvaluasi: evaluasiText,
-        kunciJawaban: aiGeneratedData?.kunciJawaban || (bp as any)?.konten_json?.kunciJawaban || [],
+        kunciJawaban: aiGeneratedData?.kunciJawaban || bp?.konten_json?.kunciJawaban || [],
         kegiatanPendahuluan: pendahuluanData,
         kegiatanInti: kegiatanIntiData,
         kegiatanPenutup: penutupData,
         capaianPembelajaran:
-          formState.capaianPembelajaran || (bp as any)?.capaian_pembelajaran || '',
-        kompetensiAwal: formState.kompetensiAwal || (bp as any)?.kompetensi_awal || '',
+          formState.capaianPembelajaran || bp?.capaian_pembelajaran || '',
+        kompetensiAwal: formState.kompetensiAwal || bp?.kompetensi_awal || '',
         asesmenSikap: sikapText,
         asesmenKeterampilan: keterampilanText,
         asesmenPengetahuan: pengetahuanText,
@@ -576,38 +612,28 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
           ? 'Modul ajar selesai disusun AI dan tersimpan di Riwayat. Drafnya juga dikirim ke Bank Bersama untuk ditinjau admin.'
           : t.lessonPlan.saveSuccess,
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      showError(t.lessonPlan.saveFailed.replace('{message}', err.message));
+      showError(t.lessonPlan.saveFailed.replace('{message}', err instanceof Error ? err.message : String(err)));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const renderPrivateDraftAiModulAjar = async (aiOutput: any) => {
+  const renderPrivateDraftAiModulAjar = async (aiOutput: AiDraftOutput) => {
     if (!user) return;
     const totalJP = formState.jumlahPertemuan * formState.jpPerPertemuan;
 
-    let kegiatanIntiData: any[] = [];
-    const sourceSteps =
+    let kegiatanIntiData: ScenarioRow[];
+    const sourceSteps: object[] | undefined =
       aiOutput.skenarioPembelajaran || aiOutput.kegiatanInti || aiOutput.konteksSintaks;
 
     if (Array.isArray(sourceSteps) && sourceSteps.length > 0) {
-      kegiatanIntiData = sourceSteps.map((s: any, idx: number) => ({
-        name: s.name || s.fase || (s.urutan ? `Langkah ${s.urutan}` : `Langkah ${idx + 1}`),
-        fase: s.name || s.fase || (s.urutan ? `Langkah ${s.urutan}` : `Langkah ${idx + 1}`),
-        kegiatanGuru: s.guru || s.kegiatanGuru || s.kegiatan_guru || '',
-        kegiatanSiswa: s.siswa || s.kegiatanSiswa || s.kegiatan_siswa || '',
-      }));
+      kegiatanIntiData = sourceSteps.map(toScenarioRow);
     } else {
-      const resolvedSyntax =
-        aiOutput._resolvedSyntax || resolveLearningSyntax([], [], formState.modelPembelajaran);
-      kegiatanIntiData = resolvedSyntax.steps.map((s: any) => ({
-        name: s.name,
-        fase: s.name,
-        kegiatanGuru: s.teacherActivity,
-        kegiatanSiswa: s.studentActivity,
-      }));
+      kegiatanIntiData = fromResolvedSyntax(
+        aiOutput._resolvedSyntax || resolveLearningSyntax([], [], formState.modelPembelajaran),
+      );
     }
 
     const pendahuluanData = aiOutput.kegiatanPendahuluan || [

@@ -83,6 +83,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Gagal menyimpan hasil AI kini muncul sebagai pesan. Reset formulir memakai nama sekolah dan alokasi waktu yang benar. Frasa materi insersi KBC tidak lagi berlipat.
   - Permintaan AI membawa kelas, CP, TP guru, profil, dan tema KBC, dan tidak lagi memakai jawaban tersimpan selama 1 jam.
   - Riwayat dimuat tanpa isi dokumen; isinya diambil saat dibuka atau diunduh.
+  - Riwayat dikelompokkan per dokumen dengan daftar versi sebelumnya. Menghapus kini bisa diurungkan (soft delete).
+  - Menyusun ulang dokumen yang sudah diedit langsung meminta konfirmasi.
+  - AI Modul Ajar mendapat batas waktu 60 detik (sebelumnya 30), hasil yang tidak lengkap diminta ulang sekali, dan proses AI bisa dibatalkan.
 - **API AI:** `api/_auth.ts` tidak lagi melewati login hanya karena header `Host`/`X-Forwarded-Host` berisi `localhost`.
 - **Input Penilaian** (temuan audit `docs/audit-input-penilaian-2026-10-04.md`):
   - Semester yang dipilih guru tidak lagi ditimpa trigger. `set_academic_record_semester_id()` dan `set_quiz_point_semester_id()` kini mempertahankan semester yang dikirim; poin tanpa semester ditentukan dari `quiz_date` (migrasi `20261004104503`, diterapkan 4 Oktober). Formulir nilai menolak menyimpan ke semester yang sudah dikunci, dan poin keaktifan/sikap memakai semester sesuai tanggalnya.

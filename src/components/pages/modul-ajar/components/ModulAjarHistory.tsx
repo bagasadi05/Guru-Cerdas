@@ -12,6 +12,7 @@ import {
   Download,
   FileDown,
   Loader2,
+  ChevronDown,
 } from 'lucide-react';
 import { useTranslation } from '../../../../utils/i18n';
 
@@ -28,6 +29,21 @@ interface ModulAjarHistoryProps {
   exportingKey?: string | null;
 }
 
+/** Regenerating a topic adds a version; these fields identify the document. */
+const documentKey = (item: any) =>
+  [item.document_type, item.identity?.mapel, item.identity?.topik, item.identity?.kelas]
+    .map((v) => String(v ?? '').trim().toLowerCase())
+    .join('|');
+
+const formatVersionDate = (iso: string) =>
+  new Date(iso).toLocaleString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
 export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
   history,
   isLoading,
@@ -42,6 +58,7 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'Modul Ajar' | 'RPP' | 'KBC'>('all');
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
   const filteredHistory = useMemo(() => {
     return history.filter((item) => {
@@ -73,6 +90,94 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
       );
     });
   }, [history, searchTerm, filterType]);
+
+  // History is newest first, so the first item of each group is the latest version.
+  const groups = useMemo(() => {
+    const byKey = new Map<string, any[]>();
+    filteredHistory.forEach((item) => {
+      const key = documentKey(item);
+      const group = byKey.get(key);
+      if (group) group.push(item);
+      else byKey.set(key, [item]);
+    });
+    return Array.from(byKey, ([key, items]) => ({ key, latest: items[0], older: items.slice(1) }));
+  }, [filteredHistory]);
+
+  const renderActions = (item: any, compact = false) => {
+    const isExportingPdf = exportingKey === `${item.id}:pdf`;
+    const isExportingWord = exportingKey === `${item.id}:docx`;
+    const iconClass = compact ? 'w-3 h-3' : 'w-3.5 h-3.5';
+    return (
+      <div className="flex items-center gap-1">
+        {onDuplicate && !compact && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDuplicate(item, e);
+            }}
+            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-brand-600 rounded-lg transition-colors cursor-pointer"
+            title="Salin sebagai Draf Baru"
+          >
+            <Copy className={iconClass} />
+          </button>
+        )}
+
+        {onExportPdf && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onExportPdf(item, e);
+            }}
+            disabled={exportingKey !== null}
+            aria-busy={isExportingPdf}
+            className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            title="Unduh Dokumen PDF Langsung"
+          >
+            {isExportingPdf ? (
+              <Loader2 className={`${iconClass} animate-spin text-red-500`} />
+            ) : (
+              <FileDown className={iconClass} />
+            )}
+          </button>
+        )}
+
+        {onExportWord && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onExportWord(item, e);
+            }}
+            disabled={exportingKey !== null}
+            aria-busy={isExportingWord}
+            className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-slate-400 hover:text-blue-600 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            title="Unduh Dokumen Word"
+          >
+            {isExportingWord ? (
+              <Loader2 className={`${iconClass} animate-spin text-blue-500`} />
+            ) : (
+              <Download className={iconClass} />
+            )}
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(item.id, e);
+          }}
+          aria-label={t.lessonPlan.rubricHapus}
+          className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-500 rounded-lg transition-colors opacity-80 group-hover:opacity-100 cursor-pointer"
+          title="Hapus dari Riwayat"
+        >
+          <Trash2 className={iconClass} />
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className="w-full max-w-4xl space-y-4">
@@ -156,19 +261,19 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredHistory.map((item) => {
+          {groups.map(({ key, latest: item, older }) => {
             const isKbc =
               item.components?.isKbcIntegrated || item.curriculum_approach === 'Berbasis Cinta';
-            const isExportingPdf = exportingKey === `${item.id}:pdf`;
-            const isExportingWord = exportingKey === `${item.id}:docx`;
+            const isExpanded = expandedKey === key;
 
             return (
               <div
-                key={item.id}
+                key={key}
                 onClick={() => onRestore(item)}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
+                  if (e.target !== e.currentTarget) return;
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     onRestore(item);
@@ -192,70 +297,7 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1">
-                      {onDuplicate && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDuplicate(item, e);
-                          }}
-                          className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-brand-600 rounded-lg transition-colors cursor-pointer"
-                          title="Salin sebagai Draf Baru"
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-
-                      {onExportPdf && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onExportPdf(item, e);
-                          }}
-                          disabled={exportingKey !== null}
-                          aria-busy={isExportingPdf}
-                          className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                          title="Unduh Dokumen PDF Langsung"
-                        >
-                          {isExportingPdf ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-red-500" />
-                          ) : (
-                            <FileDown className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                      )}
-
-                      {onExportWord && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onExportWord(item, e);
-                          }}
-                          disabled={exportingKey !== null}
-                          aria-busy={isExportingWord}
-                          className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-slate-400 hover:text-blue-600 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                          title="Unduh Dokumen Word"
-                        >
-                          {isExportingWord ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500" />
-                          ) : (
-                            <Download className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                      )}
-
-                      <button
-                        onClick={(e) => onDelete(item.id, e)}
-                        aria-label={t.lessonPlan.rubricHapus}
-                        className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-500 rounded-lg transition-colors opacity-80 group-hover:opacity-100 cursor-pointer"
-                        title="Hapus dari Riwayat"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                    {renderActions(item)}
                   </div>
 
                   <h4 className="font-bold text-slate-800 dark:text-white text-sm line-clamp-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
@@ -274,6 +316,7 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
                   <div className="flex items-center gap-1 text-brand-600 dark:text-brand-400 font-semibold group-hover:underline">
                     <Eye className="w-3 h-3" />
                     <span>
+                      {older.length > 0 ? 'Terbaru, ' : ''}
                       {new Date(item.created_at).toLocaleDateString('id-ID', {
                         month: 'short',
                         day: 'numeric',
@@ -282,6 +325,44 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
                     </span>
                   </div>
                 </div>
+
+                {older.length > 0 && (
+                  <div
+                    className="-mx-1 -mb-1 cursor-default"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      aria-expanded={isExpanded}
+                      onClick={() => setExpandedKey(isExpanded ? null : key)}
+                      className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                    >
+                      <span>{older.length} versi sebelumnya</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                    </button>
+                    {isExpanded && (
+                      <ul className="mt-1 space-y-1">
+                        {older.map((version: any) => (
+                          <li
+                            key={version.id}
+                            className="flex items-center justify-between gap-2 px-2 py-1 rounded-lg bg-slate-50 dark:bg-slate-800/60"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => onRestore(version)}
+                              className="text-[11px] text-slate-700 dark:text-slate-200 hover:text-brand-600 hover:underline cursor-pointer text-left"
+                              title="Buka versi ini"
+                            >
+                              {formatVersionDate(version.created_at)}
+                            </button>
+                            {renderActions(version, true)}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}

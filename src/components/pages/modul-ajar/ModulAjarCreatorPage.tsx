@@ -6,7 +6,6 @@ import {
   Printer,
   FileText,
   FileDown,
-  Clock,
   ZoomIn,
   ZoomOut,
   Minimize2,
@@ -18,6 +17,7 @@ import { FormState } from './types';
 import { extractStudentHtml } from './utils/template';
 import { exportModulAjarToPdf } from './utils/pdfExport';
 import { exportModulAjarToWord } from './utils/wordExport';
+import { printModulAjarHtml } from './utils/printDocument';
 import { sanitizeContent } from '../../../services/securityEnhanced';
 import { useModulAjarAiJob } from './hooks/useModulAjarAiJob';
 import {
@@ -40,10 +40,13 @@ import { ModulAjarPreview } from './components/ModulAjarPreview';
 import { CONTENT_FIELDS, type ContentField, useModulAjarForm } from './hooks/useModulAjarForm';
 import { buildAiPromptContext } from './utils/aiPromptContext';
 import { useModulAjarGenerator } from './hooks/useModulAjarGenerator';
+import { type LessonPlanListItem, useModulAjarHistory } from './hooks/useModulAjarHistory';
+import { UndoBar } from './components/UndoBar';
 import { useToast } from '../../../hooks/useToast';
 import { ConfirmationDialog } from '../../ui/ConfirmationDialog';
 import { ExportFailureBanner, type ExportFailure } from './components/ExportFailureBanner';
 import { ModulAjarToolbar } from './components/ModulAjarToolbar';
+import { AiWaitingCard } from './components/AiWaitingCard';
 import { DownloadMenu } from './components/DownloadMenu';
 import {
   DocumentExportError,
@@ -53,10 +56,6 @@ import {
   type DocumentExportRequest,
 } from '../../../services/documentExportService';
 import type { ExportFormat } from '../../../lib/modulAjarExport/types';
-
-/** History rows are listed without the document HTML; it is loaded when needed. */
-const HISTORY_COLUMNS =
-  'id, user_id, document_type, curriculum_approach, generation_method, identity, components, created_at, updated_at';
 
 const isContentField = (field: string): field is ContentField =>
   (CONTENT_FIELDS as readonly string[]).includes(field);
@@ -98,14 +97,24 @@ const ModulAjarCreatorPage: React.FC = () => {
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
-  const [history, setHistory] = useState<any[]>([]);
-  const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
-  const [historyError, setHistoryError] = useState<string | null>(null);
+  const {
+    history,
+    isLoading: isLoadingHistory,
+    error: historyError,
+    fetchHistory,
+    loadPlanContent: fetchPlanContent,
+    softDelete,
+    undoDelete,
+    updateLocal: updateHistoryItem,
+  } = useModulAjarHistory(user?.id);
+  /** The document just removed from Riwayat, while Urungkan is still offered. */
+  const [deletedPlan, setDeletedPlan] = useState<LessonPlanListItem | null>(null);
+  // Stable, so the undo bar's timer is not restarted by every re-render.
+  const clearDeletedPlan = useCallback(() => setDeletedPlan(null), []);
 
   const [aiCacheWarning, setAiCacheWarning] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string>('');
   const [fieldLoading, setFieldLoading] = useState<Record<string, boolean>>({});
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [resetConfirmOpen, setResetConfirmOpen] = useState<boolean>(false);
   const [isExportingPdf, setIsExportingPdf] = useState<boolean>(false);
   const [currentLessonPlanId, setCurrentLessonPlanId] = useState<string | null>(null);
@@ -118,6 +127,12 @@ const ModulAjarCreatorPage: React.FC = () => {
   const [editStatus, setEditStatus] = useState<'unsaved' | 'saving' | 'saved' | 'error' | null>(null);
   /** The form the displayed document was built from (identity on the student sheet). */
   const [documentForm, setDocumentForm] = useState<FormState | null>(null);
+  /**
+   * The displayed document holds text typed in the preview. A regenerated
+   * document is built from the form, so those edits would not carry over.
+   */
+  const [documentHasEdits, setDocumentHasEdits] = useState<boolean>(false);
+  const [regenerateConfirmOpen, setRegenerateConfirmOpen] = useState<boolean>(false);
   const exportInFlightRef = useRef(false);
   const useServerExport = isServerDocumentExportEnabled();
 
@@ -141,53 +156,11 @@ const ModulAjarCreatorPage: React.FC = () => {
       .catch((err) => console.error('Failed to load logo_sekolah.png:', err));
   }, []);
 
-  const fetchHistory = useCallback(async () => {
-    if (!user) return;
-    setIsLoadingHistory(true);
-    try {
-      const { data, error } = await supabase
-        .from('lesson_plans')
-        .select(HISTORY_COLUMNS)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Failed to load history:', error);
-        setHistoryError(`Gagal memuat riwayat: ${error.message}`);
-        setHistory([]);
-      } else if (data) {
-        setHistory(data);
-        setHistoryError(null);
-      }
-    } catch (e) {
-      console.error('Failed to load history:', e);
-      setHistoryError('Gagal memuat riwayat. Periksa koneksi lalu coba lagi.');
-      setHistory([]);
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    fetchHistory();
-  }, [fetchHistory]);
-
-  /** Loads one saved document's HTML (history rows are listed without it). */
-  const loadPlanContent = async (plan: {
-    id: string;
-    generated_content?: string | null;
-  }): Promise<string | null> => {
-    if (plan.generated_content) return plan.generated_content;
-    const { data, error } = await supabase
-      .from('lesson_plans')
-      .select('generated_content')
-      .eq('id', plan.id)
-      .single();
-    if (error || !data?.generated_content) {
-      toast.error('Dokumen gagal dimuat. Periksa koneksi, lalu coba lagi.');
-      return null;
-    }
-    return data.generated_content as string;
+  /** Loads one saved document's HTML; history rows are listed without it. */
+  const loadPlanContent = async (plan: { id: string; generated_content?: string | null }) => {
+    const content = await fetchPlanContent(plan);
+    if (content === null) toast.error('Dokumen gagal dimuat. Periksa koneksi, lalu coba lagi.');
+    return content;
   };
 
   const isAiEnabled = import.meta.env.VITE_ENABLE_AI_MODUL_AJAR === 'true';
@@ -210,6 +183,7 @@ const ModulAjarCreatorPage: React.FC = () => {
       onDocumentSaved: (lessonPlanId, builtFrom) => {
         setCurrentLessonPlanId(lessonPlanId);
         setDocumentForm(builtFrom);
+        setDocumentHasEdits(false);
         setHasUnsavedEdits(false);
         setEditStatus(null);
       },
@@ -242,6 +216,16 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   const queueStatus = isAiEnabled ? queueHookResult.jobStatus : 'idle';
 
+  const runGenerate = () => {
+    setRegenerateConfirmOpen(false);
+    setMobileActiveView('preview');
+    if (isAiEnabled) {
+      queueHookResult.startJob();
+    } else {
+      generateManualModulAjar();
+    }
+  };
+
   const handleGenerate = () => {
     if (!formState.mataPelajaran || !formState.topik) {
       toast.error(t.lessonPlan.validateSubject);
@@ -257,12 +241,11 @@ const ModulAjarCreatorPage: React.FC = () => {
       setActiveStep(formState.profilPelajar.length === 0 ? 3 : 5);
       return;
     }
-    setMobileActiveView('preview');
-    if (isAiEnabled) {
-      queueHookResult.startJob();
-    } else {
-      generateManualModulAjar();
+    if (generatedDocument && documentHasEdits) {
+      setRegenerateConfirmOpen(true);
+      return;
     }
+    runGenerate();
   };
 
   const FIELD_LABELS: Record<string, string> = {
@@ -411,10 +394,9 @@ const ModulAjarCreatorPage: React.FC = () => {
       return;
     }
     setHasUnsavedEdits(false);
+    setDocumentHasEdits(true);
     setEditStatus('saved');
-    setHistory((prev) =>
-      prev.map((item) => (item.id === lessonPlanId ? { ...item, generated_content: cleanHtml } : item)),
-    );
+    updateHistoryItem(lessonPlanId, { generated_content: cleanHtml });
   };
 
   const markPreviewEdited = () => {
@@ -495,12 +477,9 @@ const ModulAjarCreatorPage: React.FC = () => {
 
     setGeneratedDocument(cleanHtml);
     setHasUnsavedEdits(false);
+    setDocumentHasEdits(true);
     setEditStatus('saved');
-    setHistory((prev) =>
-      prev.map((item) =>
-        item.id === lessonPlanId ? { ...item, generated_content: cleanHtml } : item,
-      ),
-    );
+    updateHistoryItem(lessonPlanId, { generated_content: cleanHtml });
     void runServerExport({
       source: 'preview',
       lessonPlanId,
@@ -557,97 +536,9 @@ const ModulAjarCreatorPage: React.FC = () => {
     if (!rawContent) return;
     const printContent = sanitizeContent(rawContent);
 
-    const printWindow = window.open('', '', 'height=600,width=800');
-    if (!printWindow) return;
-
-    printWindow.document.write('<html><head><title>Cetak Modul Ajar</title>');
-    const isF4 = formState.paperSize === 'F4';
-    printWindow.document.write(`
-      <style>
-        @page {
-          size: ${isF4 ? '215mm 330mm' : 'A4'};
-          margin: 1.4cm 1.5cm;
-        }
-        body {
-          font-family: 'Times New Roman', Times, serif;
-          padding: 0;
-          margin: 0;
-          color: #000000;
-          background-color: #ffffff;
-          line-height: 1.5;
-        }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 0.8rem;
-        }
-        tr {
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-        }
-        td[style*="justify"], td [style*="justify"] {
-          text-align: left !important;
-        }
-        .signature-block {
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-          margin-top: 16px !important;
-        }
-        .keep-with-next, h1, h2, h3, h4, .section-header {
-          page-break-after: avoid !important;
-          break-after: avoid !important;
-        }
-        @media print {
-          body {
-            font-family: 'Times New Roman', Times, serif;
-            background-color: #ffffff;
-            color: #000000;
-            padding: 0;
-            margin: 0;
-            line-height: 1.5;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          tr {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-          }
-          .signature-block {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-          }
-          .keep-with-next, h1, h2, h3, h4 {
-            page-break-after: avoid !important;
-            break-after: avoid !important;
-          }
-          td[style*="background-color: #0d6b3e"], div[style*="background-color: #0d6b3e"] {
-            background-color: #0d6b3e !important;
-            color: #ffffff !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          td[style*="background-color: #f5f0d0"], div[style*="background-color: #f5f0d0"] {
-            background-color: #f5f0d0 !important;
-            color: #000000 !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-        }
-      </style>
-    `);
-    printWindow.document.write('</head><body>');
-    printWindow.document.write(printContent);
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.onafterprint = () => printWindow.close();
-    setTimeout(() => {
-      try {
-        printWindow.print();
-      } catch (e) {
-        console.error('Gagal mencetak:', e);
-      }
-    }, 500);
+    if (!printModulAjarHtml(printContent, formState.paperSize)) {
+      toast.error('Jendela cetak diblokir browser. Izinkan pop-up untuk situs ini, lalu coba lagi.');
+    }
   };
 
   const handleExportWord = () => {
@@ -676,35 +567,42 @@ const ModulAjarCreatorPage: React.FC = () => {
     }
   };
 
+  /**
+   * Removes a document from Riwayat right away and offers Urungkan for 10 s.
+   * The row is soft-deleted, so undoing brings it back unchanged.
+   */
   const deleteHistoryItem = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setDeleteConfirmId(id);
-  };
-
-  const confirmDeleteHistory = async () => {
-    if (!deleteConfirmId) return;
-    const id = deleteConfirmId;
+    let removed: LessonPlanListItem | null;
     try {
-      const { error } = await supabase.from('lesson_plans').delete().eq('id', id);
-      if (!error) {
-        setHistory((prev) => prev.filter((item) => item.id !== id));
-        // The document on screen was the one deleted: nothing left to show or save to.
-        if (id === currentLessonPlanId) {
-          setCurrentLessonPlanId(null);
-          setGeneratedDocument('');
-          setDocumentForm(null);
-          setHasUnsavedEdits(false);
-          setEditStatus(null);
-        }
-        toast.success('Riwayat berhasil dihapus');
-      } else {
-        toast.error(`Gagal menghapus: ${error.message}`);
-      }
+      removed = await softDelete(id);
     } catch (err) {
       console.error('Failed to delete history item:', err);
-      toast.error('Gagal menghapus riwayat');
-    } finally {
-      setDeleteConfirmId(null);
+      toast.error('Gagal menghapus. Periksa koneksi, lalu coba lagi.');
+      return;
+    }
+    // The document on screen was the one deleted: nothing left to show or save to.
+    if (id === currentLessonPlanId) {
+      setCurrentLessonPlanId(null);
+      setGeneratedDocument('');
+      setDocumentForm(null);
+      setDocumentHasEdits(false);
+      setHasUnsavedEdits(false);
+      setEditStatus(null);
+    }
+    if (removed) setDeletedPlan(removed);
+  };
+
+  const undoDeletePlan = async () => {
+    const plan = deletedPlan;
+    setDeletedPlan(null);
+    if (!plan) return;
+    try {
+      await undoDelete(plan);
+      toast.success('Modul ajar dikembalikan ke Riwayat.');
+    } catch (err) {
+      console.error('Failed to undo delete:', err);
+      toast.error('Gagal mengembalikan modul ajar. Coba lagi.');
     }
   };
 
@@ -715,6 +613,10 @@ const ModulAjarCreatorPage: React.FC = () => {
     setDocumentForm(restored);
     setGeneratedDocument(content);
     setCurrentLessonPlanId(plan.id);
+    // A plan updated well after it was created was edited in the preview.
+    setDocumentHasEdits(
+      Boolean(plan.updated_at) && Date.parse(plan.updated_at) - Date.parse(plan.created_at) > 5000,
+    );
     setHasUnsavedEdits(false);
     setEditStatus(null);
     setActiveTab('preview');
@@ -737,6 +639,7 @@ const ModulAjarCreatorPage: React.FC = () => {
     setGeneratedDocument('');
     setCurrentLessonPlanId(null);
     setDocumentForm(null);
+    setDocumentHasEdits(false);
     setHasUnsavedEdits(false);
     setEditStatus(null);
     setActiveTab('preview');
@@ -802,6 +705,7 @@ const ModulAjarCreatorPage: React.FC = () => {
     setGeneratedDocument('');
     setCurrentLessonPlanId(null);
     setDocumentForm(null);
+    setDocumentHasEdits(false);
     setHasUnsavedEdits(false);
     setEditStatus(null);
     setActiveStep(1);
@@ -811,13 +715,24 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col lg:flex-row gap-5 pb-20 lg:pb-0">
-      {/* Delete Confirmation Dialog */}
+      {deletedPlan && (
+        <UndoBar
+          key={deletedPlan.id}
+          message="Modul ajar dihapus dari Riwayat."
+          onUndo={undoDeletePlan}
+          onExpire={clearDeletedPlan}
+        />
+      )}
+
+      {/* Regenerating replaces preview edits with a document built from the form */}
       <ConfirmationDialog
-        isOpen={!!deleteConfirmId}
-        title={t.lessonPlan.deleteConfirm}
-        message="Tindakan ini tidak dapat dibatalkan. Riwayat modul ajar ini akan dihapus permanen."
-        onConfirm={confirmDeleteHistory}
-        onClose={() => setDeleteConfirmId(null)}
+        isOpen={regenerateConfirmOpen}
+        title="Susun ulang dokumen?"
+        message="Dokumen baru dibuat dari isian formulir, jadi perubahan yang Anda ketik langsung di dokumen tidak ikut. Dokumen yang sekarang tetap tersimpan sebagai versi sebelumnya di Riwayat."
+        onConfirm={runGenerate}
+        onClose={() => setRegenerateConfirmOpen(false)}
+        variant="warning"
+        confirmText="Susun Ulang"
       />
 
       {/* Reset Confirmation Dialog */}
@@ -1055,61 +970,18 @@ const ModulAjarCreatorPage: React.FC = () => {
         <div className="relative flex-1 overflow-y-auto p-4 md:p-8 flex justify-center bg-slate-200/50 dark:bg-slate-950/50 scrollbar-thin">
           {activeTab === 'preview' ? (
             <>
-              {/* AI Processing Modal Overlay */}
-              {isAiGenerating && (
-                <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-xs z-30 flex items-center justify-center p-6 text-center">
-                  <MotionDiv
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-sm w-full space-y-4"
-                  >
-                    <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
-                      <div className="absolute inset-0 rounded-full border-4 border-brand-100 dark:border-brand-900/30"></div>
-                      <div className="absolute inset-0 rounded-full border-4 border-brand-500 border-t-transparent animate-spin"></div>
-                      <Clock className="w-6 h-6 text-brand-500 animate-pulse" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <h3 className="font-bold text-slate-800 dark:text-white">
-                        AI Sedang Menyusun Dokumen
-                      </h3>
-                      <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold animate-pulse">
-                        Menghubungi AI... Sedang menulis skenario, LKPD, dan komponen evaluasi.
-                      </p>
-                    </div>
-                  </MotionDiv>
-                </div>
-              )}
+              {/* AI fallback inside the template path (no job to cancel) */}
+              {isAiGenerating && <AiWaitingCard title="AI sedang menyusun dokumen" />}
 
               {(queueStatus === 'pending' || queueStatus === 'processing') && (
-                <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-xs z-30 flex items-center justify-center p-6 text-center">
-                  <MotionDiv
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-sm w-full space-y-4"
-                  >
-                    <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
-                      <div className="absolute inset-0 rounded-full border-4 border-brand-100 dark:border-brand-900/30"></div>
-                      <div className="absolute inset-0 rounded-full border-4 border-brand-500 border-t-transparent animate-spin"></div>
-                      <Clock className="w-6 h-6 text-brand-500 animate-pulse" />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <h3 className="font-bold text-slate-800 dark:text-white">
-                        Antrian Pemrosesan AI
-                      </h3>
-                      {(queueStatus as string) === 'pending' ||
-                      (queueStatus as string) === 'retry_wait' ? (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Permintaan dikirim ke server. Harap tunggu...
-                        </p>
-                      ) : (
-                        <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold animate-pulse">
-                          Menghubungi AI... Sedang menulis perangkat ajar Anda.
-                        </p>
-                      )}
-                    </div>
-                  </MotionDiv>
-                </div>
+                <AiWaitingCard
+                  title="AI sedang menyusun modul ajar"
+                  startedAt={queueHookResult.startedAt}
+                  onCancel={() => {
+                    queueHookResult.cancelJob();
+                    toast.info('Penyusunan dibatalkan. Isian formulir tidak berubah.');
+                  }}
+                />
               )}
 
               {/* Main Document Preview */}

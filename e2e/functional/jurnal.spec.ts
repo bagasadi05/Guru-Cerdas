@@ -1,6 +1,10 @@
+import { readFileSync } from 'node:fs';
 import { test, expect, type Page } from '@playwright/test';
 
 const supabaseUrl = 'https://test.supabase.co';
+
+/** The "Apa yang baru" dialog covers the page until the newest release is marked as seen. */
+const LATEST_RELEASE_ID: string = JSON.parse(readFileSync('public/release-notes.json', 'utf8'))[0].id;
 
 const MOCK_USER_ID = 'a3b17c91-2394-4d87-9759-3fb7072dbcb0';
 const MOCK_CLASS_ID = 'c0926bdf-fb35-46bd-8588-e25fa6312a02';
@@ -110,10 +114,14 @@ async function setupSupabaseMocks(page: Page) {
 }
 
 async function authenticate(page: Page) {
-  await page.addInitScript((session) => {
-    window.localStorage.setItem('portal-guru-auth', JSON.stringify(session));
-    window.localStorage.setItem('onboarding_completed', 'true');
-  }, MOCK_AUTH_SESSION);
+  await page.addInitScript(
+    ({ session, releaseId }) => {
+      window.localStorage.setItem('portal-guru-auth', JSON.stringify(session));
+      window.localStorage.setItem('onboarding_completed', 'true');
+      window.localStorage.setItem('release-notes-last-seen', releaseId);
+    },
+    { session: MOCK_AUTH_SESSION, releaseId: LATEST_RELEASE_ID },
+  );
   await setupSupabaseMocks(page);
 }
 

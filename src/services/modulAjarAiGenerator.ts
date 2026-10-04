@@ -182,27 +182,29 @@ export interface CacheToDatabaseResult {
   error?: string;
 }
 
-export async function generateModulAjarAiContent(
-  mapel: string,
-  topik: string,
-  fase: string,
-  modelPembelajaran?: string,
-  metodePembelajaran?: string[],
-  onCacheError?: (message: string) => void,
-  context?: ModulAjarPromptContext
-): Promise<AiModulAjarContent> {
-  const prompt = buildPrompt(mapel, topik, fase, modelPembelajaran, metodePembelajaran, context);
+const MAX_CONTENT_ATTEMPTS = 2;
 
-  logger.info(`[AI Modul Ajar] Generating: ${mapel} / ${topik} / Fase ${fase}`, 'ModulAjarAI');
+const hasText = (value: unknown): boolean =>
+  typeof value === 'string'
+    ? value.trim() !== ''
+    : Array.isArray(value) && value.some((item) => typeof item === 'string' && item.trim() !== '');
 
-  // Generating is a deliberate request for a new document; never replay a cached one.
-  const result = await generateGeminiJson<AiModulAjarContent>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar', { bypassCache: true });
+/** Parts a usable document cannot do without. Returns their names, empty when complete. */
+export function findMissingModulAjarParts(content: AiModulAjarContent): string[] {
+  const missing: string[] = [];
+  if (!hasText(content.tujuanPembelajaran)) missing.push('tujuan pembelajaran');
+  const steps = (content.skenarioPembelajaran || []).filter(
+    (step) => String(step.guru || '').trim() && String(step.siswa || '').trim(),
+  );
+  if (steps.length < 2) missing.push('langkah kegiatan inti');
+  if (!hasText(content.lkpdTugas)) missing.push('LKPD');
+  if (!hasText(content.soalEvaluasi)) missing.push('soal evaluasi');
+  return missing;
+}
 
-  if (!result.tujuanPembelajaran || !Array.isArray(result.tujuanPembelajaran) || result.tujuanPembelajaran.length === 0) {
-    throw new Error('AI menghasilkan konten tidak lengkap (tujuan pembelajaran kosong).');
-  }
-
-  const normalized: AiModulAjarContent = {
+/** Maps the many field spellings models use onto AiModulAjarContent. */
+function normalizeAiModulAjar(result: AiModulAjarContent): AiModulAjarContent {
+  return {
     tujuanPembelajaran: result.tujuanPembelajaran || [],
     pemahamanBermakna: result.pemahamanBermakna || [],
     pertanyaanPemantik: result.pertanyaanPemantik || [],
@@ -238,6 +240,37 @@ export async function generateModulAjarAiContent(
     remedial: result.remedial || [],
     daftarPustaka: result.daftarPustaka || [],
   };
+}
+
+export async function generateModulAjarAiContent(
+  mapel: string,
+  topik: string,
+  fase: string,
+  modelPembelajaran?: string,
+  metodePembelajaran?: string[],
+  onCacheError?: (message: string) => void,
+  context?: ModulAjarPromptContext
+): Promise<AiModulAjarContent> {
+  const prompt = buildPrompt(mapel, topik, fase, modelPembelajaran, metodePembelajaran, context);
+
+  logger.info(`[AI Modul Ajar] Generating: ${mapel} / ${topik} / Fase ${fase}`, 'ModulAjarAI');
+
+  // Generating is a deliberate request for a new document; never replay a cached one.
+  // A document missing these parts is unusable and the template has no
+  // fallback for them. One retry, then a clear error instead of empty sections.
+  let normalized: AiModulAjarContent | null = null;
+  let missing: string[] = [];
+  for (let attempt = 1; attempt <= MAX_CONTENT_ATTEMPTS; attempt++) {
+    // Generating is a deliberate request for a new document; never replay a cached one.
+    const result = await generateGeminiJson<AiModulAjarContent>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar', { bypassCache: true });
+    normalized = normalizeAiModulAjar(result);
+    missing = findMissingModulAjarParts(normalized);
+    if (missing.length === 0) break;
+    logger.warn(`[AI Modul Ajar] Attempt ${attempt} incomplete: ${missing.join(', ')}`, 'ModulAjarAI');
+  }
+  if (!normalized || missing.length > 0) {
+    throw new Error(`AI mengembalikan modul yang belum lengkap (kurang: ${missing.join(', ')}). Silakan susun ulang.`);
+  }
 
   // Simpan draf ke Bank Bersama — non-blocking, tapi error dilaporkan ke UI
   // agar guru tahu draf-nya gagal masuk antrian review admin (bukan diam-diam).

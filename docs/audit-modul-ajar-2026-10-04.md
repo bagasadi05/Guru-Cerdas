@@ -98,3 +98,19 @@ Belum diuji di browser sungguhan. Pemeriksaan manual yang disarankan:
 1. Susun dokumen topik A, ganti ke topik B, lalu susun lagi. Isi dokumen kedua harus bertopik B.
 2. Edit teks di pratinjau, klik di luar dokumen, muat ulang halaman, lalu pulihkan dari Riwayat. Hasil edit harus tetap ada.
 3. Buka Lembar Siswa. Lembar evaluasi harus tampil setelah LKPD.
+
+## Lanjutan: peningkatan alur (4 Oktober 2026)
+
+| No. | Perubahan |
+|---|---|
+| 1 | Menyusun ulang dokumen yang sudah diedit langsung kini meminta konfirmasi. Edit tidak hilang, karena dokumen lama tetap ada sebagai versi sebelumnya. Dokumen yang dipulihkan dianggap sudah diedit bila `updated_at` lebih dari 5 detik setelah `created_at`. |
+| 2 | Riwayat dikelompokkan per dokumen (jenis, mapel, topik, kelas). Kartu menampilkan versi terbaru, dan versi lama dibuka lewat "N versi sebelumnya". Data tidak diubah; setiap penyusunan tetap baris baru. |
+| 3 | Dugaan penyebab AI jarang dipakai: timeout klien 30 detik untuk semua tugas, padahal satu modul lengkap sering lebih lama. Tugas `modul-ajar` kini mendapat 60 detik (`TASK_TIMEOUT_MS` di `aiProvider`), dan `api/gemini.ts`/`api/groq.ts` mendapat `maxDuration: 60`. Log Vercel belum diperiksa, jadi penyebab ini belum dikonfirmasi. |
+| 4 | `findMissingModulAjarParts` memeriksa TP, minimal dua langkah kegiatan inti, LKPD, dan soal. Bila ada yang kosong, AI diminta sekali lagi; bila masih kosong, guru mendapat pesan yang menyebut bagian yang kurang. `aiContentSchemas.ts` tidak dipakai karena memakai format lain dan menolak `[Kotak …]` di LKPD. |
+| 5 | Hapus dari Riwayat kini mengisi `deleted_at`, dengan bilah Urungkan selama 10 detik. `UndoToast` aplikasi tidak bisa dipakai karena hanya mendukung entitas di `UndoManager`. |
+| 6 | Belum dikerjakan: ekspor `.docx` dari server butuh `VITE_ENABLE_SERVER_DOCUMENT_EXPORT=true` di Vercel dan uji di preview deployment. |
+| 7 | Overlay AI menampilkan waktu berjalan dan tombol Batalkan. Permintaan yang sudah terkirim tidak bisa dihentikan; hasilnya diabaikan dan tidak disimpan. |
+| 8 | `useModulAjarGenerator` bebas `any` (18 menjadi 0). Riwayat dipindah ke `useModulAjarHistory`, cetak ke `utils/printDocument.ts` (kini memberi pesan bila pop-up diblokir), dan overlay ke `AiWaitingCard`. Lint turun dari 560 ke 546 warning. |
+| 9 | `e2e/functional/modul-ajar.spec.ts` (3 tes, lulus di Chromium): versi Riwayat, membuka dokumen, Lembar Siswa, menyimpan edit, serta hapus dan urungkan. |
+
+Temuan samping: E2E fungsional lain tertutup dialog "Apa yang baru". `jurnal.spec.ts` sudah diberi penanda rilis terakhir, dan hasilnya naik dari 1/6 ke 3/6. Tiga sisanya gagal karena teks halaman Jurnal sudah berubah. `attendance*.spec.ts` dan `back-navigation.spec.ts` kemungkinan butuh penanda yang sama.

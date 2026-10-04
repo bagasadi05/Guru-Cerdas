@@ -16,6 +16,8 @@
       { "type": "perbaikan", "text": "Nilai yang diketik tapi belum disimpan tidak hilang lagi saat halaman dibuka ulang atau saat pindah kelas, semester, atau penilaian. Nilai itu disimpan sebagai draf di perangkat Anda." },
       { "type": "perbaikan", "text": "Modul Ajar: menyusun ulang setelah ganti topik kini benar-benar memakai topik baru, dan isian Anda tidak lagi ditimpa AI." },
       { "type": "perbaikan", "text": "Modul Ajar: Lembar Siswa kembali memuat soal evaluasi, dan perubahan yang Anda ketik langsung di dokumen kini tersimpan." },
+      { "type": "peningkatan", "text": "Modul Ajar: Riwayat mengelompokkan versi dokumen yang sama, dan modul yang terhapus bisa dikembalikan dengan Urungkan." },
+      { "type": "peningkatan", "text": "Modul Ajar: AI diberi waktu lebih lama untuk menyusun, dan prosesnya bisa dibatalkan." },
       { "type": "baru", "text": "Nilai mapel bisa disimpan walau sinyal hilang. Nilai disimpan di perangkat dan terkirim otomatis begitu HP kembali online." },
       { "type": "peningkatan", "text": "Saat menyimpan nilai, aplikasi hanya mengirim nilai yang Anda ubah. Kalau nilai yang sama baru diubah dari perangkat lain, Anda diminta memilih nilai mana yang dipakai." },
       { "type": "perbaikan", "text": "Tanggal keaktifan, sikap, dan pelanggaran kini otomatis terisi tanggal hari ini, termasuk sebelum pukul 07.00. Catatan pada poin sikap juga ikut tersimpan." }
