@@ -127,13 +127,22 @@ function parseRetryAfter(header: string | null | undefined): number {
  * @param messages - Chat messages array with role/content
  * @param taskType - Task classification for smart routing (default: 'general')
  */
+export interface AiRequestOptions {
+  /**
+   * Skip the cached response. For requests the user makes on purpose to get a
+   * new answer (regenerate), where the same prompt must not return old text.
+   */
+  bypassCache?: boolean;
+}
+
 export async function generateGeminiContent(
   messages: GeminiMessage[],
-  taskType: AiTaskType = 'general'
+  taskType: AiTaskType = 'general',
+  options: AiRequestOptions = {}
 ): Promise<GeminiResponse> {
   // Provider init happens eagerly; cache layer doesn't depend on Groq
   const cacheKey = buildCacheKeyForMessages(messages);
-  const cached = getCachedResponse<GeminiResponse>(cacheKey, `content:${taskType}`);
+  const cached = options.bypassCache ? null : getCachedResponse<GeminiResponse>(cacheKey, `content:${taskType}`);
   if (cached) {
     logger.info('[AI] Cache HIT — returning cached response', 'AI');
     return cached;
@@ -342,12 +351,13 @@ setTimeout(() => {
 export async function generateGeminiJson<T>(
   prompt: string,
   systemInstruction?: string,
-  taskType: AiTaskType = 'general'
+  taskType: AiTaskType = 'general',
+  options: AiRequestOptions = {}
 ): Promise<T> {
   // Check cache first — namespace per taskType agar prompt yang sama di
   // konteks berbeda (modul-ajar vs insight) tidak saling menimpa.
   const cacheCategory = detectCacheCategory(prompt);
-  const cached = getCachedResponse<T>(prompt, `json:${taskType}`);
+  const cached = options.bypassCache ? null : getCachedResponse<T>(prompt, `json:${taskType}`);
   if (cached) return cached;
 
   const messages: GeminiMessage[] = [];
@@ -361,7 +371,7 @@ export async function generateGeminiJson<T>(
 
   messages.push({ role: 'user', content: jsonPrompt });
 
-  const response = await generateGeminiContent(messages, taskType);
+  const response = await generateGeminiContent(messages, taskType, options);
   const content = getAssistantContent(response);
 
   // Parse using multi-stage robust JSON recovery

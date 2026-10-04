@@ -75,6 +75,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Penambahan *safe vertical buffer* (+6.5 mm) di bawah garis pembatas Kop Surat untuk mengeliminasi tabrakan antara dasar garis ganda dan huruf kapital judul dokumen.
 
 ### Fixed
+- **Modul Ajar** (audit `docs/audit-modul-ajar-2026-10-04.md`):
+  - Menyusun ulang setelah ganti topik tidak lagi membawa Tujuan Pembelajaran, LKPD, soal, dan rubrik topik sebelumnya. Formulir mencatat asal tiap isian; isian otomatis topik lama dihapus kecuali sudah diedit guru.
+  - Mode AI memakai isian guru dan hanya mengisi kolom yang kosong. Memulihkan atau menduplikat modul tidak lagi mengosongkan isiannya.
+  - Lembar Siswa kembali memuat lembar evaluasi (penanda `data-sheet`; dokumen lama tetap dikenali).
+  - Edit langsung di pratinjau tersimpan otomatis ke Riwayat.
+  - Gagal menyimpan hasil AI kini muncul sebagai pesan. Reset formulir memakai nama sekolah dan alokasi waktu yang benar. Frasa materi insersi KBC tidak lagi berlipat.
+  - Permintaan AI membawa kelas, CP, TP guru, profil, dan tema KBC, dan tidak lagi memakai jawaban tersimpan selama 1 jam.
+  - Riwayat dimuat tanpa isi dokumen; isinya diambil saat dibuka atau diunduh.
+- **API AI:** `api/_auth.ts` tidak lagi melewati login hanya karena header `Host`/`X-Forwarded-Host` berisi `localhost`.
 - **Input Penilaian** (temuan audit `docs/audit-input-penilaian-2026-10-04.md`):
   - Semester yang dipilih guru tidak lagi ditimpa trigger. `set_academic_record_semester_id()` dan `set_quiz_point_semester_id()` kini mempertahankan semester yang dikirim; poin tanpa semester ditentukan dari `quiz_date` (migrasi `20261004104503`, diterapkan 4 Oktober). Formulir nilai menolak menyimpan ke semester yang sudah dikunci, dan poin keaktifan/sikap memakai semester sesuai tanggalnya.
   - Draf nilai disimpan per akun dan per kelas–mapel–penilaian–semester (`src/utils/subjectGradeDraftStorage.ts`), dihapus saat logout, dan tidak lagi tertimpa nilai dari database saat halaman dibuka kembali. Banner draf menawarkan **Buang draf**.

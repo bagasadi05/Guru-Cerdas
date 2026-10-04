@@ -207,7 +207,7 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
                         </button>
                       )}
 
-                      {onExportPdf && item.generated_content && (
+                      {onExportPdf && (
                         <button
                           type="button"
                           onClick={(e) => {
@@ -227,7 +227,7 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
                         </button>
                       )}
 
-                      {onExportWord && item.generated_content && (
+                      {onExportWord && (
                         <button
                           type="button"
                           onClick={(e) => {

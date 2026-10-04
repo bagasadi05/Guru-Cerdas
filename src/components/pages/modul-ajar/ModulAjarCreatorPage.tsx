@@ -37,7 +37,8 @@ import {
 import { ModulAjarForm } from './components/ModulAjarForm';
 import { ModulAjarHistory } from './components/ModulAjarHistory';
 import { ModulAjarPreview } from './components/ModulAjarPreview';
-import { useModulAjarForm } from './hooks/useModulAjarForm';
+import { CONTENT_FIELDS, type ContentField, useModulAjarForm } from './hooks/useModulAjarForm';
+import { buildAiPromptContext } from './utils/aiPromptContext';
 import { useModulAjarGenerator } from './hooks/useModulAjarGenerator';
 import { useToast } from '../../../hooks/useToast';
 import { ConfirmationDialog } from '../../ui/ConfirmationDialog';
@@ -52,6 +53,13 @@ import {
   type DocumentExportRequest,
 } from '../../../services/documentExportService';
 import type { ExportFormat } from '../../../lib/modulAjarExport/types';
+
+/** History rows are listed without the document HTML; it is loaded when needed. */
+const HISTORY_COLUMNS =
+  'id, user_id, document_type, curriculum_approach, generation_method, identity, components, created_at, updated_at';
+
+const isContentField = (field: string): field is ContentField =>
+  (CONTENT_FIELDS as readonly string[]).includes(field);
 
 interface ServerExportJob extends DocumentExportRequest {
   /** `preview` or the history item's ID; drives the per-button loading state. */
@@ -78,6 +86,9 @@ const ModulAjarCreatorPage: React.FC = () => {
     generateCP,
     resetFormToDraft,
     autoDistributeTime,
+    isFieldOwnedByTeacher,
+    applyGeneratedContent,
+    setFieldFromAi,
   } = useModulAjarForm();
 
   const [generatedDocument, setGeneratedDocument] = useState<string>('');
@@ -103,6 +114,10 @@ const ModulAjarCreatorPage: React.FC = () => {
   const [exportFailure, setExportFailure] = useState<ExportFailure | null>(null);
   const [pendingExportFormat, setPendingExportFormat] = useState<ExportFormat | null>(null);
   const [isSavingDraft, setIsSavingDraft] = useState<boolean>(false);
+  /** Saving state of live preview edits. */
+  const [editStatus, setEditStatus] = useState<'unsaved' | 'saving' | 'saved' | 'error' | null>(null);
+  /** The form the displayed document was built from (identity on the student sheet). */
+  const [documentForm, setDocumentForm] = useState<FormState | null>(null);
   const exportInFlightRef = useRef(false);
   const useServerExport = isServerDocumentExportEnabled();
 
@@ -132,7 +147,7 @@ const ModulAjarCreatorPage: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('lesson_plans')
-        .select('*')
+        .select(HISTORY_COLUMNS)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -157,10 +172,32 @@ const ModulAjarCreatorPage: React.FC = () => {
     fetchHistory();
   }, [fetchHistory]);
 
+  /** Loads one saved document's HTML (history rows are listed without it). */
+  const loadPlanContent = async (plan: {
+    id: string;
+    generated_content?: string | null;
+  }): Promise<string | null> => {
+    if (plan.generated_content) return plan.generated_content;
+    const { data, error } = await supabase
+      .from('lesson_plans')
+      .select('generated_content')
+      .eq('id', plan.id)
+      .single();
+    if (error || !data?.generated_content) {
+      toast.error('Dokumen gagal dimuat. Periksa koneksi, lalu coba lagi.');
+      return null;
+    }
+    return data.generated_content as string;
+  };
+
   const isAiEnabled = import.meta.env.VITE_ENABLE_AI_MODUL_AJAR === 'true';
 
-  const { generateManualModulAjar, renderPrivateDraftAiModulAjar, isAiGenerating } =
-    useModulAjarGenerator({
+  const {
+    generateManualModulAjar,
+    renderPrivateDraftAiModulAjar,
+    isAiGenerating,
+    isSubmitting: isGeneratorSubmitting,
+  } = useModulAjarGenerator({
       formState,
       setFormState,
       user,
@@ -170,11 +207,16 @@ const ModulAjarCreatorPage: React.FC = () => {
       logoBase64,
       fetchHistory,
       setGeneratedDocument,
-      onDocumentSaved: (lessonPlanId) => {
+      onDocumentSaved: (lessonPlanId, builtFrom) => {
         setCurrentLessonPlanId(lessonPlanId);
+        setDocumentForm(builtFrom);
         setHasUnsavedEdits(false);
+        setEditStatus(null);
       },
       setAiCacheWarning,
+      isFieldOwnedByTeacher,
+      applyGeneratedContent,
+      notify: { success: toast.success, error: toast.error },
     });
 
   const queueHookResult = useModulAjarAiJob(
@@ -191,6 +233,11 @@ const ModulAjarCreatorPage: React.FC = () => {
       console.warn(`[AI Queue] Job error: ${errMsg}`);
       toast.error(errMsg || 'Gagal menyusun modul ajar dengan AI. Silakan coba lagi.');
     },
+    () =>
+      buildAiPromptContext(
+        formState,
+        isFieldOwnedByTeacher('manualTujuanPembelajaran') ? formState.manualTujuanPembelajaran : '',
+      ),
   );
 
   const queueStatus = isAiEnabled ? queueHookResult.jobStatus : 'idle';
@@ -299,7 +346,8 @@ const ModulAjarCreatorPage: React.FC = () => {
       }
 
       if (content) {
-        handleInputChange(field as keyof FormState, content);
+        if (isContentField(field)) setFieldFromAi(field, content);
+        else handleInputChange(field as keyof FormState, content);
         toast.success(`✨ ${label} berhasil disusun oleh AI!`);
       } else {
         toast.error(`Gagal menghasilkan ${label}. Silakan coba lagi.`);
@@ -338,8 +386,40 @@ const ModulAjarCreatorPage: React.FC = () => {
     if (livePreview) return livePreview;
     if (!generatedDocument) return '';
     return previewMode === 'siswa'
-      ? extractStudentHtml(generatedDocument, formState, logoBase64)
+      ? extractStudentHtml(generatedDocument, documentForm ?? formState, logoBase64)
       : generatedDocument;
+  };
+
+  /**
+   * Live preview edits are saved to the document as soon as the teacher
+   * leaves the text. Before, they only reached the database through the
+   * server export dialog and were lost on reload.
+   */
+  const persistPreviewEdits = async (html: string) => {
+    setGeneratedDocument(html);
+    if (!hasUnsavedEdits || !currentLessonPlanId) return;
+    const lessonPlanId = currentLessonPlanId;
+    const cleanHtml = sanitizeContent(html);
+    setEditStatus('saving');
+    const { error } = await supabase
+      .from('lesson_plans')
+      .update({ generated_content: cleanHtml, updated_at: new Date().toISOString() })
+      .eq('id', lessonPlanId);
+    if (error) {
+      console.error('Failed to save preview edits:', error);
+      setEditStatus('error');
+      return;
+    }
+    setHasUnsavedEdits(false);
+    setEditStatus('saved');
+    setHistory((prev) =>
+      prev.map((item) => (item.id === lessonPlanId ? { ...item, generated_content: cleanHtml } : item)),
+    );
+  };
+
+  const markPreviewEdited = () => {
+    setHasUnsavedEdits(true);
+    setEditStatus('unsaved');
   };
 
   const runServerExport = async (job: ServerExportJob) => {
@@ -415,6 +495,7 @@ const ModulAjarCreatorPage: React.FC = () => {
 
     setGeneratedDocument(cleanHtml);
     setHasUnsavedEdits(false);
+    setEditStatus('saved');
     setHistory((prev) =>
       prev.map((item) =>
         item.id === lessonPlanId ? { ...item, generated_content: cleanHtml } : item,
@@ -607,12 +688,13 @@ const ModulAjarCreatorPage: React.FC = () => {
       const { error } = await supabase.from('lesson_plans').delete().eq('id', id);
       if (!error) {
         setHistory((prev) => prev.filter((item) => item.id !== id));
-        if (id === currentLessonPlanId) setCurrentLessonPlanId(null);
-        if (
-          generatedDocument &&
-          history.find((item) => item.id === id)?.generated_content === generatedDocument
-        ) {
+        // The document on screen was the one deleted: nothing left to show or save to.
+        if (id === currentLessonPlanId) {
+          setCurrentLessonPlanId(null);
           setGeneratedDocument('');
+          setDocumentForm(null);
+          setHasUnsavedEdits(false);
+          setEditStatus(null);
         }
         toast.success('Riwayat berhasil dihapus');
       } else {
@@ -626,11 +708,15 @@ const ModulAjarCreatorPage: React.FC = () => {
     }
   };
 
-  const restoreParameters = (plan: any) => {
-    resetFormToDraft(plan);
-    setGeneratedDocument(plan.generated_content);
+  const restoreParameters = async (plan: any) => {
+    const content = await loadPlanContent(plan);
+    if (content === null) return;
+    const restored = resetFormToDraft(plan);
+    setDocumentForm(restored);
+    setGeneratedDocument(content);
     setCurrentLessonPlanId(plan.id);
     setHasUnsavedEdits(false);
+    setEditStatus(null);
     setActiveTab('preview');
     setMobileActiveView('preview');
     toast.success(t.lessonPlan.restoreSuccess);
@@ -647,17 +733,27 @@ const ModulAjarCreatorPage: React.FC = () => {
   const handleDuplicateHistory = (item: any, e: React.MouseEvent) => {
     e.stopPropagation();
     resetFormToDraft(item);
+    // The copy is a new draft: the old document must not stay on screen as if it were it.
+    setGeneratedDocument('');
+    setCurrentLessonPlanId(null);
+    setDocumentForm(null);
+    setHasUnsavedEdits(false);
+    setEditStatus(null);
     setActiveTab('preview');
-    toast.success(`Draf ${item.identity?.mapel || 'Modul Ajar'} berhasil disalin ke formulir!`);
+    setMobileActiveView('form');
+    toast.success(
+      `Isian ${item.identity?.mapel || 'modul ajar'} disalin ke formulir. Ubah seperlunya, lalu susun dokumen baru.`,
+    );
   };
 
   const handleExportHistoryPdf = async (item: any, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!item.generated_content) return;
     if (useServerExport) {
       exportHistoryFromServer(item, 'pdf');
       return;
     }
+    const htmlContent = await loadPlanContent(item);
+    if (!htmlContent) return;
 
     toast.info('Menyiapkan file PDF, mohon tunggu sebentar...', { duration: 3000 });
     try {
@@ -666,7 +762,7 @@ const ModulAjarCreatorPage: React.FC = () => {
           .replace(/[/\\?%*:|"<>]/g, '_')
           .replace(/\s+/g, '_');
       await exportModulAjarToPdf({
-        htmlContent: item.generated_content,
+        htmlContent,
         fileName,
         paperSize: item.components?.paperSize === 'F4' ? 'F4' : 'A4',
       });
@@ -677,16 +773,17 @@ const ModulAjarCreatorPage: React.FC = () => {
     }
   };
 
-  const handleExportHistoryWord = (item: any, e: React.MouseEvent) => {
+  const handleExportHistoryWord = async (item: any, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!item.generated_content) return;
     if (useServerExport) {
       exportHistoryFromServer(item, 'docx');
       return;
     }
+    const htmlContent = await loadPlanContent(item);
+    if (!htmlContent) return;
     try {
       exportModulAjarToWord({
-        htmlContent: item.generated_content,
+        htmlContent,
         fileName: `${item.document_type || 'ModulAjar'}_${item.identity?.mapel || 'Mapel'}_Kelas${item.identity?.kelas || ''}`,
         paperSize: item.components?.paperSize === 'F4' ? 'F4' : 'A4',
         title: item.document_type || 'Modul Ajar',
@@ -704,7 +801,9 @@ const ModulAjarCreatorPage: React.FC = () => {
     resetFormToDraft();
     setGeneratedDocument('');
     setCurrentLessonPlanId(null);
+    setDocumentForm(null);
     setHasUnsavedEdits(false);
+    setEditStatus(null);
     setActiveStep(1);
     setResetConfirmOpen(false);
     toast.success('Formulir berhasil direset');
@@ -814,7 +913,7 @@ const ModulAjarCreatorPage: React.FC = () => {
         boilerplateMissingBanner={boilerplateMissingBanner}
         onAiFillField={handleAiFillField}
         fieldLoading={fieldLoading}
-        isAiGenerating={isAiGenerating}
+        isAiGenerating={isAiGenerating || isGeneratorSubmitting}
         onResetForm={() => setResetConfirmOpen(true)}
         onApplyPreset={handleApplyPreset}
         autoDistributeTime={autoDistributeTime}
@@ -1017,7 +1116,7 @@ const ModulAjarCreatorPage: React.FC = () => {
               {(() => {
                 const documentToShow =
                   previewMode === 'siswa'
-                    ? extractStudentHtml(generatedDocument, formState, logoBase64)
+                    ? extractStudentHtml(generatedDocument, documentForm ?? formState, logoBase64)
                     : generatedDocument;
                 return (
                   <ModulAjarPreview
@@ -1026,9 +1125,9 @@ const ModulAjarCreatorPage: React.FC = () => {
                     documentType={formState.documentType}
                     zoomLevel={zoomLevel}
                     paperSize={formState.paperSize}
-                    onDocumentChange={previewMode === 'guru' ? setGeneratedDocument : undefined}
-                    onEdit={() => setHasUnsavedEdits(true)}
-                    hasUnsavedEdits={useServerExport && hasUnsavedEdits}
+                    onDocumentChange={previewMode === 'guru' ? persistPreviewEdits : undefined}
+                    onEdit={markPreviewEdited}
+                    editStatus={previewMode === 'guru' ? editStatus : null}
                   />
                 );
               })()}
@@ -1165,16 +1264,16 @@ const ModulAjarCreatorPage: React.FC = () => {
                 <ModulAjarPreview
                   generatedDocument={
                     previewMode === 'siswa'
-                      ? extractStudentHtml(generatedDocument, formState, logoBase64)
+                      ? extractStudentHtml(generatedDocument, documentForm ?? formState, logoBase64)
                       : generatedDocument
                   }
                   previewRef={fullscreenPreviewRef}
                   documentType={formState.documentType}
                   zoomLevel={100}
                   paperSize={formState.paperSize}
-                  onDocumentChange={previewMode === 'guru' ? setGeneratedDocument : undefined}
-                  onEdit={() => setHasUnsavedEdits(true)}
-                  hasUnsavedEdits={useServerExport && hasUnsavedEdits}
+                  onDocumentChange={previewMode === 'guru' ? persistPreviewEdits : undefined}
+                  onEdit={markPreviewEdited}
+                  editStatus={previewMode === 'guru' ? editStatus : null}
                 />
               </div>
             </div>

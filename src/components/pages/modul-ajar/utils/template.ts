@@ -667,7 +667,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
         <div style="padding: 15px;">
           
           <!-- LKPD SHEET -->
-          <div style="border: 2px dashed #000000; padding: 18px; margin-bottom: 25px; border-radius: 8px; page-break-inside: avoid;">
+          <div data-sheet="lkpd" style="border: 2px dashed #000000; padding: 18px; margin-bottom: 25px; border-radius: 8px; page-break-inside: avoid;">
             <h3 style="text-align: center; margin: 0 0 12px 0; font-size: 12pt; font-weight: bold; text-decoration: underline; text-transform: uppercase;">
               LEMBAR KERJA PESERTA DIDIK (LKPD)
             </h3>
@@ -695,7 +695,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
           </div>
 
           <!-- EVALUATION SHEET -->
-          <div style="border: 2px dashed #000000; padding: 18px; border-radius: 8px; page-break-before: always; page-break-inside: avoid;">
+          <div data-sheet="evaluasi" style="border: 2px dashed #000000; padding: 18px; border-radius: 8px; page-break-before: always; page-break-inside: avoid;">
             <h3 style="text-align: center; margin: 0 0 12px 0; font-size: 12pt; font-weight: bold; text-decoration: underline; text-transform: uppercase;">
               LEMBAR EVALUASI PENGETAHUAN
             </h3>
@@ -1128,10 +1128,17 @@ export const extractStudentHtml = (fullHtml: string, formState: FormState, logoB
       const parser = new DOMParser();
       const doc = parser.parseFromString(fullHtml, 'text/html');
       
-      const dashedBoxes = Array.from(doc.querySelectorAll('div')).filter(el => {
-        const style = el.getAttribute('style') || '';
-        return style.includes('dashed');
-      });
+      // The two sheets carry data-sheet markers. Documents saved before the
+      // markers existed are recognised by the sheet frame (2px dashed); the
+      // headings and answer boxes inside the LKPD use thinner dashed borders.
+      const markedLkpd = doc.querySelector('[data-sheet="lkpd"]');
+      const markedEvaluasi = doc.querySelector('[data-sheet="evaluasi"]');
+      const dashedBoxes = markedLkpd && markedEvaluasi
+        ? [markedLkpd, markedEvaluasi]
+        : Array.from(doc.querySelectorAll('div')).filter(el => {
+            const style = (el.getAttribute('style') || '').replace(/\s+/g, ' ');
+            return /border:\s*2px dashed/.test(style);
+          });
 
       const listItems = Array.from(doc.querySelectorAll('td, div')).filter(el => {
         const text = el.textContent || '';

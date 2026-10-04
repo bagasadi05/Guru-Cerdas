@@ -13,8 +13,16 @@ interface ModulAjarPreviewProps {
   onDocumentChange?: (html: string) => void;
   /** Fires on the first keystroke so the page can flag unsaved edits. */
   onEdit?: () => void;
-  hasUnsavedEdits?: boolean;
+  /** Saving state of live edits; null when nothing was edited. */
+  editStatus?: 'unsaved' | 'saving' | 'saved' | 'error' | null;
 }
+
+const EDIT_STATUS_LABEL = {
+  unsaved: 'Belum disimpan',
+  saving: 'Menyimpan…',
+  saved: 'Perubahan tersimpan',
+  error: 'Gagal menyimpan, klik di luar dokumen untuk mencoba lagi',
+} as const;
 
 export const ModulAjarPreview: React.FC<ModulAjarPreviewProps> = ({
   generatedDocument,
@@ -24,9 +32,11 @@ export const ModulAjarPreview: React.FC<ModulAjarPreviewProps> = ({
   paperSize = 'A4',
   onDocumentChange,
   onEdit,
-  hasUnsavedEdits = false,
+  editStatus = null,
 }) => {
   const { t } = useTranslation();
+  // Only the teacher document is editable; the student sheet is derived from it.
+  const isEditable = Boolean(onDocumentChange);
 
   return (
     <>
@@ -40,13 +50,23 @@ export const ModulAjarPreview: React.FC<ModulAjarPreviewProps> = ({
           <div className="w-full max-w-[850px] mb-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm px-3.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs">
             <span className="flex items-center gap-1.5 font-medium text-brand-700 dark:text-brand-300">
               <Edit3 className="w-3.5 h-3.5 text-brand-500" />
-              Mode Edit Langsung: Klik dan ubah teks dokumen secara leluasa di bawah sebelum diunduh
-              atau dicetak
+              {isEditable
+                ? 'Klik teks untuk mengubahnya. Perubahan tersimpan otomatis.'
+                : 'Lembar siswa disusun dari dokumen guru. Ubah isinya di tampilan Guru.'}
             </span>
             <div className="flex items-center gap-2 text-[10px] text-slate-400">
-              {hasUnsavedEdits && (
-                <span className="bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded font-bold text-amber-700 dark:text-amber-300">
-                  Perubahan belum disimpan
+              {editStatus && (
+                <span
+                  role="status"
+                  className={`px-2 py-0.5 rounded font-bold ${
+                    editStatus === 'error'
+                      ? 'bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300'
+                      : editStatus === 'saved'
+                        ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
+                        : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'
+                  }`}
+                >
+                  {EDIT_STATUS_LABEL[editStatus]}
                 </span>
               )}
               <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded font-bold text-slate-600 dark:text-slate-300">
@@ -71,9 +91,9 @@ export const ModulAjarPreview: React.FC<ModulAjarPreviewProps> = ({
                 fontFamily: "'Times New Roman', Times, serif",
                 boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08), 0 1px 8px rgba(0, 0, 0, 0.04)',
               }}
-              contentEditable
+              contentEditable={isEditable}
               suppressContentEditableWarning
-              onInput={onDocumentChange ? onEdit : undefined}
+              onInput={isEditable ? onEdit : undefined}
               onBlur={(event) => onDocumentChange?.(event.currentTarget.innerHTML)}
               dangerouslySetInnerHTML={{ __html: sanitizeContent(generatedDocument) }}
             />

@@ -39,7 +39,40 @@ const FASE_DESC: Record<string, string> = {
   'C': 'Kelas 5-6 SD/MI (usia 10-12 tahun, transisi operasional formal, penalaran kritis & proyek)',
 };
 
-function buildPrompt(mapel: string, topik: string, fase: string, modelPembelajaran?: string, metodePembelajaran?: string[]): string {
+/** Lesson details the teacher already chose; the AI must build on them. */
+export interface ModulAjarPromptContext {
+  kelas?: string;
+  capaianPembelajaran?: string;
+  /** Objectives the teacher wrote; the scenario must serve exactly these. */
+  tujuanPembelajaran?: string;
+  profilPelajar?: string[];
+  alokasiWaktu?: string;
+  /** Kurikulum Berbasis Cinta themes and insertion material. */
+  kbc?: { tema: string[]; materiInsersi: string };
+}
+
+const describeContext = (ctx?: ModulAjarPromptContext): string => {
+  if (!ctx) return '';
+  const lines: string[] = [];
+  if (ctx.kelas) lines.push(`Kelas: ${ctx.kelas}`);
+  if (ctx.alokasiWaktu) lines.push(`Alokasi Waktu: ${ctx.alokasiWaktu}`);
+  if (ctx.capaianPembelajaran?.trim()) lines.push(`Capaian Pembelajaran (CP): ${ctx.capaianPembelajaran.trim()}`);
+  if (ctx.tujuanPembelajaran?.trim()) {
+    lines.push(`Tujuan Pembelajaran yang sudah ditetapkan guru (gunakan persis, jangan diganti):\n${ctx.tujuanPembelajaran.trim()}`);
+  }
+  if (ctx.profilPelajar?.length) lines.push(`Dimensi Profil Pelajar yang dikuatkan: ${ctx.profilPelajar.join(', ')}`);
+  if (ctx.kbc) {
+    const tema = ctx.kbc.tema.length ? ctx.kbc.tema.join(', ') : 'Panca Cinta';
+    lines.push(
+      `Pendekatan: Kurikulum Berbasis Cinta (KBC) Kemenag. Tema: ${tema}.` +
+      (ctx.kbc.materiInsersi.trim() ? ` Materi insersi: ${ctx.kbc.materiInsersi.trim()}.` : '') +
+      ' Integrasikan nilai cinta tersebut secara nyata di pendahuluan, kegiatan inti, LKPD, dan penutup.',
+    );
+  }
+  return lines.length ? `\n${lines.join('\n')}` : '';
+};
+
+function buildPrompt(mapel: string, topik: string, fase: string, modelPembelajaran?: string, metodePembelajaran?: string[], context?: ModulAjarPromptContext): string {
   const faseInfo = FASE_DESC[fase] || `Fase ${fase}`;
   const modelInfo = modelPembelajaran ? `\nModel Pembelajaran yang Digunakan: ${modelPembelajaran}` : '';
   const metodeInfo = (metodePembelajaran && metodePembelajaran.length > 0)
@@ -50,7 +83,7 @@ function buildPrompt(mapel: string, topik: string, fase: string, modelPembelajar
 
 Mata Pelajaran: ${mapel}
 Topik/Materi Pokok: ${topik}
-Fase / Sasaran: Fase ${fase} (${faseInfo})${modelInfo}${metodeInfo}
+Fase / Sasaran: Fase ${fase} (${faseInfo})${modelInfo}${metodeInfo}${describeContext(context)}
 
 Hasilkan JSON dengan struktur persis berikut:
 {
@@ -155,13 +188,15 @@ export async function generateModulAjarAiContent(
   fase: string,
   modelPembelajaran?: string,
   metodePembelajaran?: string[],
-  onCacheError?: (message: string) => void
+  onCacheError?: (message: string) => void,
+  context?: ModulAjarPromptContext
 ): Promise<AiModulAjarContent> {
-  const prompt = buildPrompt(mapel, topik, fase, modelPembelajaran, metodePembelajaran);
+  const prompt = buildPrompt(mapel, topik, fase, modelPembelajaran, metodePembelajaran, context);
 
   logger.info(`[AI Modul Ajar] Generating: ${mapel} / ${topik} / Fase ${fase}`, 'ModulAjarAI');
 
-  const result = await generateGeminiJson<AiModulAjarContent>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
+  // Generating is a deliberate request for a new document; never replay a cached one.
+  const result = await generateGeminiJson<AiModulAjarContent>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar', { bypassCache: true });
 
   if (!result.tujuanPembelajaran || !Array.isArray(result.tujuanPembelajaran) || result.tujuanPembelajaran.length === 0) {
     throw new Error('AI menghasilkan konten tidak lengkap (tujuan pembelajaran kosong).');

@@ -6,6 +6,93 @@ import { getCurrentSemester } from '../../../../utils/semesterUtils';
 import { supabase } from '../../../../services/supabase';
 import { modulAjarContentService } from '../../../../services/modulAjarContentService';
 
+/** Text fields that can be filled automatically (content bank, a generated document, AI per field). */
+export const CONTENT_FIELDS = [
+  'manualTujuanPembelajaran',
+  'manualPemahamanBermakna',
+  'manualPertanyaanPemantik',
+  'manualMateriAjar',
+  'manualLkpdTugas',
+  'manualSoalEvaluasi',
+  'manualPengayaan',
+  'manualRemedial',
+  'manualGlosarium',
+  'manualDaftarPustaka',
+  'kompetensiAwal',
+] as const;
+export type ContentField = (typeof CONTENT_FIELDS)[number];
+export type ContentValues = Partial<Record<ContentField, string>>;
+
+/**
+ * Where a content field's current value came from. A field without an origin,
+ * or whose value no longer matches its origin, was written by the teacher.
+ */
+type FieldOrigin = { value: string; key: string; kind: 'bank' | 'generated' | 'ai-field' };
+
+/** Content belongs to one subject, topic, phase and grade. */
+const contentKeyOf = (f: Pick<FormState, 'mataPelajaran' | 'topik' | 'fase' | 'kelas'>) =>
+  [f.mataPelajaran, f.topik, f.fase, f.kelas].map((v) => (v || '').trim().toLowerCase()).join('|');
+
+const BANK_LOAD_DEBOUNCE_MS = 400;
+
+const DEFAULT_SCHOOL_NAME = 'MI Al Irsyad';
+const DEFAULT_TARGET = 'Reguler/Tipikal (Peserta didik umum, tidak ada kesulitan belajar)';
+
+/** One source of defaults for a fresh form, a reset, and fields missing in an old plan. */
+export const createDefaultFormState = (opts: {
+  guru: string;
+  satuanPendidikan?: string;
+  tahunAjaran: string;
+  semester: string;
+}): FormState => ({
+  generationMethod: 'AI',
+  documentType: 'Modul Ajar',
+  curriculumApproach: 'Merdeka',
+  satuanPendidikan: opts.satuanPendidikan || DEFAULT_SCHOOL_NAME,
+  jenjang: 'SD/MI',
+  kelas: '1',
+  fase: 'A',
+  mataPelajaran: '',
+  topik: '',
+  tahunAjaran: opts.tahunAjaran,
+  semester: opts.semester,
+  guru: opts.guru,
+  targetPeserta: DEFAULT_TARGET,
+  kompetensiAwal: '',
+  saranaPrasarana: '',
+  capaianPembelajaran: '',
+  profilPelajar: [],
+  jumlahPertemuan: 1,
+  jpPerPertemuan: 2,
+  durasiPerJp: 35,
+  modelPembelajaran: 'Problem Based Learning',
+  metodePembelajaran: [],
+  manualTujuanPembelajaran: '',
+  manualPemahamanBermakna: '',
+  manualPertanyaanPemantik: '',
+  manualMateriAjar: '',
+  manualLkpdTugas: '',
+  manualSoalEvaluasi: '',
+  manualPengayaan: '',
+  manualRemedial: '',
+  manualGlosarium: '',
+  manualDaftarPustaka: '',
+  // 2 JP x 35 minutes = 70 minutes.
+  alokasiPendahuluan: 10,
+  alokasiInti: 50,
+  alokasiPenutup: 10,
+  rubrikAsesmen: [],
+  isKbcIntegrated: false,
+  temaKbc: [],
+  materiInsersi: '',
+  modelPembelajaranKbc: 'FIDS',
+  asesmenSikap: '',
+  pendekatanPembelajaran: 'Student Centered',
+  selectedModelId: 'pbl',
+  teknikPembelajaran: '',
+  paperSize: 'A4',
+});
+
 export const useModulAjarForm = () => {
   const { user } = useAuth();
   const semesterContext = useOptionalSemester();
@@ -27,64 +114,18 @@ export const useModulAjarForm = () => {
     return defaultTerm.semester === '1' ? 'Ganjil' : 'Genap';
   }, [activeSemester?.name, activeSemester?.semester_number, defaultTerm.semester]);
 
-  const [formState, setFormState] = useState<FormState>(() => {
-    const initialYear = activeAcademicYear?.name || defaultTerm.academicYear;
-    const initialSem = activeSemester?.name
-      ? activeSemester.name.toLowerCase().includes('genap') || activeSemester.semester_number === 2
-        ? 'Genap'
-        : 'Ganjil'
-      : defaultTerm.semester === '1'
-        ? 'Ganjil'
-        : 'Genap';
-
-    return {
-      generationMethod: 'AI',
-      documentType: 'Modul Ajar',
-      curriculumApproach: 'Merdeka',
-      satuanPendidikan: 'MI Al Irsyad',
-      jenjang: 'SD/MI',
-      kelas: '1',
-      fase: 'A',
-      mataPelajaran: '',
-      topik: '',
-      tahunAjaran: initialYear,
-      semester: initialSem,
+  const [formState, setFormState] = useState<FormState>(() =>
+    createDefaultFormState({
       guru: user?.name || '',
-      targetPeserta: 'Reguler/Tipikal (Peserta didik umum, tidak ada kesulitan belajar)',
-      kompetensiAwal: '',
-      saranaPrasarana: '',
-      capaianPembelajaran: '',
-      profilPelajar: [],
-      jumlahPertemuan: 1,
-      jpPerPertemuan: 2,
-      durasiPerJp: 35,
-      modelPembelajaran: 'Problem Based Learning',
-      metodePembelajaran: [],
-      manualTujuanPembelajaran: '',
-      manualPemahamanBermakna: '',
-      manualPertanyaanPemantik: '',
-      manualMateriAjar: '',
-      manualLkpdTugas: '',
-      manualSoalEvaluasi: '',
-      manualPengayaan: '',
-      manualRemedial: '',
-      manualGlosarium: '',
-      manualDaftarPustaka: '',
-      alokasiPendahuluan: 10,
-      alokasiInti: 50,
-      alokasiPenutup: 10,
-      rubrikAsesmen: [],
-      isKbcIntegrated: false,
-      temaKbc: [],
-      materiInsersi: '',
-      modelPembelajaranKbc: 'FIDS',
-      asesmenSikap: '',
-      pendekatanPembelajaran: 'Student Centered',
-      selectedModelId: 'pbl',
-      teknikPembelajaran: '',
-      paperSize: 'A4',
-    };
-  });
+      satuanPendidikan: user?.school_name,
+      tahunAjaran: getResolvedAcademicYear(),
+      semester: getResolvedSemester(),
+    }),
+  );
+  const formStateRef = useRef(formState);
+  useEffect(() => {
+    formStateRef.current = formState;
+  }, [formState]);
 
   const autoDistributeTime = useCallback(() => {
     setFormState((prev) => {
@@ -112,8 +153,8 @@ export const useModulAjarForm = () => {
   const [isGeneratingCP, setIsGeneratingCP] = useState(false);
   const [boilerplateMissingBanner, setBoilerplateMissingBanner] = useState<string | null>(null);
 
-  const lastLoadedBoilerplateRef = useRef<string>('');
   const boilerplateLoadSeqRef = useRef<number>(0);
+  const fieldOriginsRef = useRef<Partial<Record<ContentField, FieldOrigin>>>({});
 
   const [models, setModels] = useState<any[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
@@ -150,105 +191,126 @@ export const useModulAjarForm = () => {
     }
   }, [activeSemester?.name, activeSemester?.semester_number]);
 
-  useEffect(() => {
-    if (formState.generationMethod === 'Manual' && formState.topik && formState.mataPelajaran) {
-      const boilerplateKey = [
-        formState.mataPelajaran,
-        formState.topik,
-        formState.fase,
-        formState.kelas,
-      ]
-        .map((value) => value.trim().toLowerCase())
-        .join('|');
-      if (boilerplateKey !== lastLoadedBoilerplateRef.current) {
-        lastLoadedBoilerplateRef.current = boilerplateKey;
-        const loadSeq = ++boilerplateLoadSeqRef.current;
+  /** True when the field holds text the teacher wrote or explicitly asked AI to fill. */
+  const isFieldOwnedByTeacher = useCallback(
+    (field: ContentField, state: FormState = formStateRef.current) => {
+      const value = String(state[field] ?? '');
+      if (!value.trim()) return false;
+      const origin = fieldOriginsRef.current[field];
+      if (!origin || origin.value !== value) return true;
+      return origin.kind === 'ai-field';
+    },
+    [],
+  );
 
-        const loadBoilerplate = async () => {
-          try {
-            const bp = await modulAjarContentService.getBoilerplate(
-              formState.mataPelajaran,
-              formState.topik,
-              formState.fase,
-            );
-            if (loadSeq !== boilerplateLoadSeqRef.current) return;
-            if (bp) {
-              setBoilerplateMissingBanner(null);
-              setFormState((prev) => ({
-                ...prev,
-                manualTujuanPembelajaran: Array.isArray(bp.tujuan_pembelajaran)
-                  ? bp.tujuan_pembelajaran.join('\n')
-                  : '',
-                manualPemahamanBermakna: Array.isArray(bp.pemahaman_bermakna)
-                  ? bp.pemahaman_bermakna.join('\n')
-                  : '',
-                manualPertanyaanPemantik: Array.isArray(bp.pertanyaan_pemantik)
-                  ? bp.pertanyaan_pemantik.join('\n')
-                  : '',
-                manualLkpdTugas: bp.lkpd_tugas || '',
-                manualSoalEvaluasi: bp.soal_evaluasi || '',
-                manualPengayaan: Array.isArray(bp.pengayaan) ? bp.pengayaan.join('\n\n') : '',
-                manualRemedial: Array.isArray(bp.remedial) ? bp.remedial.join('\n\n') : '',
-                manualDaftarPustaka: Array.isArray(bp.daftar_pustaka)
-                  ? bp.daftar_pustaka.join('\n')
-                  : '',
-                manualMateriAjar: bp.konten_json?.materiAjar || bp.konten_json?.materi || '',
-                manualGlosarium: Array.isArray(bp.konten_json?.glosarium)
-                  ? bp.konten_json.glosarium.join('\n')
-                  : '',
-              }));
-            } else {
-              setBoilerplateMissingBanner(
-                'Bank konten untuk topik ini belum tersedia — isi manual atau minta admin menambahkan',
-              );
-              setFormState((prev) => ({
-                ...prev,
-                manualTujuanPembelajaran: '',
-                manualPemahamanBermakna: '',
-                manualPertanyaanPemantik: '',
-                manualMateriAjar: '',
-                manualLkpdTugas: '',
-                manualSoalEvaluasi: '',
-                manualPengayaan: '',
-                manualRemedial: '',
-                manualGlosarium: '',
-                manualDaftarPustaka: '',
-              }));
-            }
-          } catch (err: any) {
-            if (loadSeq !== boilerplateLoadSeqRef.current) return;
-            console.error('[Modul Ajar] Gagal memuat bank konten:', err);
-            setBoilerplateMissingBanner(
-              `⚠️ Gagal memuat bank konten: ${err.message || 'kesalahan tidak diketahui'}`,
-            );
-            setFormState((prev) => ({
-              ...prev,
-              manualTujuanPembelajaran: '',
-              manualPemahamanBermakna: '',
-              manualPertanyaanPemantik: '',
-              manualMateriAjar: '',
-              manualLkpdTugas: '',
-              manualSoalEvaluasi: '',
-              manualPengayaan: '',
-              manualRemedial: '',
-              manualGlosarium: '',
-              manualDaftarPustaka: '',
-            }));
-          }
-        };
-        loadBoilerplate();
-      }
-    } else {
+  /**
+   * Writes automatic content into the form. Fields the teacher owns are left
+   * alone; with `onlyEmpty`, any field that already has text is left alone.
+   */
+  const applyAutoContent = useCallback(
+    (values: ContentValues, kind: FieldOrigin['kind'], onlyEmpty = false) => {
+      setFormState((prev) => {
+        const key = contentKeyOf(prev);
+        const next = { ...prev };
+        let changed = false;
+        (Object.keys(values) as ContentField[]).forEach((field) => {
+          const value = values[field] ?? '';
+          const current = String(prev[field] ?? '');
+          if (onlyEmpty && current.trim()) return;
+          if (kind !== 'ai-field' && isFieldOwnedByTeacher(field, prev)) return;
+          next[field] = value;
+          fieldOriginsRef.current[field] = { value, key, kind };
+          changed = true;
+        });
+        return changed ? next : prev;
+      });
+    },
+    [isFieldOwnedByTeacher],
+  );
+
+  /** A field filled by its AI button: used for generation, dropped on topic change if untouched. */
+  const setFieldFromAi = useCallback(
+    (field: ContentField, value: string) => applyAutoContent({ [field]: value }, 'ai-field'),
+    [applyAutoContent],
+  );
+
+  /** Content of a document just generated, written back so the teacher can refine it. */
+  const applyGeneratedContent = useCallback(
+    (values: ContentValues) => applyAutoContent(values, 'generated'),
+    [applyAutoContent],
+  );
+
+  const contentKey = contentKeyOf(formState);
+
+  useEffect(() => {
+    // Automatic content written for another topic is stale. Drop it unless the
+    // teacher has edited it since (then it is theirs).
+    setFormState((prev) => {
+      let next: FormState | null = null;
+      CONTENT_FIELDS.forEach((field) => {
+        const origin = fieldOriginsRef.current[field];
+        if (!origin) return;
+        if (String(prev[field] ?? '') !== origin.value) {
+          delete fieldOriginsRef.current[field];
+          return;
+        }
+        if (origin.key !== contentKey) {
+          next = next ?? { ...prev };
+          next[field] = '';
+          delete fieldOriginsRef.current[field];
+        }
+      });
+      return next ?? prev;
+    });
+
+    const { generationMethod, mataPelajaran, topik, fase } = formStateRef.current;
+    if (generationMethod !== 'Manual' || !topik.trim() || !mataPelajaran.trim()) {
       boilerplateLoadSeqRef.current++;
       setBoilerplateMissingBanner(null);
+      return;
     }
-  }, [
-    formState.generationMethod,
-    formState.topik,
-    formState.mataPelajaran,
-    formState.kelas,
-    formState.fase,
-  ]);
+
+    // Manual mode: fill empty fields from the content bank. Debounced so typing
+    // a topic does not query the bank on every keystroke.
+    const loadSeq = ++boilerplateLoadSeqRef.current;
+    const timer = setTimeout(async () => {
+      try {
+        const bp = await modulAjarContentService.getBoilerplate(mataPelajaran, topik, fase);
+        if (loadSeq !== boilerplateLoadSeqRef.current) return;
+        if (!bp) {
+          setBoilerplateMissingBanner(
+            'Bank konten untuk topik ini belum tersedia. Isi manual atau minta admin menambahkannya.',
+          );
+          return;
+        }
+        setBoilerplateMissingBanner(null);
+        const join = (value: unknown, sep: string) => (Array.isArray(value) ? value.join(sep) : '');
+        applyAutoContent(
+          {
+            manualTujuanPembelajaran: join(bp.tujuan_pembelajaran, '\n'),
+            manualPemahamanBermakna: join(bp.pemahaman_bermakna, '\n'),
+            manualPertanyaanPemantik: join(bp.pertanyaan_pemantik, '\n'),
+            manualLkpdTugas: bp.lkpd_tugas || '',
+            manualSoalEvaluasi: bp.soal_evaluasi || '',
+            manualPengayaan: join(bp.pengayaan, '\n\n'),
+            manualRemedial: join(bp.remedial, '\n\n'),
+            manualDaftarPustaka: join(bp.daftar_pustaka, '\n'),
+            manualMateriAjar: bp.konten_json?.materiAjar || bp.konten_json?.materi || '',
+            manualGlosarium: join(bp.konten_json?.glosarium, '\n'),
+          },
+          'bank',
+          true,
+        );
+      } catch (err: any) {
+        if (loadSeq !== boilerplateLoadSeqRef.current) return;
+        console.error('[Modul Ajar] Gagal memuat bank konten:', err);
+        setBoilerplateMissingBanner(
+          `Gagal memuat bank konten: ${err.message || 'kesalahan tidak diketahui'}. Isian Anda tidak diubah.`,
+        );
+      }
+    }, BANK_LOAD_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [contentKey, formState.generationMethod, applyAutoContent]);
 
   const fetchModels = useCallback(async () => {
     setIsLoadingModels(true);
@@ -333,70 +395,73 @@ export const useModulAjarForm = () => {
     }
   };
 
-  const resetFormToDraft = (plan?: any) => {
-    setFormState({
-      generationMethod: plan?.generation_method || 'Manual',
-      documentType: plan?.document_type || 'Modul Ajar',
-      curriculumApproach: plan?.curriculum_approach || 'Merdeka',
-      satuanPendidikan: plan?.identity?.satuanPendidikan || 'SD Negeri Cerdas Cendikia',
-      jenjang: plan?.identity?.jenjang || 'SD',
-      kelas: plan?.identity?.kelas || '1',
-      fase: plan?.identity?.fase || 'A',
-      mataPelajaran: plan?.identity?.mapel || '',
-      topik: plan?.identity?.topik || '',
-      tahunAjaran: plan?.identity?.tahun || getResolvedAcademicYear(),
-      semester: plan?.identity?.semester || getResolvedSemester(),
-      guru: plan?.identity?.guru || user?.name || '',
-      targetPeserta:
-        plan?.components?.target ||
-        'Reguler/Tipikal (Peserta didik umum, tidak ada kesulitan belajar)',
-      kompetensiAwal: plan?.components?.kompetensiAwal || '',
-      saranaPrasarana: plan?.components?.saranaPrasarana || '',
-      capaianPembelajaran: plan?.components?.cp || '',
-      profilPelajar: plan?.components?.profil || ['Bernalar Kritis', 'Gotong Royong'],
-      jumlahPertemuan: plan?.components?.waktu?.pertemuan || 1,
-      jpPerPertemuan: plan?.components?.waktu?.jp || 2,
-      durasiPerJp: plan?.components?.waktu?.durasi || 35,
-      modelPembelajaran: plan?.components?.model || 'Problem Based Learning',
-      pendekatanPembelajaran: plan?.components?.pendekatanPembelajaran || 'Student Centered',
-      teknikPembelajaran: plan?.components?.teknikPembelajaran || '',
-      selectedModelId: plan?.components?.selectedModelId || undefined,
-      metodePembelajaran: plan?.components?.metode || ['Diskusi', 'Tanya Jawab', 'Demonstrasi'],
-      manualTujuanPembelajaran: Array.isArray(plan?.components?.tujuanPembelajaran)
-        ? plan.components.tujuanPembelajaran.join('\n')
-        : plan?.components?.tujuanPembelajaran || '',
-      manualPemahamanBermakna: Array.isArray(plan?.components?.pemahamanBermakna)
-        ? plan.components.pemahamanBermakna.join('\n')
-        : plan?.components?.pemahamanBermakna || '',
-      manualPertanyaanPemantik: Array.isArray(plan?.components?.pertanyaanPemantik)
-        ? plan.components.pertanyaanPemantik.join('\n')
-        : plan?.components?.pertanyaanPemantik || '',
-      manualMateriAjar: plan?.components?.materiAjar || '',
-      manualLkpdTugas: plan?.components?.lkpdTugas || '',
-      manualSoalEvaluasi: plan?.components?.soalEvaluasi || '',
-      manualPengayaan: Array.isArray(plan?.components?.pengayaan)
-        ? plan.components.pengayaan.join('\n\n')
-        : plan?.components?.pengayaan || '',
-      manualRemedial: Array.isArray(plan?.components?.remedial)
-        ? plan.components.remedial.join('\n\n')
-        : plan?.components?.remedial || '',
-      manualGlosarium: Array.isArray(plan?.components?.glosarium)
-        ? plan.components.glosarium.join('\n')
-        : plan?.components?.glosarium || '',
-      manualDaftarPustaka: Array.isArray(plan?.components?.daftarPustaka)
-        ? plan.components.daftarPustaka.join('\n')
-        : plan?.components?.daftarPustaka || '',
-      alokasiPendahuluan: plan?.components?.alokasi?.pendahuluan || 15,
-      alokasiInti: plan?.components?.alokasi?.inti || 70,
-      alokasiPenutup: plan?.components?.alokasi?.penutup || 15,
-      rubrikAsesmen: plan?.components?.rubrik || [],
-      isKbcIntegrated: plan?.components?.isKbcIntegrated || false,
-      temaKbc: plan?.components?.temaKbc || [],
-      materiInsersi: plan?.components?.materiInsersi || '',
-      modelPembelajaranKbc: plan?.components?.modelPembelajaranKbc || 'FIDS',
-      asesmenSikap: plan?.components?.asesmenSikap || '',
-      paperSize: plan?.components?.paperSize || 'A4',
+  /** Loads a saved plan into the form (or a blank form). Returns the new state. */
+  const resetFormToDraft = (plan?: any): FormState => {
+    const d = createDefaultFormState({
+      guru: user?.name || '',
+      satuanPendidikan: user?.school_name,
+      tahunAjaran: getResolvedAcademicYear(),
+      semester: getResolvedSemester(),
     });
+    const c = plan?.components || {};
+    const id = plan?.identity || {};
+    const lines = (value: unknown, sep: string) =>
+      Array.isArray(value) ? value.join(sep) : typeof value === 'string' ? value : '';
+    const next: FormState = !plan
+      ? d
+      : {
+          ...d,
+          generationMethod: plan.generation_method === 'Manual' ? 'Manual' : 'AI',
+          documentType: plan.document_type || d.documentType,
+          curriculumApproach: plan.curriculum_approach || d.curriculumApproach,
+          satuanPendidikan: id.satuanPendidikan || d.satuanPendidikan,
+          jenjang: id.jenjang || d.jenjang,
+          kelas: id.kelas || d.kelas,
+          fase: id.fase || d.fase,
+          mataPelajaran: id.mapel || '',
+          topik: id.topik || '',
+          tahunAjaran: id.tahun || d.tahunAjaran,
+          semester: id.semester || d.semester,
+          guru: id.guru || d.guru,
+          targetPeserta: c.target || d.targetPeserta,
+          kompetensiAwal: c.kompetensiAwal || '',
+          saranaPrasarana: c.saranaPrasarana || '',
+          capaianPembelajaran: c.cp || '',
+          profilPelajar: c.profil || d.profilPelajar,
+          jumlahPertemuan: c.waktu?.pertemuan || d.jumlahPertemuan,
+          jpPerPertemuan: c.waktu?.jp || d.jpPerPertemuan,
+          durasiPerJp: c.waktu?.durasi || d.durasiPerJp,
+          modelPembelajaran: c.model || d.modelPembelajaran,
+          pendekatanPembelajaran: c.pendekatanPembelajaran || d.pendekatanPembelajaran,
+          teknikPembelajaran: c.teknikPembelajaran || '',
+          selectedModelId: c.selectedModelId || d.selectedModelId,
+          metodePembelajaran: c.metode || d.metodePembelajaran,
+          manualTujuanPembelajaran: lines(c.tujuanPembelajaran, '\n'),
+          manualPemahamanBermakna: lines(c.pemahamanBermakna, '\n'),
+          manualPertanyaanPemantik: lines(c.pertanyaanPemantik, '\n'),
+          manualMateriAjar: c.materiAjar || '',
+          manualLkpdTugas: c.lkpdTugas || '',
+          manualSoalEvaluasi: c.soalEvaluasi || '',
+          manualPengayaan: lines(c.pengayaan, '\n\n'),
+          manualRemedial: lines(c.remedial, '\n\n'),
+          manualGlosarium: lines(c.glosarium, '\n'),
+          manualDaftarPustaka: lines(c.daftarPustaka, '\n'),
+          alokasiPendahuluan: c.alokasi?.pendahuluan || d.alokasiPendahuluan,
+          alokasiInti: c.alokasi?.inti || d.alokasiInti,
+          alokasiPenutup: c.alokasi?.penutup || d.alokasiPenutup,
+          rubrikAsesmen: c.rubrik || [],
+          isKbcIntegrated: c.isKbcIntegrated || false,
+          temaKbc: c.temaKbc || [],
+          materiInsersi: c.materiInsersi || '',
+          modelPembelajaranKbc: c.modelPembelajaranKbc || d.modelPembelajaranKbc,
+          asesmenSikap: c.asesmenSikap || '',
+          paperSize: c.paperSize || d.paperSize,
+        };
+    // Restored text is the teacher's document: never treat it as automatic.
+    fieldOriginsRef.current = {};
+    formStateRef.current = next;
+    setFormState(next);
+    return next;
   };
 
   return {
@@ -414,5 +479,8 @@ export const useModulAjarForm = () => {
     generateCP,
     resetFormToDraft,
     autoDistributeTime,
+    isFieldOwnedByTeacher,
+    applyGeneratedContent,
+    setFieldFromAi,
   };
 };

@@ -8,8 +8,94 @@ import {
 } from '../../../../services/modulAjarAiGenerator';
 import { resolveLearningSyntax } from '../utils/syntaxResolver';
 import { buildHtmlTemplate } from '../utils/template';
-import { FormState } from '../types';
+import { FormState, RubrikRow } from '../types';
 import type { Json } from '../../../../services/database.types';
+import type { ContentField, ContentValues } from './useModulAjarForm';
+import { buildAiPromptContext } from '../utils/aiPromptContext';
+
+const splitLines = (value: string | undefined, sep: string) =>
+  (value || '').split(sep).map((line) => line.trim()).filter(Boolean);
+
+/** Adds the KBC insertion phrase to each objective once, also on regenerate. */
+const withMateriInsersi = (tujuan: string[], formState: FormState): string[] => {
+  const frasa = formState.isKbcIntegrated ? formState.materiInsersi.trim() : '';
+  if (!frasa) return tujuan;
+  return tujuan.map((tp) => (tp.includes(`(${frasa})`) ? tp : `${tp.replace(/\.$/, '')} (${frasa}).`));
+};
+
+/** Topic-specific rubric used when the teacher picked none. Never stored in form state. */
+const buildDefaultRubric = (formState: FormState): RubrikRow[] => {
+  const topicLabel = formState.topik || formState.mataPelajaran || 'Materi Pembelajaran';
+  const isKbc = formState.isKbcIntegrated || formState.curriculumApproach === 'Berbasis Cinta';
+  const normModel = (formState.modelPembelajaran || '').toLowerCase();
+  const metode = formState.metodePembelajaran || [];
+  return [
+    {
+      kriteria: `1. Penguasaan Konsep & Nalar Kritis (${topicLabel})`,
+      sangatBaik: `Mampu menjelaskan konsep esensial ${topicLabel} secara komprehensif, logis, dan menghubungkannya dengan contoh konkret kehidupan nyata secara mandiri.`,
+      baik: `Mampu menjelaskan konsep dasar ${topicLabel} dengan benar dan memberikan contoh relevan dengan sedikit bimbingan guru.`,
+      cukup: `Memahami sebagian konsep ${topicLabel}, namun masih memerlukan arahan saat menyelesaikan latihan pemecahan masalah.`,
+      perluBimbingan: `Belum menguasai konsep dasar ${topicLabel} dan memerlukan bimbingan intensif serta scaffolding berkelanjutan.`,
+    },
+    {
+      kriteria: normModel.includes('project')
+        ? `2. Kreativitas & Kualitas Produk Proyek`
+        : normModel.includes('problem')
+          ? `2. Kemampuan Pemecahan Masalah & Penyelidikan`
+          : normModel.includes('discovery') || normModel.includes('inquiry')
+            ? `2. Keterampilan Observasi & Pengolahan Data`
+            : `2. Keterampilan Eksplorasi & Pengerjaan LKPD`,
+      sangatBaik: normModel.includes('project')
+        ? `Menghasilkan karya/produk ${topicLabel} yang sangat rapi, kreatif, solutif, dan selesai tepat waktu sesuai jadwal perancangan.`
+        : `Mampu merumuskan alternatif pemecahan masalah ${topicLabel} secara sistematis, mendalam, dan logis pada lembar kerja.`,
+      baik: normModel.includes('project')
+        ? `Menghasilkan produk ${topicLabel} yang baik, rapi, dan sesuai dengan kriteria yang ditentukan bersama kelompok.`
+        : `Mampu mengidentifikasi dan menyelesaikan masalah ${topicLabel} pada LKPD dengan langkah-langkah yang tepat.`,
+      cukup: normModel.includes('project')
+        ? `Menghasilkan produk ${topicLabel} namun masih membutuhkan penyempurnaan pada aspek kerapian atau fungsi.`
+        : `Mampu menyelesaikan sebagian masalah ${topicLabel} pada LKPD dengan arahan bertahap dari guru.`,
+      perluBimbingan: normModel.includes('project')
+        ? `Produk ${topicLabel} belum selesai atau belum memenuhi kriteria minimal, memerlukan pendampingan teknis penuh.`
+        : `Kesulitan menyelesaikan langkah pemecahan masalah ${topicLabel} di LKPD dan memerlukan bimbingan langsung.`,
+    },
+    {
+      kriteria: metode.includes('Eksperimen')
+        ? `3. Keterampilan Praktik / Eksperimen Alat Peraga`
+        : metode.includes('Role Playing')
+          ? `3. Penghayatan Peran & Komunikasi Ekspresif`
+          : `3. Keaktifan Kolaborasi & Presentasi Kelompok`,
+      sangatBaik: metode.includes('Eksperimen')
+        ? `Sangat terampil memanipulasi alat peraga ${topicLabel}, mematuhi prosedur kerja dengan disiplin, dan mencatat data secara akurat.`
+        : `Sangat aktif berdiskusi, menghargai pendapat rekan kelompok, dan menyampaikan hasil karya ${topicLabel} dengan percaya diri dan komunikatif.`,
+      baik: metode.includes('Eksperimen')
+        ? `Mampu menggunakan alat peraga ${topicLabel} sesuai prosedur keselamatan dan mencatat data pengamatan dengan baik.`
+        : `Aktif bekerja sama dalam kelompok dan mampu mempresentasikan hasil diskusi ${topicLabel} dengan jelas dan santun.`,
+      cukup: metode.includes('Eksperimen')
+        ? `Dapat menggunakan alat peraga ${topicLabel} namun masih ragu dalam prosedur pengamatan.`
+        : `Cukup terlibat dalam kerja kelompok, namun masih pasif saat sesi berbagi dan presentasi di depan kelas.`,
+      perluBimbingan: metode.includes('Eksperimen')
+        ? `Belum mampu mengoperasikan alat peraga ${topicLabel} secara mandiri dan membutuhkan bimbingan langsung guru.`
+        : `Kurang berpartisipasi dalam diskusi kelompok dan membutuhkan dorongan motivasi berkelanjutan.`,
+    },
+    {
+      kriteria: isKbc
+        ? `4. Karakter Kasih Sayang & Akhlak Mulia (Panca Cinta)`
+        : `4. Sikap Gotong Royong & Mandiri (Profil Pelajar Pancasila)`,
+      sangatBaik: isKbc
+        ? `Selalu menunjukkan sikap saling mengasihi, peduli, tolong-menolong, dan bertutur kata santun kepada sesama teman serta guru selama proses belajar.`
+        : `Selalu menunjukkan inisiatif mandiri, bekerja sama dengan tulus tanpa membeda-bedakan teman, dan bertanggung jawab penuh atas tugasnya.`,
+      baik: isKbc
+        ? `Menunjukkan sikap ramah, peduli, dan bekerja sama dengan baik bersama rekan sekelompok.`
+        : `Mampu bekerja sama dengan baik dan menyelesaikan tanggung jawab tugas yang diberikan dengan tertib.`,
+      cukup: isKbc
+        ? `Cukup peduli terhadap teman, namun sesekali masih perlu diingatkan untuk menjaga sikap saling menghormati di kelas.`
+        : `Cukup bekerja sama, namun terkadang masih bergantung pada inisiatif anggota kelompok lain.`,
+      perluBimbingan: isKbc
+        ? `Perlu pembiasaan intensif dalam menumbuhkan empati, keikhlasan, dan kasih sayang di lingkungan belajar.`
+        : `Belum menunjukkan sikap kerja sama aktif dan memerlukan pendampingan pembiasaan karakter berkelanjutan.`,
+    },
+  ];
+};
 
 interface GeneratorProps {
   formState: FormState;
@@ -21,9 +107,14 @@ interface GeneratorProps {
   logoBase64: string;
   fetchHistory: () => void;
   setGeneratedDocument: (doc: string) => void;
-  /** Receives the `lesson_plans.id` of the row just inserted, for server-side export. */
-  onDocumentSaved?: (lessonPlanId: string) => void;
+  /** Receives the inserted `lesson_plans.id` and the form the document was built from. */
+  onDocumentSaved?: (lessonPlanId: string, builtFrom: FormState) => void;
   setAiCacheWarning: (warning: string | null) => void;
+  /** True when a content field holds the teacher's own text (see useModulAjarForm). */
+  isFieldOwnedByTeacher?: (field: ContentField) => boolean;
+  /** Writes generated content back to fields the teacher does not own. */
+  applyGeneratedContent?: (values: ContentValues) => void;
+  notify?: { success: (message: string) => void; error: (message: string) => void };
 }
 
 export const useModulAjarGenerator = ({
@@ -38,17 +129,34 @@ export const useModulAjarGenerator = ({
   setGeneratedDocument,
   onDocumentSaved,
   setAiCacheWarning,
+  isFieldOwnedByTeacher,
+  applyGeneratedContent,
+  notify,
 }: GeneratorProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
 
+  const showSuccess = (message: string) => (notify ? notify.success(message) : alert(message));
+  const showError = (message: string) => (notify ? notify.error(message) : alert(message));
+  const isOwned = (field: ContentField) =>
+    isFieldOwnedByTeacher
+      ? isFieldOwnedByTeacher(field)
+      : String(formState[field] ?? '').trim() !== '';
+  const writeBack = (values: ContentValues) => {
+    if (applyGeneratedContent) {
+      applyGeneratedContent(values);
+    } else {
+      setFormState((prev) => ({ ...prev, ...values }));
+    }
+  };
+
   const generateManualModulAjar = async () => {
     if (!formState.mataPelajaran || !formState.topik) {
-      alert(t.lessonPlan.validateSubject);
+      showError(t.lessonPlan.validateSubject);
       return;
     }
     if (!user) {
-      alert(t.lessonPlan.validateSubject);
+      showError('Sesi login tidak ditemukan. Muat ulang halaman lalu coba lagi.');
       return;
     }
     if (isSubmitting) return;
@@ -74,6 +182,10 @@ export const useModulAjarGenerator = ({
             formState.modelPembelajaran,
             formState.metodePembelajaran,
             (msg) => setAiCacheWarning(msg),
+            buildAiPromptContext(
+              formState,
+              isOwned('manualTujuanPembelajaran') ? formState.manualTujuanPembelajaran : '',
+            ),
           );
           aiGeneratedData = aiContent;
           bp = {
@@ -252,13 +364,9 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
       const lkpdText = formState.manualLkpdTugas || bp?.lkpd_tugas || defaultLkpdText;
       const evaluasiText = formState.manualSoalEvaluasi || bp?.soal_evaluasi || defaultEvaluasiText;
 
-      if (formState.isKbcIntegrated && formState.materiInsersi) {
-        const frasa = formState.materiInsersi.trim();
-        tujuanPembelajaranList = tujuanPembelajaranList.map((tp) => {
-          const cleaned = tp.replace(/\.$/, '');
-          return `${cleaned} (${frasa}).`;
-        });
-      }
+      // The form keeps the objectives without the KBC phrase; it is added here only.
+      const baseTujuanPembelajaranList = tujuanPembelajaranList;
+      tujuanPembelajaranList = withMateriInsersi(tujuanPembelajaranList, formState);
 
       // Build rich structured Pendahuluan & Penutup
       let pendahuluanData: any =
@@ -324,75 +432,12 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
 
       const pengetahuanText = `Teknik Asesmen: Tes Formatif Tertulis dan Lisan melalui Lembar Kerja Peserta Didik (LKPD) serta 5 butir Soal Evaluasi Mandiri (Pilihan Ganda & Uraian Analitis). Aspek yang dinilai mencakup penguasaan konsep esensial materi ${topicLabel} dan kemampuan nalar tingkat tinggi (HOTS).`;
 
-      // Generate contextual rubrik if not provided
-      if (!formState.rubrikAsesmen || formState.rubrikAsesmen.length === 0) {
-        formState.rubrikAsesmen = [
-          {
-            kriteria: `1. Penguasaan Konsep & Nalar Kritis (${topicLabel})`,
-            sangatBaik: `Mampu menjelaskan konsep esensial ${topicLabel} secara komprehensif, logis, dan menghubungkannya dengan contoh konkret kehidupan nyata secara mandiri.`,
-            baik: `Mampu menjelaskan konsep dasar ${topicLabel} dengan benar dan memberikan contoh relevan dengan sedikit bimbingan guru.`,
-            cukup: `Memahami sebagian konsep ${topicLabel}, namun masih memerlukan arahan saat menyelesaikan latihan pemecahan masalah.`,
-            perluBimbingan: `Belum menguasai konsep dasar ${topicLabel} dan memerlukan bimbingan intensif serta scaffolding berkelanjutan.`,
-          },
-          {
-            kriteria: normModel.includes('project')
-              ? `2. Kreativitas & Kualitas Produk Proyek`
-              : normModel.includes('problem')
-                ? `2. Kemampuan Pemecahan Masalah & Penyelidikan`
-                : normModel.includes('discovery') || normModel.includes('inquiry')
-                  ? `2. Keterampilan Observasi & Pengolahan Data`
-                  : `2. Keterampilan Eksplorasi & Pengerjaan LKPD`,
-            sangatBaik: normModel.includes('project')
-              ? `Menghasilkan karya/produk ${topicLabel} yang sangat rapi, kreatif, solutif, dan selesai tepat waktu sesuai jadwal perancangan.`
-              : `Mampu merumuskan alternatif pemecahan masalah ${topicLabel} secara sistematis, mendalam, dan logis pada lembar kerja.`,
-            baik: normModel.includes('project')
-              ? `Menghasilkan produk ${topicLabel} yang baik, rapi, dan sesuai dengan kriteria yang ditentukan bersama kelompok.`
-              : `Mampu mengidentifikasi dan menyelesaikan masalah ${topicLabel} pada LKPD dengan langkah-langkah yang tepat.`,
-            cukup: normModel.includes('project')
-              ? `Menghasilkan produk ${topicLabel} namun masih membutuhkan penyempurnaan pada aspek kerapian atau fungsi.`
-              : `Mampu menyelesaikan sebagian masalah ${topicLabel} pada LKPD dengan arahan bertahap dari guru.`,
-            perluBimbingan: normModel.includes('project')
-              ? `Produk ${topicLabel} belum selesai atau belum memenuhi kriteria minimal, memerlukan pendampingan teknis penuh.`
-              : `Kesulitan menyelesaikan langkah pemecahan masalah ${topicLabel} di LKPD dan memerlukan bimbingan langsung.`,
-          },
-          {
-            kriteria: (formState.metodePembelajaran || []).includes('Eksperimen')
-              ? `3. Keterampilan Praktik / Eksperimen Alat Peraga`
-              : (formState.metodePembelajaran || []).includes('Role Playing')
-                ? `3. Penghayatan Peran & Komunikasi Ekspresif`
-                : `3. Keaktifan Kolaborasi & Presentasi Kelompok`,
-            sangatBaik: (formState.metodePembelajaran || []).includes('Eksperimen')
-              ? `Sangat terampil memanipulasi alat peraga ${topicLabel}, mematuhi prosedur kerja dengan disiplin, dan mencatat data secara akurat.`
-              : `Sangat aktif berdiskusi, menghargai pendapat rekan kelompok, dan menyampaikan hasil karya ${topicLabel} dengan percaya diri dan komunikatif.`,
-            baik: (formState.metodePembelajaran || []).includes('Eksperimen')
-              ? `Mampu menggunakan alat peraga ${topicLabel} sesuai prosedur keselamatan dan mencatat data pengamatan dengan baik.`
-              : `Aktif bekerja sama dalam kelompok dan mampu mempresentasikan hasil diskusi ${topicLabel} dengan jelas dan santun.`,
-            cukup: (formState.metodePembelajaran || []).includes('Eksperimen')
-              ? `Dapat menggunakan alat peraga ${topicLabel} namun masih ragu dalam prosedur pengamatan.`
-              : `Cukup terlibat dalam kerja kelompok, namun masih pasif saat sesi berbagi dan presentasi di depan kelas.`,
-            perluBimbingan: (formState.metodePembelajaran || []).includes('Eksperimen')
-              ? `Belum mampu mengoperasikan alat peraga ${topicLabel} secara mandiri dan membutuhkan bimbingan langsung guru.`
-              : `Kurang berpartisipasi dalam diskusi kelompok dan membutuhkan dorongan motivasi berkelanjutan.`,
-          },
-          {
-            kriteria: isKbc
-              ? `4. Karakter Kasih Sayang & Akhlak Mulia (Panca Cinta)`
-              : `4. Sikap Gotong Royong & Mandiri (Profil Pelajar Pancasila)`,
-            sangatBaik: isKbc
-              ? `Selalu menunjukkan sikap saling mengasihi, peduli, tolong-menolong, dan bertutur kata santun kepada sesama teman serta guru selama proses belajar.`
-              : `Selalu menunjukkan inisiatif mandiri, bekerja sama dengan tulus tanpa membeda-bedakan teman, dan bertanggung jawab penuh atas tugasnya.`,
-            baik: isKbc
-              ? `Menunjukkan sikap ramah, peduli, dan bekerja sama dengan baik bersama rekan sekelompok.`
-              : `Mampu bekerja sama dengan baik dan menyelesaikan tanggung jawab tugas yang diberikan dengan tertib.`,
-            cukup: isKbc
-              ? `Cukup peduli terhadap teman, namun sesekali masih perlu diingatkan untuk menjaga sikap saling menghormati di kelas.`
-              : `Cukup bekerja sama, namun terkadang masih bergantung pada inisiatif anggota kelompok lain.`,
-            perluBimbingan: isKbc
-              ? `Perlu pembiasaan intensif dalam menumbuhkan empati, keikhlasan, dan kasih sayang di lingkungan belajar.`
-              : `Belum menunjukkan sikap kerja sama aktif dan memerlukan pendampingan pembiasaan karakter berkelanjutan.`,
-          },
-        ];
-      }
+      // Default rubric for this topic when the teacher picked none. Built into
+      // a copy: writing it into form state made the next topic reuse it.
+      const docFormState: FormState = {
+        ...formState,
+        rubrikAsesmen: formState.rubrikAsesmen?.length ? formState.rubrikAsesmen : buildDefaultRubric(formState),
+      };
 
       const isAiGenerated = bp && bp.id === '';
       const manualData = {
@@ -448,7 +493,7 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
       };
 
       const totalJP = formState.jumlahPertemuan * formState.jpPerPertemuan;
-      const htmlTemplate = buildHtmlTemplate(formState, manualData, totalJP, logoBase64);
+      const htmlTemplate = buildHtmlTemplate(docFormState, manualData, totalJP, logoBase64);
 
       const { data: insertedPlan, error: insertError } = await supabase
         .from('lesson_plans')
@@ -486,7 +531,7 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
               inti: formState.alokasiInti,
               penutup: formState.alokasiPenutup,
             },
-            rubrik: formState.rubrikAsesmen.map((r) => ({ ...r })) as unknown as Json[],
+            rubrik: docFormState.rubrikAsesmen.map((r) => ({ ...r })) as unknown as Json[],
             temaKbc: formState.temaKbc,
             materiInsersi: formState.materiInsersi,
             isKbcIntegrated: formState.isKbcIntegrated,
@@ -518,23 +563,22 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
       }
 
       setGeneratedDocument(htmlTemplate);
-      if (insertedPlan?.id) onDocumentSaved?.(insertedPlan.id);
-      setFormState((prev) => ({
-        ...prev,
-        manualTujuanPembelajaran: tujuanPembelajaranList.join('\n'),
+      if (insertedPlan?.id) onDocumentSaved?.(insertedPlan.id, docFormState);
+      writeBack({
+        manualTujuanPembelajaran: baseTujuanPembelajaranList.join('\n'),
         manualPertanyaanPemantik: pertanyaanPemantikList.join('\n'),
         manualLkpdTugas: lkpdText,
         manualSoalEvaluasi: evaluasiText,
-      }));
+      });
       fetchHistory();
-      alert(
+      showSuccess(
         isAiGenerated
-          ? '✨ Modul Ajar berhasil disusun oleh AI! Draf tersimpan di Riwayat Anda dan dikirim ke Bank Bersama untuk direview admin.'
+          ? 'Modul ajar selesai disusun AI dan tersimpan di Riwayat. Drafnya juga dikirim ke Bank Bersama untuk ditinjau admin.'
           : t.lessonPlan.saveSuccess,
       );
     } catch (err: any) {
       console.error(err);
-      alert(t.lessonPlan.saveFailed.replace('{message}', err.message));
+      showError(t.lessonPlan.saveFailed.replace('{message}', err.message));
     } finally {
       setIsSubmitting(false);
     }
@@ -580,19 +624,41 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
       `Doa & Salam: Kelas ditutup dengan doa bersama dipimpin oleh salah satu siswa dan salam penutup.`,
     ];
 
+    // What the teacher wrote (or filled per field with AI) wins over the
+    // generated document; everything else comes from the AI output.
+    const pick = <T,>(field: ContentField, own: () => T, ai: T): T => (isOwned(field) ? own() : ai);
+    const asList = (value: unknown): string[] =>
+      Array.isArray(value) ? value : typeof value === 'string' && value ? [value] : [];
+
     const draftData = {
-      tujuanPembelajaran: aiOutput.tujuanPembelajaran || [],
-      pemahamanBermakna: aiOutput.pemahamanBermakna || [],
-      pertanyaanPemantik: aiOutput.pertanyaanPemantik || [],
-      materiAjar: aiOutput.materiAjar || '',
-      lkpdTugas: aiOutput.lkpdTugas || '',
-      soalEvaluasi: normalizeSoalEvaluasi(aiOutput.soalEvaluasi),
+      tujuanPembelajaran: pick(
+        'manualTujuanPembelajaran',
+        () => splitLines(formState.manualTujuanPembelajaran, '\n'),
+        asList(aiOutput.tujuanPembelajaran),
+      ),
+      pemahamanBermakna: pick(
+        'manualPemahamanBermakna',
+        () => splitLines(formState.manualPemahamanBermakna, '\n'),
+        asList(aiOutput.pemahamanBermakna),
+      ),
+      pertanyaanPemantik: pick(
+        'manualPertanyaanPemantik',
+        () => splitLines(formState.manualPertanyaanPemantik, '\n'),
+        asList(aiOutput.pertanyaanPemantik),
+      ),
+      materiAjar: pick('manualMateriAjar', () => formState.manualMateriAjar || '', aiOutput.materiAjar || ''),
+      lkpdTugas: pick('manualLkpdTugas', () => formState.manualLkpdTugas, aiOutput.lkpdTugas || ''),
+      soalEvaluasi: pick(
+        'manualSoalEvaluasi',
+        () => formState.manualSoalEvaluasi,
+        normalizeSoalEvaluasi(aiOutput.soalEvaluasi),
+      ),
       kunciJawaban: Array.isArray(aiOutput.kunciJawaban) ? aiOutput.kunciJawaban : [],
       kegiatanPendahuluan: pendahuluanData,
       kegiatanInti: kegiatanIntiData,
       kegiatanPenutup: penutupData,
-      capaianPembelajaran: aiOutput.capaianPembelajaran || formState.capaianPembelajaran || '',
-      kompetensiAwal: aiOutput.kompetensiAwal || formState.kompetensiAwal || '',
+      capaianPembelajaran: formState.capaianPembelajaran || aiOutput.capaianPembelajaran || '',
+      kompetensiAwal: pick('kompetensiAwal', () => formState.kompetensiAwal, aiOutput.kompetensiAwal || ''),
       asesmenSikap: formState.isKbcIntegrated
         ? 'Observasi sikap spiritual (rasa syukur, kecintaan pada ilmu) dan sikap sosial (kasih sayang, empati, kerja sama)'
         : 'Observasi sikap profil pelajar Pancasila (beriman, bernalar kritis, gotong royong, mandiri)',
@@ -600,13 +666,23 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
         aiOutput.asesmenKeterampilan ||
         'Penilaian unjuk kerja/proyek presentasi dan performa diskusi',
       asesmenPengetahuan: aiOutput.asesmenPengetahuan || 'Tes tertulis/lisan di akhir materi',
-      pengayaan: aiOutput.pengayaan || [],
-      remedial: aiOutput.remedial || [],
-      glosarium: aiOutput.glosarium || [],
-      daftarPustaka: aiOutput.daftarPustaka || [],
+      pengayaan: pick('manualPengayaan', () => splitLines(formState.manualPengayaan, '\n\n'), asList(aiOutput.pengayaan)),
+      remedial: pick('manualRemedial', () => splitLines(formState.manualRemedial, '\n\n'), asList(aiOutput.remedial)),
+      glosarium: pick('manualGlosarium', () => splitLines(formState.manualGlosarium, '\n'), asList(aiOutput.glosarium)),
+      daftarPustaka: pick(
+        'manualDaftarPustaka',
+        () => splitLines(formState.manualDaftarPustaka, '\n'),
+        asList(aiOutput.daftarPustaka),
+      ),
     };
+    const baseTujuan = draftData.tujuanPembelajaran;
+    draftData.tujuanPembelajaran = withMateriInsersi(baseTujuan, formState);
 
-    const htmlTemplate = buildHtmlTemplate(formState, draftData, totalJP, logoBase64);
+    const docFormState: FormState = {
+      ...formState,
+      rubrikAsesmen: formState.rubrikAsesmen?.length ? formState.rubrikAsesmen : buildDefaultRubric(formState),
+    };
+    const htmlTemplate = buildHtmlTemplate(docFormState, draftData, totalJP, logoBase64);
 
     const { data: insertedPlan, error: insertError } = await supabase
       .from('lesson_plans')
@@ -644,7 +720,7 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
             inti: formState.alokasiInti,
             penutup: formState.alokasiPenutup,
           },
-          rubrik: formState.rubrikAsesmen.map((r) => ({ ...r })) as unknown as Json[],
+          rubrik: docFormState.rubrikAsesmen.map((r) => ({ ...r })) as unknown as Json[],
           temaKbc: formState.temaKbc,
           materiInsersi: formState.materiInsersi,
           isKbcIntegrated: formState.isKbcIntegrated,
@@ -680,35 +756,21 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
     }
 
     setGeneratedDocument(htmlTemplate);
-    if (insertedPlan?.id) onDocumentSaved?.(insertedPlan.id);
-    setFormState((prev) => ({
-      ...prev,
-      manualTujuanPembelajaran: Array.isArray(draftData.tujuanPembelajaran)
-        ? draftData.tujuanPembelajaran.join('\n')
-        : draftData.tujuanPembelajaran || '',
-      manualPemahamanBermakna: Array.isArray(draftData.pemahamanBermakna)
-        ? draftData.pemahamanBermakna.join('\n')
-        : draftData.pemahamanBermakna || '',
-      manualPertanyaanPemantik: Array.isArray(draftData.pertanyaanPemantik)
-        ? draftData.pertanyaanPemantik.join('\n')
-        : draftData.pertanyaanPemantik || '',
-      manualMateriAjar: draftData.materiAjar || '',
-      manualLkpdTugas: draftData.lkpdTugas || '',
-      manualSoalEvaluasi: draftData.soalEvaluasi || '',
-      manualPengayaan: Array.isArray(draftData.pengayaan)
-        ? draftData.pengayaan.join('\n\n')
-        : draftData.pengayaan || '',
-      manualRemedial: Array.isArray(draftData.remedial)
-        ? draftData.remedial.join('\n\n')
-        : draftData.remedial || '',
-      manualGlosarium: Array.isArray(draftData.glosarium)
-        ? draftData.glosarium.join('\n')
-        : draftData.glosarium || '',
-      manualDaftarPustaka: Array.isArray(draftData.daftarPustaka)
-        ? draftData.daftarPustaka.join('\n')
-        : draftData.daftarPustaka || '',
-      asesmenSikap: draftData.asesmenSikap || '',
-    }));
+    if (insertedPlan?.id) onDocumentSaved?.(insertedPlan.id, docFormState);
+    writeBack({
+      manualTujuanPembelajaran: baseTujuan.join('\n'),
+      manualPemahamanBermakna: draftData.pemahamanBermakna.join('\n'),
+      manualPertanyaanPemantik: draftData.pertanyaanPemantik.join('\n'),
+      manualMateriAjar: draftData.materiAjar,
+      manualLkpdTugas: draftData.lkpdTugas,
+      manualSoalEvaluasi: draftData.soalEvaluasi,
+      manualPengayaan: draftData.pengayaan.join('\n\n'),
+      manualRemedial: draftData.remedial.join('\n\n'),
+      manualGlosarium: draftData.glosarium.join('\n'),
+      manualDaftarPustaka: draftData.daftarPustaka.join('\n'),
+      kompetensiAwal: draftData.kompetensiAwal,
+    });
+    setFormState((prev) => ({ ...prev, asesmenSikap: draftData.asesmenSikap }));
     fetchHistory();
   };
 
