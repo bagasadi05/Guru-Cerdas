@@ -2,3 +2,6 @@ project_id = "portal-guru"
 
 [functions.dispatch-push]
 verify_jwt = false
+
+[functions.wa-worker]
+verify_jwt = false

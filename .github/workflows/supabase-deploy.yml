@@ -79,6 +79,7 @@ jobs:
         run: |
           echo "🚀 Deploying Edge Functions..."
           supabase functions deploy dispatch-push --project-ref "$SUPABASE_PROJECT_ID" --token "$SUPABASE_ACCESS_TOKEN" --no-verify-jwt
+          supabase functions deploy wa-worker --project-ref "$SUPABASE_PROJECT_ID" --no-verify-jwt
           supabase functions deploy openrouter --project-ref "$SUPABASE_PROJECT_ID" --token "$SUPABASE_ACCESS_TOKEN" --no-verify-jwt || true
 
       - name: Verify Teacher Reminders
