@@ -4,6 +4,8 @@ import { Database } from '../../../../../services/database.types';
 import { ViolationItem } from '../../../../../services/violations.data';
 import { recordAction } from '../../../../../services/UndoManager';
 
+const GUARD_CHUNK_SIZE = 100;
+
 interface ExecuteViolationMutationParams {
     user: AppUser;
     selectedViolation: ViolationItem | null;
@@ -27,21 +29,25 @@ export async function executeViolationMutation({
         throw new Error('Jenis pelanggaran dan siswa harus dipilih.');
     }
     const studentIds = Array.from(selectedStudentIds);
-    let duplicateStudentIds = new Set<string>();
+    const duplicateStudentIds = new Set<string>();
 
     if (!shouldBypassGuard) {
-        // No semester filter: the DB trigger assigns the semester from the date,
-        // so a back-dated entry may sit in a different semester than the active one.
-        const { data: existingRows, error: existingViolationError } = await supabase
-            .from('violations')
-            .select('id, student_id, user_id')
-            .in('student_id', studentIds)
-            .eq('date', violationDate)
-            .eq('description', selectedViolation.description)
-            .is('deleted_at', null);
-        if (existingViolationError) throw existingViolationError;
+        // Chunked so a large "Semua Kelas" selection doesn't overflow the
+        // request URL (each id adds ~37 characters to the IN filter).
+        for (let i = 0; i < studentIds.length; i += GUARD_CHUNK_SIZE) {
+            // No semester filter: the DB trigger assigns the semester from the date,
+            // so a back-dated entry may sit in a different semester than the active one.
+            const { data: existingRows, error: existingViolationError } = await supabase
+                .from('violations')
+                .select('id, student_id, user_id')
+                .in('student_id', studentIds.slice(i, i + GUARD_CHUNK_SIZE))
+                .eq('date', violationDate)
+                .eq('description', selectedViolation.description)
+                .is('deleted_at', null);
+            if (existingViolationError) throw existingViolationError;
 
-        duplicateStudentIds = new Set((existingRows || []).map((r) => r.student_id));
+            for (const r of existingRows || []) duplicateStudentIds.add(r.student_id);
+        }
     }
 
     const records: Database['public']['Tables']['violations']['Insert'][] = studentIds
