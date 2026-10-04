@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - 2026-09-28
 
+### Added (Apa yang baru)
+- **Jendela "Apa yang baru" saat ada versi baru:** guru melihat daftar perubahan lalu memilih **Perbarui sekarang** atau **Nanti**. Hitung mundur muat ulang otomatis 3 detik dihapus. Kalau aplikasi diperbarui di latar belakang, daftar perubahan muncul sekali saat aplikasi dibuka lagi. Isinya diambil dari `public/release-notes.json` (panduan: `docs/release-notes.md`). Portal Orang Tua dan halaman login tetap diperbarui otomatis tanpa jendela ini.
+- **Pengingat catatan rilis sebelum push:** hook `.githooks/pre-push` memperingatkan saat push ke `main` mengubah aplikasi tanpa memperbarui `public/release-notes.json`. Aktifkan sekali per clone dengan `git config core.hooksPath .githooks`.
+
 ### Security
 - **Hardening database Supabase** (rincian: `docs/DB_HARDENING_PLAN_2026-10-03.md`):
   - Pengunjung tanpa login tidak lagi bisa memanggil 33 fungsi SECURITY DEFINER, termasuk `get_student_directory` yang sebelumnya membocorkan nama semua siswa. RPC Portal Orang Tua tetap berjalan.
@@ -40,6 +44,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cron `modul-ajar-ai-worker-poll` dinonaktifkan. Antreannya tidak dipakai lagi oleh halaman Modul Ajar, dan cron ini ditolak 401 setiap 2 menit.
 
 ### Added
+- **Ekspor Dokumen Modul Ajar lewat Server (di balik flag `VITE_ENABLE_SERVER_DOCUMENT_EXPORT`):**
+  - Endpoint `POST /api/document-export/pdf` (Chromium headless) dan `POST /api/document-export/docx` (Word `.docx` asli) yang membaca dokumen tersimpan berdasarkan `lessonPlanId`, dengan verifikasi sesi, cek kepemilikan, rate limit, timeout, dan audit log.
+  - Model ekspor bersama `src/lib/modulAjarExport` untuk PDF dan Word: dukungan A4/F4, margin 2 cm, header tabel berulang, baris tabel dan blok tanda tangan tidak terbelah, nomor halaman, serta varian LKPD siswa.
+  - Status loading per tombol, dialog **Simpan & Unduh** untuk perubahan pratinjau yang belum disimpan, dan pesan gagal dengan **Coba lagi** serta **Cetak lewat browser**.
+  - Dokumentasi: `docs/modul-ajar-ekspor-dokumen.md`.
 - **Modul Perangkat Ajar (Prota & Promes):**
   - Implementasi penuh Program Tahunan (Prota) dan Program Semester (Promes) berbasis Kurikulum Merdeka & Kurikulum 2013.
   - Wizard generator otomatis untuk kalkulasi jam pelajaran tahunan dan semesteran dengan panduan interaktif.
@@ -65,6 +74,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Penambahan *safe vertical buffer* (+6.5 mm) di bawah garis pembatas Kop Surat untuk mengeliminasi tabrakan antara dasar garis ganda dan huruf kapital judul dokumen.
 
 ### Fixed
+- **Input Penilaian** (temuan audit `docs/audit-input-penilaian-2026-10-04.md`):
+  - Semester yang dipilih guru tidak lagi ditimpa trigger. `set_academic_record_semester_id()` dan `set_quiz_point_semester_id()` kini mempertahankan semester yang dikirim; poin tanpa semester ditentukan dari `quiz_date` (migrasi `20261004100000`, **belum diterapkan ke produksi**). Formulir nilai menolak menyimpan ke semester yang sudah dikunci, dan poin keaktifan/sikap memakai semester sesuai tanggalnya.
+  - Draf nilai disimpan per akun dan per kelas–mapel–penilaian–semester (`src/utils/subjectGradeDraftStorage.ts`), dihapus saat logout, dan tidak lagi tertimpa nilai dari database saat halaman dibuka kembali. Banner draf menawarkan **Buang draf**.
+  - Ganti kelas, semester, mapel, atau nama penilaian saat ada nilai belum disimpan kini selalu meminta konfirmasi. Nilai yang sudah diketik tetap menjadi draf dan muncul lagi saat guru kembali ke penilaian itu. Nama mapel/penilaian baru diterapkan setelah selesai diketik, bukan per huruf.
+  - Simpan hanya mengirim nilai yang berubah, membaca nilai terbaru sebelum menulis, dan menampilkan dialog konflik bila nilai yang sama sudah diubah dari perangkat lain. Unique index `uq_academic_records_live_assessment` mencegah dua baris nilai untuk penilaian yang sama (migrasi `20261004100100`, **belum diterapkan ke produksi**).
+  - Rapor massal dan rekap nilai mengambil data per halaman (`src/utils/fetchAllPages.ts`), sehingga absensi lebih dari 1.000 baris tidak lagi terpotong. Ekspor gagal dengan pesan jelas bila data tidak terambil lengkap.
+  - Simpan sikap memeriksa error rekap `attitude_records`, memperbarui baris yang sudah ada alih-alih menabrak unique index, menyimpan catatan, dan menampilkan peringatan bila rekap gagal.
+  - Tanggal awal keaktifan, sikap, dan pelanggaran memakai tanggal WIB (`schoolDate()`), tidak lagi tanggal UTC sebelum pukul 07.00.
 - **Rapor Bintang:**
   - Portal Orang Tua kini bisa menampilkan rapor Bintang yang sudah terbit, lewat RPC baru `get_student_portal_bintang` yang memvalidasi kode akses (migrasi `20261003132636`).
   - Isi rapor yang sudah terbit dikunci di database dengan trigger `trg_lock_published_bintang_eval` (migrasi `20261003132628`). Untuk mengedit, batalkan publikasi dulu. Tombol Generate kini melewati rapor yang sudah terbit.

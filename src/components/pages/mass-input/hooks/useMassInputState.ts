@@ -1,48 +1,59 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSemester } from '../../../../contexts/SemesterContext';
+import { useAuth } from '../../../../hooks/useAuth';
 import { InputMode, Step, StudentFilter } from '../types';
+import { schoolDate } from '../../../../utils/reminderDates';
+import {
+    SubjectGradeDraft,
+    getSubjectGradeContextKey,
+    readLatestSubjectGradeDraft,
+    readSubjectGradeDraft,
+    removeSubjectGradeDraft,
+    writeSubjectGradeDraft,
+} from '../../../../utils/subjectGradeDraftStorage';
 
-export interface SubjectGradeDraft {
-    step: Step;
-    mode: InputMode | null;
-    selectedClass: string;
-    subjectGradeInfo: { subject: string; assessment_name: string; notes: string; semester: string };
-    scores: Record<string, string>;
-    selectedStudentIds?: string[];
-    kkm?: number;
-    validationErrors?: Record<string, string>;
+export type { SubjectGradeDraft };
+
+/** A draft put back into the form, shown so the teacher can keep or discard it. */
+export interface RestoredDraftInfo {
+    savedAt: string | null;
+    count: number;
 }
 
-const SUBJECT_GRADE_DRAFT_KEY = 'guru_cerdas_subject_grade_draft';
-
-function readSubjectGradeDraft(): SubjectGradeDraft | null {
-    try {
-        const data = sessionStorage.getItem(SUBJECT_GRADE_DRAFT_KEY);
-        return data ? JSON.parse(data) : null;
-    } catch {
-        return null;
-    }
-}
-
-function writeSubjectGradeDraft(draft: SubjectGradeDraft) {
-    try {
-        sessionStorage.setItem(SUBJECT_GRADE_DRAFT_KEY, JSON.stringify(draft));
-    } catch (e) {
-        console.error('Failed to save subject grade draft:', e);
-    }
-}
+const countFilledScores = (scores: Record<string, string>) =>
+    Object.values(scores).filter(score => score && score.trim() !== '').length;
 
 export function useMassInputState() {
     const { activeSemester } = useSemester();
+    const { user } = useAuth();
+    const userId = user?.id ?? null;
     const location = useLocation();
     const navigate = useNavigate();
-    const [initialDraft] = useState<SubjectGradeDraft | null>(() => readSubjectGradeDraft());
-    const [isScoresDirty, setIsScoresDirtyState] = useState<boolean>(() => Boolean(initialDraft && Object.keys(initialDraft.scores).length > 0));
+    const [initialDraft] = useState<SubjectGradeDraft | null>(() => {
+        const draft = readLatestSubjectGradeDraft(userId);
+        return draft && countFilledScores(draft.scores) > 0 ? draft : null;
+    });
+    const [isScoresDirty, setIsScoresDirtyState] = useState<boolean>(() => Boolean(initialDraft));
     const isScoresDirtyRef = useRef(isScoresDirty);
+    // Render-phase context resets only update state; keep the ref in step so
+    // the server sync never treats a restored draft as clean.
+    useEffect(() => {
+        isScoresDirtyRef.current = isScoresDirty;
+    }, [isScoresDirty]);
 
-    const [step, setStep] = useState<Step>(() => initialDraft?.step || 1);
-    const [mode, setMode] = useState<InputMode | null>(() => initialDraft?.mode || null);
+    /** Server scores the form started from; null until they are known. */
+    const [scoreBaseline, setScoreBaseline] = useState<Record<string, string> | null>(() => initialDraft?.baseline ?? null);
+    const scoreBaselineRef = useRef(scoreBaseline);
+    useEffect(() => {
+        scoreBaselineRef.current = scoreBaseline;
+    }, [scoreBaseline]);
+    const [restoredDraft, setRestoredDraft] = useState<RestoredDraftInfo | null>(() => initialDraft
+        ? { savedAt: initialDraft.savedAt ?? null, count: countFilledScores(initialDraft.scores) }
+        : null);
+
+    const [step, setStep] = useState<Step>(() => initialDraft ? 2 : 1);
+    const [mode, setMode] = useState<InputMode | null>(() => initialDraft ? 'subject_grade' : null);
     const [selectedClass, setSelectedClass] = useState(() => initialDraft?.selectedClass || '');
     const [prevClass, setPrevClass] = useState(selectedClass);
     const [prevMode, setPrevMode] = useState(mode);
@@ -50,18 +61,16 @@ export function useMassInputState() {
         name: 'Aktif bertanya di kelas',
         category: 'bertanya',
         subject: '',
-        date: new Date().toISOString().slice(0, 10),
+        date: schoolDate(),
         points: 1,
         max_points: 1,
     });
     const [subjectGradeInfo, setSubjectGradeInfo] = useState(() => initialDraft?.subjectGradeInfo || { subject: '', assessment_name: '', notes: '', semester: '' });
-    const getAssessmentKey = (classId: string, info: { subject: string; assessment_name: string; semester: string }) =>
-        `${classId}::${info.subject}::${info.assessment_name}::${info.semester}`;
     const [prevAssessmentKey, setPrevAssessmentKey] = useState(() =>
-        getAssessmentKey(initialDraft?.selectedClass || '', initialDraft?.subjectGradeInfo || { subject: '', assessment_name: '', notes: '', semester: '' })
+        getSubjectGradeContextKey(initialDraft?.selectedClass || '', initialDraft?.subjectGradeInfo || { subject: '', assessment_name: '', notes: '', semester: '' })
     );
     const [kkm, setKkm] = useState(75);
-    const [attitudeDate, setAttitudeDate] = useState(new Date().toISOString().slice(0, 10));
+    const [attitudeDate, setAttitudeDate] = useState(schoolDate());
     const [attitudeCategory, setAttitudeCategory] = useState('Adab & Akhlak');
     const [attitudeName, setAttitudeName] = useState('Adab & Kesantunan');
     const [attitudePoints, setAttitudePoints] = useState(1);
@@ -70,14 +79,14 @@ export function useMassInputState() {
     const [scores, setScores] = useState<Record<string, string>>(() => initialDraft?.scores || {});
     const [pasteData, setPasteData] = useState('');
     const [selectedViolationCode, setSelectedViolationCode] = useState('');
-    const [violationDate, setViolationDate] = useState(new Date().toISOString().slice(0, 10));
+    const [violationDate, setViolationDate] = useState(schoolDate());
     const [violationNotes, setViolationNotes] = useState('');
     const [selectedStudentIds, setSelectedStudentIds] = useState(() => new Set<string>(initialDraft?.selectedStudentIds || []));
     const [searchTerm, setSearchTerm] = useState('');
     const [studentFilter, setStudentFilter] = useState<StudentFilter>('all');
     const [noteMethod, setNoteMethod] = useState<'ai' | 'template'>('ai');
     const [templateNote, setTemplateNote] = useState('Ananda [Nama Siswa] menunjukkan perkembangan yang baik semester ini. Terus tingkatkan semangat belajar dan jangan ragu bertanya jika ada kesulitan.');
-    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>(() => initialDraft?.validationErrors || {});
     const [isConfigOpen, setIsConfigOpen] = useState(true);
     const [isCustomSubject, setIsCustomSubject] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
@@ -143,14 +152,27 @@ export function useMassInputState() {
         setIsScoresDirtyState(false);
     }
 
-    // Reset scores and dirty flag when assessment context changes in subject_grade mode
-    const currentAssessmentKey = getAssessmentKey(selectedClass, subjectGradeInfo);
+    // When the assessment context changes in subject_grade mode, bring back the
+    // draft saved for that context, or start empty so the server sync fills it.
+    const currentAssessmentKey = getSubjectGradeContextKey(selectedClass, subjectGradeInfo);
     if (prevAssessmentKey !== currentAssessmentKey) {
         setPrevAssessmentKey(currentAssessmentKey);
         if (mode === 'subject_grade') {
-            setScores({});
-            setValidationErrors({});
-            setIsScoresDirtyState(false);
+            const draft = readSubjectGradeDraft(userId, currentAssessmentKey);
+            const filled = draft ? countFilledScores(draft.scores) : 0;
+            if (draft && filled > 0) {
+                setScores(draft.scores);
+                setValidationErrors(draft.validationErrors || {});
+                setScoreBaseline(draft.baseline ?? null);
+                setIsScoresDirtyState(true);
+                setRestoredDraft({ savedAt: draft.savedAt ?? null, count: filled });
+            } else {
+                setScores({});
+                setValidationErrors({});
+                setScoreBaseline(null);
+                setIsScoresDirtyState(false);
+                setRestoredDraft(null);
+            }
         }
     }
 
@@ -162,68 +184,76 @@ export function useMassInputState() {
         setBypassDuplicateGuard(false);
     }
 
-    useEffect(() => {
-        isScoresDirtyRef.current = false;
-    }, [selectedClass, subjectGradeInfo.subject, subjectGradeInfo.assessment_name, subjectGradeInfo.semester]);
+    /** Removes the draft of the current (or given) context, e.g. after it was saved. */
+    const clearSubjectGradeDraft = useCallback((contextKey?: string) => {
+        removeSubjectGradeDraft(userId, contextKey ?? currentAssessmentKey);
+        setRestoredDraft(null);
+    }, [userId, currentAssessmentKey]);
 
-    const clearSubjectGradeDraft = () => {
-        sessionStorage.removeItem(SUBJECT_GRADE_DRAFT_KEY);
-    };
-
-    const saveSubjectGradeDraft = (draft: Omit<SubjectGradeDraft, 'step' | 'mode'>) => {
-        writeSubjectGradeDraft({ step: 2, mode: 'subject_grade', ...draft });
-    };
+    const saveSubjectGradeDraft = useCallback((draft: Omit<SubjectGradeDraft, 'baseline' | 'savedAt'>) => {
+        writeSubjectGradeDraft(userId, { ...draft, baseline: scoreBaselineRef.current });
+    }, [userId]);
 
     // Auto-save draft when values change
     useEffect(() => {
-        if (mode !== 'subject_grade' || !isScoresDirtyRef.current || Object.keys(scores).length === 0) return;
+        if (mode !== 'subject_grade' || !isScoresDirty) return;
+        // Every typed score was cleared: an old draft must not bring them back.
+        if (countFilledScores(scores) === 0) {
+            removeSubjectGradeDraft(userId, getSubjectGradeContextKey(selectedClass, subjectGradeInfo));
+            return;
+        }
 
-        const draft: SubjectGradeDraft = {
-            step: 2,
-            mode,
+        writeSubjectGradeDraft(userId, {
             selectedClass,
             subjectGradeInfo,
             kkm,
             scores,
+            baseline: scoreBaseline,
             selectedStudentIds: Array.from(selectedStudentIds),
             validationErrors,
-        };
-        saveSubjectGradeDraft(draft);
-    }, [mode, selectedClass, subjectGradeInfo, kkm, scores, selectedStudentIds, validationErrors]);
+        });
+    }, [userId, mode, isScoresDirty, selectedClass, subjectGradeInfo, kkm, scores, scoreBaseline, selectedStudentIds, validationErrors]);
 
     const handleModeSelect = useCallback((selectedMode: InputMode) => {
         if (selectedMode === 'subject_grade') {
-            const draft = readSubjectGradeDraft();
-            if (draft && draft.step === 2 && draft.mode === 'subject_grade') {
+            const draft = readLatestSubjectGradeDraft(userId);
+            const filled = draft ? countFilledScores(draft.scores) : 0;
+            if (draft && filled > 0) {
                 setSelectedClass(draft.selectedClass);
                 setPrevClass(draft.selectedClass);
                 setSubjectGradeInfo(draft.subjectGradeInfo);
-                setPrevAssessmentKey(getAssessmentKey(draft.selectedClass, draft.subjectGradeInfo));
+                setPrevAssessmentKey(getSubjectGradeContextKey(draft.selectedClass, draft.subjectGradeInfo));
                 setKkm(draft.kkm || 75);
                 setScores(draft.scores);
+                setScoreBaseline(draft.baseline ?? null);
                 setValidationErrors(draft.validationErrors || {});
+                setRestoredDraft({ savedAt: draft.savedAt ?? null, count: filled });
                 setMode('subject_grade');
                 setStep(2);
-                isScoresDirtyRef.current = Boolean(draft.scores && Object.keys(draft.scores).length > 0);
-                setIsScoresDirtyState(isScoresDirtyRef.current);
+                isScoresDirtyRef.current = true;
+                setIsScoresDirtyState(true);
                 return;
             }
         }
         setMode(selectedMode);
         setStep(2);
         setIsCustomSubject(false);
-    }, []);
+    }, [userId]);
 
     const handleBack = useCallback(() => {
-        clearSubjectGradeDraft();
+        // Leaving was confirmed, so the typed scores of this context are discarded.
+        // Drafts of other assessments stay available.
+        if (mode === 'subject_grade') clearSubjectGradeDraft();
+        setScoreBaseline(null);
+        setRestoredDraft(null);
         setStep(1);
         setMode(null);
         setSelectedClass('');
         setScores({});
-        setQuizInfo({ name: 'Aktif bertanya di kelas', category: 'bertanya', subject: '', date: new Date().toISOString().slice(0, 10), points: 1, max_points: 1 });
+        setQuizInfo({ name: 'Aktif bertanya di kelas', category: 'bertanya', subject: '', date: schoolDate(), points: 1, max_points: 1 });
         setSubjectGradeInfo({ subject: '', assessment_name: '', notes: '', semester: '' });
         setKkm(75);
-        setAttitudeDate(new Date().toISOString().slice(0, 10));
+        setAttitudeDate(schoolDate());
         setAttitudeCategory('Adab & Akhlak');
         setAttitudeName('Adab & Kesantunan');
         setAttitudePoints(1);
@@ -231,7 +261,7 @@ export function useMassInputState() {
         setAttitudePredicates({});
         setPasteData('');
         setSelectedViolationCode('');
-        setViolationDate(new Date().toISOString().slice(0, 10));
+        setViolationDate(schoolDate());
         setViolationNotes('');
         setSelectedStudentIds(new Set()); setSearchTerm(''); setStudentFilter('all');
         setValidationErrors({}); setNoteMethod('ai');
@@ -240,7 +270,7 @@ export function useMassInputState() {
         setBypassDuplicateGuard(false);
         isScoresDirtyRef.current = false;
         setIsScoresDirtyState(false);
-    }, []);
+    }, [mode, clearSubjectGradeDraft]);
 
     const handleScoreChange = useCallback((studentId: string, value: string) => {
         isScoresDirtyRef.current = true;
@@ -336,6 +366,8 @@ export function useMassInputState() {
         step, setStep,
         mode, setMode,
         selectedClass, setSelectedClass,
+        scoreBaseline, setScoreBaseline,
+        restoredDraft,
         quizInfo, setQuizInfo,
         subjectGradeInfo, setSubjectGradeInfo,
         kkm, setKkm,

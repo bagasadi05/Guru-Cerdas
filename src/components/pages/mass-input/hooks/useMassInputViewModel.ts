@@ -7,6 +7,13 @@ import { AcademicRecordRow, StudentFilter, StudentRow } from '../types';
 import { actionCards } from '../constants';
 import { useWarnUnsavedChanges } from '../../../../hooks/useWarnUnsavedChanges';
 import { useUserSettings } from '../../../../hooks/useUserSettings';
+import { useSemester } from '../../../../contexts/SemesterContext';
+import { summarizeScoreChanges } from './mutations/useSubjectGradeMutation';
+
+type SubjectGradeInfo = { subject: string; assessment_name: string; notes: string; semester: string };
+
+const sameAssessment = (a: SubjectGradeInfo, b: SubjectGradeInfo) =>
+    a.subject === b.subject && a.assessment_name === b.assessment_name && a.semester === b.semester;
 
 /** How long a cleared batch can still be restored from the undo bar. */
 const UNDO_CLEAR_WINDOW_MS = 8000;
@@ -18,6 +25,7 @@ export function useMassInputViewModel() {
     const toast = useToast();
 
     const state = useMassInputState();
+    const { semesters } = useSemester();
     const isSubmittingOrCheckingRef = useRef(false);
     const {
         settings: userSettings,
@@ -92,7 +100,8 @@ export function useMassInputViewModel() {
     const [pendingClearAction, setPendingClearAction] = useState<{
         kind: 'scores' | 'selection' | 'back' | 'switch_config';
         count: number;
-        nextInfo?: { subject: string; assessment_name: string; notes: string; semester: string };
+        nextInfo?: SubjectGradeInfo;
+        nextClass?: string;
     } | null>(null);
     const [undoSnapshot, setUndoSnapshot] = useState<{
         kind: 'scores' | 'selection';
@@ -113,15 +122,32 @@ export function useMassInputViewModel() {
         'Ada nilai yang belum disimpan. Yakin ingin keluar?'
     );
 
-    // Sync scores from existing grades (only when not dirty)
+    // Sync scores from existing grades. A clean form takes the server values
+    // as-is. A form with unsaved edits (typed, imported or a restored draft)
+    // keeps them and only fills the fields that are still empty.
+    const serverScores = useMemo(() => (data.existingGrades || []).reduce((acc: Record<string, string>, record: AcademicRecordRow) => {
+        acc[record.student_id] = String(record.score);
+        return acc;
+    }, {} as Record<string, string>), [data.existingGrades]);
+
     useEffect(() => {
         if (state.mode === 'subject_grade' && data.existingGrades) {
             if (!state.isScoresDirtyRef.current) {
-                const initialScores = data.existingGrades.reduce((acc: Record<string, string>, record: AcademicRecordRow) => {
-                    acc[record.student_id] = String(record.score);
-                    return acc;
-                }, {} as Record<string, string>);
-                state.setScores(initialScores);
+                state.setScores(serverScores);
+                state.setScoreBaseline(serverScores);
+            } else {
+                const nextScores = { ...state.scores };
+                const nextBaseline = { ...(state.scoreBaseline ?? serverScores) };
+                let filledFromServer = false;
+                Object.entries(serverScores).forEach(([studentId, value]) => {
+                    if (!nextScores[studentId]?.trim()) {
+                        nextScores[studentId] = value;
+                        nextBaseline[studentId] = value;
+                        filledFromServer = true;
+                    }
+                });
+                if (filledFromServer) state.setScores(nextScores);
+                if (filledFromServer || state.scoreBaseline === null) state.setScoreBaseline(nextBaseline);
             }
         } else if (state.mode !== 'subject_grade') {
             state.setScores(prev => Object.keys(prev).length === 0 ? prev : {});
@@ -178,6 +204,17 @@ export function useMassInputViewModel() {
 
     const gradedCount = useMemo(() => Object.values(state.scores).filter((s: string) => s && s.trim() !== '').length, [state.scores]);
 
+    /** New / edited / untouched scores relative to what the server holds. */
+    const scoreChangeSummary = useMemo(
+        () => summarizeScoreChanges(state.scores, state.scoreBaseline),
+        [state.scores, state.scoreBaseline],
+    );
+
+    const isSelectedSemesterLocked = useMemo(() => {
+        if (!state.subjectGradeInfo.semester) return false;
+        return Boolean(semesters?.find(s => s.id === state.subjectGradeInfo.semester)?.is_locked);
+    }, [semesters, state.subjectGradeInfo.semester]);
+
     const isAllSelected = useMemo(() => {
         if (students.length === 0) return false;
         return students.every(s => state.selectedStudentIds.has(s.id));
@@ -222,6 +259,8 @@ export function useMassInputViewModel() {
         setIsScoresDirty: state.setIsScoresDirty,
         clearSubjectGradeDraft: state.clearSubjectGradeDraft,
         saveSubjectGradeDraft: state.saveSubjectGradeDraft,
+        scoreBaseline: state.scoreBaseline,
+        setScoreBaseline: state.setScoreBaseline,
     });
 
     const attitudeFilledCount = useMemo(() => {
@@ -250,10 +289,16 @@ export function useMassInputViewModel() {
 
     const summaryText = useMemo(() => {
         const totalStudents = data.studentsData?.length || 0;
-        if (state.mode === 'subject_grade') return `${gradedCount} dari ${totalStudents} siswa telah dinilai.`;
+        if (state.mode === 'subject_grade') {
+            const { added, changed } = scoreChangeSummary;
+            const base = `${gradedCount} dari ${totalStudents} siswa sudah punya nilai.`;
+            if (!state.isScoresDirty || added + changed === 0) return base;
+            const parts = [added > 0 ? `${added} baru` : '', changed > 0 ? `${changed} diubah` : ''].filter(Boolean);
+            return `${base} Belum disimpan: ${parts.join(', ')}.`;
+        }
         if (state.mode === 'attitude') return `${state.selectedStudentIds.size} dari ${totalStudents} siswa dipilih (+1 poin ${state.attitudeCategory}).`;
         return `${state.selectedStudentIds.size} dari ${totalStudents} siswa dipilih.`;
-    }, [state.mode, gradedCount, state.attitudeCategory, state.selectedStudentIds.size, data.studentsData]);
+    }, [state.mode, gradedCount, scoreChangeSummary, state.isScoresDirty, state.attitudeCategory, state.selectedStudentIds.size, data.studentsData]);
 
     const submitButtonTooltip = useMemo(() => {
         if (!mutations.isOnline) return 'Fitur ini memerlukan koneksi internet.';
@@ -262,6 +307,7 @@ export function useMassInputViewModel() {
         switch (state.mode) {
             case 'subject_grade': {
                 if (!state.subjectGradeInfo.subject || !state.subjectGradeInfo.assessment_name) return 'Lengkapi mata pelajaran dan nama penilaian.';
+                if (isSelectedSemesterLocked) return 'Semester ini sudah dikunci. Nilainya tidak bisa diubah lagi.';
                 const invalidCount = Object.keys(state.validationErrors).length;
                 if (invalidCount > 0) return `Perbaiki ${invalidCount} nilai yang tidak valid (harus 0-100) sebelum menyimpan.`;
                 if (gradedCount === 0) return 'Masukkan setidaknya satu nilai siswa.'; break;
@@ -281,7 +327,7 @@ export function useMassInputViewModel() {
                 if (state.mode === 'academic_print' && !state.subjectGradeInfo.subject) return 'Pilih mata pelajaran untuk dicetak.'; break;
         }
         return '';
-    }, [mutations.isOnline, mutations.isSubmitting, mutations.isCheckingDuplicates, mutations.isExporting, mutations.isDeleting, state.selectedClass, state.mode, state.subjectGradeInfo, state.validationErrors, gradedCount, state.attitudeName, state.selectedStudentIds, state.quizInfo, state.selectedViolationCode]);
+    }, [mutations.isOnline, mutations.isSubmitting, mutations.isCheckingDuplicates, mutations.isExporting, mutations.isDeleting, state.selectedClass, state.mode, state.subjectGradeInfo, isSelectedSemesterLocked, state.validationErrors, gradedCount, state.attitudeName, state.selectedStudentIds, state.quizInfo, state.selectedViolationCode]);
 
     const isSubmitDisabled = !!submitButtonTooltip;
 
@@ -316,47 +362,45 @@ export function useMassInputViewModel() {
         state.handleBack();
     };
 
-    const handleSubjectGradeInfoChange = (
-        updater: React.SetStateAction<{ subject: string; assessment_name: string; notes: string; semester: string }>
-    ) => {
+    // Unsaved scores belong to one assessment context (class, subject,
+    // assessment, semester). Switching asks first; the typed scores stay as a
+    // draft of the old context and come back when the teacher returns to it.
+    const hasUnsavedScores = () => state.mode === 'subject_grade' && state.isScoresDirtyRef.current && gradedCount > 0;
+
+    const handleSubjectGradeInfoChange = (updater: React.SetStateAction<SubjectGradeInfo>) => {
         const next = typeof updater === 'function' ? updater(state.subjectGradeInfo) : updater;
-        const isTypingSubject =
-            Boolean(state.subjectGradeInfo.subject) &&
-            Boolean(next.subject) &&
-            (next.subject.startsWith(state.subjectGradeInfo.subject) ||
-             state.subjectGradeInfo.subject.startsWith(next.subject));
-
-        const isSubjectChanged = Boolean(state.subjectGradeInfo.subject) &&
-            Boolean(next.subject) &&
-            !isTypingSubject &&
-            next.subject !== state.subjectGradeInfo.subject;
-
-        const isTypingAssessment =
-            Boolean(state.subjectGradeInfo.assessment_name) &&
-            Boolean(next.assessment_name) &&
-            (next.assessment_name.startsWith(state.subjectGradeInfo.assessment_name) ||
-             state.subjectGradeInfo.assessment_name.startsWith(next.assessment_name));
-
-        const isAssessmentChanged = Boolean(state.subjectGradeInfo.assessment_name) &&
-            Boolean(next.assessment_name) &&
-            !isTypingAssessment &&
-            next.assessment_name !== state.subjectGradeInfo.assessment_name;
-
-        const isSubjectOrAssessmentChanged = isSubjectChanged || isAssessmentChanged;
-
-        if (isSubjectOrAssessmentChanged && state.mode === 'subject_grade' && state.isScoresDirtyRef.current && gradedCount > 0) {
-            setPendingClearAction({
-                kind: 'switch_config',
-                count: gradedCount,
-                nextInfo: next,
-            });
+        if (!sameAssessment(next, state.subjectGradeInfo) && hasUnsavedScores()) {
+            setPendingClearAction({ kind: 'switch_config', count: gradedCount, nextInfo: next });
             return;
         }
-
         state.setSubjectGradeInfo(next);
     };
 
-    const dismissPendingAction = () => setPendingClearAction(null);
+    const handleSelectedClassChange = (classId: string) => {
+        if (classId !== state.selectedClass && hasUnsavedScores()) {
+            setPendingClearAction({ kind: 'switch_config', count: gradedCount, nextClass: classId });
+            return;
+        }
+        state.setSelectedClass(classId);
+    };
+
+    /** Drops the restored draft and shows what the server holds again. */
+    const discardRestoredDraft = () => {
+        state.clearSubjectGradeDraft();
+        state.setIsScoresDirty(false);
+        state.setValidationErrors({});
+        state.setScores(serverScores);
+        state.setScoreBaseline(data.existingGrades ? serverScores : null);
+        toast.info('Draf dibuang. Formulir kembali menampilkan nilai yang tersimpan.');
+    };
+
+    // Bumped when a context switch is cancelled, so name inputs that already
+    // show the new text reset to the assessment that is still active.
+    const [configResetKey, setConfigResetKey] = useState(0);
+    const dismissPendingAction = () => {
+        if (pendingClearAction?.kind === 'switch_config') setConfigResetKey(k => k + 1);
+        setPendingClearAction(null);
+    };
 
     const confirmPendingAction = () => {
         const action = pendingClearAction;
@@ -369,12 +413,10 @@ export function useMassInputViewModel() {
         }
 
         if (action.kind === 'switch_config') {
-            if (action.nextInfo) {
-                state.clearSubjectGradeDraft();
-                state.setIsScoresDirty(false);
-                state.setScores({});
-                state.setSubjectGradeInfo(action.nextInfo);
-            }
+            // The draft of the current context is already stored; switching
+            // loads the next context's own draft or its server values.
+            if (action.nextClass !== undefined) state.setSelectedClass(action.nextClass);
+            if (action.nextInfo) state.setSubjectGradeInfo(action.nextInfo);
             return;
         }
 
@@ -446,7 +488,7 @@ export function useMassInputViewModel() {
         isConfigOpen: state.isConfigOpen,
         setIsConfigOpen: state.setIsConfigOpen,
         selectedClass: state.selectedClass,
-        setSelectedClass: state.setSelectedClass,
+        setSelectedClass: handleSelectedClassChange,
         classes: data.classes,
         isLoadingClasses: data.isLoadingClasses,
         quizInfo: state.quizInfo,
@@ -459,6 +501,7 @@ export function useMassInputViewModel() {
         pendingClearAction,
         confirmPendingAction,
         dismissPendingAction,
+        configResetKey,
         requestClear,
         undoSnapshot,
         handleUndoClear,
@@ -583,6 +626,14 @@ export function useMassInputViewModel() {
         },
         isScoresDirty: state.isScoresDirty,
         setIsScoresDirty: state.setIsScoresDirty,
+        restoredDraft: state.restoredDraft,
+        discardRestoredDraft,
+        scoreChangeSummary,
+        isSelectedSemesterLocked,
+        gradeConflicts: mutations.gradeConflicts,
+        dismissGradeConflicts: mutations.dismissGradeConflicts,
+        overwriteGradeConflicts: mutations.overwriteGradeConflicts,
+        acceptServerGrades: mutations.acceptServerGrades,
         saveSubjectGradeDraft: state.saveSubjectGradeDraft,
         clearSubjectGradeDraft: state.clearSubjectGradeDraft,
     };

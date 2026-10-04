@@ -10,10 +10,11 @@ import { InputMode, ClassRow, StudentRow, AcademicRecordRow } from '../types';
 import { triggerStarsConfetti } from '../../../../utils/confetti';
 
 import { useDuplicateGuard, DUPLICATE_GUARD_WINDOW_MINUTES, getDuplicateGuardWindowIso } from './mutations/useDuplicateGuard';
-import { executeSubjectGradeMutation } from './mutations/useSubjectGradeMutation';
-import { executeAttitudeMutation } from './mutations/useAttitudeMutation';
+import { executeSubjectGradeMutation, GradeConflict, GradeConflictError } from './mutations/useSubjectGradeMutation';
+import { executeAttitudeMutation, MutationWarning } from './mutations/useAttitudeMutation';
 import { executeQuizPointsMutation } from './mutations/useQuizPointsMutation';
 import { executeViolationMutation } from './mutations/useViolationMutation';
+import { findSemesterForDate } from '../../../../utils/semesterUtils';
 import { useGradeDeletionMutation } from './mutations/useGradeDeletionMutation';
 import { useMassInputExport } from './mutations/useMassInputExport';
 import { useMassInputAiParse, findStudentMatch } from './mutations/useMassInputAiParse';
@@ -51,6 +52,14 @@ export interface UseMassInputMutationsParams {
     setIsScoresDirty?: (isDirty: boolean) => void;
     clearSubjectGradeDraft: () => void;
     saveSubjectGradeDraft?: (draft: any) => void;
+    /** Server scores the grade form started from (see executeSubjectGradeMutation). */
+    scoreBaseline?: Record<string, string> | null;
+    setScoreBaseline?: React.Dispatch<React.SetStateAction<Record<string, string> | null>>;
+}
+
+interface SubmitOptions {
+    bypassGuard?: boolean;
+    overwriteConflicts?: boolean;
 }
 
 export function useMassInputMutations(params: UseMassInputMutationsParams) {
@@ -61,12 +70,18 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         studentsData, noteMethod, templateNote, pasteData,
         gradedCount, classes,
         setScores, setSelectedStudentIds, bypassDuplicateGuard, isScoresDirtyRef, setIsScoresDirty, clearSubjectGradeDraft,
-        saveSubjectGradeDraft,
+        saveSubjectGradeDraft, scoreBaseline, setScoreBaseline,
     } = params;
 
     const { user } = useAuth();
     const queryClient = useQueryClient();
-    const { activeSemester, activeAcademicYear } = useSemester();
+    const { activeSemester, activeAcademicYear, semesters } = useSemester();
+    // A back-dated violation belongs to the semester its date falls in, which
+    // after a semester switch is no longer the active one.
+    const violationSemester = findSemesterForDate(semesters, violationDate) ?? activeSemester;
+    // Same rule for back-dated activity and attitude points.
+    const quizSemester = findSemesterForDate(semesters, quizInfo.date) ?? activeSemester;
+    const attitudeSemester = findSemesterForDate(semesters, attitudeDate) ?? activeSemester;
     const toast = useToast();
     const isOnline = useOfflineStatus();
 
@@ -91,6 +106,9 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         attitudeDate,
         subjectGradeInfo,
         activeSemester,
+        violationSemester,
+        quizSemester: quizSemester ?? null,
+        attitudeSemester: attitudeSemester ?? null,
         studentsData,
     });
 
@@ -155,11 +173,17 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         toast,
     });
 
+    // Scores a grade save is about to write, kept so the baseline can follow
+    // them once the save succeeds (the form may change while it is in flight).
+    const submittedScoresRef = React.useRef<Record<string, string> | null>(null);
+    const [gradeConflicts, setGradeConflicts] = React.useState<GradeConflict[] | null>(null);
+
     // Core Mutation: Submit data across modes
     const { mutate: submitData, isPending: isSubmitting } = useMutation({
-        mutationFn: async (overrideBypassGuard?: boolean | void) => {
+        mutationFn: async (options?: SubmitOptions | boolean | void): Promise<string | MutationWarning> => {
             if (!mode || !user) throw new Error('Mode atau pengguna tidak diatur');
-            const shouldBypassGuard = overrideBypassGuard ?? bypassDuplicateGuard;
+            const opts: SubmitOptions = typeof options === 'boolean' ? { bypassGuard: options } : (options || {});
+            const shouldBypassGuard = opts.bypassGuard ?? bypassDuplicateGuard;
 
             switch (mode) {
                 case 'quiz':
@@ -167,12 +191,13 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                         user,
                         quizInfo,
                         selectedStudentIds,
-                        activeSemester,
+                        activeSemester: quizSemester,
                         shouldBypassGuard,
                         getDuplicateGuardWindowIso,
                     });
 
                 case 'subject_grade':
+                    submittedScoresRef.current = { ...scores };
                     return executeSubjectGradeMutation({
                         user,
                         subjectGradeInfo,
@@ -180,6 +205,8 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                         validationErrors,
                         gradedCount,
                         existingGrades,
+                        baselineScores: scoreBaseline,
+                        overwriteConflicts: opts.overwriteConflicts,
                     });
 
                 case 'violation':
@@ -189,7 +216,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                         selectedStudentIds,
                         violationDate,
                         violationNotes,
-                        activeSemester,
+                        activeSemester: violationSemester,
                         shouldBypassGuard,
                     });
 
@@ -203,6 +230,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                         attitudeNotes,
                         subjectGradeInfo,
                         activeSemester,
+                        attitudeSemester: attitudeSemester ?? null,
                         shouldBypassGuard,
                         getDuplicateGuardWindowIso,
                     });
@@ -211,8 +239,23 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                     throw new Error(`Mode "${mode}" tidak mendukung penyimpanan data.`);
             }
         },
-        onSuccess: async (message: string) => {
-            toast.success(message || 'Data berhasil disimpan!');
+        onSuccess: async (result: string | MutationWarning) => {
+            if (typeof result === 'object') toast.warning(result.message);
+            else toast.success(result || 'Data berhasil disimpan!');
+            if (mode === 'subject_grade' && submittedScoresRef.current) {
+                // The saved values are now the server state; later edits are
+                // compared to them, not to what the form originally loaded.
+                const saved = submittedScoresRef.current;
+                setScoreBaseline?.(prev => {
+                    const next = { ...(prev || {}) };
+                    Object.entries(saved).forEach(([studentId, value]) => {
+                        if (value && value.trim() !== '') next[studentId] = value;
+                    });
+                    return next;
+                });
+                submittedScoresRef.current = null;
+            }
+            setGradeConflicts(null);
             if (mode === 'quiz' || mode === 'attitude') {
                 triggerStarsConfetti();
             }
@@ -270,13 +313,38 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
                 }
             }
         },
-        onError: (err: Error) => toast.error(`Gagal menyimpan: ${err.message}`),
+        onError: (err: Error) => {
+            submittedScoresRef.current = null;
+            if (err instanceof GradeConflictError) {
+                setGradeConflicts(err.conflicts);
+                return;
+            }
+            toast.error(`Gagal menyimpan: ${err.message}`);
+        },
     });
 
     const handleSubmit = (overrideBypassGuard?: boolean) => {
         if (mode === 'bulk_report') handlePrintBulkReports();
         else if (mode === 'academic_print') handlePrintGrades();
         else submitData(overrideBypassGuard);
+    };
+
+    /** Keep the teacher's scores and overwrite the newer server values. */
+    const overwriteGradeConflicts = () => {
+        setGradeConflicts(null);
+        submitData({ overwriteConflicts: true });
+    };
+
+    /** Take the server values for the conflicting students; other edits stay. */
+    const acceptServerGrades = () => {
+        const conflicts = gradeConflicts;
+        setGradeConflicts(null);
+        if (!conflicts) return;
+        const serverValues: Record<string, string> = {};
+        conflicts.forEach(c => { serverValues[c.student_id] = c.serverScore === null ? '' : String(c.serverScore); });
+        setScores(prev => ({ ...prev, ...serverValues }));
+        setScoreBaseline?.(prev => ({ ...(prev || {}), ...serverValues }));
+        toast.info('Nilai yang tersimpan dipakai untuk siswa tersebut. Periksa, lalu simpan lagi bila perlu.');
     };
 
     return {
@@ -291,5 +359,9 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         duplicateList, showDuplicateDialog,
         setShowDuplicateDialog, checkDuplicates,
         isOnline,
+        gradeConflicts,
+        dismissGradeConflicts: () => setGradeConflicts(null),
+        overwriteGradeConflicts,
+        acceptServerGrades,
     };
 }

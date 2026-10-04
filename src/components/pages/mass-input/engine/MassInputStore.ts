@@ -5,6 +5,7 @@
  */
 
 import { InputMode, Step } from '../types';
+import { schoolDate } from '../../../../utils/reminderDates';
 
 export interface DraftStoragePort {
     loadDraft(key: string): unknown | null;
@@ -165,7 +166,7 @@ export class MassInputStore {
                 name: '',
                 category: 'Ulangan Harian',
                 subject: '',
-                date: new Date().toISOString().split('T')[0],
+                date: schoolDate(),
                 points: 1,
                 max_points: 100,
             },
@@ -173,9 +174,9 @@ export class MassInputStore {
             attitudeName: '',
             attitudePoints: 1,
             attitudeNotes: '',
-            attitudeDate: new Date().toISOString().split('T')[0],
+            attitudeDate: schoolDate(),
             violationCode: '',
-            violationDate: new Date().toISOString().split('T')[0],
+            violationDate: schoolDate(),
             violationNotes: '',
             scores: {},
             selectedStudentIds: new Set(),
