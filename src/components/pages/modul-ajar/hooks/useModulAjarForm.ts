@@ -19,7 +19,8 @@ export const useModulAjarForm = () => {
 
   const getResolvedSemester = useCallback(() => {
     if (activeSemester?.name) {
-      return activeSemester.name.toLowerCase().includes('genap') || activeSemester.semester_number === 2
+      return activeSemester.name.toLowerCase().includes('genap') ||
+        activeSemester.semester_number === 2
         ? 'Genap'
         : 'Ganjil';
     }
@@ -29,8 +30,12 @@ export const useModulAjarForm = () => {
   const [formState, setFormState] = useState<FormState>(() => {
     const initialYear = activeAcademicYear?.name || defaultTerm.academicYear;
     const initialSem = activeSemester?.name
-      ? (activeSemester.name.toLowerCase().includes('genap') || activeSemester.semester_number === 2 ? 'Genap' : 'Ganjil')
-      : (defaultTerm.semester === '1' ? 'Ganjil' : 'Genap');
+      ? activeSemester.name.toLowerCase().includes('genap') || activeSemester.semester_number === 2
+        ? 'Genap'
+        : 'Ganjil'
+      : defaultTerm.semester === '1'
+        ? 'Ganjil'
+        : 'Genap';
 
     return {
       generationMethod: 'AI',
@@ -82,7 +87,7 @@ export const useModulAjarForm = () => {
   });
 
   const autoDistributeTime = useCallback(() => {
-    setFormState(prev => {
+    setFormState((prev) => {
       const totalMinutes = (prev.jpPerPertemuan || 2) * (prev.durasiPerJp || 35);
       let pendahuluan = Math.max(5, Math.round((totalMinutes * 0.15) / 5) * 5);
       let penutup = Math.max(5, Math.round((totalMinutes * 0.15) / 5) * 5);
@@ -107,7 +112,7 @@ export const useModulAjarForm = () => {
   const [isGeneratingCP, setIsGeneratingCP] = useState(false);
   const [boilerplateMissingBanner, setBoilerplateMissingBanner] = useState<string | null>(null);
 
-  const lastLoadedTopicRef = useRef<string>('');
+  const lastLoadedBoilerplateRef = useRef<string>('');
   const boilerplateLoadSeqRef = useRef<number>(0);
 
   const [models, setModels] = useState<any[]>([]);
@@ -115,13 +120,13 @@ export const useModulAjarForm = () => {
 
   useEffect(() => {
     if (user?.name) {
-      setFormState(prev => ({ ...prev, guru: user.name }));
+      setFormState((prev) => ({ ...prev, guru: user.name }));
     }
   }, [user?.name]);
 
   useEffect(() => {
     if (activeAcademicYear?.name) {
-      setFormState(prev => {
+      setFormState((prev) => {
         if (!prev.tahunAjaran) {
           return { ...prev, tahunAjaran: activeAcademicYear.name };
         }
@@ -132,10 +137,11 @@ export const useModulAjarForm = () => {
 
   useEffect(() => {
     if (activeSemester?.name) {
-      const semName = activeSemester.name.toLowerCase().includes('genap') || activeSemester.semester_number === 2
-        ? 'Genap'
-        : 'Ganjil';
-      setFormState(prev => {
+      const semName =
+        activeSemester.name.toLowerCase().includes('genap') || activeSemester.semester_number === 2
+          ? 'Genap'
+          : 'Ganjil';
+      setFormState((prev) => {
         if (!prev.semester) {
           return { ...prev, semester: semName };
         }
@@ -146,32 +152,56 @@ export const useModulAjarForm = () => {
 
   useEffect(() => {
     if (formState.generationMethod === 'Manual' && formState.topik && formState.mataPelajaran) {
-      if (formState.topik !== lastLoadedTopicRef.current) {
-        lastLoadedTopicRef.current = formState.topik;
+      const boilerplateKey = [
+        formState.mataPelajaran,
+        formState.topik,
+        formState.fase,
+        formState.kelas,
+      ]
+        .map((value) => value.trim().toLowerCase())
+        .join('|');
+      if (boilerplateKey !== lastLoadedBoilerplateRef.current) {
+        lastLoadedBoilerplateRef.current = boilerplateKey;
         const loadSeq = ++boilerplateLoadSeqRef.current;
-        
+
         const loadBoilerplate = async () => {
           try {
-            const bp = await modulAjarContentService.getBoilerplate(formState.mataPelajaran, formState.topik, formState.fase);
+            const bp = await modulAjarContentService.getBoilerplate(
+              formState.mataPelajaran,
+              formState.topik,
+              formState.fase,
+            );
             if (loadSeq !== boilerplateLoadSeqRef.current) return;
             if (bp) {
               setBoilerplateMissingBanner(null);
-              setFormState(prev => ({
+              setFormState((prev) => ({
                 ...prev,
-                manualTujuanPembelajaran: Array.isArray(bp.tujuan_pembelajaran) ? bp.tujuan_pembelajaran.join('\n') : '',
-                manualPemahamanBermakna: Array.isArray(bp.pemahaman_bermakna) ? bp.pemahaman_bermakna.join('\n') : '',
-                manualPertanyaanPemantik: Array.isArray(bp.pertanyaan_pemantik) ? bp.pertanyaan_pemantik.join('\n') : '',
+                manualTujuanPembelajaran: Array.isArray(bp.tujuan_pembelajaran)
+                  ? bp.tujuan_pembelajaran.join('\n')
+                  : '',
+                manualPemahamanBermakna: Array.isArray(bp.pemahaman_bermakna)
+                  ? bp.pemahaman_bermakna.join('\n')
+                  : '',
+                manualPertanyaanPemantik: Array.isArray(bp.pertanyaan_pemantik)
+                  ? bp.pertanyaan_pemantik.join('\n')
+                  : '',
                 manualLkpdTugas: bp.lkpd_tugas || '',
                 manualSoalEvaluasi: bp.soal_evaluasi || '',
                 manualPengayaan: Array.isArray(bp.pengayaan) ? bp.pengayaan.join('\n\n') : '',
                 manualRemedial: Array.isArray(bp.remedial) ? bp.remedial.join('\n\n') : '',
-                manualDaftarPustaka: Array.isArray(bp.daftar_pustaka) ? bp.daftar_pustaka.join('\n') : '',
+                manualDaftarPustaka: Array.isArray(bp.daftar_pustaka)
+                  ? bp.daftar_pustaka.join('\n')
+                  : '',
                 manualMateriAjar: bp.konten_json?.materiAjar || bp.konten_json?.materi || '',
-                manualGlosarium: Array.isArray(bp.konten_json?.glosarium) ? bp.konten_json.glosarium.join('\n') : '',
+                manualGlosarium: Array.isArray(bp.konten_json?.glosarium)
+                  ? bp.konten_json.glosarium.join('\n')
+                  : '',
               }));
             } else {
-              setBoilerplateMissingBanner('Bank konten untuk topik ini belum tersedia — isi manual atau minta admin menambahkan');
-              setFormState(prev => ({
+              setBoilerplateMissingBanner(
+                'Bank konten untuk topik ini belum tersedia — isi manual atau minta admin menambahkan',
+              );
+              setFormState((prev) => ({
                 ...prev,
                 manualTujuanPembelajaran: '',
                 manualPemahamanBermakna: '',
@@ -188,16 +218,37 @@ export const useModulAjarForm = () => {
           } catch (err: any) {
             if (loadSeq !== boilerplateLoadSeqRef.current) return;
             console.error('[Modul Ajar] Gagal memuat bank konten:', err);
-            setBoilerplateMissingBanner(`⚠️ Gagal memuat bank konten: ${err.message || 'kesalahan tidak diketahui'}`);
+            setBoilerplateMissingBanner(
+              `⚠️ Gagal memuat bank konten: ${err.message || 'kesalahan tidak diketahui'}`,
+            );
+            setFormState((prev) => ({
+              ...prev,
+              manualTujuanPembelajaran: '',
+              manualPemahamanBermakna: '',
+              manualPertanyaanPemantik: '',
+              manualMateriAjar: '',
+              manualLkpdTugas: '',
+              manualSoalEvaluasi: '',
+              manualPengayaan: '',
+              manualRemedial: '',
+              manualGlosarium: '',
+              manualDaftarPustaka: '',
+            }));
           }
         };
         loadBoilerplate();
       }
     } else {
-      boilerplateLoadSeqRef.current++; 
+      boilerplateLoadSeqRef.current++;
       setBoilerplateMissingBanner(null);
     }
-  }, [formState.generationMethod, formState.topik, formState.mataPelajaran, formState.kelas, formState.fase]);
+  }, [
+    formState.generationMethod,
+    formState.topik,
+    formState.mataPelajaran,
+    formState.kelas,
+    formState.fase,
+  ]);
 
   const fetchModels = useCallback(async () => {
     setIsLoadingModels(true);
@@ -206,7 +257,9 @@ export const useModulAjarForm = () => {
       if (data && !error) {
         setModels(data);
         if (data.length > 0) {
-          setFormState(prev => ({ ...prev, modelPembelajaran: data[0].nama_model }));
+          setFormState((prev) =>
+            prev.modelPembelajaran ? prev : { ...prev, modelPembelajaran: data[0].nama_model },
+          );
         }
       }
     } catch (err) {
@@ -221,7 +274,7 @@ export const useModulAjarForm = () => {
   }, [fetchModels]);
 
   const handleInputChange = (field: keyof FormState, value: any) => {
-    setFormState(prev => {
+    setFormState((prev) => {
       const newState = { ...prev, [field]: value };
       if (field === 'kelas') {
         const k = parseInt(value);
@@ -234,20 +287,20 @@ export const useModulAjarForm = () => {
   };
 
   const handleProfilToggle = (profil: string) => {
-    setFormState(prev => {
+    setFormState((prev) => {
       const exists = prev.profilPelajar.includes(profil);
       if (exists) {
-        return { ...prev, profilPelajar: prev.profilPelajar.filter(p => p !== profil) };
+        return { ...prev, profilPelajar: prev.profilPelajar.filter((p) => p !== profil) };
       }
       return { ...prev, profilPelajar: [...prev.profilPelajar, profil] };
     });
   };
 
   const handleMetodeToggle = (metode: string) => {
-    setFormState(prev => {
+    setFormState((prev) => {
       const exists = prev.metodePembelajaran.includes(metode);
       if (exists) {
-        return { ...prev, metodePembelajaran: prev.metodePembelajaran.filter(m => m !== metode) };
+        return { ...prev, metodePembelajaran: prev.metodePembelajaran.filter((m) => m !== metode) };
       }
       return { ...prev, metodePembelajaran: [...prev.metodePembelajaran, metode] };
     });
@@ -294,7 +347,9 @@ export const useModulAjarForm = () => {
       tahunAjaran: plan?.identity?.tahun || getResolvedAcademicYear(),
       semester: plan?.identity?.semester || getResolvedSemester(),
       guru: plan?.identity?.guru || user?.name || '',
-      targetPeserta: plan?.components?.target || 'Reguler/Tipikal (Peserta didik umum, tidak ada kesulitan belajar)',
+      targetPeserta:
+        plan?.components?.target ||
+        'Reguler/Tipikal (Peserta didik umum, tidak ada kesulitan belajar)',
       kompetensiAwal: plan?.components?.kompetensiAwal || '',
       saranaPrasarana: plan?.components?.saranaPrasarana || '',
       capaianPembelajaran: plan?.components?.cp || '',
@@ -309,12 +364,28 @@ export const useModulAjarForm = () => {
       metodePembelajaran: plan?.components?.metode || ['Diskusi', 'Tanya Jawab', 'Demonstrasi'],
       manualTujuanPembelajaran: Array.isArray(plan?.components?.tujuanPembelajaran)
         ? plan.components.tujuanPembelajaran.join('\n')
-        : (plan?.components?.tujuanPembelajaran || ''),
+        : plan?.components?.tujuanPembelajaran || '',
+      manualPemahamanBermakna: Array.isArray(plan?.components?.pemahamanBermakna)
+        ? plan.components.pemahamanBermakna.join('\n')
+        : plan?.components?.pemahamanBermakna || '',
       manualPertanyaanPemantik: Array.isArray(plan?.components?.pertanyaanPemantik)
         ? plan.components.pertanyaanPemantik.join('\n')
-        : (plan?.components?.pertanyaanPemantik || ''),
+        : plan?.components?.pertanyaanPemantik || '',
+      manualMateriAjar: plan?.components?.materiAjar || '',
       manualLkpdTugas: plan?.components?.lkpdTugas || '',
       manualSoalEvaluasi: plan?.components?.soalEvaluasi || '',
+      manualPengayaan: Array.isArray(plan?.components?.pengayaan)
+        ? plan.components.pengayaan.join('\n\n')
+        : plan?.components?.pengayaan || '',
+      manualRemedial: Array.isArray(plan?.components?.remedial)
+        ? plan.components.remedial.join('\n\n')
+        : plan?.components?.remedial || '',
+      manualGlosarium: Array.isArray(plan?.components?.glosarium)
+        ? plan.components.glosarium.join('\n')
+        : plan?.components?.glosarium || '',
+      manualDaftarPustaka: Array.isArray(plan?.components?.daftarPustaka)
+        ? plan.components.daftarPustaka.join('\n')
+        : plan?.components?.daftarPustaka || '',
       alokasiPendahuluan: plan?.components?.alokasi?.pendahuluan || 15,
       alokasiInti: plan?.components?.alokasi?.inti || 70,
       alokasiPenutup: plan?.components?.alokasi?.penutup || 15,
@@ -323,7 +394,7 @@ export const useModulAjarForm = () => {
       temaKbc: plan?.components?.temaKbc || [],
       materiInsersi: plan?.components?.materiInsersi || '',
       modelPembelajaranKbc: plan?.components?.modelPembelajaranKbc || 'FIDS',
-      asesmenSikap: '',
+      asesmenSikap: plan?.components?.asesmenSikap || '',
       paperSize: plan?.components?.paperSize || 'A4',
     });
   };

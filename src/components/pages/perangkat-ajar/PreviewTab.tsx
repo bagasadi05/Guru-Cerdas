@@ -18,12 +18,8 @@ import type {
   KaldikWeek,
   MatrixCell,
 } from '../../../types/perangkatAjar';
-import {
-  exportProtaToExcel,
-  exportPromesToExcel,
-  exportProtaToWord,
-  exportPromesToWord,
-} from '../../../utils/exportPerangkatAjar';
+// exportPerangkatAjar pulls in docx/JSZip (~400 KB); load it only on export.
+const loadOfficeExport = () => import('../../../utils/exportPerangkatAjar');
 import { exportProtaToPdf } from '../../../utils/protaPdfExport';
 import { exportPromesToPdf } from '../../../utils/promesPdfExport';
 
@@ -85,6 +81,7 @@ export const PreviewTab: React.FC<PreviewTabProps> = ({
   const handleExportExcel = async () => {
     setIsExporting('EXCEL');
     try {
+      const { exportProtaToExcel, exportPromesToExcel } = await loadOfficeExport();
       if (selectedDoc === 'PROTA') {
         const blob = await exportProtaToExcel({
           identity,
@@ -115,6 +112,7 @@ export const PreviewTab: React.FC<PreviewTabProps> = ({
   const handleExportWord = async () => {
     setIsExporting('WORD');
     try {
+      const { exportProtaToWord, exportPromesToWord } = await loadOfficeExport();
       if (selectedDoc === 'PROTA') {
         const blob = await exportProtaToWord({
           identity,
