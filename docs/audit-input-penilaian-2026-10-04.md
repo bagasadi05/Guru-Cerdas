@@ -154,3 +154,14 @@ Sisa risiko yang diketahui:
 - Keaktifan dan sikap bertanggal mundur ke semester terkunci belum diblokir di UI.
 
 Bukti: `tests/unit/massInputAssessmentAuditFixes.test.tsx` (17 tes) memeriksa ketujuh skenario audit beserta konflik, draf per akun, dan semester terkunci. Seluruh suite: 2.500 lulus, 4 gagal pada `PhWeeklyScheduleView.test.tsx`, sama dengan sebelum perbaikan. TypeScript dan build lulus.
+
+## Lanjutan: simpan nilai offline (4 Oktober 2026)
+
+Nilai mapel bisa disimpan tanpa koneksi. Simpan offline menyimpan potret nilai pada draf konteks itu (`queued`). `useQueuedGradeSync` di `Layout` mengirimnya saat aplikasi dibuka, saat event `online`, dan saat tab kembali terlihat. Pengiriman memakai `executeSubjectGradeMutation` dengan baseline draf, sehingga konflik terdeteksi sama seperti simpan biasa.
+
+- Berhasil: baseline draf diperbarui. Draf dihapus bila guru tidak mengubah apa pun setelah menekan Simpan.
+- Konflik atau ditolak server: antrean dihentikan dan draf ditandai `needsReview`. Guru membuka penilaian itu lalu menekan Simpan untuk melihat dialog konflik.
+- Koneksi putus lagi: antrean tetap ada dan dicoba lagi berikutnya.
+- Nilai yang ternyata sudah ada di server, misalnya kiriman pertama sempat sampai, dihitung tersimpan dan tidak dianggap konflik.
+
+Belum dicakup: keaktifan, sikap, dan pelanggaran (berbasis insert, perlu kunci idempoten sendiri). Belum diuji di HP sungguhan dengan mode pesawat.

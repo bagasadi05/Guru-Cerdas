@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - 2026-09-28
 
 ### Added (Apa yang baru)
+- **Simpan nilai mapel tanpa koneksi:** saat offline, tombol menjadi **Simpan di Perangkat** dan nilai masuk antrean di perangkat (`draft.queued`). Antrean dikirim otomatis dari halaman mana pun begitu online (`useQueuedGradeSync` di `Layout`), lewat pemeriksaan konflik yang sama dengan simpan biasa. Simpan yang gagal karena koneksi putus juga masuk antrean. Nilai yang sudah diubah di perangkat lain atau ditolak tidak dikirim ulang diam-diam; draf ditandai untuk ditinjau. Keaktifan, sikap, dan pelanggaran masih memerlukan koneksi.
 - **Jendela "Apa yang baru" saat ada versi baru:** guru melihat daftar perubahan lalu memilih **Perbarui sekarang** atau **Nanti**. Hitung mundur muat ulang otomatis 3 detik dihapus. Kalau aplikasi diperbarui di latar belakang, daftar perubahan muncul sekali saat aplikasi dibuka lagi. Isinya diambil dari `public/release-notes.json` (panduan: `docs/release-notes.md`). Portal Orang Tua dan halaman login tetap diperbarui otomatis tanpa jendela ini.
 - **Pengingat catatan rilis sebelum push:** hook `.githooks/pre-push` memperingatkan saat push ke `main` mengubah aplikasi tanpa memperbarui `public/release-notes.json`. Aktifkan sekali per clone dengan `git config core.hooksPath .githooks`.
 

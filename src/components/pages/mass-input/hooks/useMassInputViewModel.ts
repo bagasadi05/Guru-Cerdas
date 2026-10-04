@@ -9,6 +9,15 @@ import { useWarnUnsavedChanges } from '../../../../hooks/useWarnUnsavedChanges';
 import { useUserSettings } from '../../../../hooks/useUserSettings';
 import { useSemester } from '../../../../contexts/SemesterContext';
 import { summarizeScoreChanges } from './mutations/useSubjectGradeMutation';
+import { readSubjectGradeDraft } from '../../../../utils/subjectGradeDraftStorage';
+import { QUEUED_GRADES_EVENT, QueuedGradesEventDetail } from '../../../../services/queuedGradeSync';
+
+const sameFilledScores = (a: Record<string, string>, b: Record<string, string>) => {
+    const filled = (scores: Record<string, string>) => Object.entries(scores).filter(([, v]) => v && v.trim() !== '');
+    const left = filled(a);
+    const right = Object.fromEntries(filled(b));
+    return left.length === Object.keys(right).length && left.every(([k, v]) => right[k] === v);
+};
 
 type SubjectGradeInfo = { subject: string; assessment_name: string; notes: string; semester: string };
 
@@ -228,6 +237,51 @@ export function useMassInputViewModel() {
         return [];
     }, [state.mode]);
 
+    // --- Offline saves ---
+    // Bumped whenever the stored draft of this context may have changed
+    // (queued here, or sent / flagged by useQueuedGradeSync).
+    const [draftStorageVersion, setDraftStorageVersion] = useState(0);
+    const draftMeta = useMemo(() => {
+        // Storage is not reactive: re-read after a queue event or a save (dirty flips).
+        void draftStorageVersion;
+        void state.isScoresDirty;
+        const draft = readSubjectGradeDraft(state.userId, state.currentAssessmentKey);
+        return draft ? { queued: draft.queued ?? null, needsReview: draft.needsReview ?? null } : null;
+    }, [state.userId, state.currentAssessmentKey, draftStorageVersion, state.isScoresDirty]);
+    const offlineSaveState: 'queued' | 'review' | null = draftMeta?.needsReview
+        ? 'review'
+        : draftMeta?.queued ? 'queued' : null;
+    const isQueuedSaveCurrent = Boolean(draftMeta?.queued && sameFilledScores(state.scores, draftMeta.queued.scores));
+
+    const queueOfflineSave = () => {
+        const className = data.classes?.find(c => c.id === state.selectedClass)?.name;
+        const name = [state.subjectGradeInfo.assessment_name, state.subjectGradeInfo.subject].filter(Boolean).join(' ');
+        state.queueSubjectGradeDraft(className ? `${name} (${className})` : name);
+        setDraftStorageVersion(v => v + 1);
+        toast.info(`Belum ada koneksi. ${gradedCount} nilai disimpan di perangkat ini dan dikirim otomatis begitu online.`);
+    };
+
+    // A queued save sent in the background: the sent values are now the
+    // server state. If the form still shows exactly those, it is clean.
+    const latestScoresRef = useRef(state.scores);
+    useEffect(() => { latestScoresRef.current = state.scores; }, [state.scores]);
+    const { setScoreBaseline, setIsScoresDirty, clearSubjectGradeDraft, currentAssessmentKey } = state;
+    useEffect(() => {
+        const onQueuedGrades = (event: Event) => {
+            const detail = (event as CustomEvent<QueuedGradesEventDetail>).detail;
+            setDraftStorageVersion(v => v + 1);
+            if (!detail || detail.contextKey !== currentAssessmentKey || detail.status !== 'saved' || !detail.savedScores) return;
+            const saved = detail.savedScores;
+            setScoreBaseline(prev => ({ ...(prev || {}), ...saved }));
+            if (sameFilledScores(latestScoresRef.current, saved)) {
+                setIsScoresDirty(false);
+                clearSubjectGradeDraft();
+            }
+        };
+        window.addEventListener(QUEUED_GRADES_EVENT, onQueuedGrades);
+        return () => window.removeEventListener(QUEUED_GRADES_EVENT, onQueuedGrades);
+    }, [currentAssessmentKey, setScoreBaseline, setIsScoresDirty, clearSubjectGradeDraft]);
+
     const mutations = useMassInputMutations({
         mode: state.mode,
         selectedClass: state.selectedClass,
@@ -261,6 +315,7 @@ export function useMassInputViewModel() {
         saveSubjectGradeDraft: state.saveSubjectGradeDraft,
         scoreBaseline: state.scoreBaseline,
         setScoreBaseline: state.setScoreBaseline,
+        onSubjectGradeOffline: queueOfflineSave,
     });
 
     const attitudeFilledCount = useMemo(() => {
@@ -301,7 +356,8 @@ export function useMassInputViewModel() {
     }, [state.mode, gradedCount, scoreChangeSummary, state.isScoresDirty, state.attitudeCategory, state.selectedStudentIds.size, data.studentsData]);
 
     const submitButtonTooltip = useMemo(() => {
-        if (!mutations.isOnline) return 'Fitur ini memerlukan koneksi internet.';
+        // Grades can be saved offline (queued); every other mode needs the server.
+        if (!mutations.isOnline && state.mode !== 'subject_grade') return 'Fitur ini memerlukan koneksi internet.';
         if (mutations.isSubmitting || mutations.isCheckingDuplicates || mutations.isExporting || mutations.isDeleting) return 'Sedang memproses...';
         if (!state.selectedClass) return 'Pilih kelas terlebih dahulu.';
         switch (state.mode) {
@@ -602,6 +658,10 @@ export function useMassInputViewModel() {
         showDuplicateDialog: mutations.showDuplicateDialog,
         setShowDuplicateDialog: mutations.setShowDuplicateDialog,
         onHandleSubmit: () => {
+            if (state.mode === 'subject_grade' && !mutations.isOnline) {
+                if (!isSubmitDisabled) queueOfflineSave();
+                return;
+            }
             // Guard against multi-clicks/double-taps while duplicate check or submission is in-flight
             if (isSubmittingOrCheckingRef.current || mutations.isSubmitting || mutations.isCheckingDuplicates) {
                 return;
@@ -630,6 +690,9 @@ export function useMassInputViewModel() {
         discardRestoredDraft,
         scoreChangeSummary,
         isSelectedSemesterLocked,
+        offlineSaveState,
+        offlineSaveMessage: draftMeta?.needsReview?.reason === 'error' ? draftMeta.needsReview.message ?? null : null,
+        isQueuedSaveCurrent,
         gradeConflicts: mutations.gradeConflicts,
         dismissGradeConflicts: mutations.dismissGradeConflicts,
         overwriteGradeConflicts: mutations.overwriteGradeConflicts,

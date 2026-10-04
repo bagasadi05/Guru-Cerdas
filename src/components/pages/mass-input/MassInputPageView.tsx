@@ -155,6 +155,11 @@ export interface MassInputPageViewProps {
     dismissGradeConflicts?: () => void;
     overwriteGradeConflicts?: () => void;
     acceptServerGrades?: () => void;
+    /** Offline save of this assessment: waiting to be sent, or stopped for review. */
+    offlineSaveState?: 'queued' | 'review' | null;
+    offlineSaveMessage?: string | null;
+    /** The form still shows exactly the scores that are queued. */
+    isQueuedSaveCurrent?: boolean;
 }
 
 const formatDraftTime = (iso: string | null) => {
@@ -205,6 +210,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         isScoresDirty, setIsScoresDirty, saveSubjectGradeDraft,
         restoredDraft, discardRestoredDraft, configResetKey,
         gradeConflicts, dismissGradeConflicts, overwriteGradeConflicts, acceptServerGrades,
+        offlineSaveState, offlineSaveMessage, isQueuedSaveCurrent,
     } = props;
     const studentNameById = useMemo(
         () => new Map((studentsData || []).map(s => [s.id, s.name])),
@@ -289,13 +295,30 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                     </div>
                 )}
 
-                {mode === 'subject_grade' && restoredDraft && isDirty && (
+                {mode === 'subject_grade' && (offlineSaveState || (restoredDraft && isDirty)) && (
                     <div role="status" className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
                         <p>
-                            <span className="font-bold">Draf belum disimpan.</span>{' '}
-                            {restoredDraft.count} nilai untuk {subjectGradeInfo.assessment_name || 'penilaian ini'} dimuat dari perangkat ini
-                            {formatDraftTime(restoredDraft.savedAt) ? ` (terakhir diubah ${formatDraftTime(restoredDraft.savedAt)})` : ''}.
-                            {' '}Tekan Simpan agar nilainya tercatat.
+                            {offlineSaveState === 'review' ? (
+                                <>
+                                    <span className="font-bold">Nilai belum terkirim.</span>{' '}
+                                    {offlineSaveMessage
+                                        ? `Penyimpanan offline ditolak: ${offlineSaveMessage} Periksa nilainya, lalu tekan Simpan lagi.`
+                                        : 'Sebagian nilai sudah diubah dari perangkat lain sejak Anda menyimpan offline. Tekan Simpan untuk melihat perbedaannya.'}
+                                </>
+                            ) : offlineSaveState === 'queued' ? (
+                                <>
+                                    <span className="font-bold">Menunggu koneksi.</span>{' '}
+                                    Nilai untuk {subjectGradeInfo.assessment_name || 'penilaian ini'} tersimpan di perangkat ini dan dikirim otomatis begitu online.
+                                    {!isQueuedSaveCurrent && ' Perubahan setelah itu belum ikut; tekan Simpan lagi untuk menyertakannya.'}
+                                </>
+                            ) : (
+                                <>
+                                    <span className="font-bold">Draf belum disimpan.</span>{' '}
+                                    {restoredDraft?.count} nilai untuk {subjectGradeInfo.assessment_name || 'penilaian ini'} dimuat dari perangkat ini
+                                    {formatDraftTime(restoredDraft?.savedAt ?? null) ? ` (terakhir diubah ${formatDraftTime(restoredDraft?.savedAt ?? null)})` : ''}.
+                                    {' '}Tekan Simpan agar nilainya tercatat.
+                                </>
+                            )}
                         </p>
                         {discardRestoredDraft && (
                             <Button
@@ -757,7 +780,11 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                             : mode === 'attitude'
                                             ? `Simpan Poin Sikap (${selectedStudentIds.size})`
                                             : mode === 'subject_grade'
-                                            ? isDirty
+                                            ? offlineSaveState === 'queued' && isQueuedSaveCurrent
+                                                ? `Menunggu Koneksi (${gradedCount})`
+                                                : !isOnline && isDirty
+                                                ? `Simpan di Perangkat (${gradedCount})`
+                                                : isDirty
                                                 ? `Simpan Nilai (${gradedCount})`
                                                 : `Tersimpan (${gradedCount})`
                                             : mode === 'bulk_report'

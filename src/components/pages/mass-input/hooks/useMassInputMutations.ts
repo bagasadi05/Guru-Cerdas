@@ -12,6 +12,7 @@ import { triggerStarsConfetti } from '../../../../utils/confetti';
 import { useDuplicateGuard, DUPLICATE_GUARD_WINDOW_MINUTES, getDuplicateGuardWindowIso } from './mutations/useDuplicateGuard';
 import { executeSubjectGradeMutation, GradeConflict, GradeConflictError } from './mutations/useSubjectGradeMutation';
 import { executeAttitudeMutation, MutationWarning } from './mutations/useAttitudeMutation';
+import { isNetworkError } from '../../../../services/queuedGradeSync';
 import { executeQuizPointsMutation } from './mutations/useQuizPointsMutation';
 import { executeViolationMutation } from './mutations/useViolationMutation';
 import { findSemesterForDate } from '../../../../utils/semesterUtils';
@@ -55,6 +56,8 @@ export interface UseMassInputMutationsParams {
     /** Server scores the grade form started from (see executeSubjectGradeMutation). */
     scoreBaseline?: Record<string, string> | null;
     setScoreBaseline?: React.Dispatch<React.SetStateAction<Record<string, string> | null>>;
+    /** Called when a grade save fails for lack of connection, to queue it instead. */
+    onSubjectGradeOffline?: () => void;
 }
 
 interface SubmitOptions {
@@ -70,7 +73,7 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         studentsData, noteMethod, templateNote, pasteData,
         gradedCount, classes,
         setScores, setSelectedStudentIds, bypassDuplicateGuard, isScoresDirtyRef, setIsScoresDirty, clearSubjectGradeDraft,
-        saveSubjectGradeDraft, scoreBaseline, setScoreBaseline,
+        saveSubjectGradeDraft, scoreBaseline, setScoreBaseline, onSubjectGradeOffline,
     } = params;
 
     const { user } = useAuth();
@@ -315,6 +318,10 @@ export function useMassInputMutations(params: UseMassInputMutationsParams) {
         },
         onError: (err: Error) => {
             submittedScoresRef.current = null;
+            if (mode === 'subject_grade' && onSubjectGradeOffline && isNetworkError(err)) {
+                onSubjectGradeOffline();
+                return;
+            }
             if (err instanceof GradeConflictError) {
                 setGradeConflicts(err.conflicts);
                 return;

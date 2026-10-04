@@ -25,6 +25,24 @@ export interface SubjectGradeDraft {
     validationErrors?: Record<string, string>;
     /** ISO timestamp of the last change. */
     savedAt?: string;
+    /**
+     * Set when the teacher pressed Simpan without a connection: the scores at
+     * that moment are sent automatically once the device is online again.
+     */
+    queued?: QueuedGradeSave;
+    /**
+     * Set when an automatic send stopped (scores changed elsewhere, or the
+     * server refused). The teacher has to open the assessment and save it.
+     */
+    needsReview?: { reason: 'conflict' | 'error'; message?: string };
+}
+
+export interface QueuedGradeSave {
+    /** ISO timestamp of the Simpan press. */
+    at: string;
+    scores: Record<string, string>;
+    /** Human label for notifications, e.g. "PH 1 Matematika — 7A". */
+    label: string;
 }
 
 interface DraftStore {
@@ -118,8 +136,45 @@ export function writeSubjectGradeDraft(userId: string | null | undefined, draft:
     if (!userId) return;
     const store = readStore(userId);
     const key = getSubjectGradeContextKey(draft.selectedClass, draft.subjectGradeInfo);
-    store.drafts[key] = { ...draft, savedAt: draft.savedAt ?? new Date().toISOString() };
+    const existing = store.drafts[key];
+    store.drafts[key] = {
+        // Autosave writes the form state on every change; it must not drop a
+        // pending offline save or a review flag it knows nothing about.
+        queued: existing?.queued,
+        needsReview: existing?.needsReview,
+        ...draft,
+        savedAt: draft.savedAt ?? new Date().toISOString(),
+    };
     store.last = key;
+    writeStore(userId, store);
+}
+
+/** Every stored draft of this account, keyed by context. */
+export function listSubjectGradeDrafts(userId: string | null | undefined): [string, SubjectGradeDraft][] {
+    if (!userId) return [];
+    return Object.entries(readStore(userId).drafts);
+}
+
+/**
+ * Rewrites one draft in place without touching `last`. Returning null from
+ * the updater removes the draft.
+ */
+export function updateSubjectGradeDraft(
+    userId: string | null | undefined,
+    contextKey: string,
+    updater: (draft: SubjectGradeDraft) => SubjectGradeDraft | null,
+) {
+    if (!userId) return;
+    const store = readStore(userId);
+    const current = store.drafts[contextKey];
+    if (!current) return;
+    const next = updater(current);
+    if (next) {
+        store.drafts[contextKey] = next;
+    } else {
+        delete store.drafts[contextKey];
+        if (store.last === contextKey) delete store.last;
+    }
     writeStore(userId, store);
 }
 

@@ -16,6 +16,7 @@ import PullToRefresh from './ui/PullToRefresh';
 import { useQueryClient } from '@tanstack/react-query';
 import { setNavigationInProgress } from '../utils/navigationState';
 import { prefetchRoutesWhenIdle } from '../utils/routePreloader';
+import { useQueuedGradeSync } from '../hooks/useQueuedGradeSync';
 
 // Enhanced Mobile Navigation Components
 import { useOrientation } from '../hooks/useOrientation';
@@ -44,6 +45,7 @@ const TutorialPicker = React.lazy(() =>
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, userRole } = useAuth();
   usePushSubscriptionSync(user?.id);
+  useQueuedGradeSync();
   const { showTour, endTour } = useOnboarding();
 
   const [isAdmin, setIsAdmin] = useState(false);

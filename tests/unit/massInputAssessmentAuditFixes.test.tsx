@@ -11,7 +11,8 @@ import {
     summarizeScoreChanges,
 } from '../../src/components/pages/mass-input/hooks/mutations/useSubjectGradeMutation';
 import { executeAttitudeMutation } from '../../src/components/pages/mass-input/hooks/mutations/useAttitudeMutation';
-import { getSubjectGradeContextKey, writeSubjectGradeDraft } from '../../src/utils/subjectGradeDraftStorage';
+import { getSubjectGradeContextKey, readSubjectGradeDraft, writeSubjectGradeDraft } from '../../src/utils/subjectGradeDraftStorage';
+import { QUEUED_GRADES_EVENT, syncQueuedGrades } from '../../src/services/queuedGradeSync';
 
 const fixture = vi.hoisted(() => ({
     data: {} as any,
@@ -20,6 +21,8 @@ const fixture = vi.hoisted(() => ({
     writes: [] as { table: string; op: string; rows: any }[],
     selectRows: {} as Record<string, any[]>,
     insertErrors: {} as Record<string, { code: string; message: string } | null>,
+    online: true,
+    upsertFailure: null as Error | null,
 }));
 
 vi.mock('react-router-dom', () => ({ useLocation: () => ({ state: {}, pathname: '/input-massal' }), useNavigate: () => vi.fn() }));
@@ -28,7 +31,7 @@ vi.mock('../../src/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: fixtur
 vi.mock('../../src/hooks/useToast', () => ({ useToast: () => ({ success: vi.fn(), error: vi.fn(), info: vi.fn(), warning: vi.fn() }) }));
 vi.mock('../../src/hooks/useUserSettings', () => ({ useUserSettings: () => ({ settings: null, isLoading: true, updateSettings: vi.fn() }) }));
 vi.mock('../../src/components/pages/mass-input/hooks/useMassInputData', () => ({ useMassInputData: () => fixture.data }));
-vi.mock('../../src/components/pages/mass-input/hooks/useMassInputMutations', () => ({ useMassInputMutations: () => ({ isOnline: true }) }));
+vi.mock('../../src/components/pages/mass-input/hooks/useMassInputMutations', () => ({ useMassInputMutations: () => ({ isOnline: fixture.online }) }));
 vi.mock('../../src/services/UndoManager', () => ({ recordAction: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('../../src/services/supabase', () => {
     const result = (data: any, error: any = null) => ({ data, error });
@@ -43,6 +46,10 @@ vi.mock('../../src/services/supabase', () => {
             from: (table: string) => ({
                 select: () => chain(table),
                 upsert: (rows: any[]) => {
+                    if (fixture.upsertFailure) {
+                        const failure = fixture.upsertFailure;
+                        return { select: async () => { throw failure; } };
+                    }
                     fixture.writes.push({ table, op: 'upsert', rows });
                     return { select: async () => result(rows) };
                 },
@@ -80,6 +87,8 @@ beforeEach(() => {
     fixture.writes = [];
     fixture.selectRows = {};
     fixture.insertErrors = {};
+    fixture.online = true;
+    fixture.upsertFailure = null;
 });
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 
@@ -251,5 +260,101 @@ describe('school dates (finding 7)', () => {
 describe('draft storage', () => {
     it('keys drafts by context', () => {
         expect(getSubjectGradeContextKey('c', info)).toBe('c::Matematika::PH1::sem-old');
+    });
+});
+
+describe('offline grade saves', () => {
+    const contextKey = getSubjectGradeContextKey('class-1', info);
+    const queueDraft = (scores: Record<string, string>, baseline: Record<string, string>) =>
+        writeSubjectGradeDraft('teacher-1', {
+            selectedClass: 'class-1', subjectGradeInfo: info, scores, baseline,
+            queued: { at: '2026-10-04T08:00:00Z', scores, label: 'PH1 Matematika (7A)' },
+        });
+
+    it('queues the save on the device when there is no connection', () => {
+        fixture.online = false;
+        writeSubjectGradeDraft('teacher-1', { selectedClass: 'class-1', subjectGradeInfo: info, scores: { s1: '88' }, baseline: { s1: '70' } });
+        const { result } = renderHook(() => useMassInputViewModel());
+        expect(result.current.isSubmitDisabled).toBe(false);
+
+        act(() => result.current.onHandleSubmit());
+
+        const draft = readSubjectGradeDraft('teacher-1', contextKey)!;
+        expect(draft.queued?.scores).toEqual({ s1: '88' });
+        expect(draft.baseline).toEqual({ s1: '70' });
+        expect(result.current.offlineSaveState).toBe('queued');
+        expect(result.current.isQueuedSaveCurrent).toBe(true);
+    });
+
+    it('keeps the queued snapshot when autosave rewrites the draft', () => {
+        queueDraft({ s1: '88' }, { s1: '70' });
+        writeSubjectGradeDraft('teacher-1', { selectedClass: 'class-1', subjectGradeInfo: info, scores: { s1: '89' } });
+        expect(readSubjectGradeDraft('teacher-1', contextKey)!.queued?.scores).toEqual({ s1: '88' });
+    });
+
+    it('sends queued saves once online and removes the finished draft', async () => {
+        queueDraft({ s1: '88' }, { s1: '70' });
+        fixture.selectRows.academic_records = [grade('s1', 70)];
+        const events: any[] = [];
+        const listener = (e: Event) => events.push((e as CustomEvent).detail);
+        window.addEventListener(QUEUED_GRADES_EVENT, listener);
+
+        const outcome = await syncQueuedGrades(user);
+        window.removeEventListener(QUEUED_GRADES_EVENT, listener);
+
+        expect(outcome.saved).toEqual(['PH1 Matematika (7A)']);
+        expect(fixture.writes.find(w => w.op === 'upsert')!.rows[0]).toMatchObject({ student_id: 's1', score: 88 });
+        expect(readSubjectGradeDraft('teacher-1', contextKey)).toBeNull();
+        expect(events).toEqual([{ contextKey, status: 'saved', savedScores: { s1: '88' } }]);
+    });
+
+    it('keeps later edits as a draft after the queued snapshot is sent', async () => {
+        queueDraft({ s1: '88' }, { s1: '70' });
+        writeSubjectGradeDraft('teacher-1', { selectedClass: 'class-1', subjectGradeInfo: info, scores: { s1: '88', s2: '75' }, baseline: { s1: '70' } });
+        fixture.selectRows.academic_records = [grade('s1', 70)];
+
+        await syncQueuedGrades(user);
+
+        const draft = readSubjectGradeDraft('teacher-1', contextKey)!;
+        expect(draft.queued).toBeUndefined();
+        expect(draft.scores).toEqual({ s1: '88', s2: '75' });
+        expect(draft.baseline).toEqual({ s1: '88' });
+    });
+
+    it('stops for review instead of overwriting a score changed elsewhere', async () => {
+        queueDraft({ s1: '88' }, { s1: '70' });
+        fixture.selectRows.academic_records = [grade('s1', 95)];
+
+        const outcome = await syncQueuedGrades(user);
+
+        expect(outcome.needsReview).toEqual(['PH1 Matematika (7A)']);
+        expect(fixture.writes.filter(w => w.op === 'upsert')).toHaveLength(0);
+        const draft = readSubjectGradeDraft('teacher-1', contextKey)!;
+        expect(draft.queued).toBeUndefined();
+        expect(draft.needsReview?.reason).toBe('conflict');
+        // Not retried on the next sync.
+        expect((await syncQueuedGrades(user)).needsReview).toEqual([]);
+    });
+
+    it('keeps the queue when the connection drops again', async () => {
+        queueDraft({ s1: '88' }, { s1: '70' });
+        fixture.selectRows.academic_records = [grade('s1', 70)];
+        fixture.upsertFailure = new TypeError('Failed to fetch');
+
+        const outcome = await syncQueuedGrades(user);
+
+        expect(outcome.interrupted).toBe(true);
+        expect(readSubjectGradeDraft('teacher-1', contextKey)!.queued?.scores).toEqual({ s1: '88' });
+    });
+
+    it('treats a score the server already holds as saved, not as a conflict', async () => {
+        // First attempt reached the server before the connection dropped.
+        fixture.selectRows.academic_records = [grade('s1', 88)];
+        const message = await executeSubjectGradeMutation({
+            user, subjectGradeInfo: info, scores: { s1: '88' }, validationErrors: {}, gradedCount: 1,
+            existingGrades: undefined, baselineScores: { s1: '70' },
+        });
+        expect(message).toBe('Semua nilai sudah tersimpan.');
+        expect(fixture.writes).toHaveLength(0);
     });
 });

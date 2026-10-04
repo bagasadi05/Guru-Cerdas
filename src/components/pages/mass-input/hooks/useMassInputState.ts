@@ -194,6 +194,24 @@ export function useMassInputState() {
         writeSubjectGradeDraft(userId, { ...draft, baseline: scoreBaselineRef.current });
     }, [userId]);
 
+    /**
+     * Offline Simpan: stores the current scores as a pending save on this
+     * context's draft. useQueuedGradeSync sends it once the device is online.
+     */
+    const queueSubjectGradeDraft = useCallback((label: string) => {
+        writeSubjectGradeDraft(userId, {
+            selectedClass,
+            subjectGradeInfo,
+            kkm,
+            scores,
+            baseline: scoreBaseline,
+            selectedStudentIds: Array.from(selectedStudentIds),
+            validationErrors,
+            queued: { at: new Date().toISOString(), scores: { ...scores }, label },
+            needsReview: undefined,
+        });
+    }, [userId, selectedClass, subjectGradeInfo, kkm, scores, scoreBaseline, selectedStudentIds, validationErrors]);
+
     // Auto-save draft when values change
     useEffect(() => {
         if (mode !== 'subject_grade' || !isScoresDirty) return;
@@ -368,6 +386,9 @@ export function useMassInputState() {
         selectedClass, setSelectedClass,
         scoreBaseline, setScoreBaseline,
         restoredDraft,
+        userId,
+        currentAssessmentKey,
+        queueSubjectGradeDraft,
         quizInfo, setQuizInfo,
         subjectGradeInfo, setSubjectGradeInfo,
         kkm, setKkm,

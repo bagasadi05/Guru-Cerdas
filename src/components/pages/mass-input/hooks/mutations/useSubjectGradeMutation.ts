@@ -111,10 +111,10 @@ export async function executeSubjectGradeMutation({
             return { student_id, numScore };
         });
 
-    const pendingScores = baselineScores
+    let pendingScores = baselineScores
         ? filledScores.filter(({ student_id, numScore }) => parseScore(baselineScores[student_id]) !== numScore)
         : filledScores;
-    const unchangedCount = filledScores.length - pendingScores.length;
+    let unchangedCount = filledScores.length - pendingScores.length;
 
     if (pendingScores.length === 0) {
         return 'Tidak ada perubahan nilai. Semua nilai sama dengan yang sudah tersimpan.';
@@ -172,6 +172,20 @@ export async function executeSubjectGradeMutation({
             }
         }
     });
+
+    // The server may already hold the value: a retried offline save whose
+    // first attempt landed before the connection dropped, or the same score
+    // typed on two devices. Writing it again is pointless and is no conflict.
+    const alreadySaved = new Set(pendingScores
+        .filter(({ student_id, numScore }) => liveScoreByStudent.get(student_id) === numScore)
+        .map(({ student_id }) => student_id));
+    if (alreadySaved.size > 0) {
+        pendingScores = pendingScores.filter(({ student_id }) => !alreadySaved.has(student_id));
+        unchangedCount += alreadySaved.size;
+        if (pendingScores.length === 0) {
+            return 'Semua nilai sudah tersimpan.';
+        }
+    }
 
     if (baselineScores && !overwriteConflicts) {
         const conflicts: GradeConflict[] = pendingScores
