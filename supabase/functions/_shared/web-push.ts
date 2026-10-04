@@ -228,6 +228,7 @@ export async function sendPushNotification(
 
     const res = await fetch(subscription.endpoint, {
       method: "POST",
+      signal: AbortSignal.timeout(10000),
       headers: {
         "Content-Type": "application/octet-stream",
         "Content-Encoding": "aes128gcm",
@@ -244,7 +245,7 @@ export async function sendPushNotification(
         ok: false,
         statusCode: res.status,
         error: text || res.statusText,
-        reason: classifyError(res.status),
+        reason: classifyError(res.status, text),
       };
     }
 
@@ -258,7 +259,10 @@ export async function sendPushNotification(
   }
 }
 
-export function classifyError(status: number): string {
+export function classifyError(status: number, detail = ''): string {
+  if ((status === 400 || status === 403) && (
+    detail.includes('VapidPkHashMismatch') || detail.includes('do not correspond to the credentials used to create')
+  )) return 'vapid_key_mismatch';
   if (status === 404 || status === 410) return "subscription_gone";
   if (status === 403) return "forbidden";
   if (status === 429) return "rate_limited";

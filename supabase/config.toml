@@ -1,0 +1,4 @@
+project_id = "portal-guru"
+
+[functions.dispatch-push]
+verify_jwt = false
