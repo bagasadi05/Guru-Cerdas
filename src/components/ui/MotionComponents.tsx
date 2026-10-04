@@ -12,13 +12,13 @@
  * identical and only the animation is skipped (which is exactly what
  * reduced-motion users expect anyway).
  *
- * HIGH-END DEVICES: MotionProvider kicks off the dynamic import on mount;
- * while the module loads, the same passthrough elements render, then swap
- * to the real motion components. Tradeoff: on the FIRST visit (before the
- * service worker runtime-caches the chunk) the page may briefly render at
- * its final state, then remount from `initial` and animate in — a one-time
- * flash. After the first visit the chunk is served from the SW runtime
- * cache, so the swap is imperceptible.
+ * HIGH-END DEVICES: MotionProvider kicks off the dynamic import on mount.
+ * Each wrapper picks its mode (motion or passthrough) once, when it mounts,
+ * and keeps it. Swapping a mounted <div> for <motion.div> changes the
+ * element type, which makes React unmount and remount the whole subtree;
+ * for the root MotionConfig that meant remounting the entire app on every
+ * cold start. Elements mounted before the module arrives simply never
+ * animate; anything mounted afterwards (next route, opened modal) does.
  *
  * @module components/ui/MotionComponents
  */
@@ -68,7 +68,20 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
     };
   }, [shouldReduceMotion, isLowPerfDevice]);
 
-  return <MotionContext.Provider value={motionModule}>{children}</MotionContext.Provider>;
+  // Hide the module again if motion gets disabled at runtime, so wrappers
+  // mounted from then on render plain elements.
+  const value = shouldReduceMotion || isLowPerfDevice ? null : motionModule;
+  return <MotionContext.Provider value={value}>{children}</MotionContext.Provider>;
+}
+
+/**
+ * Reads the motion module as it was when the calling component mounted.
+ * Later context changes are ignored on purpose; see the module comment.
+ */
+function useMountedMotionModule(): FramerMotionModule | null {
+  const current = useContext(MotionContext);
+  const [atMount] = useState(current);
+  return atMount;
 }
 
 /**
@@ -116,13 +129,13 @@ const MOTION_ONLY_PROPS = new Set<string>([
 ]);
 
 /**
- * Creates a Motion* wrapper for a DOM tag. When framer-motion is loaded it
- * renders the real motion component with all props; otherwise it renders a
- * plain element with motion-only props stripped (passthrough fallback).
+ * Creates a Motion* wrapper for a DOM tag. If framer-motion was loaded when
+ * the wrapper mounted it renders the real motion component with all props;
+ * otherwise it renders a plain element with motion-only props stripped.
  */
 function createMotionComponent<T extends HTMLElement | SVGElement = HTMLElement>(tag: string) {
   const Component = forwardRef<T, Record<string, unknown>>((props, ref) => {
-    const motionModule = useContext(MotionContext);
+    const motionModule = useMountedMotionModule();
 
     if (motionModule) {
       const MotionTag = (motionModule.motion as unknown as Record<string, React.ElementType>)[tag];
@@ -162,7 +175,7 @@ export function AnimatePresence({
   children,
   ...rest
 }: React.PropsWithChildren<AnimatePresenceProps>) {
-  const motionModule = useContext(MotionContext);
+  const motionModule = useMountedMotionModule();
   if (!motionModule) return <>{children}</>;
   const AP = motionModule.AnimatePresence;
   return <AP {...rest}>{children}</AP>;
@@ -174,7 +187,7 @@ export function AnimatePresence({
  * library).
  */
 export function MotionConfig({ children, ...rest }: React.PropsWithChildren<MotionConfigProps>) {
-  const motionModule = useContext(MotionContext);
+  const motionModule = useMountedMotionModule();
   if (!motionModule) return <>{children}</>;
   const MC = motionModule.MotionConfig;
   return <MC {...rest}>{children}</MC>;

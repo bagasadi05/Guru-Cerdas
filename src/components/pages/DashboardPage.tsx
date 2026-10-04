@@ -28,6 +28,7 @@ import FloatingActionButton from '../ui/FloatingActionButton';
 import { LeaderboardCard } from '../gamification/LeaderboardCard';
 import TodayActionPanel from '../dashboard/TodayActionPanel';
 import TodayAgendaCard from '../dashboard/TodayAgendaCard';
+import TodayJournalWidget from '../dashboard/TodayJournalWidget';
 import { DashboardSummaryCards } from '../dashboard';
 import { DashboardAlertStack } from '../dashboard/DashboardAlertStack';
 import { DashboardSection } from '../dashboard/DashboardSection';
@@ -55,7 +56,9 @@ const DashboardPage: React.FC = () => {
   const todayStr = new Date().toLocaleDateString('sv-SE');
   const { data: journalStatus } = useTodayJournalStatus(todayStr);
   const navigate = useNavigate();
-  const currentTime = useClock();
+  // Minute resolution is enough for schedule/overdue checks; the seconds
+  // display lives in DashboardGreeting so the whole page doesn't re-render every second.
+  const currentTime = useClock(60_000);
   const [isFabOpen, setIsFabOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
@@ -86,6 +89,8 @@ const DashboardPage: React.FC = () => {
   const { data, isLoading, isError, error, refetch, isRefetching: isFetching } = useDashboardData();
   const dashboardErrorMessage =
     error instanceof Error ? error.message : 'Gagal memuat data dashboard. Silakan coba lagi.';
+
+
   const { activeReminders, activities: recentActivities, dismissReminder: handleDismissReminder } = useDashboardActivities(
     data ? {
       students: data.students ?? [],
@@ -174,26 +179,29 @@ const DashboardPage: React.FC = () => {
         )}
 
         {/* Unified 2-Column Command Center: Agenda Hari Ini vs Aksi Cepat & Tugas */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-4 mt-4 items-start">
           {/* Kolom Kiri: Agenda Hari Ini (Jadwal Mengajar + Jadwal PH) */}
-          <TodayAgendaCard
-            schedule={todaySchedule}
-            currentTime={currentTime}
-            classes={classes}
-          />
+          <div className="space-y-4">
+            <TodayAgendaCard
+              schedule={todaySchedule}
+              currentTime={currentTime}
+              classes={classes}
+            />
+            <TodayActionPanel
+              data={data}
+              isLoading={isLoading}
+              currentTime={currentTime}
+            />
+            <TodayJournalWidget status={journalStatus} />
+          </div>
 
-          {/* Kolom Kanan: Aksi Cepat & Tugas Mendesak */}
+          {/* Kolom Kanan: Insight untuk peran manajemen */}
           <div className="space-y-4">
             {isGlobalRole && (
               <Suspense fallback={<CardSkeleton />}>
                 <LazySmartInsightsPanel />
               </Suspense>
             )}
-            <TodayActionPanel
-              data={data}
-              isLoading={isLoading}
-              currentTime={currentTime}
-            />
           </div>
         </div>
       </DashboardSection>

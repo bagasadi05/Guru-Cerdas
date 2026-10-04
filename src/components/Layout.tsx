@@ -15,6 +15,7 @@ import { useParentMessageNotifications } from '../hooks/useParentMessageNotifica
 import PullToRefresh from './ui/PullToRefresh';
 import { useQueryClient } from '@tanstack/react-query';
 import { setNavigationInProgress } from '../utils/navigationState';
+import { prefetchRoutesWhenIdle } from '../utils/routePreloader';
 
 // Enhanced Mobile Navigation Components
 import { useOrientation } from '../hooks/useOrientation';
@@ -76,6 +77,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const dynamicMobileNavItems = useMemo(() => {
     return getMobileNavItems(userRole);
   }, [userRole]);
+
+  // Warm up the bottom-nav pages after first paint so switching menus
+  // renders from cache instead of waiting on a chunk download.
+  useEffect(() => {
+    return prefetchRoutesWhenIdle(dynamicMobileNavItems.map((item) => item.href));
+  }, [dynamicMobileNavItems]);
 
   // Listen for real-time parent messages and show notifications
   useParentMessageNotifications();

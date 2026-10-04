@@ -126,7 +126,7 @@ export const TodayAgendaCard: React.FC<TodayAgendaCardProps> = ({
   const phCount = todayPhSchedules.length + upcomingPhSchedules.length;
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col h-full overflow-hidden transition-all duration-200">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col self-start overflow-hidden transition-all duration-200">
       {/* Card Header with Tab Switcher */}
       <div className="p-4 sm:p-5 pb-3 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/50">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

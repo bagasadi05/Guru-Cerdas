@@ -60,3 +60,43 @@ export const preloadRoute = (path: string): void => {
       break;
   }
 };
+
+/**
+ * Downloads the given routes' page chunks one at a time while the browser is
+ * idle, so tapping a menu item doesn't wait on the network. Skipped when the
+ * user has Data Saver on or is on a 2G connection.
+ *
+ * @returns a cancel function for effect cleanup.
+ */
+export const prefetchRoutesWhenIdle = (paths: string[]): (() => void) => {
+  const connection = (navigator as Navigator & {
+    connection?: { saveData?: boolean; effectiveType?: string };
+  }).connection;
+  if (connection?.saveData || /2g/.test(connection?.effectiveType ?? '')) return () => {};
+
+  const queue = [...new Set(paths)];
+  let handle: number | undefined;
+  let cancelled = false;
+
+  const schedule = (cb: () => void): number =>
+    typeof window.requestIdleCallback === 'function'
+      ? window.requestIdleCallback(cb, { timeout: 3000 })
+      : window.setTimeout(cb, 500);
+
+  const next = () => {
+    if (cancelled) return;
+    const path = queue.shift();
+    if (!path) return;
+    preloadRoute(path);
+    handle = schedule(next);
+  };
+
+  handle = schedule(next);
+
+  return () => {
+    cancelled = true;
+    if (handle === undefined) return;
+    if (typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(handle);
+    else window.clearTimeout(handle);
+  };
+};

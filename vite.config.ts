@@ -25,6 +25,78 @@ import { visualizer } from 'rollup-plugin-visualizer';
  * 5.97s -> 5.27s (-0.70s); landing (logo-image LCP, fonts not in critical
  * path) 5.31s -> 5.49s (within run noise).
  */
+/**
+ * Package → vendor chunk. Each export library gets its own chunk so a user
+ * only pays for what they open; no shared "vendor-export" group.
+ */
+const VENDOR_CHUNKS: Record<string, string> = {
+  react: 'vendor-react',
+  'react-dom': 'vendor-react',
+  'react-router-dom': 'vendor-react',
+  '@tanstack/react-query': 'vendor-query',
+  'framer-motion': 'vendor-framer',
+  jspdf: 'vendor-pdf',
+  'jspdf-autotable': 'vendor-pdf',
+  html2canvas: 'vendor-canvas',
+  exceljs: 'vendor-excel',
+  recharts: 'vendor-charts',
+  zod: 'vendor-utils',
+  'date-fns': 'vendor-utils',
+  'lucide-react': 'vendor-icons',
+  '@supabase/supabase-js': 'vendor-supabase',
+  'react-hook-form': 'vendor-forms',
+  '@hookform/resolvers': 'vendor-forms',
+};
+
+function packageName(id: string): string | null {
+  const m = id.replace(/\\/g, '/').match(/\/node_modules\/((?:@[^/]+\/)?[^/]+)\//);
+  return m ? m[1] : null;
+}
+
+type ModuleInfoLookup = (id: string) => { importers: readonly string[] } | null;
+
+/**
+ * Function-form manualChunks. The object form pulled Vite's
+ * `__vitePreload` helper into vendor-pdf (jspdf is its first dynamic
+ * importer), so the entry chunk statically imported all of jsPDF on every
+ * page load. Rollup drags a module's dependencies into whichever manual
+ * chunk claims them first, so the helper is pinned to vendor-react, which
+ * every page already loads. A transitive dependency joins a vendor chunk only when that chunk is its
+ * sole importer (matching the old object-form grouping).
+ */
+function createManualChunks() {
+  const cache = new Map<string, Set<string> | null>();
+
+  // Returns the vendor groups that reach `id`, or null if app code (or an
+  // ungrouped module) also imports it.
+  function owners(id: string, getModuleInfo: ModuleInfoLookup, seen: Set<string>): Set<string> | null {
+    const pkg = packageName(id);
+    if (pkg && VENDOR_CHUNKS[pkg]) return new Set([VENDOR_CHUNKS[pkg]]);
+    if (!pkg) return null;
+    if (cache.has(id)) return cache.get(id)!;
+    if (seen.has(id)) return new Set();
+    seen.add(id);
+
+    const info = getModuleInfo(id);
+    // Static importers only: lazily imported deps (jspdf → canvg) keep their own chunk.
+    const importers = info ? info.importers : [];
+    let result: Set<string> | null = importers.length ? new Set() : null;
+    for (const importer of importers) {
+      const found = owners(importer, getModuleInfo, seen);
+      if (!found) { result = null; break; }
+      found.forEach((g) => result!.add(g));
+    }
+    cache.set(id, result);
+    return result;
+  }
+
+  return (id: string, { getModuleInfo }: { getModuleInfo: ModuleInfoLookup }): string | undefined => {
+    if (id.includes('vite/preload-helper')) return 'vendor-react';
+    const groups = owners(id, getModuleInfo, new Set());
+    return groups && groups.size === 1 ? [...groups][0] : undefined;
+  };
+}
+
 function fontPreloadPlugin(): Plugin {
   // import.meta.env is NOT substituted inside vite.config.ts while
   // transformIndexHtml runs, so capture the resolved base from the config.
@@ -150,41 +222,8 @@ export default defineConfig(({ mode }) => {
       // Rollup options for optimization
       rollupOptions: {
         output: {
-          // Manual chunk splitting for better caching
-          manualChunks: {
-            // ── Core React (always needed on every page) ──
-            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-
-            // ── Query / data layer ──
-            'vendor-query': ['@tanstack/react-query'],
-
-            // ── Animation — separated so low-end devices can skip it ──
-            'vendor-framer': ['framer-motion'],
-
-            // ── Export libs — each dynamically imported independently ──
-            // Each library gets its own chunk so user only pays for what
-            // they actually use. NO shared "vendor-export" grouping — that
-            // would force-load ALL export libs even when just one is imported.
-            'vendor-pdf': ['jspdf', 'jspdf-autotable'],
-            'vendor-canvas': ['html2canvas'],
-            'vendor-excel': ['exceljs'],
-
-            // ── Charts (recharts + d3 sub-dependencies) ──
-            // Separated into lazy vendor chunk so initial pages do not pay ~300KB+
-            'vendor-charts': ['recharts'],
-
-            // ── Utilities ──
-            'vendor-utils': ['zod', 'date-fns'],
-
-            // ── Icons (very heavy, ~200KB+) ──
-            'vendor-icons': ['lucide-react'],
-
-            // ── Supabase ──
-            'vendor-supabase': ['@supabase/supabase-js'],
-
-            // ── Forms ──
-            'vendor-forms': ['react-hook-form', '@hookform/resolvers'],
-          },
+          // Vendor chunk splitting for better caching (see VENDOR_CHUNKS)
+          manualChunks: createManualChunks(),
           // Ensure any dynamic import() gets its own chunk instead of
           // being inlined into the importing module's chunk
           inlineDynamicImports: false,
