@@ -1,0 +1,26 @@
+#!/bin/sh
+# Reminds to add release notes before pushing app changes to main.
+# Enable once per clone:  git config core.hooksPath .githooks
+# Skip once:              SKIP_RELEASE_NOTES=1 git push
+
+[ "$SKIP_RELEASE_NOTES" = "1" ] && exit 0
+
+if ! command -v node >/dev/null 2>&1; then
+    echo "pre-push: node tidak ditemukan, pengecekan catatan rilis dilewati." >&2
+    exit 0
+fi
+
+node scripts/check-release-notes.mjs && exit 0
+
+# Interactive terminal: let the user decide. GUI clients without a terminal
+# still see the warning above but the push is not blocked.
+if (: < /dev/tty) 2>/dev/null; then
+    printf "Lanjut push tanpa catatan rilis? [y/N] " > /dev/tty
+    read -r answer < /dev/tty
+    case "$answer" in
+        y|Y|ya|Ya|YA) exit 0 ;;
+        *) echo "Push dibatalkan. Tambahkan catatan rilis lalu push lagi." >&2; exit 1 ;;
+    esac
+fi
+
+exit 0
