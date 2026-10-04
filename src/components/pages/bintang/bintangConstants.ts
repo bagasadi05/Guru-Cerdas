@@ -109,6 +109,7 @@ export function isAutoHomeroomNote(note?: string | null): boolean {
         clean.startsWith('Secara umum') ||
         clean.startsWith('Potensi dan semangat') ||
         clean.includes('uswah hasanah') ||
+        clean.includes('terus berproses dalam mengasah adab') ||
         clean.includes('catatan pelanggaran bulan ini') ||
         clean.includes('tanpa catatan pelanggaran') ||
         clean.includes('tidak memiliki catatan pelanggaran') ||
@@ -164,6 +165,8 @@ export interface HomeroomNoteContext {
     month?: string;
     spiritualPredicate?: string;
     socialPredicate?: string;
+    /** 'Laki-laki' | 'Perempuan'; unknown values keep the neutral "x/y" wording. */
+    gender?: string | null;
 }
 
 export type ViolationCluster = 'WAKTU' | 'KERAPIAN' | 'KBM_FOKUS' | 'ADAB_ETIKA' | 'UMUM';
@@ -247,6 +250,12 @@ function computeStringSeed(str: string): number {
     return Math.abs(hash);
 }
 
+function genderedWords(gender?: string | null) {
+    if (gender === 'Laki-laki') return { sholeh: 'sholeh', muslim: 'muslim', headwear: 'peci' };
+    if (gender === 'Perempuan') return { sholeh: 'sholehah', muslim: 'muslimah', headwear: 'jilbab' };
+    return { sholeh: 'sholeh/sholehah', muslim: 'muslim/muslimah', headwear: 'peci/jilbab' };
+}
+
 /**
  * Menghasilkan catatan wali kelas yang berbobot secara pedagogis, kontekstual,
  * dan disesuaikan khusus dengan karakter, nilai, dan budaya Madrasah Ibtidaiyah (MI).
@@ -273,10 +282,12 @@ export function generateContextualHomeroomNote(context: HomeroomNoteContext): st
     const seedString = studentName ? `${studentName}${context.month ? `-${context.month}` : ''}` : '';
     const seed = numericSeed ?? (seedString ? computeStringSeed(seedString) : 0);
     const greeting = getStudentGreeting(studentName);
+    const g = genderedWords(context.gender);
 
     // ── BAGIAN 1: Apresiasi & Sapaan Awal (Nuansa Islami Madrasah Ibtidaiyah) ──
     let part1 = '';
-    if (activePoints > 0) {
+    // A D grade needs a guidance-first opener; high praise for keaktifan would contradict it.
+    if (activePoints > 0 && !hasD) {
         const variants = [
             `Alhamdulillah, ${greeting} menunjukkan antusiasme belajar yang sangat tinggi serta keaktifan membanggakan di madrasah (+${activePoints} poin keaktifan).`,
             `Barakallah, ${greeting} senantiasa bersemangat dalam menuntut ilmu dan menorehkan kontribusi aktif di kelas (+${activePoints} poin keaktifan).`,
@@ -310,7 +321,7 @@ export function generateContextualHomeroomNote(context: HomeroomNoteContext): st
     let part2 = '';
     if (violationCount === 0 && countA === 3) {
         const variants = [
-            'Konsistensi Ananda dalam menjaga adab santun kepada ustadz/ustadzah dan teman, ketertiban waktu, serta kerapian seragam muslim/muslimah patut terus dipertahankan.',
+            `Konsistensi Ananda dalam menjaga adab santun kepada ustadz/ustadzah dan teman, ketertiban waktu, serta kerapian seragam ${g.muslim} patut terus dipertahankan.`,
             'Kemandirian, tanggung jawab, dan adab menuntut ilmu yang ditunjukkan Ananda selama di madrasah mencerminkan karakter santri cilik yang terpuji.',
             'Ananda mampu menjadi uswah hasanah (teladan yang baik) bagi teman-teman sekelas dalam menegakkan adab dan tata tertib madrasah.',
         ];
@@ -331,7 +342,7 @@ export function generateContextualHomeroomNote(context: HomeroomNoteContext): st
             part2 = selectVariant(variants, seed + 2);
         } else if (clusterInfo.primaryCluster === 'KERAPIAN') {
             const variants = [
-                'Sebagai catatan pembiasaan, mohon dibiasakan untuk memeriksa kelengkapan atribut seragam madrasah (peci/jilbab, dasi, ikat pinggang, dan sepatu) pada malam sebelumnya agar penampilannya senantiasa rapi dan syar\'i.',
+                `Sebagai catatan pembiasaan, mohon dibiasakan untuk memeriksa kelengkapan atribut seragam madrasah (${g.headwear}, dasi, ikat pinggang, dan sepatu) pada malam sebelumnya agar penampilannya senantiasa rapi dan syar'i.`,
                 'Perlu perhatian lebih pada kerapian diri dan kelengkapan atribut seragam madrasah sesuai jadwal hari yang telah ditentukan.',
             ];
             part2 = selectVariant(variants, seed + 2);
@@ -360,14 +371,14 @@ export function generateContextualHomeroomNote(context: HomeroomNoteContext): st
     let part3 = '';
     if (countA === 3 && violationCount === 0) {
         const variants = [
-            'Semoga Ananda senantiasa istiqamah menjadi anak yang sholeh/sholehah, berbakti kepada orang tua, berakhlak mulia, dan ilmunya berkah bermanfaat. Aamiin.',
+            `Semoga Ananda senantiasa istiqamah menjadi anak yang ${g.sholeh}, berbakti kepada orang tua, berakhlak mulia, dan ilmunya berkah bermanfaat. Aamiin.`,
             'Jazakumullah khairan kepada Ayah/Bunda di rumah atas kerja sama yang luar biasa dalam membimbing Ananda hingga meraih capaian akhlak yang sangat membanggakan ini.',
             'Mohon terus didoakan dan didampingi agar Ananda tumbuh menjadi generasi qur\'ani yang cerdas, santun, dan membanggakan keluarga serta madrasah.',
         ];
         part3 = selectVariant(variants, seed + 3);
     } else if (hasD || violationCount >= 3) {
         const variants = [
-            'Kami sangat memohon sinergi dan pendampingan penuh kasih dari Ayah/Bunda di rumah untuk bersama-sama membimbing Ananda. Insya Allah dengan doa dan bimbingan bersama, Ananda akan mampu tumbuh menjadi anak yang semakin baik dan sholeh/sholehah.',
+            `Kami sangat memohon sinergi dan pendampingan penuh kasih dari Ayah/Bunda di rumah untuk bersama-sama membimbing Ananda. Insya Allah dengan doa dan bimbingan bersama, Ananda akan mampu tumbuh menjadi anak yang semakin baik dan ${g.sholeh}.`,
             'Dengan kerja sama yang erat antara pihak madrasah dan Ayah/Bunda di rumah, insya Allah Ananda akan mampu memperbaiki diri dan meraih akhlakul karimah yang mulia.',
         ];
         part3 = selectVariant(variants, seed + 3);
@@ -414,7 +425,7 @@ export function generateHomeroomNote(
     kedis?: BintangGrade,
     kerapian?: BintangGrade,
     activePoints: number = 0,
-    contextExt?: { studentName?: string; violations?: StudentViolationSummaryItem[]; month?: string; seed?: number | string; spiritualPredicate?: string; socialPredicate?: string }
+    contextExt?: { studentName?: string; violations?: StudentViolationSummaryItem[]; month?: string; seed?: number | string; spiritualPredicate?: string; socialPredicate?: string; gender?: string | null }
 ): string {
     if (typeof adabOrContext === 'object') {
         return generateContextualHomeroomNote(adabOrContext);
@@ -432,6 +443,7 @@ export function generateHomeroomNote(
         seed: contextExt?.seed,
         spiritualPredicate: contextExt?.spiritualPredicate,
         socialPredicate: contextExt?.socialPredicate,
+        gender: contextExt?.gender,
     });
 }
 

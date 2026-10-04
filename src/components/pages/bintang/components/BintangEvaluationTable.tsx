@@ -31,6 +31,8 @@ interface BintangEvaluationTableProps {
   selectedMonth: string;
   onOpenDetail: (studentId: string) => void;
   onOpenBulkExport: () => void;
+  /** Students whose draft was generated before their latest violation/keaktifan entry. */
+  staleStudentIds?: Set<string>;
 }
 
 export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
@@ -44,6 +46,7 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
   selectedMonth,
   onOpenDetail,
   onOpenBulkExport,
+  staleStudentIds,
 }) => {
   const toast = useToast();
 
@@ -292,6 +295,13 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                         {isPublished ? (
                           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
                             <CheckCircle size={12} /> Published
+                          </span>
+                        ) : isCompleted && staleStudentIds?.has(student.id) ? (
+                          <span
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300"
+                            title="Ada pelanggaran atau poin keaktifan baru setelah rapor ini dibuat. Klik Generate untuk memperbarui."
+                          >
+                            Perlu diperbarui
                           </span>
                         ) : isCompleted ? (
                           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">

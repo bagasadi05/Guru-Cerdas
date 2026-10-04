@@ -145,6 +145,26 @@ const filterRecordsBySemesterTerm = <T extends PortalFilterableRecord>(
     return records.filter((record) => getRecordSemesterTerm(record, semesterTermsById) === selectedFilter);
 };
 
+// Portal sessions run as `anon`, which RLS blocks from reading
+// bintang_monthly_evaluations directly; the RPC validates the access code instead.
+const fetchPortalBintangEvaluations = async (studentId: string, accessCode: string): Promise<any[]> => {
+    const { data, error } = await supabase.rpc('get_student_portal_bintang' as any, {
+        student_id_param: studentId,
+        access_code_param: accessCode,
+    } as any);
+
+    if (!error) return toArray<any>(data);
+
+    console.warn('Portal bintang RPC failed, falling back to direct query:', error);
+    const { data: directData } = await supabase
+        .from('bintang_monthly_evaluations')
+        .select('*')
+        .eq('student_id', studentId)
+        .eq('is_published', true)
+        .order('month', { ascending: false });
+    return toArray<any>(directData);
+};
+
 const fetchPortalDataFallback = async (studentId: string, accessCode: string): Promise<PortalData> => {
     const { data: studentData, error: studentError } = await supabase
         .from('students')
@@ -195,7 +215,7 @@ const fetchPortalDataFallback = async (studentId: string, accessCode: string): P
         supabase.from('schedules').select('*').eq('class_id', className).is('deleted_at', null),
         supabase.from('tasks').select('*').eq('class_id', classId),
         supabase.from('announcements').select('*').in('audience_type', ['all', 'parent']).is('deleted_at', null).order('date', { ascending: false }).order('created_at', { ascending: false }).limit(5),
-        supabase.from('bintang_monthly_evaluations').select('*').eq('student_id', studentId).eq('is_published', true).order('month', { ascending: false }),
+        fetchPortalBintangEvaluations(studentId, accessCode),
     ]);
 
     const teacher = {
@@ -246,7 +266,7 @@ const fetchPortalDataFallback = async (studentId: string, accessCode: string): P
         tasks: toArray<PortalTask>(sortedTasks),
         announcements: toArray<PortalAnnouncement>(announcementsRes.data),
         achievements: [],
-        bintangEvaluations: toArray<any>(bintangEvaluationsRes.data),
+        bintangEvaluations: bintangEvaluationsRes,
         teacher,
         schoolInfo: { school_name: 'Sekolah' },
     };
@@ -288,12 +308,7 @@ const fetchPortalData = async (studentId: string, accessCode: string): Promise<P
             classes: { name: '-' },
         });
 
-        const { data: bintangData } = await supabase
-            .from('bintang_monthly_evaluations')
-            .select('*')
-            .eq('student_id', studentId)
-            .eq('is_published', true)
-            .order('month', { ascending: false });
+        const bintangData = await fetchPortalBintangEvaluations(studentId, accessCode);
 
         return {
             student: { ...student, access_code: accessCode || null },

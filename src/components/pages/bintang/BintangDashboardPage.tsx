@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { MotionDiv, AnimatePresence } from '../../ui/MotionComponents';
 import { Star, ClipboardCheck, BarChart3,
     Sparkles, Zap, Send, PlusCircle, Printer,
     ChevronDown, TrendingUp, Eye, FileSpreadsheet,
-    ShieldAlert, Download, RotateCcw
+    ShieldAlert, Download, RotateCcw, AlertTriangle
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../../hooks/useAuth';
 import { supabase } from '../../../services/supabase';
-import { bintangService, calculateAspectPoints, type AspectPointsSummary, type BintangGrade } from '../../../services/bintangService';
+import { bintangService, calculateAspectPoints, getAspectForViolation, type AspectPointsSummary, type BintangGrade } from '../../../services/bintangService';
 import { Button } from '../../ui/Button';
 import { CustomDropdown } from '../../ui/CustomDropdown';
 import { useConfirmation } from '../../ui/ConfirmationDialog';
@@ -42,6 +42,7 @@ import {
     BintangDownloadProgressModal,
 } from './components/BintangActionModals';
 import { BintangEvaluationTable } from './components/BintangEvaluationTable';
+import { formatLocalDate } from '../../../hooks/dashboard/dashboardHelpers';
 
 
 
@@ -103,7 +104,7 @@ const BintangDashboardPage: React.FC = () => {
     const [selectedMonth, setSelectedMonth] = useState(currentMonth);
 
     // ── Data state ───────────────────────────────────────────────────────────
-    const [students, setStudents] = useState<Array<{ id: string; name: string; parent_phone?: string | null; parent_name?: string | null }>>([]);
+    const [students, setStudents] = useState<Array<{ id: string; name: string; gender?: string | null; parent_phone?: string | null; parent_name?: string | null }>>([]);
     const [violations, setViolations] = useState<Array<{
         id: string; student_id: string; user_id: string | null; description: string; points: number;
         date: string; severity: string | null; semester_id: string | null; type: string | null;
@@ -117,13 +118,17 @@ const BintangDashboardPage: React.FC = () => {
         adab_score: string | null; kedisiplinan_score: string | null; kerapian_score: string | null;
         adab_notes: string | null; kedisiplinan_notes: string | null; kerapian_notes: string | null;
         catatan_wali: string | null; is_published: boolean; evaluator_id: string;
+        updated_at?: string | null;
     }>>([]);
     const [quizPoints, setQuizPoints] = useState<Array<{
         id: string; student_id: string; quiz_name: string | null; subject: string | null; points: number; category: string | null; quiz_date: string; semester_id: string | null;
+        created_at?: string | null;
     }>>([]);
     const [mentoringLogs, setMentoringLogs] = useState<any[]>([]);
     const [dailyObservations, setDailyObservations] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const fetchRequestIdRef = useRef(0);
 
     // ── UI state ─────────────────────────────────────────────────────────────
     // (mentoring search is now encapsulated inside PembinaanTab)
@@ -183,7 +188,7 @@ const BintangDashboardPage: React.FC = () => {
     const [mentoringStudentsInClass, setMentoringStudentsInClass] = useState<Array<{ id: string; name: string; parent_phone?: string | null; parent_name?: string | null }>>([]);
     const [mentoringSelectedStudents, setMentoringSelectedStudents] = useState<string[]>([]);
     const [mentoringRole, setMentoringRole] = useState('WALAS');
-    const [mentoringDate, setMentoringDate] = useState(new Date().toISOString().split('T')[0]);
+    const [mentoringDate, setMentoringDate] = useState(formatLocalDate());
     const [mentoringNotes, setMentoringNotes] = useState('');
     const [isMentoringSubmitting, setIsMentoringSubmitting] = useState(false);
     // ── Mentoring edit/delete ─────────────────────────────────────────────
@@ -212,12 +217,16 @@ const BintangDashboardPage: React.FC = () => {
     }, []);
 
     const fetchAllData = useCallback(async () => {
+        // Ignore responses from a previous class/month selection that resolve late.
+        const requestId = ++fetchRequestIdRef.current;
+        const isStale = () => requestId !== fetchRequestIdRef.current;
         setIsLoading(true);
+        setLoadError(null);
         try {
             const [studentsRes, evalsData, viosData, logsData, obsData, attitudeData] = await Promise.all([
                 supabase
                     .from('students')
-                    .select('id, name, parent_phone, parent_name')
+                    .select('id, name, gender, parent_phone, parent_name')
                     .eq('class_id', selectedClass)
                     .is('deleted_at', null)
                     .order('name'),
@@ -225,8 +234,10 @@ const BintangDashboardPage: React.FC = () => {
                 bintangService.getViolationsForClass(selectedClass, selectedMonth),
                 bintangService.getMentoringLogs(selectedClass),
                 bintangService.getDailyObservations(selectedClass, selectedMonth),
-                bintangService.getAttitudeMapForClass(selectedClass),
+                bintangService.getAttitudeMapForClassInMonth(selectedClass, selectedMonth),
             ]);
+            if (studentsRes.error) throw studentsRes.error;
+            if (isStale()) return;
 
             setStudents(studentsRes.data || []);
             setEvaluations(evalsData || []);
@@ -243,22 +254,27 @@ const BintangDashboardPage: React.FC = () => {
                 const nextYear = parseInt(monthNum) === 12 ? parseInt(year) + 1 : parseInt(year);
                 const monthStart = `${selectedMonth}-01`;
                 const monthEnd = `${nextYear}-${nextMonthNum.toString().padStart(2, '0')}-01`;
-                const { data: quizData } = await supabase
+                const { data: quizData, error: quizError } = await supabase
                     .from('quiz_points')
-                    .select('id, student_id, quiz_name, subject, points, category, quiz_date, semester_id')
+                    .select('id, student_id, quiz_name, subject, points, category, quiz_date, semester_id, created_at')
                     .in('student_id', studentIds)
                     .is('deleted_at', null)
                     .gte('quiz_date', monthStart)
                     .lt('quiz_date', monthEnd)
                     .limit(1000);
-                setQuizPoints(dedupeQuizPoints((quizData || []) as any));
+                if (quizError) throw quizError;
+                if (isStale()) return;
+                setQuizPoints(dedupeQuizPoints((quizData || []) as typeof quizPoints));
             } else {
                 setQuizPoints([]);
             }
         } catch (error) {
             console.error('Failed to fetch BINTANG data', error);
+            if (!isStale()) {
+                setLoadError('Data BINTANG gagal dimuat, jadi nilai yang tampil belum tentu benar. Generate dan Publikasi dinonaktifkan sampai data berhasil dimuat ulang.');
+            }
         } finally {
-            setIsLoading(false);
+            if (!isStale()) setIsLoading(false);
         }
     }, [selectedClass, selectedMonth]);
 
@@ -266,6 +282,9 @@ const BintangDashboardPage: React.FC = () => {
         if (selectedClass && selectedMonth) {
             fetchAllData();
         } else {
+            fetchRequestIdRef.current++;
+            setIsLoading(false);
+            setLoadError(null);
             setStudents([]);
             setViolations([]);
             setEvaluations([]);
@@ -355,10 +374,10 @@ const BintangDashboardPage: React.FC = () => {
         const map = new Map<string, Array<any>>();
         for (const v of violations) {
             const list = map.get(v.student_id) || [];
-            const item = violationList.find(i => i.description === v.description);
             list.push({
                 description: v.description,
-                bintangAspect: item?.bintangAspect,
+                // Same matcher as scoring, so note wording follows the graded aspect.
+                bintangAspect: getAspectForViolation(v.description),
                 category: v.severity,
                 context_notes: v.context_notes,
                 date: v.date,
@@ -370,6 +389,26 @@ const BintangDashboardPage: React.FC = () => {
         }
         return map;
     }, [violations]);
+
+    // A draft generated before the student's latest violation/keaktifan entry no
+    // longer matches the data; Generate refreshes every non-manual grade.
+    const staleStudentIds = useMemo(() => {
+        const latestInputAt = new Map<string, number>();
+        const track = (studentId: string, createdAt?: string | null) => {
+            const t = createdAt ? Date.parse(createdAt) : NaN;
+            if (!Number.isNaN(t) && t > (latestInputAt.get(studentId) ?? 0)) latestInputAt.set(studentId, t);
+        };
+        violations.forEach(v => track(v.student_id, v.created_at));
+        quizPoints.forEach(q => track(q.student_id, q.created_at));
+
+        const stale = new Set<string>();
+        for (const ev of evaluations) {
+            if (ev.is_published || !ev.updated_at) continue;
+            const latest = latestInputAt.get(ev.student_id);
+            if (latest && latest > Date.parse(ev.updated_at)) stale.add(ev.student_id);
+        }
+        return stale;
+    }, [violations, quizPoints, evaluations]);
 
     const getAspectSummary = (studentId: string): AspectPointsSummary => {
         return studentAspectMap.get(studentId) ?? {
@@ -456,7 +495,7 @@ const BintangDashboardPage: React.FC = () => {
             await bintangService.insertDailyObservation({
                 student_id: obsStudentId,
                 teacher_id: user?.id || '',
-                date: new Date().toISOString().split('T')[0],
+                date: formatLocalDate(),
                 aspect: obsAspect,
                 is_positive: obsIsPositive,
                 observation: obsNotes
@@ -1000,6 +1039,32 @@ const BintangDashboardPage: React.FC = () => {
                         })}
                     </div>
 
+                    {loadError && (
+                        <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-200 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/30 p-3 text-sm text-rose-800 dark:text-rose-300">
+                            <div className="flex items-start gap-2">
+                                <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+                                <span>{loadError}</span>
+                            </div>
+                            <Button
+                                variant="outline"
+                                onClick={() => fetchAllData()}
+                                disabled={isLoading}
+                                className="h-9 px-3 text-sm rounded-xl border-rose-300 dark:border-rose-700 cursor-pointer"
+                            >
+                                {isLoading ? 'Memuat...' : 'Muat Ulang'}
+                            </Button>
+                        </div>
+                    )}
+
+                    {isWalas && !loadError && staleStudentIds.size > 0 && (
+                        <div role="status" className="flex items-start gap-2 rounded-2xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/30 p-3 text-sm text-amber-800 dark:text-amber-300">
+                            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+                            <span>
+                                {staleStudentIds.size} rapor draft belum memuat pelanggaran atau poin keaktifan terbaru. Klik <strong>Generate</strong> untuk memperbarui sebelum dipublikasikan.
+                            </span>
+                        </div>
+                    )}
+
                     {/* ══════════════════════════════════════════════════════════
                         3. ACTION BAR — simplified
                        ══════════════════════════════════════════════════════════ */}
@@ -1099,7 +1164,7 @@ const BintangDashboardPage: React.FC = () => {
                             <div className="flex items-center gap-2">
                                 <Button
                                     onClick={() => evalHook.handleGenerateAll(getAspectSummary)}
-                                    disabled={evalHook.isGenerating || students.length === 0}
+                                    disabled={evalHook.isGenerating || students.length === 0 || isLoading || !!loadError}
                                     variant="outline"
                                     className="flex items-center gap-1.5 text-sm h-10 px-4 font-medium border-brand-200 dark:border-brand-800/60 text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-900/20 hover:bg-brand-100 dark:hover:bg-brand-900/40 rounded-xl cursor-pointer active:scale-95 duration-150"
                                 >
@@ -1121,7 +1186,7 @@ const BintangDashboardPage: React.FC = () => {
                                 )}
                                 <Button
                                     onClick={evalHook.handlePublish}
-                                    disabled={evaluations.length === 0 || evalHook.isPublishing}
+                                    disabled={evaluations.length === 0 || evalHook.isPublishing || isLoading || !!loadError}
                                     className="bg-brand-600 hover:bg-brand-700 text-white flex items-center gap-1.5 text-sm h-10 px-4 font-medium rounded-xl shadow-sm shadow-brand-600/20 cursor-pointer active:scale-95 duration-150"
                                 >
                                     <Send size={16} />
@@ -1143,6 +1208,7 @@ const BintangDashboardPage: React.FC = () => {
                         selectedMonth={selectedMonth}
                         onOpenDetail={(studentId) => setDetailStudentId(studentId)}
                         onOpenBulkExport={() => setIsBulkExportModalOpen(true)}
+                        staleStudentIds={staleStudentIds}
                     />
 
                     {/* ══════════════════════════════════════════════════════════

@@ -253,7 +253,7 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       testTimeout: 15000,
       setupFiles: './src/setupTests.ts',
-      exclude: ['node_modules', 'dist', '.git', '.cache', '.freebuff/**', 'e2e/**', 'tests/e2e/**', '**/*.spec.ts'],
+      exclude: ['node_modules', 'dist', '.git', '.cache', '.freebuff/**', '.delta/**', 'e2e/**', 'tests/e2e/**', '**/*.spec.ts'],
       coverage: {
         provider: 'v8',
         reporter: ['text', 'json', 'html', 'lcov'],

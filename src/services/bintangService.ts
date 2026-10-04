@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { violationList, type BintangAspect } from './violations.data';
 import type { Database } from './database.types';
-import { dedupeViolations, dedupeQuizPoints } from '../utils/academicRecordUtils';
+import { dedupeViolations, dedupeQuizPoints, buildQuizPointDailyKey } from '../utils/academicRecordUtils';
 import type {
   BintangMentoringInsert,
   BintangDailyObservationInsert,
@@ -53,6 +53,8 @@ const descriptionToAspect = new Map<string, BintangAspect>(
   violationList.map(v => [v.description, v.bintangAspect])
 );
 
+const MIN_PARTIAL_MATCH_LENGTH = 8;
+
 /** Look up which BINTANG aspect a violation falls under based on its description. */
 export function getAspectForViolation(description: string): BintangAspect {
   const exact = descriptionToAspect.get(description);
@@ -60,10 +62,15 @@ export function getAspectForViolation(description: string): BintangAspect {
 
   // Fallback: partial match terhadap deskripsi yang dikenal (normalisasi lowercase),
   // agar pelanggaran dengan teks bebas/kustom tetap masuk aspek yang tepat.
-  const normalized = description.toLowerCase().trim();
+  // Teks yang terlalu pendek tidak dicocokkan sebagai potongan deskripsi lain,
+  // karena string kosong atau 1-2 kata pendek bisa cocok dengan aspek apa saja.
+  const normalized = (description || '').toLowerCase().trim();
+  if (!normalized) return 'KEDISIPLINAN';
+  const allowSubstringOfKnown = normalized.length >= MIN_PARTIAL_MATCH_LENGTH;
   for (const v of violationList) {
     const known = v.description.toLowerCase().trim();
-    if (known.length > 0 && (normalized.includes(known) || known.includes(normalized))) {
+    if (!known) continue;
+    if (normalized.includes(known) || (allowSubstringOfKnown && known.includes(normalized))) {
       return v.bintangAspect;
     }
   }
@@ -71,10 +78,21 @@ export function getAspectForViolation(description: string): BintangAspect {
   return 'KEDISIPLINAN'; // safe fallback untuk pelanggaran yang tidak dikenal
 }
 
+/**
+ * `points` is the raw violation total; `netPoints` is what remains after the
+ * keaktifan offset and is the value the grade is derived from.
+ */
+export interface AspectPointSummaryItem {
+  points: number;
+  count: number;
+  grade: BintangGrade;
+  netPoints?: number;
+}
+
 export interface AspectPointsSummary {
-  ADAB: { points: number; count: number; grade: BintangGrade };
-  KEDISIPLINAN: { points: number; count: number; grade: BintangGrade };
-  KERAPIAN: { points: number; count: number; grade: BintangGrade };
+  ADAB: AspectPointSummaryItem;
+  KEDISIPLINAN: AspectPointSummaryItem;
+  KERAPIAN: AspectPointSummaryItem;
 }
 
 /** Calculate per-aspect violation points and apply optional keaktifan (quiz points) offsets. */
@@ -130,8 +148,22 @@ export function calculateAspectPoints(
   summary.ADAB.grade = pointsToGrade(netAdabPoints);
   summary.KEDISIPLINAN.grade = pointsToGrade(netKedisPoints);
   summary.KERAPIAN.grade = pointsToGrade(netKerapianPoints);
+  summary.ADAB.netPoints = netAdabPoints;
+  summary.KEDISIPLINAN.netPoints = netKedisPoints;
+  summary.KERAPIAN.netPoints = netKerapianPoints;
 
   return summary;
+}
+
+/** Inclusive start / exclusive end dates (YYYY-MM-DD) for a YYYY-MM month. */
+export function getMonthDateRange(month: string): { startDate: string; endDate: string } {
+  const [year, monthNum] = month.split('-').map(n => parseInt(n, 10));
+  const nextMonthNum = monthNum === 12 ? 1 : monthNum + 1;
+  const nextYear = monthNum === 12 ? year + 1 : year;
+  return {
+    startDate: `${month}-01`,
+    endDate: `${nextYear}-${nextMonthNum.toString().padStart(2, '0')}-01`,
+  };
 }
 
 // =============================================================================
@@ -207,7 +239,7 @@ export const bintangService = {
     return data;
   },
 
-  /** Soft-delete a mentoring log with an is_deleted flag (or hard delete if no soft-delete column). */
+  /** Permanently delete a mentoring log. RLS decides who may delete it. */
   async deleteMentoringLog(id: string) {
     const { data, error } = await supabase
       .from('bintang_mentoring_logs')
@@ -242,11 +274,7 @@ export const bintangService = {
       }
 
       if (month) {
-        const startDate = `${month}-01`;
-        const [year, monthNum] = month.split('-');
-        const nextMonthNum = parseInt(monthNum) === 12 ? 1 : parseInt(monthNum) + 1;
-        const nextYear = parseInt(monthNum) === 12 ? parseInt(year) + 1 : parseInt(year);
-        const endDate = `${nextYear}-${nextMonthNum.toString().padStart(2, '0')}-01`;
+        const { startDate, endDate } = getMonthDateRange(month);
 
         query = query.gte('date', startDate).lt('date', endDate);
       }
@@ -279,72 +307,62 @@ export const bintangService = {
   /**
    * Fetch violations for a given class within a month date range.
    * Returns raw violation rows needed for BINTANG score calculation.
+   * Throws on query failure so an outage never looks like "no violations" (grade A).
    */
   async getViolationsForClass(classId: string, month: string) {
-    try {
-      const startDate = `${month}-01`;
-      const [year, monthNum] = month.split('-');
-      const nextMonthNum = parseInt(monthNum) === 12 ? 1 : parseInt(monthNum) + 1;
-      const nextYear = parseInt(monthNum) === 12 ? parseInt(year) + 1 : parseInt(year);
-      const endDate = `${nextYear}-${nextMonthNum.toString().padStart(2, '0')}-01`;
+    const { startDate, endDate } = getMonthDateRange(month);
 
-      const { data: classStudents } = await supabase
-        .from('students')
-        .select('id')
-        .eq('class_id', classId)
-        .is('deleted_at', null);
+    const { data: classStudents, error: studentsError } = await supabase
+      .from('students')
+      .select('id')
+      .eq('class_id', classId)
+      .is('deleted_at', null);
+    if (studentsError) throw studentsError;
 
-      const studentIds = classStudents?.map(s => s.id) || [];
-      if (studentIds.length === 0) return [];
+    const studentIds = classStudents?.map(s => s.id) || [];
+    if (studentIds.length === 0) return [];
 
-      const { data, error } = await supabase
-        .from('violations')
-        .select('id, student_id, user_id, date, description, context_notes, points, type, severity, semester_id, evidence_url, parent_notified, parent_notified_at, created_at, follow_up_status, follow_up_notes, students(name)')
-        .in('student_id', studentIds)
-        .gte('date', startDate)
-        .lt('date', endDate)
-        .is('deleted_at', null)
-        .order('date', { ascending: false });
+    const { data, error } = await supabase
+      .from('violations')
+      .select('id, student_id, user_id, date, description, context_notes, points, type, severity, semester_id, evidence_url, parent_notified, parent_notified_at, created_at, follow_up_status, follow_up_notes, students(name)')
+      .in('student_id', studentIds)
+      .gte('date', startDate)
+      .lt('date', endDate)
+      .is('deleted_at', null)
+      .order('date', { ascending: false });
 
-      if (error) {
-        console.warn('bintangService.getViolationsForClass error:', error);
-        return [];
+    if (error) throw error;
+
+    const rawViolations = data || [];
+    const dedupedViolations = dedupeViolations(rawViolations as any);
+    const recorderIds = Array.from(new Set(dedupedViolations.map((v: any) => v.user_id).filter(Boolean)));
+    let recorderNames: Record<string, string> = {};
+    if (recorderIds.length > 0) {
+      try {
+        const { data: roleRows } = await supabase
+          .from('user_roles')
+          .select('user_id, full_name, email')
+          .in('user_id', recorderIds);
+        recorderNames = (roleRows || []).reduce((acc: Record<string, string>, r: any) => {
+          if (r.user_id) {
+            const name = r.full_name?.trim() || (r.email ? r.email.split('@')[0] : '') || '';
+            acc[r.user_id] = name;
+          }
+          return acc;
+        }, {});
+      } catch (roleErr) {
+        console.warn('Failed to enrich recorder names:', roleErr);
       }
-
-      const rawViolations = data || [];
-      const dedupedViolations = dedupeViolations(rawViolations as any);
-      const recorderIds = Array.from(new Set(dedupedViolations.map((v: any) => v.user_id).filter(Boolean)));
-      let recorderNames: Record<string, string> = {};
-      if (recorderIds.length > 0) {
-        try {
-          const { data: roleRows } = await supabase
-            .from('user_roles')
-            .select('user_id, full_name, email')
-            .in('user_id', recorderIds);
-          recorderNames = (roleRows || []).reduce((acc: Record<string, string>, r: any) => {
-            if (r.user_id) {
-              const name = r.full_name?.trim() || (r.email ? r.email.split('@')[0] : '') || '';
-              acc[r.user_id] = name;
-            }
-            return acc;
-          }, {});
-        } catch (roleErr) {
-          console.warn('Failed to enrich recorder names:', roleErr);
-        }
-      }
-
-      return dedupedViolations.map((v: any) => {
-        const recorderName = recorderNames[v.user_id] || null;
-        return {
-          ...v,
-          recorded_by_name: recorderName,
-          users: { name: recorderName || 'Guru' },
-        };
-      });
-    } catch (err) {
-      console.warn('bintangService.getViolationsForClass exception:', err);
-      return [];
     }
+
+    return dedupedViolations.map((v: any) => {
+      const recorderName = recorderNames[v.user_id] || null;
+      return {
+        ...v,
+        recorded_by_name: recorderName,
+        users: { name: recorderName || 'Guru' },
+      };
+    });
   },
 
   /**
@@ -370,11 +388,8 @@ export const bintangService = {
       const firstMonth = sortedMonths[0];
       const lastMonth = sortedMonths[sortedMonths.length - 1];
 
-      const startDate = `${firstMonth}-01`;
-      const [lastYear, lastMonthNum] = lastMonth.split('-');
-      const nextMonthNum = parseInt(lastMonthNum, 10) === 12 ? 1 : parseInt(lastMonthNum, 10) + 1;
-      const nextYear = parseInt(lastMonthNum, 10) === 12 ? parseInt(lastYear, 10) + 1 : parseInt(lastYear, 10);
-      const endDate = `${nextYear}-${nextMonthNum.toString().padStart(2, '0')}-01`;
+      const { startDate } = getMonthDateRange(firstMonth);
+      const { endDate } = getMonthDateRange(lastMonth);
 
       let targetStudentIds: string[] = [];
       if (studentId) {
@@ -418,6 +433,9 @@ export const bintangService = {
           .is('deleted_at', null),
       ]);
 
+      if (viosRes.error) throw viosRes.error;
+      if (quizRes.error) throw quizRes.error;
+
       const allVios = dedupeViolations((viosRes.data || []) as any);
       const allQuiz = dedupeQuizPoints((quizRes.data || []) as any);
 
@@ -435,12 +453,13 @@ export const bintangService = {
 
         const points = calculateAspectPoints(monthVios, monthQuizTotal);
 
+        // Plot net points so the chart height agrees with the grade shown next to it.
         return {
           month,
           label,
-          ADAB: { points: points.ADAB.points, grade: points.ADAB.grade },
-          KEDISIPLINAN: { points: points.KEDISIPLINAN.points, grade: points.KEDISIPLINAN.grade },
-          KERAPIAN: { points: points.KERAPIAN.points, grade: points.KERAPIAN.grade },
+          ADAB: { points: points.ADAB.netPoints ?? points.ADAB.points, grade: points.ADAB.grade },
+          KEDISIPLINAN: { points: points.KEDISIPLINAN.netPoints ?? points.KEDISIPLINAN.points, grade: points.KEDISIPLINAN.grade },
+          KERAPIAN: { points: points.KERAPIAN.netPoints ?? points.KERAPIAN.points, grade: points.KERAPIAN.grade },
         };
       });
     } catch (err) {
@@ -540,7 +559,7 @@ export const bintangService = {
     // 1. Sanitize internal duplicates in the incoming payload batch
     const seen = new Set<string>();
     const sanitizedPayloads = inserts.filter((p) => {
-      const key = `${p.student_id}::${p.quiz_date}::${(p.quiz_name || '').trim().toLowerCase()}::${(p.subject || '').trim().toLowerCase()}::${p.semester_id || 'no-sem'}`;
+      const key = buildQuizPointDailyKey(p);
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -550,32 +569,22 @@ export const bintangService = {
 
     let payloadsToInsert = sanitizedPayloads;
 
-    // 2. Unless explicitly allowed, skip records that already exist in Supabase for the same student, date, activity, and subject
+    // 2. Unless explicitly allowed, skip activities any teacher already recorded for
+    //    the same student and day (case-insensitive, same rule as dedupeQuizPoints).
     if (!allowDuplicates) {
       const studentIds = Array.from(new Set(sanitizedPayloads.map(p => p.student_id)));
       const quizDates = Array.from(new Set(sanitizedPayloads.map(p => p.quiz_date)));
-      const quizNames = Array.from(new Set(sanitizedPayloads.map(p => (p.quiz_name || '').trim())));
 
-      const { data: existingRows } = await supabase
+      const { data: existingRows, error: existingError } = await supabase
         .from('quiz_points')
-        .select('student_id, quiz_date, quiz_name, subject, semester_id')
+        .select('student_id, quiz_date, quiz_name, subject')
         .in('student_id', studentIds)
         .in('quiz_date', quizDates)
-        .in('quiz_name', quizNames)
         .is('deleted_at', null);
+      if (existingError) throw existingError;
 
-      if (existingRows && existingRows.length > 0) {
-        const existingKeys = new Set(
-          existingRows.map(r =>
-            `${r.student_id}::${r.quiz_date}::${(r.quiz_name || '').trim().toLowerCase()}::${(r.subject || '').trim().toLowerCase()}::${r.semester_id || 'no-sem'}`
-          )
-        );
-
-        payloadsToInsert = sanitizedPayloads.filter(p => {
-          const key = `${p.student_id}::${p.quiz_date}::${(p.quiz_name || '').trim().toLowerCase()}::${(p.subject || '').trim().toLowerCase()}::${p.semester_id || 'no-sem'}`;
-          return !existingKeys.has(key);
-        });
-      }
+      const existingKeys = new Set((existingRows || []).map(r => buildQuizPointDailyKey(r)));
+      payloadsToInsert = sanitizedPayloads.filter(p => !existingKeys.has(buildQuizPointDailyKey(p)));
     }
 
     if (payloadsToInsert.length === 0) return [];
@@ -624,15 +633,11 @@ export const bintangService = {
    */
   async getViolationsForStudent(studentId: string, month: string) {
     try {
-      const startDate = `${month}-01`;
-      const [year, monthNum] = month.split('-');
-      const nextMonthNum = parseInt(monthNum) === 12 ? 1 : parseInt(monthNum) + 1;
-      const nextYear = parseInt(monthNum) === 12 ? parseInt(year) + 1 : parseInt(year);
-      const endDate = `${nextYear}-${nextMonthNum.toString().padStart(2, '0')}-01`;
+      const { startDate, endDate } = getMonthDateRange(month);
 
       const { data, error } = await supabase
         .from('violations')
-        .select('id, student_id, user_id, description, points, date, severity, context_notes, follow_up_notes, follow_up_status')
+        .select('id, student_id, user_id, description, points, date, severity, context_notes, follow_up_notes, follow_up_status, created_at')
         .eq('student_id', studentId)
         .gte('date', startDate)
         .lt('date', endDate)
@@ -644,7 +649,8 @@ export const bintangService = {
         return [];
       }
 
-      const rawViolations = data || [];
+      // Same dedupe as the class view, so per-student counts match the dashboard.
+      const rawViolations = dedupeViolations((data || []) as any);
       const recorderIds = Array.from(new Set(rawViolations.map((v: any) => v.user_id).filter(Boolean)));
       let recorderNames: Record<string, string> = {};
       if (recorderIds.length > 0) {
@@ -680,32 +686,26 @@ export const bintangService = {
   },
 
   // --- Monthly Evaluations ---
+  /** Throws on query failure so callers never mistake an error for "no reports yet". */
   async getMonthlyEvaluations(classId: string, month: string) {
-    try {
-      const { data: classStudents } = await supabase
-        .from('students')
-        .select('id')
-        .eq('class_id', classId)
-        .is('deleted_at', null);
+    const { data: classStudents, error: studentsError } = await supabase
+      .from('students')
+      .select('id')
+      .eq('class_id', classId)
+      .is('deleted_at', null);
+    if (studentsError) throw studentsError;
 
-      const studentIds = classStudents?.map(s => s.id) || [];
-      if (studentIds.length === 0) return [];
+    const studentIds = classStudents?.map(s => s.id) || [];
+    if (studentIds.length === 0) return [];
 
-      const { data, error } = await supabase
-        .from('bintang_monthly_evaluations')
-        .select('*')
-        .in('student_id', studentIds)
-        .eq('month', month);
+    const { data, error } = await supabase
+      .from('bintang_monthly_evaluations')
+      .select('*')
+      .in('student_id', studentIds)
+      .eq('month', month);
 
-      if (error) {
-        console.warn('bintangService.getMonthlyEvaluations error:', error);
-        return [];
-      }
-      return data || [];
-    } catch (err) {
-      console.warn('bintangService.getMonthlyEvaluations exception:', err);
-      return [];
-    }
+    if (error) throw error;
+    return data || [];
   },
 
   async getStudentEvaluations(studentId: string, isPublishedOnly: boolean = true) {
@@ -898,5 +898,38 @@ export const bintangService = {
       console.warn('bintangService.getAttitudeMapForClass exception:', err);
       return {};
     }
+  },
+
+  /** Find the semester whose date range covers the given YYYY-MM month. */
+  async getSemesterIdForMonth(month: string): Promise<string | undefined> {
+    const { startDate, endDate } = getMonthDateRange(month);
+    const { data, error } = await supabase
+      .from('semesters')
+      .select('id, start_date')
+      .is('deleted_at', null)
+      .lt('start_date', endDate)
+      .gte('end_date', startDate)
+      .order('start_date', { ascending: false })
+      .limit(1);
+    if (error) {
+      console.warn('bintangService.getSemesterIdForMonth error:', error);
+      return undefined;
+    }
+    return data?.[0]?.id;
+  },
+
+  /**
+   * Attitude predicates (KI-1/KI-2) for the semester covering `month`, so an
+   * older report never picks up a predicate entered in a later semester.
+   * Falls back to the latest records when no semester matches the month.
+   */
+  async getAttitudeMapForStudentsInMonth(studentIds: string[], month: string) {
+    const semesterId = await this.getSemesterIdForMonth(month);
+    return this.getAttitudeMapForStudents(studentIds, semesterId);
+  },
+
+  async getAttitudeMapForClassInMonth(classId: string, month: string) {
+    const semesterId = await this.getSemesterIdForMonth(month);
+    return this.getAttitudeMapForClass(classId, semesterId);
   }
 };

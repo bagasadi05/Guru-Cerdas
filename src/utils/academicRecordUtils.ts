@@ -57,7 +57,21 @@ export const buildQuizPointIdentityKey = (record: QuizPointIdentity) => (
     ].join('::')
 );
 
-export const dedupeQuizPoints = <T extends QuizPointIdentity & { created_at?: string }>(records: T[]): T[] => {
+/**
+ * Write-side duplicate key: one keaktifan point per student, subject, activity
+ * and day, whichever teacher records it. Matches what dedupeQuizPoints keeps
+ * on read (the semester follows from the date).
+ */
+export const buildQuizPointDailyKey = (record: Pick<QuizPointIdentity, 'student_id' | 'subject' | 'quiz_name' | 'quiz_date'>) => (
+    [
+        record.student_id,
+        normalizeText(record.subject),
+        normalizeText(record.quiz_name),
+        record.quiz_date || 'no-date',
+    ].join('::')
+);
+
+export const dedupeQuizPoints = <T extends QuizPointIdentity & { created_at?: string | null }>(records: T[]): T[] => {
     const latestByKey = new Map<string, T>();
 
     records.forEach((record) => {

@@ -30,19 +30,15 @@ export async function executeViolationMutation({
     let duplicateStudentIds = new Set<string>();
 
     if (!shouldBypassGuard) {
-        let existingViolationQuery = supabase
+        // No semester filter: the DB trigger assigns the semester from the date,
+        // so a back-dated entry may sit in a different semester than the active one.
+        const { data: existingRows, error: existingViolationError } = await supabase
             .from('violations')
             .select('id, student_id, user_id')
             .in('student_id', studentIds)
             .eq('date', violationDate)
             .eq('description', selectedViolation.description)
             .is('deleted_at', null);
-
-        existingViolationQuery = activeSemester?.id
-            ? existingViolationQuery.eq('semester_id', activeSemester.id)
-            : existingViolationQuery.is('semester_id', null);
-
-        const { data: existingRows, error: existingViolationError } = await existingViolationQuery;
         if (existingViolationError) throw existingViolationError;
 
         duplicateStudentIds = new Set((existingRows || []).map((r) => r.student_id));

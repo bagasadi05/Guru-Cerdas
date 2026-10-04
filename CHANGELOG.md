@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - 2026-09-28
 
+### Security
+- **Hardening database Supabase** (rincian: `docs/DB_HARDENING_PLAN_2026-10-03.md`):
+  - Pengunjung tanpa login tidak lagi bisa memanggil 33 fungsi SECURITY DEFINER, termasuk `get_student_directory` yang sebelumnya membocorkan nama semua siswa. RPC Portal Orang Tua tetap berjalan.
+  - Fungsi khusus server (notifikasi push, backup, konfigurasi worker AI, sinkronisasi peran, fungsi debug) kini hanya bisa dipanggil `service_role`, cron, dan trigger.
+  - Akses ke RPC nilai yang rusak dan tidak dipakai (`bulk_insert_grades`, `update_grade_with_version`, `apply_quiz_points_to_grade`) dicabut. Fungsinya tidak dihapus.
+  - `search_path` dikunci pada 24 fungsi, dan 43 foreign key diberi index.
+  - Snapshot izin untuk rollback: `supabase/rollback/2026-10-03_function_acl_snapshot.sql`.
+- **Notifikasi push orang tua (`dispatch-push`):**
+  - Edge function kini mewajibkan secret internal atau service role key. Sebelumnya siapa pun bisa mengirim notifikasi berisi teks bebas ke orang tua.
+  - `_shared/web-push.ts` ditulis ulang sesuai RFC 8291 (enkripsi `aes128gcm`) dan RFC 8292 (VAPID). Implementasi lama gagal mengimpor kunci privat dan memakai format enkripsi yang salah, sehingga tidak ada notifikasi yang pernah terkirim. Tes baru mereproduksi vektor resmi RFC 8291.
+  - Notifikasi kini disimpan layanan push hingga 24 jam (sebelumnya 60 detik) agar tetap sampai ke HP orang tua yang sedang offline.
+  - Pasangan kunci VAPID baru dipasang di Supabase (4 Oktober 2026), karena kunci privat lama tidak ditemukan. `VAPID_SUBJECT` memakai domain produksi. Frontend perlu `VITE_VAPID_PUBLIC_KEY` baru di Vercel.
+  - Browser yang masih berlangganan dengan kunci lama otomatis pindah ke kunci baru saat pengguna membuka aplikasi, dan langganan lamanya ditandai tidak aktif.
+- **Absensi:**
+  - Absensi yang sudah direset kini bisa disimpan ulang. Sebelumnya simpan selalu gagal "duplicate key", karena unique index `(student_id, date)` ikut menghitung baris yang sudah dihapus. Simpan kini memakai konflik pada `(student_id, date)`, sehingga dua guru yang menyimpan kelas dan tanggal yang sama juga tidak bentrok lagi.
+  - Absensi tidak bisa disimpan di hari Minggu, kecuali semua siswa ditandai Libur.
+  - Isi-otomatis mingguan melewati hari yang mayoritas sudah ditandai Libur di seluruh sekolah.
+  - Notifikasi push absensi hanya dikirim untuk input guru hari ini/kemarin; isi-otomatis, Libur, dan koreksi tanggal lama tidak lagi dikirim ke orang tua.
+  - 170 baris absensi 13–14 Juli yang tidak punya semester sudah diperbaiki.
+- **Input Penilaian:**
+  - Poin keaktifan: satu poin per siswa, aktivitas, mapel, dan hari, siapa pun gurunya (tidak peka huruf besar/kecil). Aturan ini kini sama di input massal, detail siswa, dan Program Bintang, sehingga poin tidak lagi tersimpan lalu diam-diam tidak dihitung.
+  - Penjaga duplikat pelanggaran tidak lagi bergantung pada semester aktif.
+  - Database menolak poin keaktifan baru yang melebihi `max_points` (data lama tidak diubah).
+  - Semester 2 data pelanggaran lama disesuaikan dengan tanggalnya.
+- **Program Bintang:**
+  - Rapor draft yang dibuat sebelum ada pelanggaran atau poin keaktifan baru ditandai "Perlu diperbarui", dan muncul banner di atas tombol Generate.
+  - Catatan wali kelas memakai kata sesuai jenis kelamin siswa (sholeh/sholehah, muslim/muslimah, peci/jilbab).
+  - Rapor terbit hanya bisa dibaca evaluator, pimpinan, wali kelas, guru yang mengajar di kelas siswa, dan pembuat data siswa. Sebelumnya semua akun yang login bisa membacanya.
+- Cron `modul-ajar-ai-worker-poll` dinonaktifkan. Antreannya tidak dipakai lagi oleh halaman Modul Ajar, dan cron ini ditolak 401 setiap 2 menit.
+
 ### Added
 - **Modul Perangkat Ajar (Prota & Promes):**
   - Implementasi penuh Program Tahunan (Prota) dan Program Semester (Promes) berbasis Kurikulum Merdeka & Kurikulum 2013.
@@ -35,6 +65,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Penambahan *safe vertical buffer* (+6.5 mm) di bawah garis pembatas Kop Surat untuk mengeliminasi tabrakan antara dasar garis ganda dan huruf kapital judul dokumen.
 
 ### Fixed
+- **Rapor Bintang:**
+  - Portal Orang Tua kini bisa menampilkan rapor Bintang yang sudah terbit, lewat RPC baru `get_student_portal_bintang` yang memvalidasi kode akses (migrasi `20261003132636`).
+  - Isi rapor yang sudah terbit dikunci di database dengan trigger `trg_lock_published_bintang_eval` (migrasi `20261003132628`). Untuk mengedit, batalkan publikasi dulu. Tombol Generate kini melewati rapor yang sudah terbit.
+  - Nilai yang tidak diubah manual sekarang ikut diperbarui saat Generate, jadi pelanggaran yang dicatat setelah Generate pertama tetap terhitung.
+  - Catatan wali kelas dan catatan aspek yang diedit guru tidak lagi tertimpa saat Generate, walaupun teksnya diawali kalimat template.
+  - Kalau data gagal dimuat, dashboard menampilkan peringatan dan menonaktifkan Generate serta Publikasi, supaya data yang gagal dimuat tidak dibaca sebagai nilai A. Respons lama saat kelas atau bulan diganti juga diabaikan.
+  - Konfirmasi Publikasi kini menyebut jumlah siswa yang belum punya rapor.
+  - Grafik tren kini memakai poin bersih (setelah potongan poin keaktifan), sehingga tinggi grafik sesuai dengan nilai huruf yang tampil.
+  - Deskripsi pelanggaran yang kosong atau terlalu pendek tidak lagi dicocokkan ke aspek sembarangan. Catatan wali kelas juga memakai pencocokan aspek yang sama dengan perhitungan nilai.
+  - Siswa yang punya nilai D tidak lagi mendapat kalimat pembuka pujian keaktifan di catatan wali kelas.
+  - Predikat sikap (KI-1/KI-2) di rapor dan PDF diambil dari semester bulan rapor, bukan dari data sikap terbaru.
+  - Tanggal bawaan pada form pembinaan, observasi, dan poin keaktifan kini memakai tanggal lokal (WIB), bukan UTC.
+  - Pelanggaran per siswa kini dideduplikasi seperti tampilan per kelas.
+  - Tes `bintangViolationDiagnosis` tidak lagi mengirim INSERT ke Supabase produksi, dan Vitest mengabaikan folder `.delta/`.
 - **Word Export Platform Error:** Memperbaiki galat `Error: nodebuffer is not supported by this platform` pada browser dengan beralih dari `Packer.toBuffer()` ke `Packer.toBlob()`.
 - **Excel Download Cancellation:** Memperbaiki pembatalan unduhan otomatis di browser Chromium melalui penundaan pelepasan Blob URL (`setTimeout(revokeObjectURL, 1500)`).
 - **Halaman 2 Kosong pada PDF:** Mengeliminasi halaman kedua kosong yang dipicu oleh pemotongan kanvas raster `html2canvas` dengan beralih ke layout vektor `autoTable` dengan `pageBreak: 'avoid'`.

@@ -10,6 +10,16 @@ import type { useToast } from '../../../hooks/useToast';
 import { queryKeys } from '../../../lib/queryKeys';
 import { triggerPerfectAttendanceConfetti, triggerSubtleConfetti } from '../../../utils/confetti';
 
+const ATTENDANCE_CONFLICT_KEY = 'student_id,date';
+
+const SUNDAY_BLOCK_MESSAGE = 'Hari Minggu bukan hari sekolah. Pilih tanggal lain, atau tandai semua siswa Libur.';
+
+/** True when a YYYY-MM-DD date falls on a Sunday (calendar date, no timezone shift). */
+export const isSundayDate = (date: string): boolean => {
+    const [y, m, d] = date.split('-').map(Number);
+    return new Date(y, m - 1, d).getDay() === 0;
+};
+
 interface UseAttendanceActionsProps {
     user: AppUser | User | null;
     selectedClass: string;
@@ -63,12 +73,15 @@ export const useAttendanceActions = ({
 
     const { mutate: saveAttendance, isPending: isSaving } = useMutation<any, Error, any, any>({
         mutationFn: async (records) => {
-            if (isOnline) { 
-                const { error } = await supabase.from('attendance').upsert(records); 
-                if (error) throw error; 
-                return { synced: !wasLastResponseQueued() }; 
+            // Conflict on (student_id, date), not id: the unique index also covers
+            // soft-deleted rows, so a reset day or a second teacher saving the same
+            // class must update the existing row instead of inserting a new one.
+            if (isOnline) {
+                const { error } = await supabase.from('attendance').upsert(records, { onConflict: ATTENDANCE_CONFLICT_KEY });
+                if (error) throw error;
+                return { synced: !wasLastResponseQueued() };
             }
-            await addToQueue({ table: 'attendance', operation: 'upsert', payload: records as Record<string, unknown>[] });
+            await addToQueue({ table: 'attendance', operation: 'upsert', payload: records as Record<string, unknown>[], onConflict: ATTENDANCE_CONFLICT_KEY });
             return { synced: false };
         },
         onMutate: async (records) => {
@@ -119,6 +132,7 @@ export const useAttendanceActions = ({
 
     const markRestAsPresent = () => {
         if (isSaving) { toast.warning('Tunggu sampai proses simpan selesai.'); return; }
+        if (isSundayDate(selectedDate)) { toast.error(SUNDAY_BLOCK_MESSAGE); return; }
         localDirtyRef.current = true; initialSyncRef.current = true;
         const updated = { ...attendanceRecords };
         unmarkedStudents.forEach(s => { updated[s.id] = { status: AttendanceStatus.Hadir, note: '' }; });
@@ -170,15 +184,22 @@ export const useAttendanceActions = ({
             unmarkedStudents.forEach(s => { records[s.id] = { status: AttendanceStatus.Hadir, note: '' }; });
         }
         
+        // Sunday attendance inflates presence stats; only an all-"Libur" day is allowed.
+        if (isSundayDate(selectedDate) && Object.values(records).some(r => r.status && r.status !== AttendanceStatus.Libur)) {
+            toast.error(SUNDAY_BLOCK_MESSAGE);
+            return;
+        }
+
         const withIds = Object.fromEntries(Object.entries(records).map(([id, r]) => [id, { ...r, id: r.id || crypto.randomUUID() }])) as Record<string, AttendanceRecord>;
         setAttendanceRecords(withIds);
         
         const validIds = new Set(students.map(s => s.id));
         const semId = getSemesterByDate(selectedDate)?.id || selectedSemesterId || activeSemester?.id || null;
         
+        // No id in the payload: existing rows keep theirs, new rows get the DB default.
         const toUpsert = Object.entries(withIds).filter(([sid]) => validIds.has(sid)).map(([sid, r]) => ({
-            id: r.id!, student_id: sid, date: selectedDate, status: r.status, teacher_status: r.status,
-            teacher_id: user.id, notes: r.note, user_id: user.id, semester_id: semId,
+            student_id: sid, date: selectedDate, status: r.status, teacher_status: r.status,
+            teacher_id: user.id, notes: r.note, user_id: user.id, semester_id: semId, deleted_at: null,
         }));
         
         if (toUpsert.length === 0) { toast.warning('Tidak ada siswa valid.'); return; }
@@ -187,6 +208,7 @@ export const useAttendanceActions = ({
 
     const handleSave = () => {
         if (!user || !students) return;
+        if (isSundayDate(selectedDate) && unmarkedStudents.length > 0) { toast.error(SUNDAY_BLOCK_MESSAGE); return; }
         if (unmarkedStudents.length > 0) { setIsSaveConfirmOpen(true); return; }
         performSave();
     };

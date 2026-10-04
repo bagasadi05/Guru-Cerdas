@@ -3,6 +3,7 @@ import {
     pointsToGrade,
     getAspectForViolation,
     calculateAspectPoints,
+    getMonthDateRange,
     BINTANG_THRESHOLDS,
     type BintangGrade,
 } from '../bintangService';
@@ -142,5 +143,40 @@ describe('calculateAspectPoints', () => {
         expect(typeof bintangService.getTrendData).toBe('function');
         const emptyResult = await bintangService.getTrendData('class-1', []);
         expect(emptyResult).toEqual([]);
+    });
+});
+
+describe('getAspectForViolation guards', () => {
+    it('does not match an empty description to an arbitrary aspect', () => {
+        expect(getAspectForViolation('')).toBe('KEDISIPLINAN');
+        expect(getAspectForViolation('   ')).toBe('KEDISIPLINAN');
+    });
+
+    it('does not treat a very short fragment as part of a known description', () => {
+        // 'sampah' is part of an ADAB violation but too short to be a reliable match
+        expect(getAspectForViolation('sampah')).toBe('KEDISIPLINAN');
+    });
+
+    it('still matches custom text that contains a known description', () => {
+        expect(getAspectForViolation('Membuang sampah sembarangan di kelas 3A')).toBe('ADAB');
+    });
+});
+
+describe('calculateAspectPoints netPoints', () => {
+    it('reports net points after the keaktifan offset alongside raw points', () => {
+        const result = calculateAspectPoints([{ description: 'Terlambat masuk sekolah', points: 15 }], 10);
+        expect(result.KEDISIPLINAN.points).toBe(15);
+        expect(result.KEDISIPLINAN.netPoints).toBe(5);
+        expect(result.KEDISIPLINAN.grade).toBe('B');
+    });
+});
+
+describe('getMonthDateRange', () => {
+    it('returns an exclusive end date in the next month', () => {
+        expect(getMonthDateRange('2026-09')).toEqual({ startDate: '2026-09-01', endDate: '2026-10-01' });
+    });
+
+    it('rolls December over to January of the next year', () => {
+        expect(getMonthDateRange('2026-12')).toEqual({ startDate: '2026-12-01', endDate: '2027-01-01' });
     });
 });

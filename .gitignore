@@ -169,6 +169,7 @@ graphify-out/
 
 # Database lokal tool eksternal - jangan pernah masuk repo (14 MB binari)
 .freebuff/
+.delta/
 
 # One-off scratch/debug scripts - jangan pernah masuk repo
 scratch/

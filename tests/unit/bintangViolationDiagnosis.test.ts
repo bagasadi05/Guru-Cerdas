@@ -7,6 +7,19 @@ import {
 import { calculateAspectPoints, bintangService } from '../../src/services/bintangService';
 import type { ViolationRow } from '../../src/components/pages/student/types';
 
+// Never let this suite write to a real Supabase project.
+const mockInsert = vi.fn();
+vi.mock('../../src/services/supabase', () => ({
+    supabase: {
+        from: vi.fn(() => ({
+            insert: (rows: unknown[]) => {
+                mockInsert(rows);
+                return { select: vi.fn().mockResolvedValue({ data: rows.map((_, i) => ({ id: `row-${i}` })), error: null }) };
+            },
+        })),
+    },
+}));
+
 describe('BINTANG Violation Deduplication & Diagnosis Suite', () => {
 
     describe('1. Logical Violation Identity & Deduplication', () => {
@@ -177,6 +190,9 @@ describe('BINTANG Violation Deduplication & Diagnosis Suite', () => {
             await bintangService.bulkInsertViolations(batch as unknown as Parameters<typeof bintangService.bulkInsertViolations>[0]);
 
             expect(spy).toHaveBeenCalled();
+            expect(mockInsert).toHaveBeenCalledTimes(1);
+            const sentRows = mockInsert.mock.calls[0][0] as Array<{ student_id: string }>;
+            expect(sentRows.map(r => r.student_id)).toEqual(['student-1', 'student-2']);
             spy.mockRestore();
         });
     });

@@ -7,9 +7,11 @@ import { logger } from "./logger";
 
 const db = supabase as any;
 import {
+  getExistingSubscription,
   getPushSubscriptionState,
   serializeSubscription,
   subscribeToPush,
+  subscriptionMatchesKey,
   unsubscribeFromPush,
   type PushSubscriptionState,
 } from "../utils/pushSubscription";
@@ -44,6 +46,27 @@ export class PushNotificationService {
     }
   }
 
+  /**
+   * Returns the endpoint of a browser subscription made with an older VAPID
+   * key (before it is replaced), or null when the current one is still valid.
+   */
+  private async findStaleEndpoint(): Promise<string | null> {
+    if (!VAPID_PUBLIC_KEY) return null;
+    const existing = await getExistingSubscription();
+    if (!existing || subscriptionMatchesKey(existing, VAPID_PUBLIC_KEY)) return null;
+    return existing.endpoint;
+  }
+
+  private async deactivateEndpoint(endpoint: string): Promise<void> {
+    const { error } = await db
+      .from("push_subscriptions")
+      .update({ is_active: false })
+      .eq("endpoint", endpoint);
+    if (error) {
+      logger.warn("Failed to deactivate stale push subscription", "PushNotificationService", error);
+    }
+  }
+
   setOptedInLocally(value: boolean): void {
     try {
       if (value) localStorage.setItem(STORAGE_KEY, "true");
@@ -67,6 +90,7 @@ export class PushNotificationService {
       throw new Error("User belum login.");
     }
 
+    const staleEndpoint = await this.findStaleEndpoint();
     const subscription = await subscribeToPush(VAPID_PUBLIC_KEY);
     const serialized = serializeSubscription(subscription);
 
@@ -91,6 +115,10 @@ export class PushNotificationService {
         logger.warn("Rollback unsubscribe failed", "PushNotificationService", rollbackErr);
       }
       throw new Error(`Gagal menyimpan subscription: ${error.message}`);
+    }
+
+    if (staleEndpoint && staleEndpoint !== serialized.endpoint) {
+      await this.deactivateEndpoint(staleEndpoint);
     }
 
     this.setOptedInLocally(true);
@@ -166,7 +194,16 @@ export class PushNotificationService {
     if (!userId) return;
     const local = await getPushSubscriptionState();
     if (!local.subscription) return;
-    const serialized = serializeSubscription(local.subscription);
+
+    // After a VAPID key rotation, silently move this browser to the new key.
+    // Permission is already granted, so subscribing again shows no prompt.
+    let subscription = local.subscription;
+    const staleEndpoint = await this.findStaleEndpoint();
+    if (staleEndpoint && VAPID_PUBLIC_KEY && local.permission === "granted") {
+      subscription = await subscribeToPush(VAPID_PUBLIC_KEY);
+      await this.deactivateEndpoint(staleEndpoint);
+    }
+    const serialized = serializeSubscription(subscription);
 
     const { error } = await db.from("push_subscriptions").upsert(
       {

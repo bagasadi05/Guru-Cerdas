@@ -1,6 +1,11 @@
 // Supabase Edge Function: dispatch-push
-// Triggered by pg_cron (hourly + every 15 min). Reads due/overdue tasks and
-// schedule reminders, then sends Web Push notifications to subscribed users.
+// Sends Web Push notifications: instant parent notifications from DB triggers
+// (invoke_dispatch_push_instant) and task/schedule reminders when called with
+// mode "all" / "task-due-check" / "scheduled-check".
+//
+// verify_jwt is off because pg_net callers carry no user JWT, so every request
+// must present either the X-Internal-Secret stored in app_config
+// (dispatch_push_secret) or the service role key.
 
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
@@ -63,11 +68,31 @@ const vapid: VapidKeys = {
   subject: VAPID_SUBJECT,
 };
 
+const DISPATCH_SECRET_CONFIG_KEY = "dispatch_push_secret";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-internal-secret",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+/** Constant-time string comparison so secret checks don't leak via timing. */
+function safeEqual(a: string, b: string): boolean {
+  if (a.length === 0 || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+async function isAuthorized(req: Request, supabase: SupabaseClient): Promise<boolean> {
+  const internalSecret = req.headers.get("x-internal-secret") ?? "";
+  if (internalSecret) {
+    const { data: storedSecret } = await supabase.rpc("get_app_config", { p_key: DISPATCH_SECRET_CONFIG_KEY });
+    if (typeof storedSecret === "string" && safeEqual(internalSecret, storedSecret)) return true;
+  }
+  const bearer = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
+  return safeEqual(bearer, SUPABASE_SERVICE_ROLE_KEY ?? "");
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -78,6 +103,10 @@ Deno.serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+
+  if (!(await isAuthorized(req, supabase))) {
+    return jsonResponse({ ok: false, error: "Unauthorized" }, 401);
+  }
 
   let body: Record<string, unknown> = {};
   try {
@@ -100,6 +129,7 @@ Deno.serve(async (req) => {
 
   try {
     if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+      console.error("dispatch-push: VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY secrets are not set");
       return jsonResponse(
         { ok: false, error: "VAPID keys not configured" },
         500,
@@ -446,6 +476,9 @@ async function sendToSubscription(
     keys: { p256dh: sub.p256dh, auth: sub.auth },
   };
   const result = await sendPushNotification(pushSub, payload, vapid);
+  if (!result.ok) {
+    console.warn(`push send failed [${result.reason}] status=${result.statusCode ?? "-"}: ${result.error ?? ""}`);
+  }
   return { ok: result.ok, reason: result.reason };
 }
 

@@ -81,13 +81,20 @@ vi.mock('../../src/contexts/SemesterContext', () => ({
 }));
 
 describe('AttendancePage Integration', () => {
+    // The page defaults to today's date and Sundays are blocked from saving,
+    // so pin the clock to a school day (Monday) to keep these tests date-independent.
+    const MONDAY = new Date('2026-10-05T03:00:00Z');
+    const SUNDAY = new Date('2026-10-04T03:00:00Z');
+
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.useFakeTimers({ toFake: ['Date'], now: MONDAY });
         vi.stubGlobal('confirm', vi.fn(() => true));
         mockAttendance.length = 0;
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.unstubAllGlobals();
     });
 
@@ -179,5 +186,28 @@ describe('AttendancePage Integration', () => {
         await waitFor(() => {
             expect(screen.queryByRole('button', { name: /Tandai Sisa Hadir/i })).not.toBeInTheDocument();
         });
+    }, 15000);
+
+    it('does not save "mark rest present" on a Sunday', async () => {
+        vi.setSystemTime(SUNDAY);
+        mockAttendance.push({
+            id: 'att-1',
+            student_id: '1',
+            status: 'Izin',
+            notes: '',
+            official_status: null,
+            teacher_id: 'test-user',
+        });
+
+        renderPage();
+
+        expect(await screen.findByText('Siti')).toBeInTheDocument();
+        const markRestButton = await screen.findByRole('button', { name: /Tandai Sisa Hadir \(1\)/i });
+        vi.mocked(supabase.from).mockClear();
+        fireEvent.click(markRestButton);
+
+        expect(await screen.findByText(/Hari Minggu bukan hari sekolah/i)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Tandai Sisa Hadir \(1\)/i })).toBeInTheDocument();
+        expect(vi.mocked(supabase.from)).not.toHaveBeenCalledWith('attendance');
     }, 15000);
 });

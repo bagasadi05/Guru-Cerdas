@@ -284,8 +284,8 @@ describe('useBintangEvaluation', () => {
             expect(result.current.formData.kerapian_score).toBe('C');
             expect(result.current.formData.adab_notes).toBe('Sudah cukup baik');
             expect(result.current.formData.catatan_wali).toBe('Pertahankan semangatnya');
-            // Should NOT call generateAutoNote/HomeroomNote when eval exists
-            expect(mockGenerateAutoNote).not.toHaveBeenCalled();
+            // Custom notes are kept, so the homeroom generator is not needed
+            expect(mockGenerateHomeroomNote).not.toHaveBeenCalled();
         });
 
         it('should include quiz active points in auto-notes when getStudentQuizPoints is provided', async () => {
@@ -510,6 +510,78 @@ describe('useBintangEvaluation', () => {
                 })
             );
         });
+
+        it('should keep the custom homeroom flag on save even if the text matches the template heuristic', async () => {
+            const { useBintangEvaluation } = await import('../useBintangEvaluation');
+            const options = createDefaultOptions();
+            mockUpsertEvaluation.mockResolvedValue({ id: 'eval-saved' });
+
+            const { result } = renderHook(() => useBintangEvaluation(options));
+
+            act(() => {
+                result.current.handleOpenEditModal(MOCK_STUDENTS[0], mockGetAspectSummary);
+            });
+
+            // Typing in the textarea sets CUSTOM_CATATAN_WALI (BintangEvaluationModal)
+            act(() => {
+                result.current.setFormData(prev => ({
+                    ...prev,
+                    catatan_wali: 'Alhamdulillah, Ahmad sudah mau memimpin doa pagi.',
+                    manual_aspects: [...prev.manual_aspects, 'CUSTOM_CATATAN_WALI'],
+                }));
+            });
+
+            const mockEvent = { preventDefault: vi.fn() } as unknown as React.FormEvent;
+            await act(async () => {
+                await result.current.handleSaveEvaluation(mockEvent, mockGetAspectSummary);
+            });
+
+            const saved = mockUpsertEvaluation.mock.calls[0][0];
+            expect(saved.manual_aspects).toContain('CUSTOM_CATATAN_WALI');
+        });
+
+        it('should drop the manual grade flag when the grade equals the recommendation', async () => {
+            const { useBintangEvaluation } = await import('../useBintangEvaluation');
+            const options = createDefaultOptions();
+            mockUpsertEvaluation.mockResolvedValue({ id: 'eval-saved' });
+
+            const { result } = renderHook(() => useBintangEvaluation(options));
+
+            act(() => {
+                result.current.handleOpenEditModal(MOCK_STUDENTS[0], mockGetAspectSummary);
+            });
+            act(() => {
+                result.current.setFormData(prev => ({ ...prev, adab_score: 'B', manual_aspects: ['ADAB'] }));
+            });
+
+            const mockEvent = { preventDefault: vi.fn() } as unknown as React.FormEvent;
+            await act(async () => {
+                await result.current.handleSaveEvaluation(mockEvent, mockGetAspectSummary);
+            });
+
+            const saved = mockUpsertEvaluation.mock.calls[0][0];
+            expect(saved.manual_aspects).not.toContain('ADAB');
+        });
+
+        it('should refuse to save without a logged-in user', async () => {
+            const { useBintangEvaluation } = await import('../useBintangEvaluation');
+            const toast = { success: vi.fn(), error: vi.fn() };
+            const options = createDefaultOptions({ toast, user: null });
+
+            const { result } = renderHook(() => useBintangEvaluation(options));
+
+            act(() => {
+                result.current.handleOpenEditModal(MOCK_STUDENTS[0], mockGetAspectSummary);
+            });
+
+            const mockEvent = { preventDefault: vi.fn() } as unknown as React.FormEvent;
+            await act(async () => {
+                await result.current.handleSaveEvaluation(mockEvent, mockGetAspectSummary);
+            });
+
+            expect(mockUpsertEvaluation).not.toHaveBeenCalled();
+            expect(toast.error).toHaveBeenCalled();
+        });
     });
 
     // ── handleGenerateAll ─────────────────────────────────────────────────────
@@ -544,7 +616,7 @@ describe('useBintangEvaluation', () => {
             expect(inserts[1].student_id).toBe('student-2');
             expect(inserts[2].student_id).toBe('student-3');
 
-            expect(toast.success).toHaveBeenCalledWith('Berhasil generate rapor untuk 3 siswa');
+            expect(toast.success).toHaveBeenCalledWith('Rapor 3 siswa berhasil dibuat');
             expect(fetchData).toHaveBeenCalled();
         });
 
@@ -632,17 +704,17 @@ describe('useBintangEvaluation', () => {
             expect(student2Insert.kerapian_score).toBe('C');
         });
 
-        it('should preserve manually edited scores even without manual_aspects via backward compatibility', async () => {
+        it('should follow the latest recommendation when a stored grade is not flagged manual', async () => {
             const { useBintangEvaluation } = await import('../useBintangEvaluation');
             const options = createDefaultOptions({
-                // student-2 has adab_score='A' differing from calculated recommendation 'B',
-                // but manual_aspects is undefined (legacy row)
+                // Stored 'A' came from an earlier generate; a violation since then
+                // moved the recommendation to 'B'. Without a manual flag it must update.
                 evaluations: [
                     {
                         ...MOCK_EVALUATIONS[0],
                         student_id: 'student-2',
                         adab_score: 'A',
-                        manual_aspects: null,
+                        manual_aspects: [],
                     },
                 ],
             });
@@ -660,8 +732,78 @@ describe('useBintangEvaluation', () => {
             const inserts = mockBulkUpsertEvaluations.mock.calls[0][0];
             const student2Insert = inserts.find((i: any) => i.student_id === 'student-2');
 
-            // Legacy manual score 'A' must still be preserved
-            expect(student2Insert.adab_score).toBe('A');
+            expect(student2Insert.adab_score).toBe('B');
+            expect(student2Insert.manual_aspects).not.toContain('ADAB');
+        });
+
+        it('should skip published evaluations when generating', async () => {
+            const { useBintangEvaluation } = await import('../useBintangEvaluation');
+            const toast = { success: vi.fn(), error: vi.fn() };
+            const options = createDefaultOptions({
+                toast,
+                evaluations: [{ ...MOCK_EVALUATIONS[0], is_published: true }],
+            });
+
+            mockBulkUpsertEvaluations.mockResolvedValue([]);
+            mockGenerateAutoNote.mockReturnValue({ adabNote: 'Auto', kedisNote: 'Auto', kerapianNote: 'Auto' });
+            mockGenerateHomeroomNote.mockReturnValue('Auto note');
+
+            const { result } = renderHook(() => useBintangEvaluation(options));
+
+            await act(async () => {
+                await result.current.handleGenerateAll(mockGetAspectSummary);
+            });
+
+            const inserts = mockBulkUpsertEvaluations.mock.calls[0][0];
+            expect(inserts.map((i: any) => i.student_id)).toEqual(['student-1', 'student-3']);
+            expect(toast.success).toHaveBeenCalledWith('Rapor 2 siswa berhasil dibuat. 1 rapor yang sudah terbit tidak diubah.');
+        });
+
+        it('should not call the database when every evaluation is already published', async () => {
+            const { useBintangEvaluation } = await import('../useBintangEvaluation');
+            const toast = { success: vi.fn(), error: vi.fn() };
+            const options = createDefaultOptions({
+                toast,
+                students: [MOCK_STUDENTS[1]],
+                evaluations: [{ ...MOCK_EVALUATIONS[0], is_published: true }],
+            });
+
+            const { result } = renderHook(() => useBintangEvaluation(options));
+
+            await act(async () => {
+                await result.current.handleGenerateAll(mockGetAspectSummary);
+            });
+
+            expect(mockBulkUpsertEvaluations).not.toHaveBeenCalled();
+            expect(toast.error).toHaveBeenCalled();
+        });
+
+        it('should keep a teacher-edited homeroom note even when it starts like a template', async () => {
+            const { useBintangEvaluation } = await import('../useBintangEvaluation');
+            const options = createDefaultOptions({
+                evaluations: [
+                    {
+                        ...MOCK_EVALUATIONS[0],
+                        catatan_wali: 'Alhamdulillah, Budi sudah mulai rajin piket kelas.',
+                        manual_aspects: ['CUSTOM_CATATAN_WALI'],
+                    },
+                ],
+            });
+
+            mockBulkUpsertEvaluations.mockResolvedValue([]);
+            mockGenerateAutoNote.mockReturnValue({ adabNote: 'Auto', kedisNote: 'Auto', kerapianNote: 'Auto' });
+            mockGenerateHomeroomNote.mockReturnValue('Auto note');
+
+            const { result } = renderHook(() => useBintangEvaluation(options));
+
+            await act(async () => {
+                await result.current.handleGenerateAll(mockGetAspectSummary);
+            });
+
+            const inserts = mockBulkUpsertEvaluations.mock.calls[0][0];
+            const student2Insert = inserts.find((i: any) => i.student_id === 'student-2');
+            expect(student2Insert.catatan_wali).toBe('Alhamdulillah, Budi sudah mulai rajin piket kelas.');
+            expect(student2Insert.manual_aspects).toContain('CUSTOM_CATATAN_WALI');
         });
     });
 
