@@ -133,14 +133,14 @@ Migrasi maupun perbaikan data historis perlu preflight tersendiri; audit ini tid
 
 ## Status perbaikan (4 Oktober 2026, sore)
 
-Semua temuan sudah ditangani di kode. Dua migrasi baru **belum diterapkan ke produksi**. Keduanya harus diterapkan dulu sebelum push ke `main`, karena `scripts/verify-applied-supabase-migrations.mjs` menolak migrasi yang belum terdaftar.
+Semua temuan sudah ditangani. Kedua migrasi diterapkan ke produksi pada 4 Oktober 2026 (versi `20261004104503` dan `20261004104508`). Uji dalam transaksi yang di-rollback memastikan semester eksplisit dipertahankan dan poin tanpa semester mengikuti `quiz_date`.
 
 | No. | Status | Perubahan |
 |---|---|---|
-| 1 | Kode klien selesai; migrasi menunggu | `20261004100000_preserve_explicit_record_semester.sql`: trigger mempertahankan `semester_id` yang dikirim. Poin tanpa semester ditentukan dari `quiz_date`. Formulir nilai menolak semester terkunci; keaktifan dan sikap memakai semester sesuai tanggal. |
+| 1 | Selesai | `20261004104503_preserve_explicit_record_semester.sql`: trigger mempertahankan `semester_id` yang dikirim. Poin tanpa semester ditentukan dari `quiz_date`. Formulir nilai menolak semester terkunci; keaktifan dan sikap memakai semester sesuai tanggal. |
 | 2 | Selesai | Draf per akun dan per konteks di `localStorage` (`src/utils/subjectGradeDraftStorage.ts`), kedaluwarsa 7 hari, dihapus saat logout. Status dirty tidak lagi direset saat mount. Sinkronisasi server hanya mengisi kolom yang masih kosong. Banner draf menyediakan **Buang draf**. |
 | 3 | Selesai | Pergantian kelas, mapel, nama penilaian, dan semester melewati satu pemeriksaan. Nama mapel/penilaian kustom baru diterapkan saat blur atau Enter. Draf konteks lama tetap tersimpan. |
-| 4 | Kode klien selesai; migrasi menunggu | Hanya nilai yang berbeda dari baseline yang dikirim. Nilai terbaru dibaca ulang sebelum menulis; perbedaan memunculkan dialog konflik (pakai nilai tersimpan / simpan isian saya). `version` naik pada setiap update. `20261004100100_unique_live_academic_record.sql` menambah unique index, dengan preflight yang membatalkan migrasi bila ada duplikat (snapshot 4 Oktober: 0 kelompok duplikat). |
+| 4 | Selesai | Hanya nilai yang berbeda dari baseline yang dikirim. Nilai terbaru dibaca ulang sebelum menulis; perbedaan memunculkan dialog konflik (pakai nilai tersimpan / simpan isian saya). `version` naik pada setiap update. `20261004104508_unique_live_academic_record.sql` menambah unique index, dengan preflight yang membatalkan migrasi bila ada duplikat (snapshot 4 Oktober: 0 kelompok duplikat). |
 | 5 | Selesai | `fetchAllPages` dengan `order('id')` untuk semua tabel rapor massal dan rekap nilai. |
 | 6 | Selesai | Error `attitude_records` diperiksa. Baris yang sudah ada diperbarui, tabrakan dengan baris guru lain diabaikan, catatan disimpan ke `notes`, dan kegagalan muncul sebagai peringatan. `attitude_records` tetap diperlakukan sebagai rekap per semester sesuai `uq_attitude_records`. |
 | 7 | Selesai | `schoolDate()` dipakai untuk nilai awal, reset, dan fallback mutation. |
