@@ -129,21 +129,24 @@ export class PushNotificationService {
   }
 
   /**
-   * Unsubscribe from PushManager and remove the row from the database.
+   * Unsubscribe this browser and deactivate its server registration.
    */
   async disable(userId: string): Promise<PushStatusResult> {
     if (!userId) {
       throw new Error("User belum login.");
     }
+    const local = await getPushSubscriptionState();
     await unsubscribeFromPush();
 
-    const { error } = await db
-      .from("push_subscriptions")
-      .update({ is_active: false })
-      .eq("user_id", userId);
-
-    if (error) {
-      logger.warn("Failed to mark subscriptions inactive", "PushNotificationService", error);
+    if (local.subscription) {
+      const { error } = await db
+        .from("push_subscriptions")
+        .update({ is_active: false })
+        .eq("user_id", userId)
+        .eq("endpoint", local.subscription.endpoint);
+      if (error) {
+        logger.warn("Failed to mark subscription inactive", "PushNotificationService", error);
+      }
     }
 
     this.setOptedInLocally(false);
@@ -193,7 +196,12 @@ export class PushNotificationService {
   async sync(userId: string): Promise<void> {
     if (!userId) return;
     const local = await getPushSubscriptionState();
-    if (!local.subscription) return;
+    if (!local.subscription) {
+      if (local.supported && local.permission === "granted" && this.isOptedInLocally()) {
+        await this.enable(userId);
+      }
+      return;
+    }
 
     // After a VAPID key rotation, silently move this browser to the new key.
     // Permission is already granted, so subscribing again shows no prompt.
@@ -201,7 +209,6 @@ export class PushNotificationService {
     const staleEndpoint = await this.findStaleEndpoint();
     if (staleEndpoint && VAPID_PUBLIC_KEY && local.permission === "granted") {
       subscription = await subscribeToPush(VAPID_PUBLIC_KEY);
-      await this.deactivateEndpoint(staleEndpoint);
     }
     const serialized = serializeSubscription(subscription);
 
@@ -221,6 +228,9 @@ export class PushNotificationService {
     if (error) {
       logger.warn("Push subscription sync failed", "PushNotificationService", error);
     } else {
+      if (staleEndpoint && staleEndpoint !== serialized.endpoint) {
+        await this.deactivateEndpoint(staleEndpoint);
+      }
       this.setOptedInLocally(true);
     }
   }

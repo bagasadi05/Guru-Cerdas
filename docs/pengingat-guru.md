@@ -44,6 +44,9 @@ diproses bersamaan, dengan timeout layanan push sepuluh detik.
 Langganan dengan kunci VAPID lama dicatat sebagai `vapid_key_mismatch` dan tidak
 dihapus. Saat guru membuka halaman aplikasi mana pun, browser memperbarui
 langganannya jika kunci berubah. Pengaturan pengingat juga disinkronkan saat itu.
+Browser yang sudah ikut serta dan mengizinkan notifikasi dapat membuat ulang
+langganan yang hilang. Menonaktifkan push hanya berlaku pada perangkat tersebut;
+perangkat lain pada akun yang sama tetap terdaftar.
 
 HTTP sukses dari layanan push berarti pesan diterima layanan tersebut, bukan
 konfirmasi pesan sudah terlihat di layar perangkat. Kegagalan antara penerimaan
@@ -91,12 +94,11 @@ Frontend `e4760cc0` sudah terpasang di produksi. Migrasi skema sudah diterapkan
 dan dispatcher sudah dideploy. Pemeriksaan RLS, reservasi atomik, deduplikasi,
 autentikasi, dan dry run tanpa penulisan database berhasil.
 
-Cron masih nonaktif. Uji pada satu langganan Apple dan satu langganan Google
-ditolak karena kunci VAPID langganan lama. Kunci frontend produksi sudah cocok
-dengan server. Sebelum menerapkan migrasi aktivasi, buka aplikasi yang diperbarui
-pada perangkat dengan notifikasi aktif, pastikan subscription tersinkron, lalu
-ulang uji satu perangkat hingga layanan push menerima kiriman. Setelah migrasi
-diterapkan, cocokkan kembali version/name file aktivasi dengan riwayat Supabase.
+Uji awal pada langganan Apple dan Google ditolak karena kunci VAPID lama.
+Setelah perangkat didaftarkan ulang, layanan push menerima uji kirim satu
+perangkat dengan HTTP 200. Cron diaktifkan pada 15.42 WIB dan verifikasi penuh
+cron serta dry run berhasil. Migrasi aktivasi sudah dicocokkan dengan riwayat
+Supabase: `20261004084249_enable_teacher_reminder_cron.sql`.
 
 Pantau selama 24 jam pertama:
 
