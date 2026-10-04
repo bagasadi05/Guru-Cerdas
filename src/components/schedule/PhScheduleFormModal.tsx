@@ -158,6 +158,8 @@ export const PhScheduleFormModal: React.FC<PhScheduleFormModalProps> = ({
         if (isOpen && (!prevIsOpenRef.current || editingSchedule)) {
             const { baseSubject, topic: parsedTopic } = parseSubjectString(formData.subject);
             const normalizedBase = normalizeSubjectDisplay(baseSubject);
+            // Initialize the form when the dialog opens.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setSelectedSubject(normalizedBase);
             setTopic(parsedTopic);
 

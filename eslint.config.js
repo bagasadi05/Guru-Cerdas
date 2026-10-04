@@ -6,7 +6,7 @@ import unusedImports from 'eslint-plugin-unused-imports';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-    { ignores: ['dist', 'android/**', 'supabase/**'] },
+    { ignores: ['dist', 'android/**', 'supabase/**', '.cache/**'] },
     {
         extends: [js.configs.recommended, ...tseslint.configs.recommended],
         files: ['**/*.{ts,tsx}'],

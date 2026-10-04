@@ -9,6 +9,9 @@ import { Switch } from '../ui/Switch';
 import { AlertCircleIcon, BellIcon, CheckCircleIcon, ClockIcon, CheckSquareIcon, CalendarIcon, RefreshCwIcon } from '../Icons';
 import { PlayCircle, Upload, Volume, Volume2, SendIcon } from 'lucide-react';
 import { getPreferences, getUnreadCount, savePreferences, NotificationPreferences } from '../../services/NotificationService';
+import { saveAccountNotificationPreferences, syncNotificationPreferences } from '../../services/notificationPreferenceSync';
+import { reminderSettings } from '../../locales/reminderSettings';
+import { useI18n } from '../../utils/i18n';
 import { pushNotificationService, type PushStatusResult } from '../../services/PushNotificationService';
 import { logger } from '../../services/logger';
 import { Select } from '../ui/Select';
@@ -34,11 +37,43 @@ const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(naviga
 const NotificationsSection: React.FC = () => {
     const { user } = useAuth();
     const toast = useToast();
+    const { language } = useI18n();
+    const copy = reminderSettings[language];
     const isOnline = useOfflineStatus();
     const [isLoading, setIsLoading] = useState(false);
     const [taskPrefs, setTaskPrefs] = useState<NotificationPreferences>(getPreferences());
     const [pushStatus, setPushStatus] = useState<PushStatusResult | null>(null);
     const [isTesting, setIsTesting] = useState(false);
+    const [isSavingPreferences, setIsSavingPreferences] = useState(false);
+    const [preferencesReady, setPreferencesReady] = useState(false);
+    const preferenceUserRef = useRef(user?.id);
+    preferenceUserRef.current = user?.id;
+
+    useEffect(() => {
+        let active = true;
+        setPreferencesReady(false);
+        setIsSavingPreferences(false);
+        if (!user?.id) return;
+        const refresh = async () => {
+            try {
+                const prefs = await syncNotificationPreferences(user.id);
+                if (active) { setTaskPrefs(prefs); setPreferencesReady(true); }
+            } catch (error) {
+                logger.warn('Failed to load account notification preferences', 'NotificationsSection', error);
+            }
+        };
+        const updateCache = () => { if (active) setTaskPrefs(getPreferences(user.id)); };
+        void refresh();
+        window.addEventListener('focus', refresh);
+        window.addEventListener('online', refresh);
+        window.addEventListener('portal-guru-preferences-updated', updateCache);
+        return () => {
+            active = false;
+            window.removeEventListener('focus', refresh);
+            window.removeEventListener('online', refresh);
+            window.removeEventListener('portal-guru-preferences-updated', updateCache);
+        };
+    }, [user?.id]);
 
     // Sound picker state
     const [selectedSound, setSelectedSound] = useState<SoundType>('default');
@@ -187,11 +222,27 @@ const NotificationsSection: React.FC = () => {
         }
     };
 
-    const handleTaskPrefChange = (key: keyof NotificationPreferences, value: NotificationPreferences[keyof NotificationPreferences]) => {
-        const newPrefs = { ...taskPrefs, [key]: value };
-        setTaskPrefs(newPrefs);
-        savePreferences(newPrefs);
-        toast.success("Preferensi notifikasi disimpan.");
+    const handleTaskPrefChange = async (key: keyof NotificationPreferences, value: NotificationPreferences[keyof NotificationPreferences]) => {
+        if (!user) return;
+        if (key !== 'taskReminders' && key !== 'taskReminderDays') {
+            const newPrefs = { ...taskPrefs, [key]: value };
+            savePreferences(newPrefs, user.id);
+            setTaskPrefs(newPrefs);
+            toast.success(copy.saved);
+            return;
+        }
+        if (!isOnline || isSavingPreferences || !preferencesReady) return;
+        setIsSavingPreferences(true);
+        try {
+            const prefs = await saveAccountNotificationPreferences(user.id, { [key]: value });
+            if (preferenceUserRef.current === user.id) {
+                setTaskPrefs(prefs);
+                toast.success(copy.saved);
+            }
+        } catch (error) {
+            if (preferenceUserRef.current === user.id) toast.error(copy.failed);
+            logger.warn('Failed to save account notification preferences', 'NotificationsSection', error);
+        } finally { if (preferenceUserRef.current === user.id) setIsSavingPreferences(false); }
     };
 
     const handleSoundSelect = (soundId: SoundType) => {
@@ -383,14 +434,17 @@ const NotificationsSection: React.FC = () => {
                                 <CheckSquareIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
                             <div className="min-w-0">
-                                <p className="font-bold text-sm sm:text-lg text-slate-900 dark:text-white">Pengingat Tugas</p>
-                                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Notifikasi saat tugas mendekati deadline.</p>
+                                <p className="font-bold text-sm sm:text-lg text-slate-900 dark:text-white">{copy.taskLabel}</p>
+                                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{copy.description}</p>
+                                {!isOnline && <p className="text-xs text-slate-500 dark:text-slate-400">{copy.unavailable}</p>}
                             </div>
                         </div>
                         <Switch
                             checked={taskPrefs.taskReminders}
+                            aria-label={copy.taskLabel}
                             onChange={(e) => handleTaskPrefChange('taskReminders', e.target.checked)}
-                            className="data-[state=checked]:bg-amber-600 flex-shrink-0"
+                            disabled={!isOnline || isSavingPreferences || !preferencesReady}
+                            className="data-[state=checked]:bg-amber-600 flex-shrink-0 min-h-11 [&>div]:after:top-1/2 [&>div]:after:-translate-y-1/2"
                         />
                     </div>
 
@@ -402,20 +456,21 @@ const NotificationsSection: React.FC = () => {
                                     <ClockIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="font-medium text-sm sm:text-base text-slate-900 dark:text-white">Ingatkan Sebelum Deadline</p>
-                                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">Waktu pengingatan sebelum deadline.</p>
+                                    <p className="font-medium text-sm sm:text-base text-slate-900 dark:text-white">{copy.leadLabel}</p>
+                                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">{copy.leadDescription}</p>
                                 </div>
                             </div>
                             <Select
-                                value={taskPrefs.taskReminderHours.toString()}
-                                onChange={(e) => handleTaskPrefChange('taskReminderHours', parseInt(e.target.value))}
+                                value={taskPrefs.taskReminderDays.toString()}
+                                aria-label={copy.leadLabel}
+                                onChange={(e) => handleTaskPrefChange('taskReminderDays', parseInt(e.target.value))}
+                                disabled={!isOnline || isSavingPreferences || !preferencesReady}
                                 className="w-full sm:w-32 flex-shrink-0"
                             >
-                                <option value="6">6 jam</option>
-                                <option value="12">12 jam</option>
-                                <option value="24">24 jam</option>
-                                <option value="48">48 jam</option>
-                                <option value="72">72 jam</option>
+                                <option value="0">{copy.today}</option>
+                                <option value="1">{copy.oneDay}</option>
+                                <option value="2">{copy.twoDays}</option>
+                                <option value="3">{copy.threeDays}</option>
                             </Select>
                         </div>
                     )}

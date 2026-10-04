@@ -3,9 +3,7 @@ import {
   autoDistributePromes,
   evaluateMatrixRowStatuses,
   evaluateColumnWeeklySums,
-  AutoDistributeInput,
   MatrixCell,
-  MatrixRowStatus,
 } from '@/utils/promesEngine';
 import type { KaldikWeek, ProtaItem, WeekType } from '@/types/perangkatAjar';
 

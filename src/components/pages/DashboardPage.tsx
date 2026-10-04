@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 
 import { useAuth } from '../../hooks/useAuth';
-import { useScheduleNotifications } from '../../hooks/useScheduleNotifications';
 import { useDashboardData } from '../../hooks/useDashboardData';
 import { useClock } from '../../hooks/useClock';
 import { useDashboardActivities } from '../../hooks/useDashboardActivities';
@@ -87,9 +86,6 @@ const DashboardPage: React.FC = () => {
   const { data, isLoading, isError, error, refetch, isRefetching: isFetching } = useDashboardData();
   const dashboardErrorMessage =
     error instanceof Error ? error.message : 'Gagal memuat data dashboard. Silakan coba lagi.';
-
-  useScheduleNotifications(user?.id);
-
   const { activeReminders, activities: recentActivities, dismissReminder: handleDismissReminder } = useDashboardActivities(
     data ? {
       students: data.students ?? [],

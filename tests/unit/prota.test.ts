@@ -5,9 +5,8 @@ import {
   swapItemSemester,
   autoBalanceProtaJp,
   ProtaItem,
-  ProtaValidationResult,
 } from '@/utils/protaEngine';
-import type { RmeSummary, WeekType } from '@/types/perangkatAjar';
+import type { RmeSummary } from '@/types/perangkatAjar';
 
 /**
  * Helper to build mock RmeSummary for testing Prota balance.
