@@ -2982,6 +2982,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_ph_schedule: {
+        Args: { p_class_id: string; p_semester_id: string }
+        Returns: boolean
+      }
+      preview_wa_ph_schedule: {
+        Args: { p_class_id: string; p_report_date?: string }
+        Returns: string
+      }
       get_class_analytics_attendance: {
         Args: Record<PropertyKey, never>
         Returns: Json
