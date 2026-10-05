@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026.10.05",
+    "date": "2026-10-05",
+    "title": "Prota & Promes jauh lebih cepat dibuat",
+    "changes": [
+      { "type": "baru", "text": "Tombol Buat dari Jadwal membuat Prota dan Promes untuk semua mapel dan kelas di jadwal mengajar Anda sekaligus. Unduh Paket mengunduh semuanya dalam satu file ZIP." },
+      { "type": "baru", "text": "Susun dengan AI membuat draf TP dan bab untuk mapel yang belum punya daftar bab. Jam pelajarannya tetap dihitung dari Kaldik. Periksa isinya dengan CP terbaru." },
+      { "type": "baru", "text": "Kaldik kini disusun dari tanggal sebenarnya dan hari libur nasional serta cuti bersama dari SKB 3 Menteri. Admin bisa menerbitkan Kaldik sekolah untuk semua guru." },
+      { "type": "peningkatan", "text": "Anda bisa punya beberapa Prota sekaligus, misalnya per mapel dan kelas. Perubahan tersimpan otomatis, dan hapus materi, bagi ulang jam, atau hapus dokumen bisa dibatalkan." },
+      { "type": "peningkatan", "text": "Pekan yang Anda atur sendiri di Promes tidak berubah saat Bagi ulang. Tombol Modul Ajar di tiap materi membuka Modul Ajar yang sudah terisi." },
+      { "type": "perbaikan", "text": "Bagi Jam Otomatis di Semester 2 tidak lagi mengisi minggu ujian dan libur Lebaran. Isi Promes juga tidak hilang lagi saat materi Prota diubah." },
+      { "type": "perbaikan", "text": "Promes versi Word kini memuat mapel, kelas, dan tabel jam per pekan dengan lengkap." }
+    ]
+  },
+  {
     "id": "2026.10.04",
     "date": "2026-10-04",
     "title": "Absensi lebih andal, rapor Bintang lebih akurat",

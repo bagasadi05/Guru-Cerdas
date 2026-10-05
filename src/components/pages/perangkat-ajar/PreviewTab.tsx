@@ -55,12 +55,8 @@ export const PreviewTab: React.FC<PreviewTabProps> = ({
   const printRef = useRef<HTMLDivElement>(null);
 
   // Helper to determine cells for a requested semester
-  const getPromesCellsForSemester = (sem: 1 | 2): MatrixCell[] => {
-    if (sem === 2 && promesCellsSem2 && promesCellsSem2.length > 0) {
-      return promesCellsSem2;
-    }
-    return promesCells;
-  };
+  const getPromesCellsForSemester = (sem: 1 | 2): MatrixCell[] =>
+    sem === 2 ? promesCellsSem2 ?? [] : promesCells;
 
   // Safe file download helper with delay before revoking Object URL
   const downloadBlob = (blob: Blob, filename: string) => {

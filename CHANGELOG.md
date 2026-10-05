@@ -9,7 +9,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - 2026-09-28
 
+### Fixed (Perbaikan)
+- **Prota & Promes:**
+  - **Bagi Jam Otomatis** di Semester 2 kini memakai kalender Januari–Juni. Sebelumnya tombol ini membaca pola Juli–Desember, sehingga jam masuk ke minggu STS, cuti Idul Fitri, dan pekan kelima Februari.
+  - Mengedit materi Prota tidak lagi menghapus isi Promes yang tersimpan di cloud. Materi kini diperbarui per baris, dan yang dihapus hanya materi yang memang dibuang guru.
+  - Simpan yang beruntun ke dokumen yang sama dijalankan berurutan, jadi edit cepat tidak saling menimpa.
+  - Minggu non-efektif di matriks Promes tetap terkunci setelah halaman dimuat ulang atau Kaldik diubah. Jam yang terlanjur ada di minggu tersebut dikosongkan dan tidak ikut terhitung.
+  - Pratinjau dan ekspor Promes Semester 2 yang masih kosong tidak lagi menampilkan jumlah jam per pekan milik Semester 1.
+  - Daftar bab bawaan hanya ditawarkan untuk mapel dan kelas yang sesuai. Sebelumnya guru Kelas 1 menerima bab Kelas 4. Tombol contoh materi Bahasa Indonesia Kelas 4 yang muncul untuk semua mapel dihapus.
+  - Panduan Cepat memakai Kaldik yang sudah diatur guru, tidak lagi menimpanya dengan preset nasional. Ringkasannya menampilkan selisih jam yang sebenarnya, dan pilihan kelas mencakup Kelas 1–12.
+  - Tahun ajaran default mengikuti tanggal hari ini.
+  - Ekspor Word Promes kini memuat identitas (mapel, kelas/fase, kurikulum) dan matriks 6 bulan × 5 pekan beserta jumlah JP per pekan, dalam A4 landscape. Pekan tidak efektif diarsir. Sebelumnya hanya tercetak tulisan "Alokasi terdistribusi X JP".
+  - Blok tanda tangan di Word Prota dan Promes tidak lagi bergaris kotak.
+  - Menyimpan Promes ke cloud tidak lagi menghapus semua alokasi sebelum menulis ulang. Kalau koneksi putus di tengah, Promes yang tersimpan tetap utuh.
+  - Teks yang berlebihan dirapikan: "AI" pada Seimbangkan Jam (prosesnya bukan AI), label "Paket Silabus Resmi", klaim "seimbang 100%", dan emoji pada tombol.
+
 ### Added (Apa yang baru)
+- **Prota & Promes, kelengkapan fitur:**
+  - **Hapus dokumen Prota** beserta Promes-nya lewat tombol **Hapus** di samping pilihan dokumen. Bisa dibatalkan sesaat; dokumen dan isinya dikembalikan utuh.
+  - **Kaldik sekolah:** admin menekan **Terbitkan untuk semua guru**. Guru yang belum mengatur Kaldik sendiri langsung memakainya; guru yang sudah punya Kaldik sendiri mendapat tombol **Pakai Kaldik sekolah** (bisa dibatalkan). Perlu migrasi `20261005130255_perangkat_ajar_school_kaldik_and_manual_cells.sql`.
+  - **Pekan yang diatur manual di Promes tetap saat Bagi ulang.** Sel bertanda bingkai kuning; pilih **Kembalikan ke otomatis** untuk melepasnya. Sel yang sengaja dikosongkan juga dipertahankan. Tanda manual baru tersimpan di cloud setelah migrasi di atas dijalankan; sebelum itu jam tetap tersimpan, hanya tandanya yang tidak.
+  - **Satu angka JP per pekan:** isian di tab Promes sekarang sama dengan JP per pekan di Kaldik dan Prota, bukan batas terpisah.
+  - **Buat Modul Ajar dari baris Prota:** tombol **Modul Ajar** membuka pembuat Modul Ajar yang sudah terisi mapel, kelas, fase, semester, topik, TP, dan jumlah pertemuan dari alokasi JP.
+  - **Kunjungan pertama:** kalau guru belum punya Prota tetapi sudah punya jadwal mengajar, yang dibuka adalah **Buat dari Jadwal**, bukan Panduan Cepat.
+- **Prota & Promes dari jadwal mengajar:**
+  - Tombol **Buat dari Jadwal** membaca jadwal mengajar guru dan membuat satu Prota & Promes untuk tiap mapel dan kelas sekaligus.
+  - Kelas paralel (4A, 4B) memakai satu Prota yang sama. JP per pekan dihitung dari durasi jadwal: 1 JP = 35 menit untuk SD/MI, 40 menit untuk SMP, dan 45 menit untuk SMA.
+  - Jam materi dan matriks Promes langsung mengikuti Kaldik tahun berjalan. Mapel yang sudah punya Prota ditandai **Sudah ada** dan tidak ikut dipilih.
+- **Unduh Paket:** satu tombol mengunduh ZIP berisi Prota (Word) serta Promes Semester 1 dan 2 (Excel, supaya jam masih bisa digeser antar pekan) untuk dokumen yang sedang dibuka, atau untuk semua Prota tahun ajaran itu (satu folder per mapel dan kelas).
+- **Susun TP dengan AI:** pilihan baru di Panduan Cepat, tombol **Susun dengan AI** di tab Prota, dan opsi di **Buat dari Jadwal** untuk mapel tanpa daftar bab bawaan.
+  - AI hanya mengusulkan elemen, TP, dan bab. Jam tetap dihitung dari Kaldik, sehingga totalnya selalu sama dengan jam efektif.
+  - Hasil AI diperiksa dulu (minimal 2 dan maksimal 10 materi per semester), dan mengganti materi bisa dibatalkan.
+  - Kalau AI gagal di Buat dari Jadwal, mapel itu memakai kerangka 4 + 4 bab.
+- **Kaldik dari tanggal sebenarnya:**
+  - Kaldik default untuk tiap tahun ajaran sekarang disusun dari tanggal kalender (pekan dihitung per Senin, jadi bulan bisa punya 4 atau 5 pekan) dan libur nasional serta cuti bersama SKB 3 Menteri. Data libur tersedia untuk Juli 2025 sampai Desember 2027.
+  - Pekan dengan 3 hari libur atau lebih otomatis tidak efektif. MPLS, STS, SAS, rapor, dan libur semester diletakkan mengikuti pola nasional.
+  - Tiap pekan diberi keterangan tanggal. Tombol **Susun dari Tanggal** menggantikan **Preset Nasional** dan bisa dibatalkan.
+  - Tahun yang SKB-nya belum terbit diberi peringatan agar libur ditandai manual.
+- **Prota & Promes lebih aman dan bisa banyak dokumen:**
+  - Guru bisa menyimpan beberapa Prota (per mapel dan kelas) dan berpindah lewat pilihan **Dokumen Prota**. Tombol **Prota baru** membuka Panduan Cepat untuk dokumen baru.
+  - Panduan Cepat menyimpan hasilnya sebagai dokumen baru secara default. Pilihan **Ganti isi dokumen ini** tetap ada.
+  - Hapus materi, Seimbangkan Jam, Bagi Jam Otomatis, Kosongkan Matriks, dan Ganti isi dokumen bisa dibatalkan lewat tombol **Batalkan** selama 10 detik.
+  - Mapel, kelas, fase, kurikulum, JP per pekan, dan jam cadangan tersimpan otomatis tanpa menekan **Simpan Semua**. Fase terisi sendiri dari kelas.
+  - Tab Promes memberi tahu jumlah materi yang jamnya belum sesuai Prota, lengkap dengan tautan **Bagi ulang**.
 - **Simpan nilai mapel tanpa koneksi:** saat offline, tombol menjadi **Simpan di Perangkat** dan nilai masuk antrean di perangkat (`draft.queued`). Antrean dikirim otomatis dari halaman mana pun begitu online (`useQueuedGradeSync` di `Layout`), lewat pemeriksaan konflik yang sama dengan simpan biasa. Simpan yang gagal karena koneksi putus juga masuk antrean. Nilai yang sudah diubah di perangkat lain atau ditolak tidak dikirim ulang diam-diam; draf ditandai untuk ditinjau. Keaktifan, sikap, dan pelanggaran masih memerlukan koneksi.
 - **Jendela "Apa yang baru" saat ada versi baru:** guru melihat daftar perubahan lalu memilih **Perbarui sekarang** atau **Nanti**. Hitung mundur muat ulang otomatis 3 detik dihapus. Kalau aplikasi diperbarui di latar belakang, daftar perubahan muncul sekali saat aplikasi dibuka lagi. Isinya diambil dari `public/release-notes.json` (panduan: `docs/release-notes.md`). Portal Orang Tua dan halaman login tetap diperbarui otomatis tanpa jendela ini.
 - **Pengingat catatan rilis sebelum push:** hook `.githooks/pre-push` memperingatkan saat push ke `main` mengubah aplikasi tanpa memperbarui `public/release-notes.json`. Aktifkan sekali per clone dengan `git config core.hooksPath .githooks`.

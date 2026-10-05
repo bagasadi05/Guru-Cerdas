@@ -5,6 +5,7 @@ import { useOptionalSemester } from '../../../../contexts/SemesterContext';
 import { getCurrentSemester } from '../../../../utils/semesterUtils';
 import { supabase } from '../../../../services/supabase';
 import { modulAjarContentService } from '../../../../services/modulAjarContentService';
+import { clearModulAjarPrefill, peekModulAjarPrefill } from '../utils/protaPrefill';
 
 /** Text fields that can be filled automatically (content bank, a generated document, AI per field). */
 export const CONTENT_FIELDS = [
@@ -114,14 +115,19 @@ export const useModulAjarForm = () => {
     return defaultTerm.semester === '1' ? 'Ganjil' : 'Genap';
   }, [activeSemester?.name, activeSemester?.semester_number, defaultTerm.semester]);
 
-  const [formState, setFormState] = useState<FormState>(() =>
-    createDefaultFormState({
+  const [formState, setFormState] = useState<FormState>(() => ({
+    ...createDefaultFormState({
       guru: user?.name || '',
       satuanPendidikan: user?.school_name,
       tahunAjaran: getResolvedAcademicYear(),
       semester: getResolvedSemester(),
     }),
-  );
+    // Opened from a Prota row: start from that materi instead of an empty form.
+    ...peekModulAjarPrefill(),
+  }));
+  useEffect(() => {
+    clearModulAjarPrefill();
+  }, []);
   const formStateRef = useRef(formState);
   useEffect(() => {
     formStateRef.current = formState;

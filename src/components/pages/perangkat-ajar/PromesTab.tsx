@@ -17,6 +17,7 @@ import {
   evaluateMatrixRowStatuses,
   evaluateColumnWeeklySums,
   getRowStatusBadgeProps,
+  getLockedWeekSlots,
 } from '../../../utils/promesEngine';
 import { WEEK_TYPE_SHORT_LABELS } from '../../../types/perangkatAjar';
 
@@ -34,6 +35,8 @@ interface PromesTabProps {
   onUpdateCell: (rowId: string, monthIndex: number, weekNumber: number, jp: number) => void;
   onAutoDistribute: () => void;
   onResetMatrix: () => void;
+  /** Returns a teacher-set week to automatic distribution. */
+  onReleaseCell?: (rowId: string, monthIndex: number, weekNumber: number) => void;
 }
 
 export const PromesTab: React.FC<PromesTabProps> = ({
@@ -47,6 +50,7 @@ export const PromesTab: React.FC<PromesTabProps> = ({
   onUpdateCell,
   onAutoDistribute,
   onResetMatrix,
+  onReleaseCell,
 }) => {
   const monthNames = semesterNumber === 1 ? MONTH_NAMES_SEM_1 : MONTH_NAMES_SEM_2;
 
@@ -133,18 +137,25 @@ export const PromesTab: React.FC<PromesTabProps> = ({
     return Object.values(rowStatuses).filter((st) => st.status === 'SESUAI').length;
   }, [rowStatuses]);
 
+  const lockedSlots = useMemo(
+    () => getLockedWeekSlots(semesterWeeks, semesterNumber),
+    [semesterWeeks, semesterNumber]
+  );
+
   const getCellData = (rowId: string, monthIndex: number, weekNumber: number): MatrixCell => {
-    return (
-      cells.find(
-        (c) => c.rowId === rowId && c.monthIndex === monthIndex && c.weekNumber === weekNumber
-      ) || {
-        rowId,
-        monthIndex,
-        weekNumber,
-        allocatedJp: 0,
-        isLocked: false,
-      }
+    const existing = cells.find(
+      (c) => c.rowId === rowId && c.monthIndex === monthIndex && c.weekNumber === weekNumber
     );
+    if (existing) return existing;
+    const lockReason = lockedSlots.get(`${monthIndex}-${weekNumber}`);
+    return {
+      rowId,
+      monthIndex,
+      weekNumber,
+      allocatedJp: 0,
+      isLocked: Boolean(lockReason),
+      lockReason,
+    };
   };
 
   const getColumnData = (monthIndex: number, weekNumber: number) => {
@@ -184,14 +195,14 @@ export const PromesTab: React.FC<PromesTabProps> = ({
 
           {/* Weekly JP Limit Input */}
           <div className="flex items-center justify-between sm:justify-start gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 min-h-[38px] rounded-xl border border-slate-200 dark:border-slate-700 w-full sm:w-auto">
-            <span className="text-xs text-slate-500 font-medium">Batas Jam / Pekan:</span>
+            <span className="text-xs text-slate-500 font-medium" title="Sama dengan JP per pekan di Kaldik dan Prota">JP / Pekan:</span>
             <div className="flex items-center gap-1.5">
               <input
                 type="number"
                 min={1}
                 max={12}
                 value={weeklyJpLimit}
-                aria-label="Batas Jam Pelajaran per pekan"
+                aria-label="Jam pelajaran per pekan (berlaku juga untuk Prota)"
                 onChange={(e) =>
                   onChangeWeeklyJpLimit(Math.max(1, parseInt(e.target.value, 10) || 1))
                 }
@@ -242,6 +253,18 @@ export const PromesTab: React.FC<PromesTabProps> = ({
               Total Jam Terbagi: <strong className="text-slate-800 dark:text-slate-200">{totalDistributedJp} JP</strong> dari target{' '}
               <strong className="text-slate-800 dark:text-slate-200">{totalTargetJp} JP</strong>
             </p>
+            {currentSemesterItems.length > 0 && matchedRowCount < currentSemesterItems.length && (
+              <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                {currentSemesterItems.length - matchedRowCount} materi jamnya belum sesuai Prota.{' '}
+                <button
+                  type="button"
+                  onClick={onAutoDistribute}
+                  className="font-bold underline underline-offset-2 hover:text-amber-800 dark:hover:text-amber-300"
+                >
+                  Bagi ulang
+                </button>
+              </p>
+            )}
           </div>
         </div>
 
@@ -537,7 +560,10 @@ export const PromesTab: React.FC<PromesTabProps> = ({
                                     const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
                                     onUpdateCell(item.id, mIdx, w, Math.max(0, val || 0));
                                   }}
+                                  title={cell.isManual ? 'Diatur manual; tetap saat Bagi ulang' : undefined}
                                   className={`w-9 h-8 py-0.5 text-xs font-bold text-center rounded-lg outline-none transition-all cursor-pointer ${
+                                    cell.isManual ? 'ring-2 ring-amber-400 dark:ring-amber-500 ' : ''
+                                  }${
                                     cell.allocatedJp > 0
                                       ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-extrabold border border-emerald-300 dark:border-emerald-700'
                                       : 'bg-transparent text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-transparent hover:border-slate-200'
@@ -598,9 +624,22 @@ export const PromesTab: React.FC<PromesTabProps> = ({
                                       </button>
                                     </div>
 
+                                    {cell.isManual && onReleaseCell && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          onReleaseCell(item.id, mIdx, w);
+                                          setActiveCellPicker(null);
+                                        }}
+                                        className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 hover:underline"
+                                      >
+                                        Kembalikan ke otomatis
+                                      </button>
+                                    )}
+
                                     {/* Quick Chips */}
                                     <div className="grid grid-cols-4 gap-1 pt-1 border-t border-slate-100 dark:border-slate-700">
-                                      {[0, 1, 2, Math.min(4, weeklyJpLimit)].map((presetVal) => (
+                                      {[...new Set([0, 1, 2, 4].map((v) => Math.min(v, weeklyJpLimit)))].map((presetVal) => (
                                         <button
                                           key={presetVal}
                                           type="button"

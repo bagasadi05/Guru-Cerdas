@@ -58,6 +58,59 @@ export function getSemesterMonthIndex(month: number): number {
 }
 
 /**
+ * Keeps only the Kaldik weeks that belong to one semester.
+ * Month index 0 means July in semester 1 and January in semester 2, so a full-year
+ * array must be narrowed before matching weeks by month index.
+ */
+export function filterWeeksForSemester(weeks: KaldikWeek[], semesterNumber: 1 | 2): KaldikWeek[] {
+  if (!Array.isArray(weeks)) return [];
+  return weeks.filter((w) =>
+    semesterNumber === 1 ? w.month >= 7 && w.month <= 12 : w.month >= 1 && w.month <= 6
+  );
+}
+
+const slotKey = (monthIndex: number, weekNumber: number) => `${monthIndex}-${weekNumber}`;
+
+/**
+ * Returns the non-KBM weeks of a semester, keyed by `${monthIndex}-${weekNumber}`.
+ */
+export function getLockedWeekSlots(
+  weeks: KaldikWeek[],
+  semesterNumber: 1 | 2
+): Map<string, WeekType> {
+  const locked = new Map<string, WeekType>();
+  for (const week of filterWeeksForSemester(weeks, semesterNumber)) {
+    if (week.type !== 'KBM') {
+      locked.set(slotKey(getSemesterMonthIndex(week.month), week.weekNumber), week.type);
+    }
+  }
+  return locked;
+}
+
+/**
+ * Re-derives cell locks from the current Kaldik. Saved cells do not carry lock state,
+ * and the Kaldik may change after a Promes was filled, so hours sitting in a week that
+ * is no longer effective are cleared.
+ */
+export function applyKaldikLocks(
+  cells: MatrixCell[],
+  weeks: KaldikWeek[],
+  semesterNumber: 1 | 2
+): MatrixCell[] {
+  if (!Array.isArray(cells)) return [];
+  const locked = getLockedWeekSlots(weeks, semesterNumber);
+  return cells.map((cell) => {
+    const lockReason = locked.get(slotKey(cell.monthIndex, cell.weekNumber));
+    if (lockReason) {
+      return { ...cell, allocatedJp: 0, isLocked: true, lockReason };
+    }
+    return cell.isLocked || cell.lockReason
+      ? { ...cell, isLocked: false, lockReason: undefined }
+      : cell;
+  });
+}
+
+/**
  * Sanitizes a numeric JP value to guarantee a non-negative integer.
  */
 function sanitizeJp(value: unknown): number {
@@ -202,10 +255,11 @@ export function buildEmptyMatrix(
  * @returns Complete MatrixCell array (items.length × 30 cells)
  */
 export function autoDistributePromes(input: AutoDistributeInput): MatrixCell[] {
-  const { items = [], semesterWeeks = [], weeklyJpLimit = 4 } = input;
+  const { items = [], semesterWeeks = [], weeklyJpLimit = 4, semesterNumber, fixedCells = [] } = input;
   const limit = Math.max(0, sanitizeJp(weeklyJpLimit));
 
-  const slots = buildColumnSlots(semesterWeeks, limit);
+  const weeks = semesterNumber ? filterWeeksForSemester(semesterWeeks, semesterNumber) : semesterWeeks;
+  const slots = buildColumnSlots(weeks, limit);
 
   // Initialize all matrix cells with 0 JP
   const cellMap = new Map<string, MatrixCell>();
@@ -225,25 +279,43 @@ export function autoDistributePromes(input: AutoDistributeInput): MatrixCell[] {
     }
   }
 
+  // Teacher-set cells stay as they are: they use up week capacity and count toward the item.
+  const slotByKey = new Map(slots.map((slot) => [`${slot.monthIndex}-${slot.weekNumber}`, slot]));
+  const manualJpByItem = new Map<string, number>();
+  for (const fixed of fixedCells) {
+    if (!fixed?.isManual) continue;
+    const slot = slotByKey.get(`${fixed.monthIndex}-${fixed.weekNumber}`);
+    const cell = cellMap.get(`${fixed.rowId}-${fixed.monthIndex}-${fixed.weekNumber}`);
+    if (!slot || !cell || slot.isLocked) continue;
+    const jp = sanitizeJp(fixed.allocatedJp);
+    cell.allocatedJp = jp;
+    cell.isManual = true;
+    slot.remainingCapacity = Math.max(0, slot.remainingCapacity - jp);
+    manualJpByItem.set(fixed.rowId, (manualJpByItem.get(fixed.rowId) ?? 0) + jp);
+  }
+
   // Sequential packing loop
   let slotIdx = 0;
 
   for (const item of items) {
     if (!item?.id) continue;
-    let remainingNeeded = sanitizeJp(item.targetJp);
+    let remainingNeeded = Math.max(0, sanitizeJp(item.targetJp) - (manualJpByItem.get(item.id) ?? 0));
+    // Weeks this item skipped because of its own manual cell; later items may still use them.
+    let skipIdx = slotIdx;
 
-    while (remainingNeeded > 0 && slotIdx < slots.length) {
-      const currentSlot = slots[slotIdx];
+    while (remainingNeeded > 0 && skipIdx < slots.length) {
+      const currentSlot = slots[skipIdx];
+      const key = `${item.id}-${currentSlot.monthIndex}-${currentSlot.weekNumber}`;
+      const existingCell = cellMap.get(key);
 
-      // Skip locked weeks or weeks with no remaining capacity
-      if (currentSlot.isLocked || currentSlot.remainingCapacity <= 0) {
-        slotIdx++;
+      // Skip locked weeks, full weeks, and weeks the teacher set by hand for this item
+      if (currentSlot.isLocked || currentSlot.remainingCapacity <= 0 || existingCell?.isManual) {
+        if (skipIdx === slotIdx && !existingCell?.isManual) slotIdx++;
+        skipIdx++;
         continue;
       }
 
       const alloc = Math.min(remainingNeeded, currentSlot.remainingCapacity);
-      const key = `${item.id}-${currentSlot.monthIndex}-${currentSlot.weekNumber}`;
-      const existingCell = cellMap.get(key);
 
       if (existingCell) {
         existingCell.allocatedJp = alloc;
@@ -254,7 +326,8 @@ export function autoDistributePromes(input: AutoDistributeInput): MatrixCell[] {
 
       // If this column slot is fully filled, advance to next slot
       if (currentSlot.remainingCapacity === 0) {
-        slotIdx++;
+        if (skipIdx === slotIdx) slotIdx++;
+        skipIdx++;
       }
     }
   }

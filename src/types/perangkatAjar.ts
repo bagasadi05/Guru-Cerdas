@@ -357,6 +357,8 @@ export interface MatrixCell {
   allocatedJp: number; // Number of hours assigned to this week
   isLocked: boolean; // Locked if non-effective week in Kaldik
   lockReason?: WeekType; // Reason if locked (e.g. 'MPLS', 'STS', 'LIBUR_SEMESTER')
+  /** Set by the teacher's own edit; auto-distribution keeps it as is. */
+  isManual?: boolean;
 }
 
 /**
@@ -377,6 +379,10 @@ export interface AutoDistributeInput {
   items: Array<{ id: string; targetJp: number }>;
   semesterWeeks: KaldikWeek[];
   weeklyJpLimit: number;
+  /** When set, `semesterWeeks` may hold the whole year; only this semester's weeks are used. */
+  semesterNumber?: 1 | 2;
+  /** Current cells; those marked `isManual` are kept and count toward their item's hours. */
+  fixedCells?: MatrixCell[];
 }
 
 /**

@@ -14,6 +14,7 @@
 
 import type {
   KaldikWeek,
+  PhaseType,
   RmeSummary,
   WeekType,
 } from '../types/perangkatAjar';
@@ -142,4 +143,40 @@ export function getDefaultNationalKaldik(academicYear: string = '2024/2025'): Ka
     label: w.label,
     academicYear,
   }));
+}
+
+/**
+ * Academic year containing `date`. The Indonesian school year starts in July.
+ */
+export function getCurrentAcademicYear(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const startYear = date.getMonth() >= 6 ? year : year - 1;
+  return `${startYear}/${startYear + 1}`;
+}
+
+/**
+ * Previous, current and next academic year, plus `extra` when it falls outside that window
+ * (e.g. an older saved Prota).
+ */
+export function getAcademicYearOptions(date: Date = new Date(), extra?: string): string[] {
+  const startYear = parseInt(getCurrentAcademicYear(date), 10);
+  const options = [-1, 0, 1].map((offset) => `${startYear + offset}/${startYear + offset + 1}`);
+  if (extra && !options.includes(extra)) options.push(extra);
+  return options.sort();
+}
+
+/**
+ * Kurikulum Merdeka phase for a grade label such as "Kelas 4" or "kelas 10".
+ */
+export function getPhaseForGrade(gradeLevel: string): PhaseType | null {
+  const match = /(\d{1,2})/.exec(gradeLevel);
+  if (!match) return null;
+  const grade = Number(match[1]);
+  if (grade <= 0 || grade > 12) return null;
+  if (grade <= 2) return 'A';
+  if (grade <= 4) return 'B';
+  if (grade <= 6) return 'C';
+  if (grade <= 9) return 'D';
+  if (grade === 10) return 'E';
+  return 'F';
 }
