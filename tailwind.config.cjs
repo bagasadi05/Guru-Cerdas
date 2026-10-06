@@ -143,6 +143,9 @@ module.exports = {
       animation: {
         'fade-in-up': 'fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both',
         'fade-in': 'fade-in 0.6s ease-out both',
+        // `backwards` fill: no transform is left on the page wrapper afterwards,
+        // which would otherwise re-anchor position:fixed descendants.
+        'page-in': 'page-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) backwards',
         shimmer: 'shimmer 3s infinite linear',
         'shimmer-slide': 'shimmer-slide 1.5s infinite',
         'slide-down': 'slide-down 0.3s ease-out both',
@@ -190,6 +193,10 @@ module.exports = {
         'fade-in': {
           from: { opacity: '0' },
           to: { opacity: '1' },
+        },
+        'page-in': {
+          from: { opacity: '0', transform: 'translateY(8px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
         },
         shimmer: {
           '0%': { 'background-position': '200% 0' },

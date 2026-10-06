@@ -5,6 +5,7 @@
  */
 
 import type { PhScheduleRow } from '../../../types';
+import { comparePhPeriods, phPeriodsOverlap } from './phScheduleValidation';
 
 export type PhScheduleItem = PhScheduleRow;
 
@@ -102,7 +103,7 @@ export class PhScheduleEngine {
         const dayCountMap = new Map<string, number>();
 
         schedules.forEach((s) => {
-            const key = `${s.date}___${(s.period_label || '').trim().toLowerCase()}`;
+            const key = s.date;
             const existing = periodMap.get(key) || [];
             existing.push(s);
             periodMap.set(key, existing);
@@ -113,11 +114,12 @@ export class PhScheduleEngine {
         const conflicts: ScheduleConflict[] = [];
         periodMap.forEach((items, key) => {
             if (items.length > 1) {
-                const [date, period] = key.split('___');
-                conflicts.push({
-                    date,
-                    period,
-                    subjects: items.map((i) => i.subject),
+                items.forEach((left, index) => {
+                    items.slice(index + 1).forEach((right) => {
+                        if (phPeriodsOverlap(left.period_label, right.period_label)) {
+                            conflicts.push({ date: key, period: left.period_label === right.period_label ? left.period_label : `${left.period_label} / ${right.period_label}`, subjects: [left.subject, right.subject] });
+                        }
+                    });
                 });
             }
         });
@@ -168,7 +170,7 @@ export class PhScheduleEngine {
         return [...filtered].sort((a, b) => {
             const cmp = a.date.localeCompare(b.date);
             if (cmp !== 0) return sortOrder === 'asc' ? cmp : -cmp;
-            return a.period_label.localeCompare(b.period_label);
+            return comparePhPeriods(a.period_label, b.period_label);
         });
     }
 
@@ -258,7 +260,7 @@ export class PhScheduleEngine {
 
         if (listToShare.length === 0) return '';
 
-        const dateMap = this.groupByDate(listToShare);
+        const dateMap = this.groupByDate(this.filterAndSort(listToShare, {}, referenceToday));
 
         let message = `📅 *JADWAL PENILAIAN HARIAN (PH)*\n`;
         message += `🏫 *Kelas:* ${context.className}\n`;
@@ -284,23 +286,24 @@ export class PhScheduleEngine {
      * Calculates the Monday-to-Friday dates for a given reference date and week offset.
      * offset: 0 for reference week, +1 for next week, -1 for previous week, etc.
      */
-    public static getSchoolWeekDays(referenceDate: Date = new Date(), weekOffset: number = 0): SchoolWeekDayInfo[] {
+    public static getSchoolWeekDays(referenceDate: Date = new Date(), weekOffset: number = 0, includeWeekends = false): SchoolWeekDayInfo[] {
         const today = new Date(referenceDate);
         const day = today.getDay(); // 0 is Sunday, 1 is Monday, ..., 6 is Saturday
         // If Sunday (0), the upcoming school week begins tomorrow (Monday). Otherwise target Monday of this week.
-        const diffToMonday = day === 0 ? 1 : 1 - day;
+        const diffToMonday = day === 0 ? (includeWeekends ? -6 : 1) : 1 - day;
         const monday = new Date(today);
         monday.setDate(today.getDate() + diffToMonday + (weekOffset * 7));
         monday.setHours(0, 0, 0, 0);
 
         const realTodayStr = new Date().toLocaleDateString('sv-SE');
-        const dayNames: ('Senin' | 'Selasa' | 'Rabu' | 'Kamis' | 'Jumat')[] = [
+        const dayNames: SchoolWeekDayInfo['dayName'][] = [
             'Senin',
             'Selasa',
             'Rabu',
             'Kamis',
             'Jumat',
         ];
+        if (includeWeekends) dayNames.push('Sabtu', 'Minggu');
 
         return dayNames.map((dayName, index) => {
             const d = new Date(monday);
@@ -341,7 +344,7 @@ export class PhScheduleEngine {
 }
 
 export interface SchoolWeekDayInfo {
-    dayName: 'Senin' | 'Selasa' | 'Rabu' | 'Kamis' | 'Jumat';
+    dayName: 'Senin' | 'Selasa' | 'Rabu' | 'Kamis' | 'Jumat' | 'Sabtu' | 'Minggu';
     dateStr: string;
     dateFormatted: string;
     dayNumber: number;

@@ -1,4 +1,7 @@
 import { generateGeminiJson } from './geminiService';
+
+/** Each AI button press asks for new text; a cached answer would repeat the last one. */
+const FRESH = { bypassCache: true } as const;
 import { supabase } from './supabase';
 
 const FASE_DESC: Record<string, string> = {
@@ -145,7 +148,7 @@ Panduan:
 
 Output JSON: {"tujuan": ["string", ...]}`;
 
-  const result = await generateGeminiJson<{ tujuan?: string[]; tujuanPembelajaran?: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
+  const result = await generateGeminiJson<{ tujuan?: string[]; tujuanPembelajaran?: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar', FRESH);
   const items = result?.tujuan || result?.tujuanPembelajaran || (Array.isArray(result) ? result : []);
   const content = Array.isArray(items) ? items.join('\n') : String(items || '');
   cacheToBank(ctx, { tujuan_pembelajaran: Array.isArray(items) ? items : [content] });
@@ -168,7 +171,7 @@ Panduan:
 
 Output JSON: {"pemahamanBermakna": ["string", ...]}`;
 
-  const result = await generateGeminiJson<{ pemahamanBermakna?: string[]; pemahaman_bermakna?: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
+  const result = await generateGeminiJson<{ pemahamanBermakna?: string[]; pemahaman_bermakna?: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar', FRESH);
   const items = result?.pemahamanBermakna || result?.pemahaman_bermakna || (Array.isArray(result) ? result : []);
   const content = Array.isArray(items) ? items.join('\n') : String(items || '');
   cacheToBank(ctx, { pemahaman_bermakna: Array.isArray(items) ? items : [content] });
@@ -190,7 +193,7 @@ Panduan:
 
 Output JSON: {"pertanyaan": ["string", ...]}`;
 
-  const result = await generateGeminiJson<{ pertanyaan?: string[]; pertanyaanPemantik?: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
+  const result = await generateGeminiJson<{ pertanyaan?: string[]; pertanyaanPemantik?: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar', FRESH);
   const items = result?.pertanyaan || result?.pertanyaanPemantik || (Array.isArray(result) ? result : []);
   const content = Array.isArray(items) ? items.join('\n') : String(items || '');
   cacheToBank(ctx, { pertanyaan_pemantik: Array.isArray(items) ? items : [content] });
@@ -216,7 +219,7 @@ Gunakan format Markdown bersih (##, ###, bullet -). Jangan gunakan tabel markdow
 
 Output JSON: {"materi": "string — isi materi bacaan lengkap dan terstruktur"}`;
 
-  const result = await generateGeminiJson<{ materi?: string; materiAjar?: string; ringkasan?: string }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
+  const result = await generateGeminiJson<{ materi?: string; materiAjar?: string; ringkasan?: string }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar', FRESH);
   const content = result?.materi || result?.materiAjar || result?.ringkasan || (typeof result === 'string' ? result : '');
   cacheToBank(ctx, { materi_ajar: content });
   return content;
@@ -243,7 +246,7 @@ Gunakan format Markdown bersih (##, ###, bullet -, nomor 1.). Jangan gunakan for
 
 Output JSON: {"lkpd": "string — konten LKPD lengkap dan terstruktur"}`;
 
-  const result = await generateGeminiJson<{ lkpd?: string; lkpdTugas?: string; konten?: string }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
+  const result = await generateGeminiJson<{ lkpd?: string; lkpdTugas?: string; konten?: string }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar', FRESH);
   const content = result?.lkpd || result?.lkpdTugas || result?.konten || (typeof result === 'string' ? result : '');
   cacheToBank(ctx, { lkpd_tugas: content });
   return content;
@@ -270,7 +273,7 @@ Output JSON: {
   "kunci": ["1. Jawaban...", "2. Jawaban...", "3. Jawaban...", "4. Pembahasan & Pedoman Skor: ...", "5. Pembahasan & Pedoman Skor: ..."]
 }`;
 
-  const result = await generateGeminiJson<{ soal?: string | string[]; soalEvaluasi?: string | string[]; kunci?: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
+  const result = await generateGeminiJson<{ soal?: string | string[]; soalEvaluasi?: string | string[]; kunci?: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar', FRESH);
   let content = '';
   if (typeof result?.soal === 'string') {
     content = result.soal;
@@ -303,7 +306,7 @@ Panduan:
 
 Output JSON: {"pengayaan": ["string — aktivitas 1", "string — aktivitas 2"]}`;
 
-  const result = await generateGeminiJson<{ pengayaan?: string[]; aktivitasPengayaan?: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
+  const result = await generateGeminiJson<{ pengayaan?: string[]; aktivitasPengayaan?: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar', FRESH);
   const items = result?.pengayaan || result?.aktivitasPengayaan || (Array.isArray(result) ? result : []);
   const content = Array.isArray(items) ? items.join('\n\n') : String(items || '');
   cacheToBank(ctx, { pengayaan: Array.isArray(items) ? items : [content] });
@@ -325,7 +328,7 @@ Panduan:
 
 Output JSON: {"remedial": ["string — langkah 1", "string — langkah 2"]}`;
 
-  const result = await generateGeminiJson<{ remedial?: string[]; aktivitasRemedial?: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
+  const result = await generateGeminiJson<{ remedial?: string[]; aktivitasRemedial?: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar', FRESH);
   const items = result?.remedial || result?.aktivitasRemedial || (Array.isArray(result) ? result : []);
   const content = Array.isArray(items) ? items.join('\n\n') : String(items || '');
   cacheToBank(ctx, { remedial: Array.isArray(items) ? items : [content] });
@@ -345,7 +348,7 @@ Format per entri: "Nama Istilah: Penjelasan sederhana dan mudah dipahami."
 
 Output JSON: {"glosarium": ["string", ...]}`;
 
-  const result = await generateGeminiJson<{ glosarium?: string[]; istilah?: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
+  const result = await generateGeminiJson<{ glosarium?: string[]; istilah?: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar', FRESH);
   const items = result?.glosarium || result?.istilah || (Array.isArray(result) ? result : []);
   const content = Array.isArray(items) ? items.join('\n') : String(items || '');
   cacheToBank(ctx, { glosarium: Array.isArray(items) ? items : [content] });
@@ -365,7 +368,7 @@ Format referensi standar APA / Kurikulum Merdeka yang rapi.
 
 Output JSON: {"daftarPustaka": ["string", ...]}`;
 
-  const result = await generateGeminiJson<{ daftarPustaka?: string[]; referensi?: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
+  const result = await generateGeminiJson<{ daftarPustaka?: string[]; referensi?: string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar', FRESH);
   const items = result?.daftarPustaka || result?.referensi || (Array.isArray(result) ? result : []);
   const content = Array.isArray(items) ? items.join('\n') : String(items || '');
   cacheToBank(ctx, { daftar_pustaka: Array.isArray(items) ? items : [content] });
@@ -387,7 +390,7 @@ Panduan:
 
 Output JSON: {"kompetensiAwal": "string — deskripsi kompetensi awal"}`;
 
-  const result = await generateGeminiJson<{ kompetensiAwal?: string | string[]; kompetensi_awal?: string | string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
+  const result = await generateGeminiJson<{ kompetensiAwal?: string | string[]; kompetensi_awal?: string | string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar', FRESH);
   const raw = result?.kompetensiAwal || result?.kompetensi_awal || (typeof result === 'string' ? result : '');
   const content = Array.isArray(raw) ? raw.join('\n') : String(raw || '');
   cacheToBank(ctx, { kompetensi_awal: content });
@@ -409,7 +412,7 @@ Panduan:
 
 Output JSON: {"cp": "string — deskripsi CP lengkap 2-3 paragraf, spesifik topik"}`;
 
-  const result = await generateGeminiJson<{ cp?: string | string[]; capaianPembelajaran?: string | string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
+  const result = await generateGeminiJson<{ cp?: string | string[]; capaianPembelajaran?: string | string[] }>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar', FRESH);
   const raw = result?.cp || result?.capaianPembelajaran || (typeof result === 'string' ? result : '');
   const content = Array.isArray(raw) ? raw.join('\n\n') : String(raw || '');
   cacheToBank(ctx, { capaian_pembelajaran: content });

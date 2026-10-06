@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { MotionDiv, AnimatePresence } from '../../../ui/MotionComponents';
 import {
   Sparkles,
@@ -9,6 +9,8 @@ import {
   FileEdit,
   Clock,
   RotateCcw,
+  Check,
+  AlertCircle,
 } from 'lucide-react';
 import { useTranslation } from '../../../../utils/i18n';
 import { FormState } from '../types';
@@ -84,6 +86,9 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
 
   const aiProps = { onAiFillField, fieldLoading };
 
+  const [hasMovedPastFirstStep, setHasMovedPastFirstStep] = useState(activeStep > 1);
+  if (activeStep > 1 && !hasMovedPastFirstStep) setHasMovedPastFirstStep(true);
+
   const PROFIL_OPTIONS = [
     'Beriman & Bertakwa',
     'Berkebinekaan Global',
@@ -128,7 +133,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
   const isStepComplete = (stepId: number): boolean => {
     switch (stepId) {
       case 1:
-        return !!formState.generationMethod && !!formState.documentType;
+        return hasMovedPastFirstStep && !!formState.generationMethod && !!formState.documentType;
       case 2:
         return !!formState.mataPelajaran && !!formState.topik && !!formState.kelas;
       case 3:
@@ -194,6 +199,15 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
     onChange('alokasiPenutup', newPenutup);
   };
 
+  const missingForGenerate = [
+    !formState.mataPelajaran && 'Mata Pelajaran',
+    !formState.topik && 'Topik',
+  ].filter(Boolean) as string[];
+  const generateBlockedReason =
+    missingForGenerate.length > 0
+      ? `Isi ${missingForGenerate.join(' dan ')} di Langkah 2 untuk menyusun dokumen.`
+      : null;
+
   const appendToField = (field: 'manualLkpdTugas' | 'manualSoalEvaluasi', snippet: string) => {
     const current = (formState[field] as string) || '';
     const updated = current ? current + '\n\n' + snippet : snippet;
@@ -234,13 +248,16 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
           {WIZARD_STEPS.map(step => {
             const isActive = activeStep === step.id;
             const isCompleted = isStepComplete(step.id);
-            const StepIcon = step.icon;
+            const showCheck = isCompleted && !isActive;
+            const StepIcon = showCheck ? Check : step.icon;
 
             return (
               <button
                 key={step.id}
                 type="button"
                 onClick={() => setActiveStep(step.id)}
+                aria-current={isActive ? 'step' : undefined}
+                aria-label={`Langkah ${step.id}: ${step.label}${showCheck ? ', selesai' : ''}`}
                 className={`py-1.5 px-1 sm:px-2 rounded-xl text-center transition-all flex flex-col sm:flex-row items-center justify-center gap-1 relative cursor-pointer active:scale-95 duration-150 ${
                   isActive
                     ? 'bg-brand-600 text-white shadow-sm font-bold'
@@ -251,9 +268,9 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
                 title={`Pindah ke ${step.label}`}
               >
                 <div className="flex items-center gap-1">
-                  <StepIcon className="w-3.5 h-3.5" />
+                  <StepIcon className="w-3.5 h-3.5" aria-hidden="true" />
                   <span className="hidden md:inline text-xs">{step.label}</span>
-                  <span className="md:hidden text-[10px]">{step.id}</span>
+                  <span className="md:hidden text-xxs">{step.id}</span>
                 </div>
               </button>
             );
@@ -339,45 +356,60 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
       </div>
 
       {/* Wizard Footer Controls */}
-      <div className="p-3.5 lg:p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center gap-3 shrink-0">
-        {activeStep > 1 ? (
-          <button
-            type="button"
-            onClick={() => setActiveStep(prev => prev - 1)}
-            className="px-3.5 py-2 sm:px-4 sm:py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 duration-150"
+      <div className="border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+        {activeStep === 5 && generateBlockedReason && (
+          <p
+            id="generate-blocked-reason"
+            role="status"
+            className="px-3.5 lg:px-4 pt-3 text-xs text-amber-800 dark:text-amber-300 flex flex-wrap items-center gap-x-2 gap-y-1"
           >
-            <ChevronLeft className="w-4 h-4" />
-            <span className="hidden xs:inline">{t.lessonPlan.previous}</span>
-            <span className="xs:hidden">Kembali</span>
-          </button>
-        ) : (
-          <div />
+            <AlertCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>{generateBlockedReason}</span>
+            <button
+              type="button"
+              onClick={() => setActiveStep(2)}
+              className="font-semibold underline underline-offset-2 hover:text-amber-950 dark:hover:text-amber-100 cursor-pointer"
+            >
+              Ke Langkah 2
+            </button>
+          </p>
         )}
+        <div className="p-3.5 lg:p-4 flex justify-between items-center gap-3">
+          {activeStep > 1 ? (
+            <button
+              type="button"
+              onClick={() => setActiveStep(prev => prev - 1)}
+              className="px-3.5 py-2 sm:px-4 sm:py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 duration-150"
+            >
+              <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+              <span>{t.lessonPlan.previous}</span>
+            </button>
+          ) : (
+            <div />
+          )}
 
-        <div className="text-[11px] text-slate-400 hidden sm:block">
-          Langkah {activeStep} dari 5
+          {activeStep < 5 ? (
+            <button
+              type="button"
+              onClick={() => setActiveStep(prev => prev + 1)}
+              className="px-4 py-2 sm:px-5 sm:py-2.5 bg-brand-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-brand-700 flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer active:scale-95 duration-150"
+            >
+              <span>{t.lessonPlan.next}</span>
+              <ChevronRight className="w-4 h-4" aria-hidden="true" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onGenerate}
+              disabled={queueStatus === 'pending' || queueStatus === 'processing' || isAiGenerating || !!generateBlockedReason}
+              aria-describedby={generateBlockedReason ? 'generate-blocked-reason' : undefined}
+              className="px-4 py-2 sm:px-5 sm:py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-md transition-all text-xs sm:text-sm cursor-pointer active:scale-95 duration-150"
+            >
+              <Sparkles className="w-4 h-4" aria-hidden="true" />
+              <span>{t.lessonPlan.create.replace('{type}', formState.documentType)}</span>
+            </button>
+          )}
         </div>
-
-        {activeStep < 5 ? (
-          <button
-            type="button"
-            onClick={() => setActiveStep(prev => prev + 1)}
-            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-brand-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-brand-700 flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer active:scale-95 duration-150"
-          >
-            <span>{t.lessonPlan.next}</span>
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={onGenerate}
-            disabled={queueStatus === 'pending' || queueStatus === 'processing' || isAiGenerating || !formState.mataPelajaran || !formState.topik}
-            className="px-4 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-r from-brand-700 to-emerald-700 hover:from-brand-800 hover:to-emerald-800 text-white rounded-xl font-bold flex items-center gap-1.5 disabled:opacity-50 shadow-md transition-all text-xs sm:text-sm cursor-pointer active:scale-95 duration-150"
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>{t.lessonPlan.create.replace('{type}', formState.documentType)}</span>
-          </button>
-        )}
       </div>
     </div>
   );

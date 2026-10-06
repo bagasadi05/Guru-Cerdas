@@ -10,7 +10,19 @@ interface ModulAjarPreviewProps {
   documentType: string;
   zoomLevel?: number;
   paperSize?: 'A4' | 'F4';
+  onDocumentChange?: (html: string) => void;
+  /** Fires on the first keystroke so the page can flag unsaved edits. */
+  onEdit?: () => void;
+  /** Saving state of live edits; null when nothing was edited. */
+  editStatus?: 'unsaved' | 'saving' | 'saved' | 'error' | null;
 }
+
+const EDIT_STATUS_LABEL = {
+  unsaved: 'Belum disimpan',
+  saving: 'Menyimpan…',
+  saved: 'Perubahan tersimpan',
+  error: 'Gagal menyimpan, klik di luar dokumen untuk mencoba lagi',
+} as const;
 
 export const ModulAjarPreview: React.FC<ModulAjarPreviewProps> = ({
   generatedDocument,
@@ -18,8 +30,13 @@ export const ModulAjarPreview: React.FC<ModulAjarPreviewProps> = ({
   documentType,
   zoomLevel = 100,
   paperSize = 'A4',
+  onDocumentChange,
+  onEdit,
+  editStatus = null,
 }) => {
   const { t } = useTranslation();
+  // Only the teacher document is editable; the student sheet is derived from it.
+  const isEditable = Boolean(onDocumentChange);
 
   return (
     <>
@@ -33,9 +50,25 @@ export const ModulAjarPreview: React.FC<ModulAjarPreviewProps> = ({
           <div className="w-full max-w-[850px] mb-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm px-3.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs">
             <span className="flex items-center gap-1.5 font-medium text-brand-700 dark:text-brand-300">
               <Edit3 className="w-3.5 h-3.5 text-brand-500" />
-              Mode Edit Langsung: Klik dan ubah teks dokumen secara leluasa di bawah sebelum diunduh atau dicetak
+              {isEditable
+                ? 'Klik teks untuk mengubahnya. Perubahan tersimpan otomatis.'
+                : 'Lembar siswa disusun dari dokumen guru. Ubah isinya di tampilan Guru.'}
             </span>
             <div className="flex items-center gap-2 text-[10px] text-slate-400">
+              {editStatus && (
+                <span
+                  role="status"
+                  className={`px-2 py-0.5 rounded font-bold ${
+                    editStatus === 'error'
+                      ? 'bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300'
+                      : editStatus === 'saved'
+                        ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
+                        : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'
+                  }`}
+                >
+                  {EDIT_STATUS_LABEL[editStatus]}
+                </span>
+              )}
               <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded font-bold text-slate-600 dark:text-slate-300">
                 {paperSize === 'F4' ? 'Kertas: F4 / Folio' : 'Kertas: A4'}
               </span>
@@ -53,13 +86,15 @@ export const ModulAjarPreview: React.FC<ModulAjarPreviewProps> = ({
           >
             <div
               ref={previewRef}
-              className="bg-white p-8 sm:p-12 md:p-14 lg:p-16 shadow-2xl rounded-xl border border-slate-300/80 dark:border-slate-800 w-full max-w-[850px] text-black focus:outline-none focus:ring-2 focus:ring-brand-400/40 ring-offset-2 transition-all min-h-[900px]"
+              className="bg-white p-8 sm:p-12 md:p-14 lg:p-16 shadow-2xl rounded-xl border border-slate-300/80 dark:border-slate-800 w-full max-w-[850px] text-black focus:outline-none focus:ring-2 focus:ring-brand-400/40 ring-offset-2 transition-all min-h-[900px] [&_td[style*='justify']]:!text-left [&_td_[style*='justify']]:!text-left"
               style={{
                 fontFamily: "'Times New Roman', Times, serif",
                 boxShadow: '0 10px 30px rgba(0, 0, 0, 0.08), 0 1px 8px rgba(0, 0, 0, 0.04)',
               }}
-              contentEditable
+              contentEditable={isEditable}
               suppressContentEditableWarning
+              onInput={isEditable ? onEdit : undefined}
+              onBlur={(event) => onDocumentChange?.(event.currentTarget.innerHTML)}
               dangerouslySetInnerHTML={{ __html: sanitizeContent(generatedDocument) }}
             />
           </div>
@@ -74,7 +109,11 @@ export const ModulAjarPreview: React.FC<ModulAjarPreviewProps> = ({
               {t.lessonPlan.previewEmpty}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Lengkapi formulir di samping kiri lalu klik tombol <strong className="text-brand-600 dark:text-brand-400">"{t.lessonPlan.create.replace('{type}', documentType)}"</strong> untuk menyusun modul ajar standar Kurikulum Merdeka secara otomatis.
+              Lengkapi formulir di samping kiri lalu klik tombol{' '}
+              <strong className="text-brand-600 dark:text-brand-400">
+                "{t.lessonPlan.create.replace('{type}', documentType)}"
+              </strong>{' '}
+              untuk menyusun modul ajar standar Kurikulum Merdeka secara otomatis.
             </p>
           </div>
         </div>

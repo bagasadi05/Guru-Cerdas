@@ -6,6 +6,7 @@ import {
   RotateCcw,
   Sparkles,
   Info,
+  School,
 } from 'lucide-react';
 import type {
   KaldikWeek,
@@ -24,6 +25,16 @@ interface KaldikTabProps {
   weeks: KaldikWeek[];
   onUpdateWeek: (month: number, weekNumber: number, type: WeekType) => void;
   onResetToPreset: () => void;
+  academicYear?: string;
+  /** Semesters whose national holidays are not bundled yet; shown as a notice. */
+  semestersWithoutHolidayData?: Array<1 | 2>;
+  /** Publish time of a school Kaldik that differs from this one; null when there is none. */
+  schoolKaldikUpdatedAt?: string | null;
+  onUseSchoolKaldik?: () => void;
+  /** Admins only: publish this Kaldik for every teacher. */
+  onPublishSchoolKaldik?: () => void;
+  /** The Kaldik shown is the school's published one. */
+  isSchoolKaldik?: boolean;
   rmeSem1: RmeSummary;
   rmeSem2: RmeSummary;
   weeklyJpQuota: number;
@@ -38,6 +49,12 @@ export const KaldikTab: React.FC<KaldikTabProps> = ({
   weeks,
   onUpdateWeek,
   onResetToPreset,
+  academicYear,
+  semestersWithoutHolidayData = [],
+  schoolKaldikUpdatedAt = null,
+  onUseSchoolKaldik,
+  onPublishSchoolKaldik,
+  isSchoolKaldik = false,
   rmeSem1,
   rmeSem2,
   weeklyJpQuota,
@@ -103,14 +120,62 @@ export const KaldikTab: React.FC<KaldikTabProps> = ({
           <button
             onClick={onResetToPreset}
             className="flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[38px] text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-colors shadow-sm flex-1 sm:flex-none cursor-pointer"
-            title="Kembalikan pengaturan pekan ke kalender standar nasional"
-            aria-label="Kembalikan pengaturan pekan ke kalender standar nasional"
+            title="Susun ulang pekan dari tanggal tahun ajaran ini dan libur nasional SKB 3 Menteri"
+            aria-label="Susun ulang Kaldik dari tanggal tahun ajaran ini"
           >
             <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-            <span>Preset Nasional</span>
+            <span>Susun dari Tanggal</span>
           </button>
         </div>
       </div>
+
+      {(schoolKaldikUpdatedAt !== null || isSchoolKaldik || onPublishSchoolKaldik) && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 text-xs rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/40 text-sky-900 dark:text-sky-200">
+          <p className="flex items-start gap-2">
+            <School className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>
+              {schoolKaldikUpdatedAt !== null
+                ? `Sekolah sudah menerbitkan Kaldik${academicYear ? ` ${academicYear}` : ''}${
+                    schoolKaldikUpdatedAt
+                      ? ` (diperbarui ${new Date(schoolKaldikUpdatedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })})`
+                      : ''
+                  }, dan berbeda dari Kaldik Anda.`
+                : isSchoolKaldik
+                  ? 'Kaldik ini sama dengan Kaldik yang diterbitkan sekolah.'
+                  : 'Belum ada Kaldik sekolah untuk tahun ajaran ini.'}
+            </span>
+          </p>
+          <div className="flex gap-2 shrink-0">
+            {schoolKaldikUpdatedAt !== null && onUseSchoolKaldik && (
+              <button
+                type="button"
+                onClick={onUseSchoolKaldik}
+                className="min-h-[36px] px-3 font-bold rounded-lg bg-sky-600 hover:bg-sky-700 text-white"
+              >
+                Pakai Kaldik sekolah
+              </button>
+            )}
+            {onPublishSchoolKaldik && !isSchoolKaldik && (
+              <button
+                type="button"
+                onClick={onPublishSchoolKaldik}
+                title="Hanya admin. Guru yang belum mengatur Kaldik sendiri akan langsung memakainya."
+                className="min-h-[36px] px-3 font-bold rounded-lg border border-sky-300 dark:border-sky-700 hover:bg-sky-100 dark:hover:bg-sky-900/40"
+              >
+                Terbitkan untuk semua guru
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {semestersWithoutHolidayData.length > 0 && (
+        <p className="p-3 text-xs rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200">
+          Libur nasional semester {semestersWithoutHolidayData.join(' & ')}
+          {academicYear ? ` tahun ajaran ${academicYear}` : ''} belum tersedia di aplikasi karena SKB 3 Menteri-nya
+          belum terbit. Tandai minggu libur secara manual.
+        </p>
+      )}
 
       {/* RME Summary Cards (Semester 1 & Semester 2) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -282,7 +347,7 @@ export const KaldikTab: React.FC<KaldikTabProps> = ({
                           ? 'ring-2 ring-brand-500 shadow-md scale-105 z-10'
                           : 'hover:scale-[1.02]'
                       }`}
-                      title={`Minggu ${weekNum}: ${WEEK_TYPE_LABELS[week.type]}`}
+                      title={`Minggu ${weekNum}: ${WEEK_TYPE_LABELS[week.type]}${week.label ? `\n${week.label}` : ''}`}
                       aria-label={`Bulan ${month.name} Minggu ${weekNum}: ${WEEK_TYPE_LABELS[week.type]}`}
                     >
                       <span className="text-[10px] font-bold opacity-80">M{weekNum}</span>

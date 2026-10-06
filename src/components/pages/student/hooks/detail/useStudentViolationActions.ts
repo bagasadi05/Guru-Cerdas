@@ -81,7 +81,9 @@ export function useStudentViolationActions({
             description: data.description,
             context_notes: data.context_notes || null,
             points: selectedViolation?.points ?? existingViolationRecord?.points ?? 0,
-            type: existingViolationRecord?.type || 'general',
+            // New records used to fall through to 'general' because there is no
+            // existing record yet; take the code of the chosen violation first.
+            type: selectedViolation?.code || existingViolationRecord?.type || 'general',
             severity: data.severity || getViolationSeverityFromCategory(selectedViolation?.category) || existingViolationRecord?.severity || null,
             evidence_url: evidenceUrl,
             student_id: studentId,

@@ -33,8 +33,12 @@ import {
   HeadingLevel,
   Packer,
   PageOrientation,
+  TableLayoutType,
+  TableBorders,
+  VerticalAlign,
   convertInchesToTwip,
 } from 'docx';
+import { getLockedWeekSlots } from './promesEngine';
 
 export type { DocumentIdentity };
 
@@ -722,6 +726,7 @@ export async function exportProtaToWord(data: {
           new Paragraph({ text: '' }),
           // Signatures Block
           new Table({
+            borders: TableBorders.NONE,
             rows: [
               new TableRow({
                 children: [
@@ -783,97 +788,143 @@ export async function exportPromesToWord(data: {
   weeks: KaldikWeek[];
   cells: MatrixCell[];
 }): Promise<Blob> {
-  const { identity, items } = data;
+  const { identity, items, weeks, cells } = data;
   const semester = identity.semesterNumber === 2 ? 2 : 1;
+  const monthNames = getMonthNames(semester);
 
-  const filteredItems = items.filter((it) => (it.semesterNumber ?? 1) === semester);
+  const filteredItems = items
+    .filter((it) => (it.semesterNumber ?? 1) === semester)
+    .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+  const lockedSlots = getLockedWeekSlots(weeks, semester);
+  const isLocked = (monthIndex: number, week: number) => lockedSlots.has(`${monthIndex}-${week}`);
+  const jpAt = (rowId: string, monthIndex: number, week: number) =>
+    isLocked(monthIndex, week)
+      ? 0
+      : cells
+          .filter((c) => c.rowId === rowId && c.monthIndex === monthIndex && c.weekNumber === week)
+          .reduce((sum, c) => sum + (c.allocatedJp || 0), 0);
 
-  const headerCells = [
+  // Landscape A4 minus 0.5" margins leaves ~15,100 twips: 3 fixed columns + 30 week columns.
+  const NO_WIDTH = 420;
+  const TP_WIDTH = 3300;
+  const JP_WIDTH = 520;
+  const WEEK_WIDTH = 360;
+  const columnWidths = [NO_WIDTH, TP_WIDTH, JP_WIDTH, ...Array.from({ length: 30 }, () => WEEK_WIDTH)];
+  const HEADER_FILL = '0D9488';
+  const LOCKED_FILL = 'CBD5E1';
+  const SMALL = 14; // 7 pt
+  const BODY = 16; // 8 pt
+
+  const text = (value: string, opts: { bold?: boolean; size?: number; color?: string; align?: (typeof AlignmentType)[keyof typeof AlignmentType] } = {}) =>
+    new Paragraph({
+      alignment: opts.align ?? AlignmentType.CENTER,
+      children: [new TextRun({ text: value, bold: opts.bold, size: opts.size ?? SMALL, color: opts.color })],
+    });
+
+  const headerCell = (value: string, width: number, extra: { rowSpan?: number; columnSpan?: number } = {}) =>
     new TableCell({
-      children: [new Paragraph({ text: 'No', alignment: AlignmentType.CENTER })],
-      width: { size: 600, type: WidthType.DXA },
-      shading: { fill: '0D9488' },
-    }),
-    new TableCell({
-      children: [
-        new Paragraph({
-          text: identity.curriculum === 'K13' ? 'KI / KD' : 'Elemen',
-          alignment: AlignmentType.CENTER,
-        }),
-      ],
-      width: { size: 2000, type: WidthType.DXA },
-      shading: { fill: '0D9488' },
-    }),
-    new TableCell({
-      children: [
-        new Paragraph({
-          text: identity.curriculum === 'K13' ? 'Kompetensi Dasar' : 'Tujuan Pembelajaran',
-          alignment: AlignmentType.CENTER,
-        }),
-      ],
-      width: { size: 3600, type: WidthType.DXA },
-      shading: { fill: '0D9488' },
-    }),
-    new TableCell({
-      children: [new Paragraph({ text: 'Materi Pokok', alignment: AlignmentType.CENTER })],
-      width: { size: 2400, type: WidthType.DXA },
-      shading: { fill: '0D9488' },
-    }),
-    new TableCell({
-      children: [new Paragraph({ text: 'JP', alignment: AlignmentType.CENTER })],
-      width: { size: 800, type: WidthType.DXA },
-      shading: { fill: '0D9488' },
-    }),
-    new TableCell({
-      children: [
-        new Paragraph({
-          text: `Distribusi Minggu Efektif (Semester ${semester})`,
-          alignment: AlignmentType.CENTER,
-        }),
-      ],
-      width: { size: 4000, type: WidthType.DXA },
-      shading: { fill: '0D9488' },
-    }),
-  ];
+      children: [text(value, { bold: true, size: BODY, color: 'FFFFFF' })],
+      width: { size: width, type: WidthType.DXA },
+      shading: { fill: HEADER_FILL },
+      verticalAlign: VerticalAlign.CENTER,
+      ...extra,
+    });
+
+  const monthHeaderRow = new TableRow({
+    tableHeader: true,
+    children: [
+      headerCell('No', NO_WIDTH, { rowSpan: 2 }),
+      headerCell(identity.curriculum === 'K13' ? 'Kompetensi Dasar / Materi Pokok' : 'Tujuan Pembelajaran / Materi', TP_WIDTH, { rowSpan: 2 }),
+      headerCell('JP', JP_WIDTH, { rowSpan: 2 }),
+      ...monthNames.map((name) => headerCell(name, WEEK_WIDTH * 5, { columnSpan: 5 })),
+    ],
+  });
+
+  const weekHeaderRow = new TableRow({
+    tableHeader: true,
+    children: monthNames.flatMap((_, monthIndex) =>
+      [1, 2, 3, 4, 5].map(
+        (week) =>
+          new TableCell({
+            children: [text(String(week), { bold: true })],
+            width: { size: WEEK_WIDTH, type: WidthType.DXA },
+            shading: { fill: isLocked(monthIndex, week) ? LOCKED_FILL : 'CCFBF1' },
+          })
+      )
+    ),
+  });
+
+  const weekCells = (valueAt: (monthIndex: number, week: number) => number, bold = false) =>
+    monthNames.flatMap((_, monthIndex) =>
+      [1, 2, 3, 4, 5].map((week) => {
+        const locked = isLocked(monthIndex, week);
+        const value = valueAt(monthIndex, week);
+        return new TableCell({
+          children: [text(!locked && value > 0 ? String(value) : '', { bold })],
+          width: { size: WEEK_WIDTH, type: WidthType.DXA },
+          shading: locked ? { fill: LOCKED_FILL } : undefined,
+          verticalAlign: VerticalAlign.CENTER,
+        });
+      })
+    );
 
   const rows = filteredItems.map(
     (item, index) =>
       new TableRow({
+        cantSplit: true,
         children: [
           new TableCell({
-            children: [new Paragraph({ text: String(index + 1), alignment: AlignmentType.CENTER })],
+            children: [text(String(index + 1), { size: BODY })],
+            width: { size: NO_WIDTH, type: WidthType.DXA },
           }),
           new TableCell({
-            children: [new Paragraph({ text: item.elementOrDomain || '-' })],
-          }),
-          new TableCell({
+            width: { size: TP_WIDTH, type: WidthType.DXA },
             children: [
               new Paragraph({
-                text: item.learningObjectiveCode
-                  ? `${item.learningObjectiveCode}: ${item.learningObjectiveText}`
-                  : item.learningObjectiveText,
+                children: [
+                  new TextRun({
+                    text: item.learningObjectiveCode ? `${item.learningObjectiveCode}: ` : '',
+                    bold: true,
+                    size: BODY,
+                  }),
+                  new TextRun({ text: item.learningObjectiveText || '-', size: BODY }),
+                ],
               }),
+              ...(item.coreTopic
+                ? [new Paragraph({ children: [new TextRun({ text: item.coreTopic, italics: true, size: SMALL, color: '475569' })] })]
+                : []),
             ],
           }),
           new TableCell({
-            children: [new Paragraph({ text: item.coreTopic || '-' })],
+            children: [text(String(item.targetJp ?? 0), { bold: true, size: BODY })],
+            width: { size: JP_WIDTH, type: WidthType.DXA },
+            verticalAlign: VerticalAlign.CENTER,
           }),
-          new TableCell({
-            children: [
-              new Paragraph({ text: String(item.targetJp ?? 0), alignment: AlignmentType.CENTER }),
-            ],
-          }),
-          new TableCell({
-            children: [
-              new Paragraph({
-                text: `Alokasi terdistribusi ${item.targetJp ?? 0} JP`,
-                alignment: AlignmentType.CENTER,
-              }),
-            ],
-          }),
+          ...weekCells((monthIndex, week) => jpAt(item.id, monthIndex, week)),
         ],
       })
   );
+
+  const totalRow = new TableRow({
+    cantSplit: true,
+    children: [
+      new TableCell({
+        children: [text('JUMLAH JP PER PEKAN', { bold: true, size: SMALL, align: AlignmentType.RIGHT })],
+        columnSpan: 2,
+        shading: { fill: 'F1F5F9' },
+      }),
+      new TableCell({
+        children: [
+          text(String(filteredItems.reduce((sum, it) => sum + (it.targetJp ?? 0), 0)), { bold: true, size: BODY }),
+        ],
+        shading: { fill: 'F1F5F9' },
+      }),
+      ...weekCells(
+        (monthIndex, week) => filteredItems.reduce((sum, it) => sum + jpAt(it.id, monthIndex, week), 0),
+        true
+      ),
+    ],
+  });
 
   const doc = new Document({
     sections: [
@@ -884,10 +935,10 @@ export async function exportPromesToWord(data: {
               orientation: PageOrientation.LANDSCAPE,
             },
             margin: {
-              top: convertInchesToTwip(0.6),
-              right: convertInchesToTwip(0.6),
-              bottom: convertInchesToTwip(0.6),
-              left: convertInchesToTwip(0.6),
+              top: convertInchesToTwip(0.5),
+              right: convertInchesToTwip(0.5),
+              bottom: convertInchesToTwip(0.5),
+              left: convertInchesToTwip(0.5),
             },
           },
         },
@@ -929,14 +980,34 @@ export async function exportPromesToWord(data: {
             heading: HeadingLevel.HEADING_2,
           }),
           new Paragraph({ text: '' }),
+          new Paragraph({ children: [new TextRun({ text: `Mata Pelajaran\t: ${identity.subject}` })] }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: `Kelas / Fase\t: ${identity.gradeLevel} ${identity.phase ? `(${identity.phase})` : ''}` }),
+            ],
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: `Kurikulum\t: ${identity.curriculum === 'K13' ? 'Kurikulum 2013' : 'Kurikulum Merdeka'}` }),
+            ],
+          }),
+          new Paragraph({ text: '' }),
           new Table({
-            rows: [new TableRow({ children: headerCells }), ...rows],
-            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [monthHeaderRow, weekHeaderRow, ...rows, totalRow],
+            columnWidths,
+            layout: TableLayoutType.FIXED,
+            width: { size: columnWidths.reduce((a, b) => a + b, 0), type: WidthType.DXA },
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: 'Kolom berarsir: pekan tidak efektif menurut Kalender Pendidikan.', italics: true, size: SMALL }),
+            ],
           }),
           new Paragraph({ text: '' }),
           new Paragraph({ text: '' }),
           // Signature Block
           new Table({
+            borders: TableBorders.NONE,
             rows: [
               new TableRow({
                 children: [

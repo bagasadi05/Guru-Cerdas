@@ -61,6 +61,17 @@ afterEach(() => {
 // ─── Tests ────────────────────────────────────────────────────────
 
 describe('geminiService — proxy mode', () => {
+  it('replays a cached answer unless the caller asks for a fresh one', async () => {
+    const fetchMock = stubFetch(() => Promise.resolve(okGeminiResponse('{"ok":true}')));
+
+    await generateGeminiJson('Susun ulang tujuan pembelajaran unik-cache-1', 'sys', 'modul-ajar');
+    await generateGeminiJson('Susun ulang tujuan pembelajaran unik-cache-1', 'sys', 'modul-ajar');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await generateGeminiJson('Susun ulang tujuan pembelajaran unik-cache-1', 'sys', 'modul-ajar', { bypassCache: true });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('posts to the proxy endpoint with the model in the body', async () => {
     const fetchMock = stubFetch(() => Promise.resolve(okGeminiResponse('{"nama":"Budi"}')));
     vi.stubEnv('VITE_GEMINI_MODEL', 'gemini-2.5-flash');

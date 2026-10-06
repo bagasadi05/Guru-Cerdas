@@ -90,6 +90,7 @@ export const ComparativeAnalysisView: React.FC<ComparativeAnalysisViewProps> = (
   onGenerateComparativeAnalysis,
   onExportComparativeReport,
 }) => {
+  const [renderedAt] = React.useState(() => Date.now());
   const shouldReduceMotion = useReducedMotion();
 
   const chartSize = 260;
@@ -533,7 +534,7 @@ export const ComparativeAnalysisView: React.FC<ComparativeAnalysisViewProps> = (
                           • Dibuat: {new Date(compGeneratedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </span>
                       )}
-                      {compGeneratedAt && (Date.now() - new Date(compGeneratedAt).getTime()) > 30 * 24 * 60 * 60 * 1000 && (
+                      {compGeneratedAt && (renderedAt - new Date(compGeneratedAt).getTime()) > 30 * 24 * 60 * 60 * 1000 && (
                         <span className="ml-1 px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded text-xxs font-semibold">Stale</span>
                       )}
                     </CardDescription>

@@ -9,7 +9,8 @@ export interface AuthResult {
 /**
  * Verifies Supabase Auth JWT token from Authorization header (Bearer <token>).
  * Communicates with Supabase Auth API /auth/v1/user to validate user identity.
- * In local dev without token, allows fallback to support development workflows.
+ * In local development (NODE_ENV or VERCEL_ENV = development) a missing token
+ * is allowed when `allowDevWithoutAuth` is set.
  */
 export async function authenticateRequest(
   req: IncomingMessage,
@@ -25,10 +26,10 @@ export async function authenticateRequest(
     ? authHeader.slice(7).trim()
     : null;
 
-  const host = (req.headers['x-forwarded-host'] || req.headers.host || '') as string;
+  // Only the runtime environment decides this. Host and X-Forwarded-Host come
+  // from the client, so trusting "localhost" in them let anyone skip login.
   const isDev = process.env.NODE_ENV === 'development' ||
-    host.includes('localhost') ||
-    host.includes('127.0.0.1');
+    process.env.VERCEL_ENV === 'development';
 
   if (!token) {
     if (isDev && options.allowDevWithoutAuth) {

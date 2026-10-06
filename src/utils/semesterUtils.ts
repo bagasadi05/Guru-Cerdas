@@ -173,3 +173,17 @@ export const SEMESTER_OPTIONS: { value: SemesterType; label: string }[] = [
 ];
 
 
+
+/**
+ * Returns the semester row whose date range contains `date` (YYYY-MM-DD), or
+ * null when none does. Use this to file a record by the date it happened,
+ * not by whichever semester is active when it's entered.
+ */
+export const findSemesterForDate = <T extends { start_date: string; end_date: string; deleted_at?: string | null }>(
+    semesters: readonly T[] | null | undefined,
+    date: string | null | undefined,
+): T | null => {
+    if (!semesters || !date) return null;
+    const day = date.slice(0, 10);
+    return semesters.find((s) => !s.deleted_at && s.start_date <= day && day <= s.end_date) ?? null;
+};

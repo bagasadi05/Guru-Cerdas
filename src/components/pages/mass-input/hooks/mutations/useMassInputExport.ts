@@ -10,6 +10,8 @@ import { sanitizeFilename } from '../../../../../services/securityEnhanced';
 import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../../../../utils/academicRecordUtils';
 import { generateTeacherNotesBatched } from '../../../../../utils/aiBatch';
 import { useToast } from '../../../../../hooks/useToast';
+import { schoolDate } from '../../../../../utils/reminderDates';
+import { fetchAllPages } from '../../../../../utils/fetchAllPages';
 
 interface UseMassInputExportParams {
     selectedClass: string;
@@ -43,67 +45,47 @@ export function useMassInputExport({
 
     const fetchBulkReportData = async (studentIds: string[], semesterId: string): Promise<ReportDataType[]> => {
         if (studentIds.length === 0) return [];
+        // A class's attendance for one semester already passes the 1000-row
+        // response cap, so every table is paged (ordered by id so pages neither
+        // overlap nor skip). A failed page fails the export instead of printing
+        // reports from partial data.
+        type StudentScoped = { student_id: string };
         const [
-            studentsRes,
-            reportsRes,
-            attendanceRes,
-            academicRes,
-            violationsRes,
-            quizPointsRes,
-            achievementsRes
+            studentsList,
+            reportsRows,
+            attendanceRows,
+            academicRows,
+            violationRows,
+            quizPointRows,
+            achievementRows,
         ] = await Promise.all([
-            supabase.from('students').select('*, classes(id, name)').in('id', studentIds).is('deleted_at', null),
-            supabase.from('reports').select('*').in('student_id', studentIds).is('deleted_at', null),
-            supabase.from('attendance').select('*').in('student_id', studentIds).eq('semester_id', semesterId).is('deleted_at', null),
-            supabase.from('academic_records').select('*').in('student_id', studentIds).eq('semester_id', semesterId).is('deleted_at', null),
-            supabase.from('violations').select('*').in('student_id', studentIds).eq('semester_id', semesterId).is('deleted_at', null),
-            supabase.from('quiz_points').select('*').in('student_id', studentIds).eq('semester_id', semesterId).is('deleted_at', null),
-            supabase.from('student_achievements').select('*').in('student_id', studentIds).is('deleted_at', null),
-        ]);
+            fetchAllPages<{ id: string; name: string }>((from, to) => supabase.from('students').select('*, classes(id, name)').in('id', studentIds).is('deleted_at', null).order('id').range(from, to)),
+            fetchAllPages<StudentScoped>((from, to) => supabase.from('reports').select('*').in('student_id', studentIds).is('deleted_at', null).order('id').range(from, to)),
+            fetchAllPages<StudentScoped>((from, to) => supabase.from('attendance').select('*').in('student_id', studentIds).eq('semester_id', semesterId).is('deleted_at', null).order('id').range(from, to)),
+            fetchAllPages<StudentScoped>((from, to) => supabase.from('academic_records').select('*').in('student_id', studentIds).eq('semester_id', semesterId).is('deleted_at', null).order('id').range(from, to)),
+            fetchAllPages<StudentScoped>((from, to) => supabase.from('violations').select('*').in('student_id', studentIds).eq('semester_id', semesterId).is('deleted_at', null).order('id').range(from, to)),
+            fetchAllPages<StudentScoped>((from, to) => supabase.from('quiz_points').select('*').in('student_id', studentIds).eq('semester_id', semesterId).is('deleted_at', null).order('id').range(from, to)),
+            fetchAllPages<StudentScoped>((from, to) => supabase.from('student_achievements').select('*').in('student_id', studentIds).is('deleted_at', null).order('id').range(from, to)),
+        ]).catch((err: unknown) => {
+            const message = err && typeof err === 'object' && 'message' in err ? String((err as { message: unknown }).message) : String(err);
+            throw new Error(`Data rapor gagal diambil lengkap: ${message}`);
+        });
 
-        const errors = [studentsRes, reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes, achievementsRes]
-            .map((r) => r.error)
-            .filter((e) => e !== null);
-        if (errors.length > 0) throw new Error(errors.map((e) => e!.message).join(', '));
-
-        const studentsList = studentsRes.data || [];
-        const reportsByStudent = new Map<string, unknown[]>();
-        const attendanceByStudent = new Map<string, unknown[]>();
-        const academicByStudent = new Map<string, unknown[]>();
-        const violationsByStudent = new Map<string, unknown[]>();
-        const quizPointsByStudent = new Map<string, unknown[]>();
-        const achievementsByStudent = new Map<string, unknown[]>();
-
-        (reportsRes.data || []).forEach((item) => {
-            const arr = reportsByStudent.get(item.student_id) || [];
-            arr.push(item);
-            reportsByStudent.set(item.student_id, arr);
-        });
-        (attendanceRes.data || []).forEach((item) => {
-            const arr = attendanceByStudent.get(item.student_id) || [];
-            arr.push(item);
-            attendanceByStudent.set(item.student_id, arr);
-        });
-        (academicRes.data || []).forEach((item) => {
-            const arr = academicByStudent.get(item.student_id) || [];
-            arr.push(item);
-            academicByStudent.set(item.student_id, arr);
-        });
-        (violationsRes.data || []).forEach((item) => {
-            const arr = violationsByStudent.get(item.student_id) || [];
-            arr.push(item);
-            violationsByStudent.set(item.student_id, arr);
-        });
-        (quizPointsRes.data || []).forEach((item) => {
-            const arr = quizPointsByStudent.get(item.student_id) || [];
-            arr.push(item);
-            quizPointsByStudent.set(item.student_id, arr);
-        });
-        (achievementsRes.data || []).forEach((item) => {
-            const arr = achievementsByStudent.get(item.student_id) || [];
-            arr.push(item);
-            achievementsByStudent.set(item.student_id, arr);
-        });
+        const groupByStudent = (rows: StudentScoped[]) => {
+            const byStudent = new Map<string, unknown[]>();
+            rows.forEach((item) => {
+                const arr = byStudent.get(item.student_id) || [];
+                arr.push(item);
+                byStudent.set(item.student_id, arr);
+            });
+            return byStudent;
+        };
+        const reportsByStudent = groupByStudent(reportsRows);
+        const attendanceByStudent = groupByStudent(attendanceRows);
+        const academicByStudent = groupByStudent(academicRows);
+        const violationsByStudent = groupByStudent(violationRows);
+        const quizPointsByStudent = groupByStudent(quizPointRows);
+        const achievementsByStudent = groupByStudent(achievementRows);
 
         const studentMap = new Map(studentsList.map(s => [s.id, s]));
         return studentIds
@@ -175,7 +157,7 @@ Format JSON yang diharapkan:
                 const semNumber = activeSemester?.semester_number ?? 1;
                 const semName = semNumber % 2 !== 0 ? 'Ganjil' : 'Genap';
                 const acadYear = activeAcademicYear?.name || `${new Date().getFullYear()} / ${new Date().getFullYear() + 1}`;
-                await generateStudentReport(doc, reportData, teacherNote, new Date().toISOString().slice(0, 10), semName, acadYear, user);
+                await generateStudentReport(doc, reportData, teacherNote, schoolDate(), semName, acadYear, user);
                 setExportProgress(`${Math.round(70 + ((i + 1) / studentsToPrint.length) * 30)}%`);
             }
             const selectedClassName = classes?.find(c => c.id === selectedClass)?.name || 'Kelas';
@@ -210,20 +192,25 @@ Format JSON yang diharapkan:
         doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, pageWidth - 14, y, { align: 'right' });
         const tableStartY = y + 8;
         
-        let query = supabase
-            .from('academic_records').select('*')
-            .eq('subject', subjectGradeInfo.subject)
-            .in('student_id', Array.from(selectedStudentIds))
-            .is('deleted_at', null);
-            
-        if (activeSemester?.id) {
-            query = query.eq('semester_id', activeSemester.id);
-        } else {
-            query = query.is('semester_id', null);
+        let rawAllSubjectGrades: unknown[];
+        try {
+            rawAllSubjectGrades = await fetchAllPages((from, to) => {
+                let query = supabase
+                    .from('academic_records').select('*')
+                    .eq('subject', subjectGradeInfo.subject)
+                    .in('student_id', Array.from(selectedStudentIds))
+                    .is('deleted_at', null);
+                query = activeSemester?.id
+                    ? query.eq('semester_id', activeSemester.id)
+                    : query.is('semester_id', null);
+                return query.order('id').range(from, to);
+            });
+        } catch (err) {
+            setIsExporting(false);
+            toast.error(`Gagal mengambil nilai: ${err instanceof Error ? err.message : 'periksa koneksi lalu coba lagi.'}`);
+            return;
         }
-            
-        const { data: rawAllSubjectGrades } = await query;
-        const allSubjectGrades = dedupeAcademicRecords((rawAllSubjectGrades || []) as never) as { student_id: string; assessment_name?: string; score: number }[];
+        const allSubjectGrades = dedupeAcademicRecords(rawAllSubjectGrades as never) as { student_id: string; assessment_name?: string; score: number }[];
         const allAssessments = [...new Set(allSubjectGrades.map((r) => r.assessment_name || 'Lainnya'))].sort();
         const head = [['No', 'Nama Siswa', ...allAssessments]];
         const tableData = (studentsData || [])

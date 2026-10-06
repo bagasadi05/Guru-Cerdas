@@ -6,7 +6,7 @@ import { Database } from '../../../../services/database.types';
 import { StudentMutationVars, ReportMutationVars, AcademicMutationVars, QuizMutationVars, ViolationMutationVars, CommunicationMutationVars } from '../types';
 import { writeAuditLog } from '../../../../services/auditTrail';
 import { queryKeys } from '../../../../lib/queryKeys';
-import { dedupeAcademicRecords } from '../../../../utils/academicRecordUtils';
+import { dedupeAcademicRecords, buildQuizPointDailyKey } from '../../../../utils/academicRecordUtils';
 import { normalizeStudentName } from '../../../../utils/textSanitizer';
 
 const DUPLICATE_GUARD_WINDOW_MINUTES = 10;
@@ -221,29 +221,27 @@ export const useStudentMutations = (studentId: string | undefined, onSuccessClos
                 inFlightQuizMutationsRef.current.add(inFlightKey);
 
                 try {
-                    let existingQuery = supabase
+                    const { data: sameDayRows, error: existingError } = await supabase
                         .from('quiz_points')
                         .select('id, student_id, user_id, quiz_date, quiz_name, subject, points, max_points, category, is_used, used_at, used_for_subject, semester_id, created_at')
                         .eq('student_id', vars.data.student_id)
-                        .eq('user_id', userId)
                         .eq('quiz_date', vars.data.quiz_date)
-                        .eq('quiz_name', normalizedQuizName)
                         .is('deleted_at', null)
-                        .order('created_at', { ascending: false })
-                        .limit(1);
-
-                    existingQuery = normalizedSubject != null
-                        ? existingQuery.eq('subject', normalizedSubject)
-                        : existingQuery.is('subject', null);
-
-                    existingQuery = vars.data.semester_id
-                        ? existingQuery.eq('semester_id', vars.data.semester_id)
-                        : existingQuery.is('semester_id', null);
-
-                    const { data: existingRows, error: existingError } = await existingQuery;
+                        .order('created_at', { ascending: false });
                     if (existingError) throw existingError;
 
-                    const existingRow = existingRows?.[0];
+                    // One point per student, activity, subject and day across all teachers;
+                    // the Bintang score would silently drop a second one anyway.
+                    const targetKey = buildQuizPointDailyKey({
+                        student_id: vars.data.student_id,
+                        subject: normalizedSubject,
+                        quiz_name: normalizedQuizName,
+                        quiz_date: vars.data.quiz_date,
+                    });
+                    const existingRow = (sameDayRows || []).find(row => buildQuizPointDailyKey(row) === targetKey);
+                    if (existingRow && existingRow.user_id !== userId) {
+                        throw new Error('Poin keaktifan untuk aktivitas ini sudah dicatat guru lain pada tanggal yang sama.');
+                    }
                     if (existingRow) {
                         const { error } = await supabase
                             .from('quiz_points')

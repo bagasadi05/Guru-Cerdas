@@ -2,24 +2,23 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { MotionDiv, AnimatePresence } from '../../ui/MotionComponents';
 import {
   BookOpen,
-  History,
   Copy,
   Printer,
   FileText,
-  Clock,
+  FileDown,
   ZoomIn,
   ZoomOut,
-  Maximize2,
   Minimize2,
-  Download,
-  Loader2
 } from 'lucide-react';
 import { useTranslation } from '../../../utils/i18n';
 import { useAuth } from '../../../hooks/useAuth';
 import { supabase } from '../../../services/supabase';
 import { FormState } from './types';
-import { extractStudentHtml, cleanHtmlForWordExport } from './utils/template';
+import { extractStudentHtml } from './utils/template';
 import { exportModulAjarToPdf } from './utils/pdfExport';
+import { exportModulAjarToWord } from './utils/wordExport';
+import { printModulAjarHtml } from './utils/printDocument';
+import { sanitizeContent } from '../../../services/securityEnhanced';
 import { useModulAjarAiJob } from './hooks/useModulAjarAiJob';
 import {
   generateTujuanPembelajaran,
@@ -38,16 +37,39 @@ import {
 import { ModulAjarForm } from './components/ModulAjarForm';
 import { ModulAjarHistory } from './components/ModulAjarHistory';
 import { ModulAjarPreview } from './components/ModulAjarPreview';
-import { useModulAjarForm } from './hooks/useModulAjarForm';
+import { CONTENT_FIELDS, type ContentField, useModulAjarForm } from './hooks/useModulAjarForm';
+import { buildAiPromptContext } from './utils/aiPromptContext';
 import { useModulAjarGenerator } from './hooks/useModulAjarGenerator';
+import { type LessonPlanListItem, useModulAjarHistory } from './hooks/useModulAjarHistory';
+import { UndoBar } from './components/UndoBar';
 import { useToast } from '../../../hooks/useToast';
 import { ConfirmationDialog } from '../../ui/ConfirmationDialog';
+import { ExportFailureBanner, type ExportFailure } from './components/ExportFailureBanner';
+import { ModulAjarToolbar } from './components/ModulAjarToolbar';
+import { AiWaitingCard } from './components/AiWaitingCard';
+import { DownloadMenu } from './components/DownloadMenu';
+import {
+  DocumentExportError,
+  downloadBlob,
+  isServerDocumentExportEnabled,
+  requestDocumentExport,
+  type DocumentExportRequest,
+} from '../../../services/documentExportService';
+import type { ExportFormat } from '../../../lib/modulAjarExport/types';
+
+const isContentField = (field: string): field is ContentField =>
+  (CONTENT_FIELDS as readonly string[]).includes(field);
+
+interface ServerExportJob extends DocumentExportRequest {
+  /** `preview` or the history item's ID; drives the per-button loading state. */
+  source: string;
+}
 
 const ModulAjarCreatorPage: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const toast = useToast();
-  
+
   const {
     formState,
     setFormState,
@@ -63,6 +85,9 @@ const ModulAjarCreatorPage: React.FC = () => {
     generateCP,
     resetFormToDraft,
     autoDistributeTime,
+    isFieldOwnedByTeacher,
+    applyGeneratedContent,
+    setFieldFromAi,
   } = useModulAjarForm();
 
   const [generatedDocument, setGeneratedDocument] = useState<string>('');
@@ -71,28 +96,56 @@ const ModulAjarCreatorPage: React.FC = () => {
   const [previewMode, setPreviewMode] = useState<'guru' | 'siswa'>('guru');
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  
-  const [history, setHistory] = useState<any[]>([]);
-  const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
-  const [historyError, setHistoryError] = useState<string | null>(null);
+
+  const {
+    history,
+    isLoading: isLoadingHistory,
+    error: historyError,
+    fetchHistory,
+    loadPlanContent: fetchPlanContent,
+    softDelete,
+    undoDelete,
+    updateLocal: updateHistoryItem,
+  } = useModulAjarHistory(user?.id);
+  /** The document just removed from Riwayat, while Urungkan is still offered. */
+  const [deletedPlan, setDeletedPlan] = useState<LessonPlanListItem | null>(null);
+  // Stable, so the undo bar's timer is not restarted by every re-render.
+  const clearDeletedPlan = useCallback(() => setDeletedPlan(null), []);
 
   const [aiCacheWarning, setAiCacheWarning] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string>('');
   const [fieldLoading, setFieldLoading] = useState<Record<string, boolean>>({});
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [resetConfirmOpen, setResetConfirmOpen] = useState<boolean>(false);
   const [isExportingPdf, setIsExportingPdf] = useState<boolean>(false);
+  const [currentLessonPlanId, setCurrentLessonPlanId] = useState<string | null>(null);
+  const [hasUnsavedEdits, setHasUnsavedEdits] = useState<boolean>(false);
+  const [exportingKey, setExportingKey] = useState<string | null>(null);
+  const [exportFailure, setExportFailure] = useState<ExportFailure | null>(null);
+  const [pendingExportFormat, setPendingExportFormat] = useState<ExportFormat | null>(null);
+  const [isSavingDraft, setIsSavingDraft] = useState<boolean>(false);
+  /** Saving state of live preview edits. */
+  const [editStatus, setEditStatus] = useState<'unsaved' | 'saving' | 'saved' | 'error' | null>(null);
+  /** The form the displayed document was built from (identity on the student sheet). */
+  const [documentForm, setDocumentForm] = useState<FormState | null>(null);
+  /**
+   * The displayed document holds text typed in the preview. A regenerated
+   * document is built from the form, so those edits would not carry over.
+   */
+  const [documentHasEdits, setDocumentHasEdits] = useState<boolean>(false);
+  const [regenerateConfirmOpen, setRegenerateConfirmOpen] = useState<boolean>(false);
+  const exportInFlightRef = useRef(false);
+  const useServerExport = isServerDocumentExportEnabled();
 
   const previewRef = useRef<HTMLDivElement>(null);
   const fullscreenPreviewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch('/logo_sekolah.png')
-      .then(res => {
+      .then((res) => {
         if (!res.ok) return null;
         return res.blob();
       })
-      .then(blob => {
+      .then((blob) => {
         if (!blob) return;
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -100,54 +153,45 @@ const ModulAjarCreatorPage: React.FC = () => {
         };
         reader.readAsDataURL(blob);
       })
-      .catch(err => console.error('Failed to load logo_sekolah.png:', err));
+      .catch((err) => console.error('Failed to load logo_sekolah.png:', err));
   }, []);
 
-  const fetchHistory = useCallback(async () => {
-    if (!user) return;
-    setIsLoadingHistory(true);
-    try {
-      const { data, error } = await supabase
-        .from('lesson_plans')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Failed to load history:', error);
-        setHistoryError(`Gagal memuat riwayat: ${error.message}`);
-        setHistory([]);
-      } else if (data) {
-        setHistory(data);
-        setHistoryError(null);
-      }
-    } catch (e) {
-      console.error('Failed to load history:', e);
-      setHistoryError('Gagal memuat riwayat. Periksa koneksi lalu coba lagi.');
-      setHistory([]);
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    fetchHistory();
-  }, [fetchHistory]);
+  /** Loads one saved document's HTML; history rows are listed without it. */
+  const loadPlanContent = async (plan: { id: string; generated_content?: string | null }) => {
+    const content = await fetchPlanContent(plan);
+    if (content === null) toast.error('Dokumen gagal dimuat. Periksa koneksi, lalu coba lagi.');
+    return content;
+  };
 
   const isAiEnabled = import.meta.env.VITE_ENABLE_AI_MODUL_AJAR === 'true';
-  
-  const { generateManualModulAjar, renderPrivateDraftAiModulAjar, isAiGenerating } = useModulAjarGenerator({
-    formState,
-    setFormState,
-    user,
-    models,
-    t,
-    isAiEnabled,
-    logoBase64,
-    fetchHistory,
-    setGeneratedDocument,
-    setAiCacheWarning,
-  });
+
+  const {
+    generateManualModulAjar,
+    renderPrivateDraftAiModulAjar,
+    isAiGenerating,
+    isSubmitting: isGeneratorSubmitting,
+  } = useModulAjarGenerator({
+      formState,
+      setFormState,
+      user,
+      models,
+      t,
+      isAiEnabled,
+      logoBase64,
+      fetchHistory,
+      setGeneratedDocument,
+      onDocumentSaved: (lessonPlanId, builtFrom) => {
+        setCurrentLessonPlanId(lessonPlanId);
+        setDocumentForm(builtFrom);
+        setDocumentHasEdits(false);
+        setHasUnsavedEdits(false);
+        setEditStatus(null);
+      },
+      setAiCacheWarning,
+      isFieldOwnedByTeacher,
+      applyGeneratedContent,
+      notify: { success: toast.success, error: toast.error },
+    });
 
   const queueHookResult = useModulAjarAiJob(
     formState,
@@ -162,22 +206,46 @@ const ModulAjarCreatorPage: React.FC = () => {
     (errMsg) => {
       console.warn(`[AI Queue] Job error: ${errMsg}`);
       toast.error(errMsg || 'Gagal menyusun modul ajar dengan AI. Silakan coba lagi.');
-    }
+    },
+    () =>
+      buildAiPromptContext(
+        formState,
+        isFieldOwnedByTeacher('manualTujuanPembelajaran') ? formState.manualTujuanPembelajaran : '',
+      ),
   );
 
   const queueStatus = isAiEnabled ? queueHookResult.jobStatus : 'idle';
 
-  const handleGenerate = () => {
-    if (!formState.mataPelajaran || !formState.topik) {
-      toast.error(t.lessonPlan.validateSubject);
-      return;
-    }
+  const runGenerate = () => {
+    setRegenerateConfirmOpen(false);
     setMobileActiveView('preview');
     if (isAiEnabled) {
       queueHookResult.startJob();
     } else {
       generateManualModulAjar();
     }
+  };
+
+  const handleGenerate = () => {
+    if (!formState.mataPelajaran || !formState.topik) {
+      toast.error(t.lessonPlan.validateSubject);
+      return;
+    }
+    if (!formState.capaianPembelajaran && !formState.manualTujuanPembelajaran) {
+      toast.error('Lengkapi Capaian atau Tujuan Pembelajaran sebelum menyusun modul ajar.');
+      setActiveStep(4);
+      return;
+    }
+    if (formState.profilPelajar.length === 0 || !formState.modelPembelajaran) {
+      toast.error('Pilih profil pelajar dan model pembelajaran sebelum menyusun modul ajar.');
+      setActiveStep(formState.profilPelajar.length === 0 ? 3 : 5);
+      return;
+    }
+    if (generatedDocument && documentHasEdits) {
+      setRegenerateConfirmOpen(true);
+      return;
+    }
+    runGenerate();
   };
 
   const FIELD_LABELS: Record<string, string> = {
@@ -202,7 +270,7 @@ const ModulAjarCreatorPage: React.FC = () => {
     }
 
     const label = FIELD_LABELS[field] || 'konten';
-    setFieldLoading(prev => ({ ...prev, [field]: true }));
+    setFieldLoading((prev) => ({ ...prev, [field]: true }));
     try {
       const ctx = {
         mapel: formState.mataPelajaran.trim(),
@@ -214,7 +282,8 @@ const ModulAjarCreatorPage: React.FC = () => {
         profilPelajarPancasila: formState.profilPelajar,
         temaKbc: formState.temaKbc,
         materiInsersi: formState.materiInsersi,
-        isKbcIntegrated: formState.isKbcIntegrated || formState.curriculumApproach === 'Berbasis Cinta',
+        isKbcIntegrated:
+          formState.isKbcIntegrated || formState.curriculumApproach === 'Berbasis Cinta',
       };
       let content = '';
 
@@ -260,7 +329,8 @@ const ModulAjarCreatorPage: React.FC = () => {
       }
 
       if (content) {
-        handleInputChange(field as keyof FormState, content);
+        if (isContentField(field)) setFieldFromAi(field, content);
+        else handleInputChange(field as keyof FormState, content);
         toast.success(`✨ ${label} berhasil disusun oleh AI!`);
       } else {
         toast.error(`Gagal menghasilkan ${label}. Silakan coba lagi.`);
@@ -269,9 +339,18 @@ const ModulAjarCreatorPage: React.FC = () => {
       console.error(`[AI Field] ${field} generation failed:`, err);
       toast.error(err.message || `Gagal menyusun ${label} dengan AI. Silakan coba lagi.`);
     } finally {
-      setFieldLoading(prev => ({ ...prev, [field]: false }));
+      setFieldLoading((prev) => ({ ...prev, [field]: false }));
     }
   };
+
+  const previewBusyFormat: 'pdf' | 'docx' | null =
+    exportingKey === 'preview:docx'
+      ? 'docx'
+      : exportingKey === 'preview:pdf' || isExportingPdf
+        ? 'pdf'
+        : exportingKey !== null
+          ? 'pdf'
+          : null;
 
   const handleCopy = async () => {
     const targetRef = isFullscreen ? fullscreenPreviewRef : previewRef;
@@ -285,11 +364,148 @@ const ModulAjarCreatorPage: React.FC = () => {
     }
   };
 
-  const handleExportPdf = async () => {
+  const getDocumentForOutput = (targetRef: React.RefObject<HTMLDivElement>) => {
+    const livePreview = targetRef.current?.innerHTML;
+    if (livePreview) return livePreview;
+    if (!generatedDocument) return '';
+    return previewMode === 'siswa'
+      ? extractStudentHtml(generatedDocument, documentForm ?? formState, logoBase64)
+      : generatedDocument;
+  };
+
+  /**
+   * Live preview edits are saved to the document as soon as the teacher
+   * leaves the text. Before, they only reached the database through the
+   * server export dialog and were lost on reload.
+   */
+  const persistPreviewEdits = async (html: string) => {
+    setGeneratedDocument(html);
+    if (!hasUnsavedEdits || !currentLessonPlanId) return;
+    const lessonPlanId = currentLessonPlanId;
+    const cleanHtml = sanitizeContent(html);
+    setEditStatus('saving');
+    const { error } = await supabase
+      .from('lesson_plans')
+      .update({ generated_content: cleanHtml, updated_at: new Date().toISOString() })
+      .eq('id', lessonPlanId);
+    if (error) {
+      console.error('Failed to save preview edits:', error);
+      setEditStatus('error');
+      return;
+    }
+    setHasUnsavedEdits(false);
+    setDocumentHasEdits(true);
+    setEditStatus('saved');
+    updateHistoryItem(lessonPlanId, { generated_content: cleanHtml });
+  };
+
+  const markPreviewEdited = () => {
+    setHasUnsavedEdits(true);
+    setEditStatus('unsaved');
+  };
+
+  const runServerExport = async (job: ServerExportJob) => {
+    if (exportInFlightRef.current) return;
+    exportInFlightRef.current = true;
+    setExportingKey(`${job.source}:${job.format}`);
+    setExportFailure(null);
+    try {
+      const { blob, fileName } = await requestDocumentExport(job);
+      downloadBlob(blob, fileName);
+      toast.success(
+        job.format === 'pdf' ? 'PDF berhasil diunduh' : 'File Word (.docx) berhasil diunduh',
+      );
+    } catch (err) {
+      console.error(`Failed to export ${job.format}:`, err);
+      const error = err instanceof DocumentExportError ? err : new DocumentExportError('UNKNOWN');
+      setExportFailure({
+        message: error.message,
+        onRetry: error.retryable ? () => void runServerExport(job) : undefined,
+        onPrintFallback: job.format === 'pdf' && job.source === 'preview' ? handlePrint : undefined,
+      });
+    } finally {
+      exportInFlightRef.current = false;
+      setExportingKey(null);
+    }
+  };
+
+  const exportPreviewFromServer = (format: ExportFormat) => {
+    if (!currentLessonPlanId) {
+      setExportFailure({
+        message: 'Dokumen ini belum tersimpan. Susun ulang dokumen agar tersimpan, lalu unduh lagi.',
+      });
+      return;
+    }
+    if (hasUnsavedEdits) {
+      setPendingExportFormat(format);
+      return;
+    }
+    void runServerExport({
+      source: 'preview',
+      lessonPlanId: currentLessonPlanId,
+      format,
+      paperSize: formState.paperSize === 'F4' ? 'F4' : 'A4',
+      variant: previewMode,
+    });
+  };
+
+  /** Persists live preview edits, then exports the saved version. */
+  const saveDraftAndExport = async () => {
+    const format = pendingExportFormat;
+    const lessonPlanId = currentLessonPlanId;
+    if (!format || !lessonPlanId) return;
+
     const targetRef = isFullscreen ? fullscreenPreviewRef : previewRef;
-    const documentToExport = previewMode === 'siswa'
-      ? (extractStudentHtml(generatedDocument, formState, logoBase64) || targetRef.current?.innerHTML)
-      : (generatedDocument || targetRef.current?.innerHTML);
+    const liveHtml = previewMode === 'guru' ? targetRef.current?.innerHTML : undefined;
+    const cleanHtml = sanitizeContent(liveHtml || generatedDocument);
+
+    setIsSavingDraft(true);
+    try {
+      const { error } = await supabase
+        .from('lesson_plans')
+        .update({ generated_content: cleanHtml, updated_at: new Date().toISOString() })
+        .eq('id', lessonPlanId);
+      if (error) throw error;
+    } catch (err) {
+      console.error('Failed to save draft before export:', err);
+      toast.error('Perubahan gagal disimpan. Periksa koneksi, lalu coba lagi.');
+      // Rethrow so the confirmation dialog stays open for another attempt.
+      throw err;
+    } finally {
+      setIsSavingDraft(false);
+    }
+
+    setGeneratedDocument(cleanHtml);
+    setHasUnsavedEdits(false);
+    setDocumentHasEdits(true);
+    setEditStatus('saved');
+    updateHistoryItem(lessonPlanId, { generated_content: cleanHtml });
+    void runServerExport({
+      source: 'preview',
+      lessonPlanId,
+      format,
+      paperSize: formState.paperSize === 'F4' ? 'F4' : 'A4',
+      variant: previewMode,
+    });
+  };
+
+  const exportHistoryFromServer = (item: any, format: ExportFormat) => {
+    void runServerExport({
+      source: item.id,
+      lessonPlanId: item.id,
+      format,
+      paperSize: item.components?.paperSize === 'F4' ? 'F4' : 'A4',
+      variant: 'guru',
+    });
+  };
+
+  const handleExportPdf = async () => {
+    if (useServerExport) {
+      exportPreviewFromServer('pdf');
+      return;
+    }
+    const targetRef = isFullscreen ? fullscreenPreviewRef : previewRef;
+    const documentToExport = getDocumentForOutput(targetRef);
 
     if (!documentToExport) return;
 
@@ -316,215 +532,100 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   const handlePrint = () => {
     const targetRef = isFullscreen ? fullscreenPreviewRef : previewRef;
-    const printContent = generatedDocument || targetRef.current?.innerHTML;
-    if (!printContent) return;
-    
-    const printWindow = window.open('', '', 'height=600,width=800');
-    if (!printWindow) return;
-    
-    printWindow.document.write('<html><head><title>Cetak Modul Ajar</title>');
-    const isF4 = formState.paperSize === 'F4';
-    printWindow.document.write(`
-      <style>
-        @page {
-          size: ${isF4 ? '215mm 330mm' : 'A4'};
-          margin: 1.4cm 1.5cm;
-        }
-        body {
-          font-family: 'Times New Roman', Times, serif;
-          padding: 0;
-          margin: 0;
-          color: #000000;
-          background-color: #ffffff;
-          line-height: 1.5;
-        }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 0.8rem;
-        }
-        tr {
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-        }
-        .signature-block {
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-          margin-top: 16px !important;
-        }
-        .keep-with-next, h1, h2, h3, h4, .section-header {
-          page-break-after: avoid !important;
-          break-after: avoid !important;
-        }
-        @media print {
-          body {
-            font-family: 'Times New Roman', Times, serif;
-            background-color: #ffffff;
-            color: #000000;
-            padding: 0;
-            margin: 0;
-            line-height: 1.5;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          tr {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-          }
-          .signature-block {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-          }
-          .keep-with-next, h1, h2, h3, h4 {
-            page-break-after: avoid !important;
-            break-after: avoid !important;
-          }
-          td[style*="background-color: #0d6b3e"], div[style*="background-color: #0d6b3e"] {
-            background-color: #0d6b3e !important;
-            color: #ffffff !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          td[style*="background-color: #f5f0d0"], div[style*="background-color: #f5f0d0"] {
-            background-color: #f5f0d0 !important;
-            color: #000000 !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-        }
-      </style>
-    `);
-    printWindow.document.write('</head><body>');
-    printWindow.document.write(printContent);
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.onafterprint = () => printWindow.close();
-    setTimeout(() => {
-      try { printWindow.print(); } catch (e) { console.error('Gagal mencetak:', e); }
-    }, 500);
-  };
+    const rawContent = getDocumentForOutput(targetRef);
+    if (!rawContent) return;
+    const printContent = sanitizeContent(rawContent);
 
-  const handleExportWord = () => {
-    const targetRef = isFullscreen ? fullscreenPreviewRef : previewRef;
-    const printContent = generatedDocument || targetRef.current?.innerHTML;
-    if (!printContent) return;
-
-    const isF4 = formState.paperSize === 'F4';
-    const wordStyles = `
-      <style>
-        <!--
-        @page WordSection1 {
-          size: ${isF4 ? '612pt 936pt' : '595.3pt 841.9pt'}; /* ${isF4 ? 'F4 / Folio (215x330mm)' : 'A4 (210x297mm)'} */
-          margin: 56.7pt 56.7pt 56.7pt 56.7pt; /* 2 cm margins */
-          mso-header-margin: 35.4pt;
-          mso-footer-margin: 35.4pt;
-          mso-paper-source: 0;
-        }
-        div.WordSection1 {
-          page: WordSection1;
-        }
-        body {
-          font-family: 'Times New Roman', serif;
-          font-size: 11pt;
-          line-height: 1.45;
-          color: #000000;
-        }
-        table {
-          border-collapse: collapse;
-          width: 100%;
-          mso-table-lspace: 0pt;
-          mso-table-rspace: 0pt;
-          margin-bottom: 8pt;
-        }
-        tr {
-          page-break-inside: avoid;
-          mso-line-break-rule: exactly;
-        }
-        .signature-block {
-          page-break-inside: avoid;
-          margin-top: 14pt;
-        }
-        .keep-with-next, h1, h2, h3, h4 {
-          page-break-after: avoid;
-        }
-        td, th {
-          vertical-align: top;
-          padding: 4pt 6pt;
-        }
-        p {
-          margin-top: 0pt;
-          margin-bottom: 4pt;
-          line-height: 1.45;
-        }
-        h1, h2, h3, h4 {
-          margin-top: 6pt;
-          margin-bottom: 3pt;
-        }
-        -->
-      </style>
-    `;
-
-    const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-<head>
-  <meta charset='utf-8'>
-  <title>${formState.documentType} ${formState.mataPelajaran}</title>
-  ${wordStyles}
-</head>
-<body>
-<div class="WordSection1">`;
-    const footer = `</div></body></html>`;
-    const cleanedContent = cleanHtmlForWordExport(printContent);
-    const sourceHTML = header + cleanedContent + footer;
-    
-    const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${formState.documentType}_${formState.mataPelajaran}_Kelas${formState.kelas}.doc`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  };
-
-  const deleteHistoryItem = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setDeleteConfirmId(id);
-  };
-
-  const confirmDeleteHistory = async () => {
-    if (!deleteConfirmId) return;
-    const id = deleteConfirmId;
-    try {
-      const { error } = await supabase.from('lesson_plans').delete().eq('id', id);
-      if (!error) {
-        setHistory(prev => prev.filter(item => item.id !== id));
-        if (generatedDocument && history.find(item => item.id === id)?.generated_content === generatedDocument) {
-          setGeneratedDocument('');
-        }
-        toast.success('Riwayat berhasil dihapus');
-      } else {
-        toast.error(`Gagal menghapus: ${error.message}`);
-      }
-    } catch (err) {
-      console.error('Failed to delete history item:', err);
-      toast.error('Gagal menghapus riwayat');
-    } finally {
-      setDeleteConfirmId(null);
+    if (!printModulAjarHtml(printContent, formState.paperSize)) {
+      toast.error('Jendela cetak diblokir browser. Izinkan pop-up untuk situs ini, lalu coba lagi.');
     }
   };
 
-  const restoreParameters = (plan: any) => {
-    resetFormToDraft(plan);
-    setGeneratedDocument(plan.generated_content);
+  const handleExportWord = () => {
+    if (useServerExport) {
+      exportPreviewFromServer('docx');
+      return;
+    }
+    const targetRef = isFullscreen ? fullscreenPreviewRef : previewRef;
+    const htmlContent = getDocumentForOutput(targetRef);
+    if (!htmlContent) return;
+
+    try {
+      const typeSuffix = previewMode === 'siswa' ? 'LKPD_Siswa' : formState.documentType;
+      exportModulAjarToWord({
+        htmlContent,
+        fileName: `${typeSuffix}_${formState.mataPelajaran}_Kelas${formState.kelas}`,
+        paperSize: formState.paperSize,
+        title: `${typeSuffix} ${formState.mataPelajaran}`,
+      });
+      toast.success('File Word (.doc) berhasil diunduh');
+    } catch (err: unknown) {
+      console.error('Failed to export Word:', err);
+      toast.error(
+        `Gagal mengunduh Word: ${err instanceof Error ? err.message : 'Terjadi kesalahan'}`,
+      );
+    }
+  };
+
+  /**
+   * Removes a document from Riwayat right away and offers Urungkan for 10 s.
+   * The row is soft-deleted, so undoing brings it back unchanged.
+   */
+  const deleteHistoryItem = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    let removed: LessonPlanListItem | null;
+    try {
+      removed = await softDelete(id);
+    } catch (err) {
+      console.error('Failed to delete history item:', err);
+      toast.error('Gagal menghapus. Periksa koneksi, lalu coba lagi.');
+      return;
+    }
+    // The document on screen was the one deleted: nothing left to show or save to.
+    if (id === currentLessonPlanId) {
+      setCurrentLessonPlanId(null);
+      setGeneratedDocument('');
+      setDocumentForm(null);
+      setDocumentHasEdits(false);
+      setHasUnsavedEdits(false);
+      setEditStatus(null);
+    }
+    if (removed) setDeletedPlan(removed);
+  };
+
+  const undoDeletePlan = async () => {
+    const plan = deletedPlan;
+    setDeletedPlan(null);
+    if (!plan) return;
+    try {
+      await undoDelete(plan);
+      toast.success('Modul ajar dikembalikan ke Riwayat.');
+    } catch (err) {
+      console.error('Failed to undo delete:', err);
+      toast.error('Gagal mengembalikan modul ajar. Coba lagi.');
+    }
+  };
+
+  const restoreParameters = async (plan: any) => {
+    const content = await loadPlanContent(plan);
+    if (content === null) return;
+    const restored = resetFormToDraft(plan);
+    setDocumentForm(restored);
+    setGeneratedDocument(content);
+    setCurrentLessonPlanId(plan.id);
+    // A plan updated well after it was created was edited in the preview.
+    setDocumentHasEdits(
+      Boolean(plan.updated_at) && Date.parse(plan.updated_at) - Date.parse(plan.created_at) > 5000,
+    );
+    setHasUnsavedEdits(false);
+    setEditStatus(null);
     setActiveTab('preview');
     setMobileActiveView('preview');
     toast.success(t.lessonPlan.restoreSuccess);
   };
 
   const handleApplyPreset = (presetData: Partial<FormState>) => {
-    setFormState(prev => ({
+    setFormState((prev) => ({
       ...prev,
       ...presetData,
     }));
@@ -534,23 +635,39 @@ const ModulAjarCreatorPage: React.FC = () => {
   const handleDuplicateHistory = (item: any, e: React.MouseEvent) => {
     e.stopPropagation();
     resetFormToDraft(item);
+    // The copy is a new draft: the old document must not stay on screen as if it were it.
+    setGeneratedDocument('');
+    setCurrentLessonPlanId(null);
+    setDocumentForm(null);
+    setDocumentHasEdits(false);
+    setHasUnsavedEdits(false);
+    setEditStatus(null);
     setActiveTab('preview');
-    toast.success(`Draf ${item.identity?.mapel || 'Modul Ajar'} berhasil disalin ke formulir!`);
+    setMobileActiveView('form');
+    toast.success(
+      `Isian ${item.identity?.mapel || 'modul ajar'} disalin ke formulir. Ubah seperlunya, lalu susun dokumen baru.`,
+    );
   };
 
   const handleExportHistoryPdf = async (item: any, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!item.generated_content) return;
+    if (useServerExport) {
+      exportHistoryFromServer(item, 'pdf');
+      return;
+    }
+    const htmlContent = await loadPlanContent(item);
+    if (!htmlContent) return;
 
     toast.info('Menyiapkan file PDF, mohon tunggu sebentar...', { duration: 3000 });
     try {
-      const fileName = `${item.document_type || 'ModulAjar'}_${item.identity?.mapel || 'Mapel'}_Kelas${item.identity?.kelas || ''}`
-        .replace(/[/\\?%*:|"<>]/g, '_')
-        .replace(/\s+/g, '_');
+      const fileName =
+        `${item.document_type || 'ModulAjar'}_${item.identity?.mapel || 'Mapel'}_Kelas${item.identity?.kelas || ''}`
+          .replace(/[/\\?%*:|"<>]/g, '_')
+          .replace(/\s+/g, '_');
       await exportModulAjarToPdf({
-        htmlContent: item.generated_content,
+        htmlContent,
         fileName,
-        paperSize: 'A4',
+        paperSize: item.components?.paperSize === 'F4' ? 'F4' : 'A4',
       });
       toast.success('PDF berhasil diunduh!');
     } catch (err: any) {
@@ -559,59 +676,38 @@ const ModulAjarCreatorPage: React.FC = () => {
     }
   };
 
-  const handleExportHistoryWord = (item: any, e: React.MouseEvent) => {
+  const handleExportHistoryWord = async (item: any, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!item.generated_content) return;
-    
-    const wordStyles = `
-      <style>
-        <!--
-        @page WordSection1 {
-          size: 595.3pt 841.9pt; /* A4 */
-          margin: 56.7pt 56.7pt 56.7pt 56.7pt;
-          mso-header-margin: 35.4pt;
-          mso-footer-margin: 35.4pt;
-          mso-paper-source: 0;
-        }
-        div.WordSection1 { page: WordSection1; }
-        body { font-family: 'Times New Roman', serif; font-size: 11pt; line-height: 1.45; color: #000000; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 8pt; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-        tr { page-break-inside: avoid; mso-line-break-rule: exactly; }
-        .signature-block { page-break-inside: avoid; margin-top: 14pt; }
-        .keep-with-next, h1, h2, h3, h4 { page-break-after: avoid; }
-        td, th { padding: 4pt 6pt; vertical-align: top; }
-        p { margin-top: 0pt; margin-bottom: 4pt; line-height: 1.45; }
-        h1, h2, h3, h4 { margin-top: 6pt; margin-bottom: 3pt; }
-        -->
-      </style>
-    `;
-    const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-<head>
-  <meta charset='utf-8'>
-  <title>${item.document_type || 'Modul Ajar'}</title>
-  ${wordStyles}
-</head>
-<body>
-<div class="WordSection1">`;
-    const footer = `</div></body></html>`;
-    const cleanedContent = cleanHtmlForWordExport(item.generated_content);
-    const sourceHTML = header + cleanedContent + footer;
-    
-    const blob = new Blob(['\ufeff', sourceHTML], { type: 'application/msword' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${item.document_type || 'ModulAjar'}_${item.identity?.mapel || 'Mapel'}_Kelas${item.identity?.kelas || ''}.doc`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    toast.success('File Word (.doc) berhasil diunduh');
+    if (useServerExport) {
+      exportHistoryFromServer(item, 'docx');
+      return;
+    }
+    const htmlContent = await loadPlanContent(item);
+    if (!htmlContent) return;
+    try {
+      exportModulAjarToWord({
+        htmlContent,
+        fileName: `${item.document_type || 'ModulAjar'}_${item.identity?.mapel || 'Mapel'}_Kelas${item.identity?.kelas || ''}`,
+        paperSize: item.components?.paperSize === 'F4' ? 'F4' : 'A4',
+        title: item.document_type || 'Modul Ajar',
+      });
+      toast.success('File Word (.doc) berhasil diunduh');
+    } catch (err: unknown) {
+      console.error('Failed to export history Word:', err);
+      toast.error(
+        `Gagal mengunduh Word: ${err instanceof Error ? err.message : 'Terjadi kesalahan'}`,
+      );
+    }
   };
 
   const handleConfirmReset = () => {
     resetFormToDraft();
     setGeneratedDocument('');
+    setCurrentLessonPlanId(null);
+    setDocumentForm(null);
+    setDocumentHasEdits(false);
+    setHasUnsavedEdits(false);
+    setEditStatus(null);
     setActiveStep(1);
     setResetConfirmOpen(false);
     toast.success('Formulir berhasil direset');
@@ -619,13 +715,24 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col lg:flex-row gap-5 pb-20 lg:pb-0">
-      {/* Delete Confirmation Dialog */}
+      {deletedPlan && (
+        <UndoBar
+          key={deletedPlan.id}
+          message="Modul ajar dihapus dari Riwayat."
+          onUndo={undoDeletePlan}
+          onExpire={clearDeletedPlan}
+        />
+      )}
+
+      {/* Regenerating replaces preview edits with a document built from the form */}
       <ConfirmationDialog
-        isOpen={!!deleteConfirmId}
-        title={t.lessonPlan.deleteConfirm}
-        message="Tindakan ini tidak dapat dibatalkan. Riwayat modul ajar ini akan dihapus permanen."
-        onConfirm={confirmDeleteHistory}
-        onClose={() => setDeleteConfirmId(null)}
+        isOpen={regenerateConfirmOpen}
+        title="Susun ulang dokumen?"
+        message="Dokumen baru dibuat dari isian formulir, jadi perubahan yang Anda ketik langsung di dokumen tidak ikut. Dokumen yang sekarang tetap tersimpan sebagai versi sebelumnya di Riwayat."
+        onConfirm={runGenerate}
+        onClose={() => setRegenerateConfirmOpen(false)}
+        variant="warning"
+        confirmText="Susun Ulang"
       />
 
       {/* Reset Confirmation Dialog */}
@@ -639,13 +746,27 @@ const ModulAjarCreatorPage: React.FC = () => {
         confirmText="Ya, Reset Form"
       />
 
+      {/* Unsaved preview edits: the server exports the stored document */}
+      <ConfirmationDialog
+        isOpen={!!pendingExportFormat}
+        title="Simpan perubahan sebelum mengunduh?"
+        message="Berkas dibuat dari dokumen yang tersimpan. Simpan dulu agar perubahan Anda ikut masuk ke berkas."
+        onConfirm={saveDraftAndExport}
+        onClose={() => setPendingExportFormat(null)}
+        variant="info"
+        confirmText="Simpan & Unduh"
+        isPending={isSavingDraft}
+      />
+
       {/* AI Cache Warning Toast */}
       {aiCacheWarning && (
         <div className="fixed top-16 right-4 z-50 max-w-sm bg-amber-50 dark:bg-amber-950/90 border border-amber-300 dark:border-amber-700 rounded-xl shadow-lg p-4 text-sm">
           <div className="flex items-start gap-2">
             <span className="text-amber-500 dark:text-amber-400 font-bold">⚠️</span>
             <div className="flex-1">
-              <p className="font-bold text-amber-800 dark:text-amber-200">Draf AI tidak tersimpan ke Bank</p>
+              <p className="font-bold text-amber-800 dark:text-amber-200">
+                Draf AI tidak tersimpan ke Bank
+              </p>
               <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{aiCacheWarning}</p>
             </div>
             <button
@@ -658,7 +779,7 @@ const ModulAjarCreatorPage: React.FC = () => {
           </div>
         </div>
       )}
-      
+
       {/* Mobile Segmented View Switcher (< lg) */}
       <div className="lg:hidden flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700 shrink-0">
         <button
@@ -689,7 +810,7 @@ const ModulAjarCreatorPage: React.FC = () => {
           )}
         </button>
       </div>
-      
+
       {/* Left Column: Form & Step Wizard */}
       <ModulAjarForm
         formState={formState}
@@ -707,7 +828,7 @@ const ModulAjarCreatorPage: React.FC = () => {
         boilerplateMissingBanner={boilerplateMissingBanner}
         onAiFillField={handleAiFillField}
         fieldLoading={fieldLoading}
-        isAiGenerating={isAiGenerating}
+        isAiGenerating={isAiGenerating || isGeneratorSubmitting}
         onResetForm={() => setResetConfirmOpen(true)}
         onApplyPreset={handleApplyPreset}
         autoDistributeTime={autoDistributeTime}
@@ -715,119 +836,36 @@ const ModulAjarCreatorPage: React.FC = () => {
       />
 
       {/* Right Column: Preview & History Workspace */}
-      <div className={`flex-1 bg-slate-100 dark:bg-slate-950/50 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 overflow-hidden h-[calc(100dvh-6rem)] lg:h-[calc(100dvh-8rem)] ${
-        mobileActiveView === 'preview' ? 'flex flex-col' : 'hidden lg:flex lg:flex-col'
-      }`}>
-        
-        {/* Workspace Toolbar Header */}
-        <div className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-4 shrink-0 shadow-xs z-20 gap-2">
-          
-          {/* Left Tabs: Preview vs Riwayat */}
-          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl shrink-0">
-            <button 
-              type="button"
-              onClick={() => setActiveTab('preview')}
-              className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 duration-150 whitespace-nowrap ${
-                activeTab === 'preview' 
-                ? 'bg-white text-slate-800 dark:bg-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
-              }`}
-            >
-              <BookOpen className="w-3.5 h-3.5 shrink-0" />
-              <span>{t.lessonPlan.preview}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('history')}
-              className={`px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 duration-150 whitespace-nowrap ${
-                activeTab === 'history'
-                ? 'bg-white text-slate-800 dark:bg-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
-              }`}
-            >
-              <History className="w-3.5 h-3.5 shrink-0" />
-              <span>{t.lessonPlan.history}</span>
-              {history.length > 0 && (
-                <span className="px-1.5 py-0.2 bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300 rounded-full text-[10px] font-bold">
-                  {history.length}
-                </span>
-              )}
-            </button>
-          </div>
-
-          {/* Right Action Tools: Salin, Cetak/PDF, Unduh Word, Layar Penuh */}
-          {activeTab === 'preview' && (
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                type="button"
-                onClick={handleCopy}
-                disabled={!generatedDocument}
-                className="w-9 h-9 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-500 hover:text-brand-600 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:scale-95 duration-150 shrink-0 border border-slate-200/50 dark:border-slate-800"
-                title={t.lessonPlan.copy}
-                aria-label={t.lessonPlan.copy}
-              >
-                <Copy className="w-4 h-4 shrink-0" />
-              </button>
-
-              <button
-                type="button"
-                onClick={handleExportPdf}
-                disabled={!generatedDocument || isExportingPdf}
-                className="h-9 px-3 hover:bg-red-100 dark:hover:bg-red-900/40 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 rounded-xl border border-red-200/80 dark:border-red-900/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 text-xs font-semibold cursor-pointer active:scale-95 duration-150 shrink-0"
-                title="Langsung Unduh Dokumen ke Format PDF"
-                aria-label={t.lessonPlan.pdf}
-              >
-                {isExportingPdf ? (
-                  <Loader2 className="w-4 h-4 shrink-0 animate-spin text-red-500 dark:text-red-400" />
-                ) : (
-                  <Download className="w-4 h-4 shrink-0 text-red-500 dark:text-red-400" />
-                )}
-                <span className="whitespace-nowrap">{t.lessonPlan.pdf}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleExportWord}
-                disabled={!generatedDocument}
-                className="h-9 px-3 hover:bg-blue-100 dark:hover:bg-blue-900/40 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 rounded-xl border border-blue-200/80 dark:border-blue-900/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 text-xs font-semibold cursor-pointer active:scale-95 duration-150 shrink-0"
-                title="Unduh Dokumen ke Format Microsoft Word (.doc)"
-                aria-label={t.lessonPlan.word}
-              >
-                <FileText className="w-4 h-4 shrink-0 text-blue-500 dark:text-blue-400" />
-                <span className="whitespace-nowrap">{t.lessonPlan.word}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handlePrint}
-                disabled={!generatedDocument}
-                className="h-9 px-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 rounded-xl border border-slate-200 dark:border-slate-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 text-xs font-medium cursor-pointer active:scale-95 duration-150 shrink-0"
-                title="Cetak Fisik / Buka Dialog Cetak Printer"
-                aria-label={t.lessonPlan.print}
-              >
-                <Printer className="w-4 h-4 shrink-0 text-slate-500 dark:text-slate-400" />
-                <span className="hidden sm:inline whitespace-nowrap">{t.lessonPlan.print}</span>
-              </button>
-
-              {generatedDocument && (
-                <button
-                  type="button"
-                  onClick={() => setIsFullscreen(true)}
-                  className="w-9 h-9 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-all cursor-pointer active:scale-95 duration-150 shrink-0 border border-slate-200/60 dark:border-slate-800"
-                  title="Mode Layar Penuh (Fokus)"
-                  aria-label="Mode Layar Penuh (Fokus)"
-                >
-                  <Maximize2 className="w-4 h-4 shrink-0" />
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+      <div
+        className={`flex-1 bg-slate-100 dark:bg-slate-950/50 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 overflow-hidden h-[calc(100dvh-6rem)] lg:h-[calc(100dvh-8rem)] ${
+          mobileActiveView === 'preview' ? 'flex flex-col' : 'hidden lg:flex lg:flex-col'
+        }`}
+      >
+        <ModulAjarToolbar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          historyCount={history.length}
+          hasDocument={!!generatedDocument}
+          busyFormat={previewBusyFormat}
+          onExportPdf={handleExportPdf}
+          onExportWord={handleExportWord}
+          onPrint={handlePrint}
+          onCopy={handleCopy}
+          onFullscreen={() => setIsFullscreen(true)}
+          wordExtension={useServerExport ? 'docx' : 'doc'}
+          labels={{
+            preview: t.lessonPlan.preview,
+            history: t.lessonPlan.history,
+            copy: t.lessonPlan.copy,
+            pdf: t.lessonPlan.pdf,
+            word: t.lessonPlan.word,
+            print: t.lessonPlan.print,
+          }}
+        />
 
         {/* Secondary Document Control Strip: Target Dokumen & Canvas Format */}
         {activeTab === 'preview' && generatedDocument && (
           <div className="min-h-11 py-1.5 bg-slate-50/95 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between px-3 sm:px-4 shrink-0 z-10 gap-2">
-            
             {/* Left: Mode Switcher (Target Dokumen) */}
             <div className="flex items-center gap-2 shrink-0">
               <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 hidden md:inline">
@@ -895,7 +933,7 @@ const ModulAjarCreatorPage: React.FC = () => {
               <div className="flex items-center bg-slate-200/70 dark:bg-slate-800 rounded-lg p-0.5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60">
                 <button
                   type="button"
-                  onClick={() => setZoomLevel(prev => Math.max(70, prev - 10))}
+                  onClick={() => setZoomLevel((prev) => Math.max(70, prev - 10))}
                   className="p-1 hover:bg-white dark:hover:bg-slate-700 rounded transition-all cursor-pointer active:scale-90"
                   title="Perkecil (Zoom Out)"
                   aria-label="Perkecil Skala"
@@ -912,7 +950,7 @@ const ModulAjarCreatorPage: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setZoomLevel(prev => Math.min(150, prev + 10))}
+                  onClick={() => setZoomLevel((prev) => Math.min(150, prev + 10))}
                   className="p-1 hover:bg-white dark:hover:bg-slate-700 rounded transition-all cursor-pointer active:scale-90"
                   title="Perbesar (Zoom In)"
                   aria-label="Perbesar Skala"
@@ -924,63 +962,34 @@ const ModulAjarCreatorPage: React.FC = () => {
           </div>
         )}
 
+        {exportFailure && (
+          <ExportFailureBanner failure={exportFailure} onDismiss={() => setExportFailure(null)} />
+        )}
+
         {/* Workspace Canvas Body */}
         <div className="relative flex-1 overflow-y-auto p-4 md:p-8 flex justify-center bg-slate-200/50 dark:bg-slate-950/50 scrollbar-thin">
           {activeTab === 'preview' ? (
             <>
-              {/* AI Processing Modal Overlay */}
-              {isAiGenerating && (
-                <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-xs z-30 flex items-center justify-center p-6 text-center">
-                  <MotionDiv
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-sm w-full space-y-4"
-                  >
-                    <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
-                      <div className="absolute inset-0 rounded-full border-4 border-brand-100 dark:border-brand-900/30"></div>
-                      <div className="absolute inset-0 rounded-full border-4 border-brand-500 border-t-transparent animate-spin"></div>
-                      <Clock className="w-6 h-6 text-brand-500 animate-pulse" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <h3 className="font-bold text-slate-800 dark:text-white">AI Sedang Menyusun Dokumen</h3>
-                      <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold animate-pulse">
-                        Menghubungi AI... Sedang menulis skenario, LKPD, dan komponen evaluasi.
-                      </p>
-                    </div>
-                  </MotionDiv>
-                </div>
-              )}
+              {/* AI fallback inside the template path (no job to cancel) */}
+              {isAiGenerating && <AiWaitingCard title="AI sedang menyusun dokumen" />}
 
               {(queueStatus === 'pending' || queueStatus === 'processing') && (
-                <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-xs z-30 flex items-center justify-center p-6 text-center">
-                  <MotionDiv 
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-sm w-full space-y-4"
-                  >
-                    <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
-                      <div className="absolute inset-0 rounded-full border-4 border-brand-100 dark:border-brand-900/30"></div>
-                      <div className="absolute inset-0 rounded-full border-4 border-brand-500 border-t-transparent animate-spin"></div>
-                      <Clock className="w-6 h-6 text-brand-500 animate-pulse" />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <h3 className="font-bold text-slate-800 dark:text-white">Antrian Pemrosesan AI</h3>
-                      {(queueStatus as string) === 'pending' || (queueStatus as string) === 'retry_wait' ? (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Permintaan dikirim ke server. Harap tunggu...</p>
-                      ) : (
-                        <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold animate-pulse">Menghubungi AI... Sedang menulis perangkat ajar Anda.</p>
-                      )}
-                    </div>
-                  </MotionDiv>
-                </div>
+                <AiWaitingCard
+                  title="AI sedang menyusun modul ajar"
+                  startedAt={queueHookResult.startedAt}
+                  onCancel={() => {
+                    queueHookResult.cancelJob();
+                    toast.info('Penyusunan dibatalkan. Isian formulir tidak berubah.');
+                  }}
+                />
               )}
 
               {/* Main Document Preview */}
               {(() => {
-                const documentToShow = previewMode === 'siswa'
-                  ? extractStudentHtml(generatedDocument, formState, logoBase64)
-                  : generatedDocument;
+                const documentToShow =
+                  previewMode === 'siswa'
+                    ? extractStudentHtml(generatedDocument, documentForm ?? formState, logoBase64)
+                    : generatedDocument;
                 return (
                   <ModulAjarPreview
                     generatedDocument={documentToShow}
@@ -988,6 +997,9 @@ const ModulAjarCreatorPage: React.FC = () => {
                     documentType={formState.documentType}
                     zoomLevel={zoomLevel}
                     paperSize={formState.paperSize}
+                    onDocumentChange={previewMode === 'guru' ? persistPreviewEdits : undefined}
+                    onEdit={markPreviewEdited}
+                    editStatus={previewMode === 'guru' ? editStatus : null}
                   />
                 );
               })()}
@@ -1002,6 +1014,7 @@ const ModulAjarCreatorPage: React.FC = () => {
               onExportPdf={handleExportHistoryPdf}
               onExportWord={handleExportHistoryWord}
               onDuplicate={handleDuplicateHistory}
+              exportingKey={exportingKey}
             />
           )}
         </div>
@@ -1024,7 +1037,8 @@ const ModulAjarCreatorPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-white">
-                    {formState.documentType} {formState.mataPelajaran || 'Pratinjau'} - Kelas {formState.kelas}
+                    {formState.documentType} {formState.mataPelajaran || 'Pratinjau'} - Kelas{' '}
+                    {formState.kelas}
                   </h3>
                   <p className="text-xs text-slate-400">
                     Mode Fokus Layar Penuh &bull; Klik teks untuk mengedit langsung
@@ -1039,8 +1053,8 @@ const ModulAjarCreatorPage: React.FC = () => {
                   onClick={() => setPreviewMode('guru')}
                   className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95 duration-150 whitespace-nowrap ${
                     previewMode === 'guru'
-                    ? 'bg-brand-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                      ? 'bg-brand-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
                   }`}
                   title="Dokumen Lengkap Guru (Modul Ajar + Asesmen)"
                 >
@@ -1051,8 +1065,8 @@ const ModulAjarCreatorPage: React.FC = () => {
                   onClick={() => setPreviewMode('siswa')}
                   className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95 duration-150 whitespace-nowrap ${
                     previewMode === 'siswa'
-                    ? 'bg-brand-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                      ? 'bg-brand-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
                   }`}
                   title="Lembar Kerja Peserta Didik (LKPD) Khusus Siswa"
                 >
@@ -1062,42 +1076,42 @@ const ModulAjarCreatorPage: React.FC = () => {
 
               {/* Right Action Icons */}
               <div className="flex items-center gap-2">
-                <button
-                  onClick={handleCopy}
-                  className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center hover:bg-slate-800 rounded-xl text-slate-300 hover:text-white transition-all cursor-pointer active:scale-95 duration-150"
-                  title="Salin Teks"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={handleExportPdf}
-                  disabled={isExportingPdf}
-                  className="px-3 py-1.5 min-h-[36px] bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 duration-150"
-                  title="Langsung Unduh Dokumen ke Format PDF"
-                >
-                  {isExportingPdf ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Download className="w-4 h-4" />
-                  )}
-                  <span>{t.lessonPlan.pdf}</span>
-                </button>
-                <button
-                  onClick={handleExportWord}
-                  className="px-3 py-1.5 min-h-[36px] bg-blue-600 hover:bg-blue-700 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 duration-150"
-                  title="Unduh Dokumen ke Format Microsoft Word (.doc)"
-                >
-                  <FileText className="w-4 h-4" />
-                  <span>{t.lessonPlan.word}</span>
-                </button>
-                <button
-                  onClick={handlePrint}
-                  className="px-3 py-1.5 min-h-[36px] bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-medium text-slate-200 flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 duration-150 border border-slate-700"
-                  title="Cetak Fisik / Buka Dialog Cetak Printer"
-                >
-                  <Printer className="w-4 h-4" />
-                  <span>{t.lessonPlan.print}</span>
-                </button>
+                <DownloadMenu
+                  tone="dark"
+                  busy={previewBusyFormat !== null}
+                  items={[
+                    {
+                      id: 'pdf',
+                      label: t.lessonPlan.pdf,
+                      description: 'Siap cetak, tata letak A4/F4 tetap',
+                      icon: FileDown,
+                      onSelect: handleExportPdf,
+                    },
+                    {
+                      id: 'word',
+                      label: t.lessonPlan.word,
+                      description: useServerExport
+                        ? 'Berkas .docx, bisa diedit di Word'
+                        : 'Berkas .doc, bisa diedit di Word',
+                      icon: FileText,
+                      onSelect: handleExportWord,
+                    },
+                    {
+                      id: 'print',
+                      label: t.lessonPlan.print,
+                      description: 'Buka dialog printer',
+                      icon: Printer,
+                      onSelect: handlePrint,
+                    },
+                    {
+                      id: 'copy',
+                      label: t.lessonPlan.copy,
+                      icon: Copy,
+                      onSelect: handleCopy,
+                      separatorBefore: true,
+                    },
+                  ]}
+                />
                 <button
                   onClick={() => setIsFullscreen(false)}
                   className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white ml-2 transition-all cursor-pointer active:scale-95 duration-150"
@@ -1108,19 +1122,30 @@ const ModulAjarCreatorPage: React.FC = () => {
               </div>
             </div>
 
+            {exportFailure && (
+              <ExportFailureBanner
+                failure={exportFailure}
+                onDismiss={() => setExportFailure(null)}
+                tone="dark"
+              />
+            )}
+
             {/* Fullscreen Document Content */}
             <div className="flex-1 overflow-y-auto p-6 md:p-12 flex justify-center bg-slate-950/60">
               <div className="w-full max-w-4xl">
                 <ModulAjarPreview
                   generatedDocument={
                     previewMode === 'siswa'
-                      ? extractStudentHtml(generatedDocument, formState, logoBase64)
+                      ? extractStudentHtml(generatedDocument, documentForm ?? formState, logoBase64)
                       : generatedDocument
                   }
                   previewRef={fullscreenPreviewRef}
                   documentType={formState.documentType}
                   zoomLevel={100}
                   paperSize={formState.paperSize}
+                  onDocumentChange={previewMode === 'guru' ? persistPreviewEdits : undefined}
+                  onEdit={markPreviewEdited}
+                  editStatus={previewMode === 'guru' ? editStatus : null}
                 />
               </div>
             </div>

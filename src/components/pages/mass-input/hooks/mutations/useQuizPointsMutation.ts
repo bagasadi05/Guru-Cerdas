@@ -2,6 +2,10 @@ import { supabase } from '../../../../../services/supabase';
 import type { AppUser } from '../../../../../hooks/useAuth';
 import { Database } from '../../../../../services/database.types';
 import { recordAction } from '../../../../../services/UndoManager';
+import { buildQuizPointDailyKey } from '../../../../../utils/academicRecordUtils';
+
+/** Keeps each duplicate-check request URL short for large "Semua Kelas" selections. */
+const GUARD_CHUNK_SIZE = 100;
 
 interface ExecuteQuizPointsMutationParams {
     user: AppUser;
@@ -37,25 +41,29 @@ export async function executeQuizPointsMutation({
     inFlightQuizKeys.add(inFlightKey);
 
     try {
-        let duplicateStudentIds = new Set<string>();
+        const duplicateStudentIds = new Set<string>();
         if (!shouldBypassGuard) {
-            let existingQuizQuery = supabase
-                .from('quiz_points')
-                .select('id, student_id')
-                .in('student_id', studentIds)
-                .eq('user_id', user.id)
-                .eq('quiz_name', normalizedQuizName)
-                .eq('subject', normalizedSubject)
-                .eq('quiz_date', quizInfo.date)
-                .is('deleted_at', null);
+            // Same rule as the Bintang read side: any teacher's point for this
+            // activity, subject and day counts, compared case-insensitively.
+            for (let i = 0; i < studentIds.length; i += GUARD_CHUNK_SIZE) {
+                const { data: existingQuizRows, error: existingQuizError } = await supabase
+                    .from('quiz_points')
+                    .select('student_id, subject, quiz_name, quiz_date')
+                    .in('student_id', studentIds.slice(i, i + GUARD_CHUNK_SIZE))
+                    .eq('quiz_date', quizInfo.date)
+                    .is('deleted_at', null);
+                if (existingQuizError) throw existingQuizError;
 
-            existingQuizQuery = activeSemester?.id
-                ? existingQuizQuery.eq('semester_id', activeSemester.id)
-                : existingQuizQuery.is('semester_id', null);
-
-            const { data: existingQuizRows, error: existingQuizError } = await existingQuizQuery;
-            if (existingQuizError) throw existingQuizError;
-            duplicateStudentIds = new Set((existingQuizRows || []).map((row) => row.student_id));
+                for (const row of existingQuizRows || []) {
+                    const sameActivity = buildQuizPointDailyKey(row) === buildQuizPointDailyKey({
+                        student_id: row.student_id,
+                        subject: normalizedSubject,
+                        quiz_name: normalizedQuizName,
+                        quiz_date: quizInfo.date,
+                    });
+                    if (sameActivity) duplicateStudentIds.add(row.student_id);
+                }
+            }
         }
 
         const records: Database['public']['Tables']['quiz_points']['Insert'][] = studentIds

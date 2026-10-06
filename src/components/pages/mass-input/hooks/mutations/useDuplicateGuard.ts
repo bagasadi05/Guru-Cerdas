@@ -3,6 +3,7 @@ import { supabase } from '../../../../../services/supabase';
 import type { AppUser } from '../../../../../hooks/useAuth';
 import { StudentRow, InputMode } from '../../types';
 import { ViolationItem } from '../../../../../services/violations.data';
+import { schoolDate } from '../../../../../utils/reminderDates';
 
 export const DUPLICATE_GUARD_WINDOW_MINUTES = 10;
 
@@ -31,6 +32,11 @@ interface UseDuplicateGuardParams {
     attitudeDate?: string;
     subjectGradeInfo: { subject: string; assessment_name: string; notes: string; semester: string };
     activeSemester: { id: string } | null | undefined;
+    /** Semester resolved from the violation date; falls back to the active one. */
+    violationSemester?: { id: string } | null;
+    /** Semesters resolved from the quiz / attitude dates, same rule as violations. */
+    quizSemester?: { id: string } | null;
+    attitudeSemester?: { id: string } | null;
     studentsData: StudentRow[] | undefined;
 }
 
@@ -46,6 +52,9 @@ export function useDuplicateGuard({
     attitudeDate,
     subjectGradeInfo,
     activeSemester,
+    violationSemester,
+    quizSemester,
+    attitudeSemester,
     studentsData,
 }: UseDuplicateGuardParams) {
     const [duplicateList, setDuplicateList] = useState<DuplicateItem[]>([]);
@@ -70,19 +79,26 @@ export function useDuplicateGuard({
                 onProceed();
                 return;
             }
-            let query = supabase
-                .from('violations')
-                .select('id, student_id, user_id')
-                .in('student_id', studentIds)
-                .eq('date', violationDate)
-                .eq('description', selectedViolation.description)
-                .is('deleted_at', null);
+            const semester = violationSemester === undefined ? activeSemester : violationSemester;
+            // Chunked like the save path so a large "Semua Kelas" selection
+            // doesn't overflow the request URL.
+            const existingRows: { id: string; student_id: string; user_id: string }[] = [];
+            for (let i = 0; i < studentIds.length; i += 100) {
+                let query = supabase
+                    .from('violations')
+                    .select('id, student_id, user_id')
+                    .in('student_id', studentIds.slice(i, i + 100))
+                    .eq('date', violationDate)
+                    .eq('description', selectedViolation.description)
+                    .is('deleted_at', null);
 
-            query = activeSemester?.id
-                ? query.eq('semester_id', activeSemester.id)
-                : query.is('semester_id', null);
+                query = semester?.id
+                    ? query.eq('semester_id', semester.id)
+                    : query.is('semester_id', null);
 
-            const { data: existingRows } = await query;
+                const { data } = await query;
+                existingRows.push(...(data || []));
+            }
             if (!existingRows || existingRows.length === 0) {
                 onProceed();
                 return;
@@ -114,7 +130,7 @@ export function useDuplicateGuard({
             const activityName = mode === 'quiz' ? quizInfo.name : (attitudeName || '').trim();
             const activityDate = mode === 'quiz'
                 ? quizInfo.date
-                : (attitudeDate || new Date().toISOString().slice(0, 10));
+                : (attitudeDate || schoolDate());
             if (!activityName || (mode === 'quiz' && !quizInfo.subject)) {
                 onProceed();
                 return;
@@ -136,9 +152,11 @@ export function useDuplicateGuard({
                 query = query.eq('category', (attitudeCategory || 'Adab & Akhlak').trim());
             }
 
-            const semesterId = mode === 'attitude'
+            const legacySemesterId = mode === 'attitude'
                 ? ((subjectGradeInfo.semester && subjectGradeInfo.semester.trim() !== '') ? subjectGradeInfo.semester : (activeSemester?.id || null))
                 : (activeSemester?.id || null);
+            const datedSemester = mode === 'attitude' ? attitudeSemester : quizSemester;
+            const semesterId = datedSemester === undefined ? legacySemesterId : (datedSemester?.id || null);
             query = semesterId ? query.eq('semester_id', semesterId) : query.is('semester_id', null);
 
             const { data: existingRows } = await query;

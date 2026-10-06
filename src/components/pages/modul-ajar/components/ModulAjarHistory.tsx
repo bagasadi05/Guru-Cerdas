@@ -1,5 +1,19 @@
 import React, { useState, useMemo } from 'react';
-import { Trash2, Clock, RefreshCw, AlertTriangle, Search, Filter, Heart, Eye, Copy, Download, FileDown } from 'lucide-react';
+import {
+  Trash2,
+  Clock,
+  RefreshCw,
+  AlertTriangle,
+  Search,
+  Filter,
+  Heart,
+  Eye,
+  Copy,
+  Download,
+  FileDown,
+  Loader2,
+  ChevronDown,
+} from 'lucide-react';
 import { useTranslation } from '../../../../utils/i18n';
 
 interface ModulAjarHistoryProps {
@@ -11,7 +25,24 @@ interface ModulAjarHistoryProps {
   onExportPdf?: (item: any, e: React.MouseEvent) => void;
   onExportWord?: (item: any, e: React.MouseEvent) => void;
   onDuplicate?: (item: any, e: React.MouseEvent) => void;
+  /** `${lessonPlanId}:pdf` or `${lessonPlanId}:docx` while that export is running. */
+  exportingKey?: string | null;
 }
+
+/** Regenerating a topic adds a version; these fields identify the document. */
+const documentKey = (item: any) =>
+  [item.document_type, item.identity?.mapel, item.identity?.topik, item.identity?.kelas]
+    .map((v) => String(v ?? '').trim().toLowerCase())
+    .join('|');
+
+const formatVersionDate = (iso: string) =>
+  new Date(iso).toLocaleString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
 export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
   history,
@@ -21,18 +52,25 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
   onDelete,
   onExportPdf,
   onExportWord,
-  onDuplicate
+  onDuplicate,
+  exportingKey = null,
 }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'Modul Ajar' | 'RPP' | 'KBC'>('all');
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
   const filteredHistory = useMemo(() => {
-    return history.filter(item => {
+    return history.filter((item) => {
       // Type filter
       if (filterType === 'Modul Ajar' && item.document_type !== 'Modul Ajar') return false;
       if (filterType === 'RPP' && item.document_type !== 'RPP') return false;
-      if (filterType === 'KBC' && !item.identity?.isKbcIntegrated && item.identity?.curriculumApproach !== 'Berbasis Cinta') return false;
+      if (
+        filterType === 'KBC' &&
+        !item.components?.isKbcIntegrated &&
+        item.curriculum_approach !== 'Berbasis Cinta'
+      )
+        return false;
 
       // Text search
       if (!searchTerm.trim()) return true;
@@ -41,11 +79,105 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
       const topik = (item.identity?.topik || '').toLowerCase();
       const kelas = String(item.identity?.kelas || '').toLowerCase();
       const docType = (item.document_type || '').toLowerCase();
-      const model = (item.identity?.modelPembelajaran || '').toLowerCase();
+      const model = (item.components?.model || '').toLowerCase();
 
-      return mapel.includes(query) || topik.includes(query) || kelas.includes(query) || docType.includes(query) || model.includes(query);
+      return (
+        mapel.includes(query) ||
+        topik.includes(query) ||
+        kelas.includes(query) ||
+        docType.includes(query) ||
+        model.includes(query)
+      );
     });
   }, [history, searchTerm, filterType]);
+
+  // History is newest first, so the first item of each group is the latest version.
+  const groups = useMemo(() => {
+    const byKey = new Map<string, any[]>();
+    filteredHistory.forEach((item) => {
+      const key = documentKey(item);
+      const group = byKey.get(key);
+      if (group) group.push(item);
+      else byKey.set(key, [item]);
+    });
+    return Array.from(byKey, ([key, items]) => ({ key, latest: items[0], older: items.slice(1) }));
+  }, [filteredHistory]);
+
+  const renderActions = (item: any, compact = false) => {
+    const isExportingPdf = exportingKey === `${item.id}:pdf`;
+    const isExportingWord = exportingKey === `${item.id}:docx`;
+    const iconClass = compact ? 'w-3 h-3' : 'w-3.5 h-3.5';
+    return (
+      <div className="flex items-center gap-1">
+        {onDuplicate && !compact && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDuplicate(item, e);
+            }}
+            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-brand-600 rounded-lg transition-colors cursor-pointer"
+            title="Salin sebagai Draf Baru"
+          >
+            <Copy className={iconClass} />
+          </button>
+        )}
+
+        {onExportPdf && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onExportPdf(item, e);
+            }}
+            disabled={exportingKey !== null}
+            aria-busy={isExportingPdf}
+            className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            title="Unduh Dokumen PDF Langsung"
+          >
+            {isExportingPdf ? (
+              <Loader2 className={`${iconClass} animate-spin text-red-500`} />
+            ) : (
+              <FileDown className={iconClass} />
+            )}
+          </button>
+        )}
+
+        {onExportWord && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onExportWord(item, e);
+            }}
+            disabled={exportingKey !== null}
+            aria-busy={isExportingWord}
+            className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-slate-400 hover:text-blue-600 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+            title="Unduh Dokumen Word"
+          >
+            {isExportingWord ? (
+              <Loader2 className={`${iconClass} animate-spin text-blue-500`} />
+            ) : (
+              <Download className={iconClass} />
+            )}
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(item.id, e);
+          }}
+          aria-label={t.lessonPlan.rubricHapus}
+          className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-500 rounded-lg transition-colors opacity-80 group-hover:opacity-100 cursor-pointer"
+          title="Hapus dari Riwayat"
+        >
+          <Trash2 className={iconClass} />
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className="w-full max-w-4xl space-y-4">
@@ -67,7 +199,7 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
             <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1 shrink-0">
               <Filter className="w-3 h-3" /> Filter:
             </span>
-            {(['all', 'Modul Ajar', 'RPP', 'KBC'] as const).map(type => (
+            {(['all', 'Modul Ajar', 'RPP', 'KBC'] as const).map((type) => (
               <button
                 key={type}
                 type="button"
@@ -102,17 +234,26 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
             <Clock className="w-8 h-8 text-slate-400 dark:text-slate-600" />
           </div>
           <div className="space-y-1 max-w-sm mx-auto">
-            <h4 className="font-bold text-slate-700 dark:text-slate-200">Belum Ada Riwayat Modul Ajar</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{t.lessonPlan.historyEmpty}</p>
+            <h4 className="font-bold text-slate-700 dark:text-slate-200">
+              Belum Ada Riwayat Modul Ajar
+            </h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {t.lessonPlan.historyEmpty}
+            </p>
           </div>
         </div>
       ) : filteredHistory.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-400 p-6 space-y-2">
           <Search className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600" />
-          <p className="text-xs text-slate-500">Tidak ada riwayat modul ajar yang cocok dengan pencarian "{searchTerm}".</p>
+          <p className="text-xs text-slate-500">
+            Tidak ada riwayat modul ajar yang cocok dengan pencarian "{searchTerm}".
+          </p>
           <button
             type="button"
-            onClick={() => { setSearchTerm(''); setFilterType('all'); }}
+            onClick={() => {
+              setSearchTerm('');
+              setFilterType('all');
+            }}
             className="text-xs text-brand-600 font-semibold hover:underline cursor-pointer"
           >
             Reset Filter Pencarian
@@ -120,16 +261,24 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredHistory.map(item => {
-            const isKbc = item.identity?.isKbcIntegrated || item.identity?.curriculumApproach === 'Berbasis Cinta';
+          {groups.map(({ key, latest: item, older }) => {
+            const isKbc =
+              item.components?.isKbcIntegrated || item.curriculum_approach === 'Berbasis Cinta';
+            const isExpanded = expandedKey === key;
 
             return (
               <div
-                key={item.id}
+                key={key}
                 onClick={() => onRestore(item)}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRestore(item); } }}
+                onKeyDown={(e) => {
+                  if (e.target !== e.currentTarget) return;
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onRestore(item);
+                  }
+                }}
                 className="p-4 sm:p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-brand-500 dark:hover:border-brand-500 hover:shadow-lg cursor-pointer transition-all flex flex-col justify-between group space-y-3"
               >
                 <div className="space-y-2">
@@ -148,77 +297,72 @@ export const ModulAjarHistory: React.FC<ModulAjarHistoryProps> = ({
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1">
-                      {onDuplicate && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDuplicate(item, e);
-                          }}
-                          className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-brand-600 rounded-lg transition-colors cursor-pointer"
-                          title="Salin sebagai Draf Baru"
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-
-                      {onExportPdf && item.generated_content && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onExportPdf(item, e);
-                          }}
-                          className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer"
-                          title="Unduh Dokumen PDF Langsung"
-                        >
-                          <FileDown className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-
-                      {onExportWord && item.generated_content && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onExportWord(item, e);
-                          }}
-                          className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-slate-400 hover:text-blue-600 rounded-lg transition-colors cursor-pointer"
-                          title="Unduh Dokumen Word"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-
-                      <button
-                        onClick={(e) => onDelete(item.id, e)}
-                        aria-label={t.lessonPlan.rubricHapus}
-                        className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-500 rounded-lg transition-colors opacity-80 group-hover:opacity-100 cursor-pointer"
-                        title="Hapus dari Riwayat"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                    {renderActions(item)}
                   </div>
 
                   <h4 className="font-bold text-slate-800 dark:text-white text-sm line-clamp-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
                     {item.identity?.mapel || 'Mata Pelajaran'}
                   </h4>
                   <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
-                    <span className="font-semibold text-slate-500 dark:text-slate-400">Topik:</span> {item.identity?.topik || '-'}
+                    <span className="font-semibold text-slate-500 dark:text-slate-400">Topik:</span>{' '}
+                    {item.identity?.topik || '-'}
                   </p>
                 </div>
 
                 <div className="border-t border-slate-100 dark:border-slate-800/80 pt-3 flex justify-between items-center text-[10px] text-slate-400">
                   <span className="font-medium truncate max-w-[150px]">
-                    {item.identity?.modelPembelajaran || 'Merdeka'}
+                    {item.components?.model || 'Merdeka'}
                   </span>
                   <div className="flex items-center gap-1 text-brand-600 dark:text-brand-400 font-semibold group-hover:underline">
                     <Eye className="w-3 h-3" />
-                    <span>{new Date(item.created_at).toLocaleDateString('id-ID', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    <span>
+                      {older.length > 0 ? 'Terbaru, ' : ''}
+                      {new Date(item.created_at).toLocaleDateString('id-ID', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </span>
                   </div>
                 </div>
+
+                {older.length > 0 && (
+                  <div
+                    className="-mx-1 -mb-1 cursor-default"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      aria-expanded={isExpanded}
+                      onClick={() => setExpandedKey(isExpanded ? null : key)}
+                      className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                    >
+                      <span>{older.length} versi sebelumnya</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                    </button>
+                    {isExpanded && (
+                      <ul className="mt-1 space-y-1">
+                        {older.map((version: any) => (
+                          <li
+                            key={version.id}
+                            className="flex items-center justify-between gap-2 px-2 py-1 rounded-lg bg-slate-50 dark:bg-slate-800/60"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => onRestore(version)}
+                              className="text-[11px] text-slate-700 dark:text-slate-200 hover:text-brand-600 hover:underline cursor-pointer text-left"
+                              title="Buka versi ini"
+                            >
+                              {formatVersionDate(version.created_at)}
+                            </button>
+                            {renderActions(version, true)}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}

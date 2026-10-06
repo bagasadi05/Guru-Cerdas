@@ -3,6 +3,7 @@ import {
     classifyViolationCluster,
     generateContextualHomeroomNote,
     generateHomeroomNote,
+    isAutoHomeroomNote,
     type StudentViolationSummaryItem,
 } from '../bintangConstants';
 
@@ -259,3 +260,56 @@ describe('generateHomeroomNote (Backward Compatibility)', () => {
     });
 });
 
+describe('homeroom note tone for D grades', () => {
+    it('does not open with high praise for keaktifan when an aspect is graded D', () => {
+        const note = generateContextualHomeroomNote({
+            studentName: 'Rizki',
+            adabGrade: 'D',
+            kedisGrade: 'B',
+            kerapianGrade: 'A',
+            activePoints: 3,
+            violations: [{ description: 'Berkata kotor' }],
+        });
+        expect(note).not.toMatch(/antusiasme belajar yang sangat tinggi|Apresiasi setinggi-tingginya/);
+        expect(note).not.toContain('+3 poin keaktifan');
+    });
+
+    it('recognises every generated opener as an auto note', () => {
+        for (let seed = 0; seed < 12; seed++) {
+            const note = generateContextualHomeroomNote({
+                studentName: 'Rizki',
+                adabGrade: 'C',
+                kedisGrade: 'D',
+                kerapianGrade: 'B',
+                violations: [],
+                seed,
+            });
+            expect(isAutoHomeroomNote(note)).toBe(true);
+        }
+    });
+});
+
+describe('gender-aware homeroom note wording', () => {
+    const perfect = { adabGrade: 'A' as const, kedisGrade: 'A' as const, kerapianGrade: 'A' as const, violations: [] };
+    const kerapianViolation = { adabGrade: 'C' as const, kedisGrade: 'A' as const, kerapianGrade: 'D' as const, violations: [{ description: 'Tidak memakai dasi', bintangAspect: 'KERAPIAN' as const }] };
+
+    it('uses gender-specific words for male and female students', () => {
+        for (let seed = 0; seed < 6; seed++) {
+            const boy = generateContextualHomeroomNote({ ...perfect, studentName: 'Ahmad', gender: 'Laki-laki', seed });
+            const girl = generateContextualHomeroomNote({ ...perfect, studentName: 'Aisyah', gender: 'Perempuan', seed });
+            expect(boy).not.toMatch(/sholeh\/sholehah|muslim\/muslimah|sholehah|muslimah/);
+            expect(girl).not.toMatch(/sholeh\/sholehah|muslim\/muslimah/);
+
+            const boyKerapian = generateContextualHomeroomNote({ ...kerapianViolation, studentName: 'Ahmad', gender: 'Laki-laki', seed });
+            const girlKerapian = generateContextualHomeroomNote({ ...kerapianViolation, studentName: 'Aisyah', gender: 'Perempuan', seed });
+            expect(boyKerapian).not.toContain('jilbab');
+            expect(girlKerapian).not.toContain('peci');
+            expect(boyKerapian).not.toMatch(/sholehah/);
+        }
+    });
+
+    it('keeps the neutral wording when gender is unknown', () => {
+        const notes = Array.from({ length: 6 }, (_, seed) => generateContextualHomeroomNote({ ...kerapianViolation, studentName: 'Rizki', seed }));
+        expect(notes.some(n => n.includes('sholeh/sholehah') || n.includes('peci/jilbab'))).toBe(true);
+    });
+});

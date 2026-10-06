@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { logger } from '../services/logger';
 import { pushNotificationService } from '../services/PushNotificationService';
 import { supabase } from '../services/supabase';
+import { syncNotificationPreferences } from '../services/notificationPreferenceSync';
+import { unbindPreferences } from '../services/NotificationService';
 
 /**
  * usePushSubscriptionSync
@@ -36,15 +38,25 @@ export const usePushSubscriptionSync = (userId: string | null | undefined) => {
   }, []);
 
   useEffect(() => {
-    if (!userId) return;
-    if (lastUserIdRef.current === userId) return;
-    lastUserIdRef.current = userId;
+    if (!userId) {
+      lastUserIdRef.current = null;
+      unbindPreferences();
+      return;
+    }
+    const sync = () => {
+      void syncNotificationPreferences(userId).catch((err) => {
+        logger.warn('Notification preference sync failed', 'PushSubscriptionSync', err);
+      });
+      void pushNotificationService.sync(userId).catch((err) => {
+        logger.warn('Push subscription sync on login failed', 'PushSubscriptionSync', err);
+      });
+    };
+    if (lastUserIdRef.current !== userId) {
+      lastUserIdRef.current = userId;
+      sync();
+    }
 
-    void pushNotificationService.sync(userId).catch((err) => {
-      logger.warn('Push subscription sync on login failed', 'PushSubscriptionSync', err);
-    });
-
-    // Otomatis meminta izin notifikasi segera setelah PWA diinstal
+    // Request permission after the user installs the PWA.
     const handleAppInstalled = () => {
       logger.info('PWA installed, automatically requesting push permission...', 'PushSubscriptionSync');
       void pushNotificationService.enable(userId).catch(err => {
@@ -53,9 +65,11 @@ export const usePushSubscriptionSync = (userId: string | null | undefined) => {
     };
 
     window.addEventListener('appinstalled', handleAppInstalled);
+    window.addEventListener('online', sync);
 
     return () => {
       window.removeEventListener('appinstalled', handleAppInstalled);
+      window.removeEventListener('online', sync);
     };
   }, [userId]);
 

@@ -6,12 +6,23 @@ import { FilterPills } from './FilterPills';
 import { StudentRow, InputMode, StudentFilter, AcademicRecordRow, ClassRow, AttitudeRecordRow, QuizPointRow } from '../types';
 import { QUIZ_ACTIVITY_CATEGORIES, BINTANG_ATTITUDE_ASPECTS } from '../constants';
 import { useGridNavigation } from '../../../../hooks/useGridNavigation';
+import { useMediaQuery } from '../../../../hooks/useMediaQuery';
 import { StudentSortControls, GroupHeader, sortStudents, groupStudents, SortField, SortDirection, GroupBy } from '../../../ui/StudentSortControls';
 import { GradeDistributionMini } from '../../../ui/GradeDistributionChart';
 import { BatchFillInput } from '../../../ui/BatchFillInput';
 import { VoiceGradeModal } from './VoiceGradeModal';
 import { Step2_StudentTableRow, Step2_StudentMobileCard } from './Step2_StudentItems';
+import type { StudentViolationStatus } from '../violationInsights';
 import { Mic, ChevronDown, ChevronUp, Zap } from 'lucide-react';
+
+// Shared empty value so rows without records keep the same prop identity
+// and React.memo can skip them.
+const NO_RECORDS: QuizPointRow[] = [];
+
+// Rows mounted up front, and how many more each time the user nears the end.
+// "Semua Kelas" can hold 600+ students; mounting them all at once freezes
+// low-end phones.
+const ROW_BATCH = 60;
 
 interface Step2_StudentListProps {
     mode: InputMode | null;
@@ -42,6 +53,7 @@ interface Step2_StudentListProps {
     selectedClass?: string;
     kkm?: number;
     onClearRequest?: () => void;
+    violationStatusMap?: Map<string, StudentViolationStatus>;
 }
 
 export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
@@ -53,6 +65,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     existingQuizPoints, quizInfo,
     classes, selectedClass, kkm = 75,
     onClearRequest,
+    violationStatusMap,
 }) => {
     // Sorting and Grouping State
     const [sortConfig, setSortConfig] = useState<{ field: SortField; direction: SortDirection }>({
@@ -93,13 +106,54 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
         }
     );
 
+    // useGridNavigation returns a fresh object every render; depend on the
+    // stable callbacks so the row props below don't change on every render.
+    const { registerRef: registerGridRef, handleKeyDown: handleGridKeyDown } = gridNav;
     const registerInputRef = React.useCallback((index: number, el: HTMLInputElement | null) => {
         if (el && el.offsetParent !== null) {
-            gridNav.registerRef(index, el);
+            registerGridRef(index, el);
         } else if (!el) {
-            gridNav.registerRef(index, null);
+            registerGridRef(index, null);
         }
-    }, [gridNav]);
+    }, [registerGridRef]);
+
+    const isDesktop = useMediaQuery('(min-width: 768px)');
+
+    const [renderLimit, setRenderLimit] = useState(ROW_BATCH);
+    React.useEffect(() => {
+        setRenderLimit(ROW_BATCH);
+    }, [selectedClass, mode]);
+
+    // Cut the groups down to the first `renderLimit` rows, keeping group order.
+    const visibleGroups = useMemo(() => {
+        const withTotals = groupedStudents.map((group) => ({ ...group, total: group.students.length }));
+        if (flatStudentList.length <= renderLimit) return withTotals;
+        let remaining = renderLimit;
+        const result: typeof withTotals = [];
+        for (const group of withTotals) {
+            if (remaining <= 0) break;
+            result.push({ ...group, students: group.students.slice(0, remaining) });
+            remaining -= group.total;
+        }
+        return result;
+    }, [groupedStudents, flatStudentList.length, renderLimit]);
+    const hasMoreRows = flatStudentList.length > renderLimit;
+
+    const loadMoreRef = React.useRef<HTMLDivElement | null>(null);
+    React.useEffect(() => {
+        const sentinel = loadMoreRef.current;
+        if (!hasMoreRows || !sentinel || typeof IntersectionObserver === 'undefined') return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries.some((entry) => entry.isIntersecting)) {
+                    setRenderLimit((limit) => limit + ROW_BATCH);
+                }
+            },
+            { rootMargin: '600px 0px' },
+        );
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [hasMoreRows, renderLimit]);
 
     // Auto-focus the first input once per class/mode.
     const hasAutoFocusedRef = React.useRef(false);
@@ -318,7 +372,8 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                     </div>
                 ) : students && students.length > 0 ? (
                     <>
-                        <div className="hidden md:block overflow-x-auto">
+                        {isDesktop ? (
+                        <div className="overflow-x-auto">
                             <table className="w-full text-sm border-separate border-spacing-y-2" aria-label="Tabel Input Nilai Siswa">
                                 <thead>
                                     <tr className="text-emerald-600 dark:text-emerald-200">
@@ -338,12 +393,12 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {groupedStudents.map((group) => (
+                                    {visibleGroups.map((group) => (
                                         <React.Fragment key={group.title}>
                                             {groupBy !== 'none' && (
                                                 <tr>
                                                     <td colSpan={4} className="pt-4 pb-2">
-                                                        <GroupHeader title={group.title} count={group.students.length} color={group.color} />
+                                                        <GroupHeader title={group.title} count={group.total} color={group.color} />
                                                     </td>
                                                 </tr>
                                             )}
@@ -366,17 +421,19 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                         gradeRecord={existingGradesMap.get(s.id)}
                                                         classNameLabel={selectedClass === 'all' && classes ? (classMap.get(s.class_id || '') || 'Unknown Class') : undefined}
                                                         studentQuizPoints={studentQuizPointsCountMap.get(s.id) || 0}
-                                                        todayQuizRecords={studentQuizTodayMap.get(s.id) || []}
+                                                        todayQuizRecords={studentQuizTodayMap.get(s.id) || NO_RECORDS}
                                                         studentAttitudePoints={studentAttitudePointsCountMap.get(s.id) || 0}
-                                                        todayAttitudeRecords={studentAttitudeTodayMap.get(s.id) || []}
+                                                        todayAttitudeRecords={studentAttitudeTodayMap.get(s.id) || NO_RECORDS}
                                                         activeAttitudeCategory={activeAttitudeCategory}
                                                         activeQuizCategory={activeQuizCategory}
                                                         validationError={validationErrors[s.id]}
+                                                violationRecordedOnDate={violationStatusMap?.get(s.id)?.recordedOnDate}
+                                                violationSemesterPoints={violationStatusMap?.get(s.id)?.semesterPoints}
                                                         onSelect={handleStudentSelect}
                                                         onScoreChange={handleScoreChange}
                                                         onScoreFocus={onScoreFieldFocus}
                                                         registerInputRef={registerInputRef}
-                                                        onKeyDown={(e) => gridNav.handleKeyDown(e, globalIndex)}
+                                                        onKeyDown={handleGridKeyDown}
                                                     />
                                                 );
                                             })}
@@ -385,13 +442,12 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                 </tbody>
                             </table>
                         </div>
-
-                        {/* Mobile View */}
-                        <div className="md:hidden space-y-4">
-                            {groupedStudents.map((group) => (
+                        ) : (
+                        <div className="space-y-4">
+                            {visibleGroups.map((group) => (
                                 <React.Fragment key={group.title}>
                                     {groupBy !== 'none' && (
-                                        <GroupHeader title={group.title} count={group.students.length} color={group.color} />
+                                        <GroupHeader title={group.title} count={group.total} color={group.color} />
                                     )}
                                     {group.students.map((s: StudentRow) => {
                                         const globalIndex = globalIndexMap.get(s.id) ?? 0;
@@ -412,23 +468,31 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                                                 gradeRecord={existingGradesMap.get(s.id)}
                                                 classNameLabel={selectedClass === 'all' && classes ? (classMap.get(s.class_id || '') || 'Unknown') : undefined}
                                                 studentQuizPoints={studentQuizPointsCountMap.get(s.id) || 0}
-                                                todayQuizRecords={studentQuizTodayMap.get(s.id) || []}
+                                                todayQuizRecords={studentQuizTodayMap.get(s.id) || NO_RECORDS}
                                                 studentAttitudePoints={studentAttitudePointsCountMap.get(s.id) || 0}
-                                                todayAttitudeRecords={studentAttitudeTodayMap.get(s.id) || []}
+                                                todayAttitudeRecords={studentAttitudeTodayMap.get(s.id) || NO_RECORDS}
                                                 activeAttitudeCategory={activeAttitudeCategory}
                                                 activeQuizCategory={activeQuizCategory}
                                                 validationError={validationErrors[s.id]}
+                                                violationRecordedOnDate={violationStatusMap?.get(s.id)?.recordedOnDate}
+                                                violationSemesterPoints={violationStatusMap?.get(s.id)?.semesterPoints}
                                                 onSelect={handleStudentSelect}
                                                 onScoreChange={handleScoreChange}
                                                 onScoreFocus={onScoreFieldFocus}
                                                 registerInputRef={registerInputRef}
-                                                onKeyDown={(e) => gridNav.handleKeyDown(e, globalIndex)}
+                                                onKeyDown={handleGridKeyDown}
                                             />
                                         );
                                     })}
                                 </React.Fragment>
                             ))}
                         </div>
+                        )}
+                        {hasMoreRows && (
+                            <div ref={loadMoreRef} className="py-4 text-center text-xs text-slate-400 dark:text-slate-500">
+                                Memuat siswa lainnya… ({renderLimit} dari {flatStudentList.length})
+                            </div>
+                        )}
                     </>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-64 text-slate-400 dark:text-brand-200/60">

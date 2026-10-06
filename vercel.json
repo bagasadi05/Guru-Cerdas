@@ -1,4 +1,21 @@
 {
+    "functions": {
+        "api/document-export/pdf.ts": {
+            "memory": 1769,
+            "maxDuration": 60,
+            "includeFiles": "{node_modules/@sparticuz/chromium/bin/**,node_modules/@fontsource/tinos/files/tinos-latin*.woff2}"
+        },
+        "api/document-export/docx.ts": {
+            "memory": 1024,
+            "maxDuration": 30
+        },
+        "api/gemini.ts": {
+            "maxDuration": 60
+        },
+        "api/groq.ts": {
+            "maxDuration": 60
+        }
+    },
     "rewrites": [
         {
             "source": "/api/(.*)",

@@ -1,0 +1,40 @@
+[
+  {
+    "id": "2026.10.05",
+    "date": "2026-10-05",
+    "title": "Prota & Promes jauh lebih cepat dibuat",
+    "changes": [
+      { "type": "baru", "text": "Tombol Buat dari Jadwal membuat Prota dan Promes untuk semua mapel dan kelas di jadwal mengajar Anda sekaligus. Unduh Paket mengunduh semuanya dalam satu file ZIP." },
+      { "type": "baru", "text": "Susun dengan AI membuat draf TP dan bab untuk mapel yang belum punya daftar bab. Jam pelajarannya tetap dihitung dari Kaldik. Periksa isinya dengan CP terbaru." },
+      { "type": "baru", "text": "Kaldik kini disusun dari tanggal sebenarnya dan hari libur nasional serta cuti bersama dari SKB 3 Menteri. Admin bisa menerbitkan Kaldik sekolah untuk semua guru." },
+      { "type": "peningkatan", "text": "Anda bisa punya beberapa Prota sekaligus, misalnya per mapel dan kelas. Perubahan tersimpan otomatis, dan hapus materi, bagi ulang jam, atau hapus dokumen bisa dibatalkan." },
+      { "type": "peningkatan", "text": "Pekan yang Anda atur sendiri di Promes tidak berubah saat Bagi ulang. Tombol Modul Ajar di tiap materi membuka Modul Ajar yang sudah terisi." },
+      { "type": "perbaikan", "text": "Bagi Jam Otomatis di Semester 2 tidak lagi mengisi minggu ujian dan libur Lebaran. Isi Promes juga tidak hilang lagi saat materi Prota diubah." },
+      { "type": "perbaikan", "text": "Promes versi Word kini memuat mapel, kelas, dan tabel jam per pekan dengan lengkap." }
+    ]
+  },
+  {
+    "id": "2026.10.04",
+    "date": "2026-10-04",
+    "title": "Absensi lebih andal, rapor Bintang lebih akurat",
+    "changes": [
+      { "type": "baru", "text": "Setiap kali aplikasi diperbarui, jendela ini menampilkan apa saja yang berubah sebelum Anda memuat ulang." },
+      { "type": "perbaikan", "text": "Absensi yang sudah direset kini bisa disimpan lagi. Dua guru yang mengisi kelas dan tanggal yang sama juga tidak bentrok lagi." },
+      { "type": "baru", "text": "Absensi tidak bisa disimpan di hari Minggu, kecuali semua siswa ditandai Libur." },
+      { "type": "baru", "text": "Program Bintang memberi tanda \"Perlu diperbarui\" kalau ada pelanggaran atau poin keaktifan baru setelah rapor dibuat. Klik Generate untuk memperbaruinya." },
+      { "type": "peningkatan", "text": "Generate rapor Bintang tidak lagi menimpa nilai dan catatan yang sudah Anda ubah sendiri." },
+      { "type": "peningkatan", "text": "Catatan wali kelas menyesuaikan jenis kelamin siswa, misalnya sholeh atau sholehah." },
+      { "type": "baru", "text": "Orang tua bisa melihat rapor Bintang yang sudah dipublikasikan di Portal Orang Tua." },
+      { "type": "perbaikan", "text": "Poin keaktifan yang sama untuk siswa yang sama di hari yang sama hanya tercatat sekali, siapa pun gurunya." },
+      { "type": "perbaikan", "text": "Notifikasi di HP kini benar-benar terkirim. Buka aplikasi sekali agar notifikasi Anda tersambung kembali." },
+      { "type": "perbaikan", "text": "Nilai yang diketik tapi belum disimpan tidak hilang lagi saat halaman dibuka ulang atau saat pindah kelas, semester, atau penilaian. Nilai itu disimpan sebagai draf di perangkat Anda." },
+      { "type": "perbaikan", "text": "Modul Ajar: menyusun ulang setelah ganti topik kini benar-benar memakai topik baru, dan isian Anda tidak lagi ditimpa AI." },
+      { "type": "perbaikan", "text": "Modul Ajar: Lembar Siswa kembali memuat soal evaluasi, dan perubahan yang Anda ketik langsung di dokumen kini tersimpan." },
+      { "type": "peningkatan", "text": "Modul Ajar: Riwayat mengelompokkan versi dokumen yang sama, dan modul yang terhapus bisa dikembalikan dengan Urungkan." },
+      { "type": "peningkatan", "text": "Modul Ajar: AI diberi waktu lebih lama untuk menyusun, dan prosesnya bisa dibatalkan." },
+      { "type": "baru", "text": "Nilai mapel bisa disimpan walau sinyal hilang. Nilai disimpan di perangkat dan terkirim otomatis begitu HP kembali online." },
+      { "type": "peningkatan", "text": "Saat menyimpan nilai, aplikasi hanya mengirim nilai yang Anda ubah. Kalau nilai yang sama baru diubah dari perangkat lain, Anda diminta memilih nilai mana yang dipakai." },
+      { "type": "perbaikan", "text": "Tanggal keaktifan, sikap, dan pelanggaran kini otomatis terisi tanggal hari ini, termasuk sebelum pukul 07.00. Catatan pada poin sikap juga ikut tersimpan." }
+    ]
+  }
+]

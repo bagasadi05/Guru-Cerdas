@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback, createContext, useContext, useRef } from 'react';
 import { Wifi, WifiOff, CloudOff, Upload, Check, X, Clock, RefreshCw, AlertTriangle, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { WhatsNewDialog } from './WhatsNewDialog';
+import { fetchReleaseNotes, getLastSeenReleaseId, getUnseenReleases, markReleaseSeen, type ReleaseNote } from '../services/releaseNotes';
 
 /**
  * Performance & Status Indicators
@@ -678,22 +681,38 @@ export const LoadingWithStatus: React.FC<LoadingWithStatusProps> = ({
 // SW UPDATE BANNER
 // ============================================
 
+/** How long "Nanti" postpones the update dialog. */
+const UPDATE_SNOOZE_MS = 10 * 60 * 1000;
+
+/** Release notes are written for teachers; parents and the login screens skip them. */
+const isTeacherArea = (pathname: string) =>
+    pathname !== '/' && !pathname.startsWith('/guru-login') && !pathname.startsWith('/portal');
+
 /**
- * Smart Auto-Reboot Banner that appears when a new version is deployed.
- * Automatically counts down from 3 to 1 and reboots the page to use the latest version,
- * while giving users the option to reboot immediately or snooze for 1 minute if typing.
+ * Shows "Apa yang baru" when a new version is deployed, before the user
+ * reloads into it. If the app updated itself in a background tab, the same
+ * notes are shown once after it reopens.
  */
 export const SWUpdateBanner: React.FC = () => {
     const [updateFn, setUpdateFn] = useState<(() => void) | null>(null);
-    const [visible, setVisible] = useState(false);
-    const [countdown, setCountdown] = useState(3);
-    const [isPaused, setIsPaused] = useState(false);
+    const [mode, setMode] = useState<'update' | 'updated' | null>(null);
+    const [releases, setReleases] = useState<ReleaseNote[]>([]);
     const rebootTriggeredRef = useRef(false);
+    const snoozeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const postUpdateCheckedRef = useRef(false);
+    const { pathname } = useLocation();
+    // The SW event handler is registered once, so it reads the route via a ref.
+    const pathnameRef = useRef(pathname);
+    useEffect(() => {
+        pathnameRef.current = pathname;
+    }, [pathname]);
 
     const executeReboot = useCallback(() => {
         if (rebootTriggeredRef.current) return;
         rebootTriggeredRef.current = true;
 
+        // The user just read these notes; don't repeat them after the reload.
+        if (releases[0]) markReleaseSeen(releases[0].id);
         try {
             sessionStorage.setItem('post-reload-path', window.location.pathname + window.location.search);
         } catch {
@@ -709,129 +728,70 @@ export const SWUpdateBanner: React.FC = () => {
         setTimeout(() => {
             window.location.reload();
         }, 1500);
-    }, [updateFn]);
+    }, [updateFn, releases]);
 
+    // New version waiting: load the new version's notes, then ask before reloading.
     useEffect(() => {
-        const handler = (e: Event) => {
+        const handler = async (e: Event) => {
             const { updateSW } = (e as CustomEvent).detail as { updateSW: (reload?: boolean) => void };
+            if (!isTeacherArea(pathnameRef.current)) {
+                // Outside the teacher app, update quietly as before.
+                updateSW(true);
+                return;
+            }
             setUpdateFn(() => () => updateSW(true));
-            setCountdown(3);
-            setIsPaused(false);
             rebootTriggeredRef.current = false;
-            setVisible(true);
+            const notes = await fetchReleaseNotes();
+            setReleases(getUnseenReleases(notes, getLastSeenReleaseId()));
+            setMode('update');
         };
         window.addEventListener('sw-update-available', handler);
         return () => window.removeEventListener('sw-update-available', handler);
     }, []);
 
+    // App already updated (e.g. in a background tab): show what changed once,
+    // the first time the user reaches the teacher area in this session.
     useEffect(() => {
-        if (!visible || isPaused) return;
+        if (!import.meta.env.PROD || postUpdateCheckedRef.current || !isTeacherArea(pathname)) return;
+        postUpdateCheckedRef.current = true;
+        // Not cancelled on navigation: this runs once per session and an early
+        // redirect must not swallow the result.
+        void (async () => {
+            const notes = await fetchReleaseNotes();
+            if (notes.length === 0) return;
+            // No history yet (including everyone on the first release with this
+            // dialog): show the latest release once.
+            const unseen = getUnseenReleases(notes, getLastSeenReleaseId());
+            if (unseen.length === 0) return;
+            setReleases(unseen);
+            setMode(current => current ?? 'updated');
+        })();
+    }, [pathname]);
 
-        if (countdown <= 0) {
-            executeReboot();
+    useEffect(() => () => {
+        if (snoozeTimerRef.current) clearTimeout(snoozeTimerRef.current);
+    }, []);
+
+    const handleClose = () => {
+        if (mode === 'updated') {
+            if (releases[0]) markReleaseSeen(releases[0].id);
+            setMode(null);
             return;
         }
-
-        const timer = setInterval(() => {
-            setCountdown((prev) => {
-                if (prev <= 1) {
-                    clearInterval(timer);
-                    executeReboot();
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-
-        return () => clearInterval(timer);
-    }, [visible, isPaused, countdown, executeReboot]);
-
-    const handleSnooze = () => {
-        setIsPaused(true);
-        // Snooze for 60 seconds, then resume countdown
-        setTimeout(() => {
-            setCountdown(3);
-            setIsPaused(false);
-        }, 60000);
+        // "Nanti": ask again later; the update also applies once all tabs close.
+        setMode(null);
+        if (snoozeTimerRef.current) clearTimeout(snoozeTimerRef.current);
+        snoozeTimerRef.current = setTimeout(() => setMode('update'), UPDATE_SNOOZE_MS);
     };
 
-    if (!visible) return null;
-
     return (
-        <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:w-96 z-[9999] animate-slide-up">
-            <div className="relative overflow-hidden rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/60 shadow-2xl p-4 sm:p-5">
-                {/* Glowing accent at the top */}
-                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 animate-pulse" />
-
-                {/* Visual progress bar matching 3s countdown */}
-                {!isPaused && (
-                    <div className="absolute top-1.5 left-0 right-0 h-0.5 bg-slate-100 dark:bg-slate-800">
-                        <div
-                            className="h-full bg-emerald-500 transition-all duration-1000 ease-linear"
-                            style={{ width: `${((3 - countdown) / 3) * 100}%` }}
-                        />
-                    </div>
-                )}
-                
-                <div className="flex items-start gap-3.5 mt-1">
-                    <div className="relative flex-shrink-0 bg-emerald-100 dark:bg-emerald-500/20 p-2.5 rounded-full ring-4 ring-emerald-50 dark:ring-emerald-500/10">
-                        <RefreshCw className="w-5 h-5 text-emerald-600 dark:text-emerald-400 animate-[spin_3s_linear_infinite]" />
-                        {!isPaused && countdown > 0 && (
-                            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-900">
-                                {countdown}
-                            </span>
-                        )}
-                    </div>
-                    
-                    <div className="flex-1 pt-0.5">
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                            Pembaruan Terdeteksi!
-                        </h3>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 leading-relaxed pr-5">
-                            {isPaused ? (
-                                'Pembaruan ditunda selama 1 menit. Klik "Muat Ulang Sekarang" jika Anda telah siap.'
-                            ) : (
-                                <>
-                                    Aplikasi versi terbaru telah tersedia. Memuat ulang otomatis dalam{' '}
-                                    <span className="font-bold text-emerald-600 dark:text-emerald-400">{countdown} detik</span>...
-                                </>
-                            )}
-                        </p>
-                        
-                        <div className="mt-3.5 flex items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={executeReboot}
-                                className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 flex items-center justify-center gap-1.5"
-                            >
-                                <RefreshCw className="w-3.5 h-3.5" />
-                                <span>Muat Ulang Sekarang</span>
-                            </button>
-                            {!isPaused && (
-                                <button
-                                    type="button"
-                                    onClick={handleSnooze}
-                                    className="flex-1 sm:flex-none bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-medium px-3 py-2 rounded-xl transition-colors active:scale-95 flex items-center justify-center gap-1"
-                                >
-                                    <Clock className="w-3 h-3 text-slate-400" />
-                                    <span>Tunda 1 Menit</span>
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                    
-                    <button
-                        type="button"
-                        onClick={handleSnooze}
-                        className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-700/50 p-1.5 rounded-full transition-colors"
-                        aria-label="Tunda pembaruan"
-                        title="Tunda 1 Menit"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
-                </div>
-            </div>
-        </div>
+        <WhatsNewDialog
+            isOpen={mode !== null}
+            mode={mode ?? 'update'}
+            releases={releases}
+            onUpdate={executeReboot}
+            onClose={handleClose}
+        />
     );
 };
 

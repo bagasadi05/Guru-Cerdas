@@ -919,7 +919,7 @@ export const downloadBintangReportAction = async ({
             ? supabase.from('quiz_points').select('id, student_id, quiz_name, subject, points, category, quiz_date, semester_id').in('student_id', studentIds).is('deleted_at', null).gte('quiz_date', monthStart).lt('quiz_date', monthEnd).limit(2000)
             : Promise.resolve({ data: [] }),
         studentIds.length > 0
-            ? bintangService.getAttitudeMapForStudents(studentIds)
+            ? bintangService.getAttitudeMapForStudentsInMonth(studentIds, month)
             : Promise.resolve({} as Record<string, { spiritual?: string; social?: string }>),
     ]);
 

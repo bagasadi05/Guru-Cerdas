@@ -6,10 +6,10 @@ import { usePhScheduleDomain } from './engine/usePhScheduleDomain';
 import { PhScheduleEngine } from './engine/PhScheduleEngine';
 import { PhWeeklyScheduleView } from './PhWeeklyScheduleView';
 import { PhScheduleFormModal } from './PhScheduleFormModal';
+import { PhBatchFormModal } from './PhBatchFormModal';
+import { PhScheduleToolbar } from './PhScheduleToolbar';
 import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
-import { CustomDropdown } from '../ui/CustomDropdown';
 import { ConfirmationDialog } from '../ui/ConfirmationDialog';
 import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../ui/DropdownMenu';
 import {
@@ -23,10 +23,7 @@ import {
     ClipboardPenIcon,
     SearchIcon,
     AlertTriangleIcon,
-    Share2Icon,
     PrinterIcon,
-    CheckCircleIcon,
-    XIcon,
 } from '../Icons';
 import { getColorForSubject } from '../../utils/scheduleUtils';
 import type { PhScheduleRow } from '../../types';
@@ -152,48 +149,16 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
 
     return (
         <div className="space-y-6 animate-fade-in">
-            {/* Stat Summary Cards Bar */}
-            {domain.effectiveClassId && domain.selectedSemesterId && !domain.isLoadingSchedules && domain.rawSchedules.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                    <div className="bg-white/90 dark:bg-[#111c2e]/80 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-[#1c2b44] p-4 shadow-sm flex items-center gap-3.5">
-                        <div className="w-11 h-11 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-400 flex items-center justify-center shrink-0 border border-brand-200/60 dark:border-brand-500/20">
-                            <CalendarIcon className="w-5 h-5" />
+            <PhScheduleToolbar domain={domain} onPrint={handleTriggerPrint} />
+            {!domain.isLoadingSchedules && !domain.loadError && domain.rawSchedules.length > 0 && (
+                <section aria-label="Ringkasan jadwal PH" className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-slate-200 bg-slate-200 sm:grid-cols-4 dark:border-slate-700 dark:bg-slate-700">
+                    {[{ label: 'Jadwal semester ini', count: domain.statusCounts.all }, { label: 'Hari ini', count: domain.statusCounts.today }, { label: 'Mendatang', count: domain.statusCounts.upcoming }, { label: 'Tanggal sudah lewat', count: domain.statusCounts.past }].map((stat) => (
+                        <div key={stat.label} className="bg-white px-4 py-4 sm:px-5 dark:bg-slate-900">
+                            <p className="text-sm text-slate-600 dark:text-slate-300">{stat.label}</p>
+                            <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-900 dark:text-white">{stat.count}<span className="ml-1.5 text-sm font-normal text-slate-500 dark:text-slate-400">PH</span></p>
                         </div>
-                        <div className="min-w-0">
-                            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Jadwal PH</div>
-                            <div className="text-xl font-bold text-slate-900 dark:text-white font-serif">{domain.statusCounts.all} PH</div>
-                            <div className="text-xxs text-slate-400 truncate">Terjadwal di semester ini</div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white/90 dark:bg-[#111c2e]/80 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-[#1c2b44] p-4 shadow-sm flex items-center gap-3.5">
-                        <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-200/60 dark:border-blue-500/20">
-                            <ClockIcon className="w-5 h-5" />
-                        </div>
-                        <div className="min-w-0">
-                            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">PH Mendatang</div>
-                            <div className="text-xl font-bold text-blue-600 dark:text-blue-400 font-serif">{domain.statusCounts.upcoming} PH</div>
-                            <div className="text-xxs text-slate-400 truncate">
-                                {domain.nextUpcomingPh
-                                    ? `Terdekat: ${domain.nextUpcomingPh.subject} (${PhScheduleEngine.getRelativeDateLabel(domain.nextUpcomingPh.date)})`
-                                    : 'Tidak ada PH mendatang'}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white/90 dark:bg-[#111c2e]/80 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-[#1c2b44] p-4 shadow-sm flex items-center gap-3.5">
-                        <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-200/60 dark:border-emerald-500/20">
-                            <CheckCircleIcon className="w-5 h-5" />
-                        </div>
-                        <div className="min-w-0">
-                            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">PH Terlaksana</div>
-                            <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400 font-serif">{domain.statusCounts.past} PH</div>
-                            <div className="text-xxs text-slate-400 truncate">
-                                {domain.statusCounts.today > 0 ? `✨ ${domain.statusCounts.today} PH hari ini!` : 'Selesai diuji'}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    ))}
+                </section>
             )}
 
             {/* Schedule Anomaly Alerts */}
@@ -201,7 +166,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                 <div className="bg-rose-50 dark:bg-rose-500/10 rounded-2xl border border-rose-200 dark:border-rose-500/20 p-4 flex items-start gap-3">
                     <AlertTriangleIcon className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
                     <div className="space-y-1 text-xs sm:text-sm">
-                        <h4 className="font-bold text-rose-800 dark:text-rose-300">Peringatan Bentrok Jadwal PH Terdeteksi!</h4>
+                        <h4 className="font-bold text-rose-800 dark:text-rose-300">Ada jadwal yang bertumpang tindih</h4>
                         <ul className="list-disc list-inside text-rose-700 dark:text-rose-400 space-y-0.5">
                             {domain.scheduleAnomalies.conflicts.map((c, i) => (
                                 <li key={i}>
@@ -217,7 +182,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                 <div className="bg-amber-50 dark:bg-amber-500/10 rounded-2xl border border-amber-200 dark:border-amber-500/20 p-3.5 flex items-start gap-3">
                     <AlertTriangleIcon className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                     <div className="text-xs text-amber-800 dark:text-amber-300">
-                        <span className="font-bold">Info Kepadatan Ujian: </span>
+                        <span className="font-bold">Beberapa PH pada hari yang sama: </span>
                         {domain.scheduleAnomalies.heavyDays.map((h, i) => (
                             <span key={i}>
                                 Tanggal <strong>{PhScheduleEngine.formatDateHeading(h.date)}</strong> memiliki {h.count} PH dalam sehari. Pastikan tidak melebihi beban belajar siswa.
@@ -227,248 +192,17 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                 </div>
             )}
 
-            {/* Filter & Action Card */}
-            <div className="bg-white/95 dark:bg-[#111c2e]/80 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-[#1c2b44] p-3 sm:p-3.5 shadow-sm dark:shadow-[0_0_0_1px_rgba(28,43,68,0.8),0_4px_20px_-2px_rgba(0,0,0,0.4)] space-y-3 sm:space-y-3.5">
-                <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
-                    <div className="space-y-1">
-                        <label className="block text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-400 dark:text-[#64748b] uppercase">
-                            KELAS
-                        </label>
-                        <CustomDropdown
-                            value={domain.effectiveClassId}
-                            onChange={domain.handleSelectClass}
-                            options={domain.classes.map((c) => ({ value: c.id, label: c.name }))}
-                            placeholder="Pilih Kelas"
-                        />
-                    </div>
-                    <div className="space-y-1">
-                        <label className="block text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-400 dark:text-[#64748b] uppercase">
-                            SEMESTER
-                        </label>
-                        <CustomDropdown
-                            value={domain.selectedSemesterId}
-                            onChange={domain.setSelectedSemesterId}
-                            options={domain.semesterOptions}
-                            placeholder="Pilih Semester"
-                        />
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center border border-slate-200 dark:border-[#1c2b44] rounded-xl bg-slate-100/70 dark:bg-[#0f1828]/60 p-0.5">
-                        <button
-                            type="button"
-                            onClick={() => domain.setIsWaModalOpen(true)}
-                            disabled={domain.rawSchedules.length === 0}
-                            className="w-10 h-10 sm:w-9 sm:h-9 min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px] rounded-lg flex items-center justify-center text-slate-500 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-[#111c2e] disabled:opacity-40 transition-colors cursor-pointer active:scale-95"
-                            title="Salin Jadwal untuk WhatsApp"
-                            aria-label="Bagikan WhatsApp"
-                        >
-                            <Share2Icon className="w-4 h-4" />
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleTriggerPrint}
-                            disabled={domain.rawSchedules.length === 0}
-                            className="w-10 h-10 sm:w-9 sm:h-9 min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px] rounded-lg flex items-center justify-center text-slate-500 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-[#111c2e] disabled:opacity-40 transition-colors cursor-pointer active:scale-95"
-                            title="Cetak Jadwal PH"
-                            aria-label="Cetak"
-                        >
-                            <PrinterIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                            type="button"
-                            onClick={domain.handleExportIcs}
-                            disabled={domain.rawSchedules.length === 0}
-                            className="w-10 h-10 sm:w-9 sm:h-9 min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px] rounded-lg flex items-center justify-center text-slate-500 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-[#111c2e] disabled:opacity-40 transition-colors cursor-pointer active:scale-95"
-                            title="Ekspor Jadwal PH ke Kalender (.ics)"
-                            aria-label="Kalender ICS"
-                        >
-                            <CalendarIcon className="w-4 h-4" />
-                        </button>
-                    </div>
-
-                    {domain.canManage && (
-                        <button
-                            type="button"
-                            onClick={() => domain.openAdd()}
-                            className="flex-1 min-h-[42px] sm:min-h-[40px] h-10 bg-[#00d284] hover:bg-[#00ba74] text-slate-950 font-bold text-xs sm:text-[13px] rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-[0_4px_14px_0_rgba(0,210,132,0.25)] active:scale-[0.98] whitespace-nowrap px-3 cursor-pointer"
-                        >
-                            <PlusIcon className="w-4 h-4 stroke-[2.5] shrink-0" />
-                            <span className="whitespace-nowrap">Tambah PH</span>
-                        </button>
-                    )}
-                </div>
-
-                {/* Search & Month Filter */}
-                <div className="flex items-center gap-2">
-                    <div className="relative flex-1 min-w-0">
-                        <SearchIcon className="w-4 h-4 text-slate-400 dark:text-[#64748b] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                        <Input
-                            type="text"
-                            placeholder="Cari mata pelajaran PH..."
-                            value={domain.searchQuery}
-                            onChange={(e) => domain.setSearchQuery(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-[#0f1828] border border-slate-200 dark:border-[#1f314d] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-[#64748b] text-[13px] rounded-xl py-2.5 pl-10 pr-8 focus:outline-none focus:border-emerald-500 dark:focus:border-[#00d284]/80 transition-colors min-h-[42px] h-10"
-                        />
-                        {domain.searchQuery && (
-                            <button
-                                type="button"
-                                onClick={() => domain.setSearchQuery('')}
-                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-md cursor-pointer"
-                                aria-label="Hapus kata kunci pencarian"
-                            >
-                                <XIcon className="w-4 h-4" />
-                            </button>
-                        )}
-                    </div>
-                    {domain.availableMonths.length > 0 && (
-                        <div className="w-28 sm:w-36 shrink-0">
-                            <CustomDropdown
-                                value={domain.selectedMonth}
-                                onChange={domain.setSelectedMonth}
-                                options={[{ value: 'all', label: 'Semua Bulan' }, ...domain.availableMonths]}
-                                placeholder="Bulan"
-                            />
-                        </div>
-                    )}
-                </div>
-
-                {/* Filter Pills & View Mode */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-0.5">
-                    <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 min-w-0" role="tablist" aria-label="Filter status PH">
-                        <button
-                            type="button"
-                            role="tab"
-                            aria-selected={domain.statusFilter === 'all'}
-                            onClick={() => domain.setStatusFilter('all')}
-                            className={`min-h-[36px] sm:min-h-[30px] px-3 py-1.5 rounded-lg font-semibold text-xs whitespace-nowrap shadow-xs shrink-0 transition-all cursor-pointer active:scale-95 ${
-                                domain.statusFilter === 'all'
-                                    ? 'bg-slate-700/80 dark:bg-slate-700/90 text-white border border-slate-600'
-                                    : 'text-slate-600 dark:text-[#94a3b8] hover:bg-slate-100 dark:hover:bg-[#0f1828]'
-                            }`}
-                        >
-                            Semua ({domain.statusCounts.all})
-                        </button>
-                        <button
-                            type="button"
-                            role="tab"
-                            aria-selected={domain.statusFilter === 'today'}
-                            onClick={() => domain.setStatusFilter('today')}
-                            className={`min-h-[36px] sm:min-h-[30px] px-3 py-1.5 rounded-lg font-semibold text-xs whitespace-nowrap shrink-0 transition-all cursor-pointer active:scale-95 ${
-                                domain.statusFilter === 'today'
-                                    ? 'bg-emerald-500 text-white shadow-xs font-semibold'
-                                    : 'text-emerald-600 dark:text-[#00d284] hover:bg-slate-100 dark:hover:bg-[#0f1828]'
-                            }`}
-                        >
-                            Hari Ini ({domain.statusCounts.today})
-                        </button>
-                        <button
-                            type="button"
-                            role="tab"
-                            aria-selected={domain.statusFilter === 'upcoming'}
-                            onClick={() => domain.setStatusFilter('upcoming')}
-                            className={`min-h-[36px] sm:min-h-[30px] flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-xs whitespace-nowrap shrink-0 transition-all cursor-pointer active:scale-95 ${
-                                domain.statusFilter === 'upcoming'
-                                    ? 'bg-blue-500 text-white shadow-xs font-semibold'
-                                    : 'text-blue-500 dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-[#0f1828]'
-                            }`}
-                        >
-                            <span>Mendatang ({domain.statusCounts.upcoming})</span>
-                            <span className="text-[10px]">↑</span>
-                        </button>
-                        <button
-                            type="button"
-                            role="tab"
-                            aria-selected={domain.statusFilter === 'past'}
-                            onClick={() => domain.setStatusFilter('past')}
-                            className={`min-h-[36px] sm:min-h-[30px] px-3 py-1.5 rounded-lg font-semibold text-xs whitespace-nowrap shrink-0 transition-all cursor-pointer active:scale-95 ${
-                                domain.statusFilter === 'past'
-                                    ? 'bg-slate-400 text-white shadow-xs font-semibold'
-                                    : 'text-slate-500 dark:text-[#64748b] hover:bg-slate-100 dark:hover:bg-[#0f1828]'
-                            }`}
-                        >
-                            Selesai ({domain.statusCounts.past})
-                        </button>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
-                        <button
-                            type="button"
-                            onClick={() => domain.setSortOrder(domain.sortOrder === 'asc' ? 'desc' : 'asc')}
-                            title={domain.sortOrder === 'asc' ? 'Urutan: Tanggal Terdekat' : 'Urutan: Tanggal Terjauh'}
-                            aria-label={domain.sortOrder === 'asc' ? 'Urutan: Tanggal Terdekat' : 'Urutan: Tanggal Terjauh'}
-                            className="min-h-[36px] sm:min-h-[30px] px-2.5 rounded-xl bg-slate-100 dark:bg-[#0f1828] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap shrink-0 border border-slate-200 dark:border-[#1c2b44]/80 transition-colors cursor-pointer active:scale-95"
-                        >
-                            <span className="font-bold text-sm">{domain.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                            <span className="hidden sm:inline">{domain.sortOrder === 'asc' ? 'Terdekat' : 'Terjauh'}</span>
-                        </button>
-
-                        <div className="flex items-center bg-slate-100 dark:bg-[#0f1828] border border-slate-200 dark:border-[#1c2b44]/80 rounded-xl p-0.5 shrink-0" role="group" aria-label="Pilihan Tampilan PH">
-                            <button
-                                type="button"
-                                onClick={() => domain.setViewMode('weekly')}
-                                title="Tampilan Mingguan Menyamping (Senin - Jumat)"
-                                aria-label="Tampilan Mingguan"
-                                aria-pressed={domain.viewMode === 'weekly'}
-                                className={`w-9 h-9 sm:w-8 sm:h-8 min-w-[36px] min-h-[36px] sm:min-w-[32px] sm:min-h-[32px] rounded-lg flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
-                                    domain.viewMode === 'weekly'
-                                        ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-cyan-300 shadow-sm font-bold'
-                                        : 'text-slate-400 dark:text-[#64748b] hover:text-slate-700 dark:hover:text-white'
-                                }`}
-                            >
-                                <CalendarIcon className="w-4 h-4" />
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => domain.setViewMode('cards')}
-                                title="Tampilan Semua Kartu Vertikal"
-                                aria-label="Tampilan Kartu"
-                                aria-pressed={domain.viewMode === 'cards'}
-                                className={`w-9 h-9 sm:w-8 sm:h-8 min-w-[36px] min-h-[36px] sm:min-w-[32px] sm:min-h-[32px] rounded-lg flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
-                                    domain.viewMode === 'cards'
-                                        ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-cyan-300 shadow-sm font-bold'
-                                        : 'text-slate-400 dark:text-[#64748b] hover:text-slate-700 dark:hover:text-white'
-                                }`}
-                            >
-                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16">
-                                    <rect height="5.5" rx="1.2" width="5.5" x="1" y="1" />
-                                    <rect height="5.5" rx="1.2" width="5.5" x="9.5" y="1" />
-                                    <rect height="5.5" rx="1.2" width="5.5" x="1" y="9.5" />
-                                    <rect height="5.5" rx="1.2" width="5.5" x="9.5" y="9.5" />
-                                </svg>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => domain.setViewMode('table')}
-                                title="Tampilan Tabel / Daftar"
-                                aria-label="Tampilan Tabel"
-                                aria-pressed={domain.viewMode === 'table'}
-                                className={`w-9 h-9 sm:w-8 sm:h-8 min-w-[36px] min-h-[36px] sm:min-w-[32px] sm:min-h-[32px] rounded-lg flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
-                                    domain.viewMode === 'table'
-                                        ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-cyan-300 shadow-sm font-bold'
-                                        : 'text-slate-400 dark:text-[#64748b] hover:text-slate-700 dark:hover:text-white'
-                                }`}
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                    <line x1="8" x2="21" y1="6" y2="6" />
-                                    <line x1="8" x2="21" y1="12" y2="12" />
-                                    <line x1="8" x2="21" y1="18" y2="18" />
-                                    <circle cx="3.5" cy="6" r="1.5" />
-                                    <circle cx="3.5" cy="12" r="1.5" />
-                                    <circle cx="3.5" cy="18" r="1.5" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+            {domain.selectedSemester?.is_locked && <p className="mb-4 text-sm text-amber-700 dark:text-amber-300">Semester ini terkunci. Jadwal PH hanya dapat dilihat.</p>}
             {/* Main Content Area */}
             {!domain.effectiveClassId || !domain.selectedSemesterId ? (
-                <div className="bg-white dark:bg-[#111c2e]/70 rounded-2xl border border-dashed border-slate-300 dark:border-[#1c2b44] p-8 text-center text-slate-500 dark:text-slate-400 space-y-3">
+                <div className="bg-white dark:bg-slate-900/70 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-8 text-center text-slate-500 dark:text-slate-400 space-y-3">
                     <CalendarIcon className="w-10 h-10 mx-auto text-slate-400 opacity-60" />
                     <p className="text-sm font-semibold">Pilih kelas dan semester di atas untuk melihat jadwal PH.</p>
+                </div>
+            ) : domain.loadError ? (
+                <div role="alert" className="rounded-xl border border-amber-300 p-5 space-y-3">
+                    <p>Jadwal atau izin akses gagal dimuat. Data yang tampil mungkin belum lengkap.</p>
+                    <Button type="button" onClick={domain.retryLoad}>Coba lagi</Button>
                 </div>
             ) : domain.isLoadingSchedules || domain.isLoadingClasses ? (
                 <div className="py-16 flex flex-col items-center justify-center text-slate-400 gap-3">
@@ -476,15 +210,10 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                     <p className="text-xs">Memuat jadwal Penilaian Harian...</p>
                 </div>
             ) : domain.rawSchedules.length === 0 ? (
-                <div className="bg-white/90 dark:bg-[#111c2e]/70 border border-slate-200/80 dark:border-[#1c2b44]/90 rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center space-y-4 shadow-sm dark:shadow-[0_0_0_1px_rgba(28,43,68,0.8),0_4px_20px_-2px_rgba(0,0,0,0.4)] my-2">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-b from-cyan-950/60 to-slate-900 border border-cyan-500/30 flex items-center justify-center shadow-[0_0_24px_-2px_rgba(6,182,212,0.2)] text-cyan-400">
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-                            <path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z" strokeLinejoin="round" />
-                            <circle cx="19" cy="5" fill="currentColor" r="1" />
-                        </svg>
-                    </div>
+                <div className="bg-white/90 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-700/90 rounded-2xl p-6 sm:p-8 flex flex-col items-center text-center space-y-4 shadow-sm dark:shadow-[0_0_0_1px_rgba(28,43,68,0.8),0_4px_20px_-2px_rgba(0,0,0,0.4)] my-2">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300"><CalendarIcon className="h-7 w-7" /></div>
                     <div className="space-y-1.5 max-w-[280px] sm:max-w-md">
-                        <h2 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Belum Ada Jadwal PH</h2>
+                        <h2 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Belum ada jadwal PH</h2>
                         <p className="text-[13px] text-slate-500 dark:text-[#94a3b8] leading-relaxed">
                             Belum ada agenda penilaian harian yang dijadwalkan untuk {domain.currentClassName} pada semester ini.
                         </p>
@@ -493,17 +222,18 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                         <button
                             type="button"
                             onClick={() => domain.openAdd()}
-                            className="w-full max-w-[280px] py-3 px-3 bg-[#00d284] hover:bg-[#00ba74] text-slate-950 font-bold text-[13px] rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-[0_4px_14px_0_rgba(0,210,132,0.25)] active:scale-[0.98] mt-2 whitespace-nowrap"
+                            className="w-full max-w-[280px] py-3 px-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-[13px] rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] mt-2 whitespace-nowrap"
                         >
                             <PlusIcon className="w-4 h-4 stroke-[2.5]" />
                             <span>Tambah Jadwal PH</span>
                         </button>
                     )}
                 </div>
-            ) : domain.viewMode === 'weekly' ? (
-                /* Weekly 5-Column View (Senin - Jumat) */
+            ) : domain.viewMode === 'weekly' && domain.filteredSchedules.length > 0 ? (
+                /* Weekly view includes weekend schedules. */
                 <PhWeeklyScheduleView
                     schedules={domain.filteredSchedules}
+                    referenceDate={domain.todayStr}
                     canManage={domain.canManage}
                     onAdd={(initialDate) => domain.openAdd(initialDate)}
                     onEdit={domain.openEdit}
@@ -512,17 +242,18 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                     onInputNilai={handleInputNilai}
                 />
             ) : domain.filteredSchedules.length === 0 ? (
-                <div className="bg-white dark:bg-[#111c2e]/70 rounded-2xl border border-slate-200 dark:border-[#1c2b44] p-8 text-center text-slate-400 space-y-2">
+                <div className="bg-white dark:bg-slate-900/70 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 text-center text-slate-400 space-y-2">
                     <SearchIcon className="w-8 h-8 mx-auto opacity-50 text-slate-400" />
                     <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Tidak ada jadwal yang cocok</p>
                     <p className="text-xs text-slate-500">Coba ubah kata kunci pencarian atau filter status di atas.</p>
+                    <Button type="button" variant="outline" onClick={() => { domain.setSearchQuery(''); domain.setStatusFilter('all'); domain.setSelectedMonth('all'); }}>Hapus filter</Button>
                 </div>
             ) : domain.viewMode === 'table' ? (
                 /* Table View */
-                <div className="bg-white/95 dark:bg-[#111c2e]/80 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-[#1c2b44] overflow-hidden shadow-sm">
+                <div className="bg-white/95 dark:bg-slate-900/80 rounded-2xl border border-slate-200/80 dark:border-slate-700 overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs sm:text-sm">
-                            <thead className="bg-slate-50 dark:bg-[#0f1828] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-[#1c2b44] uppercase tracking-wider text-[10px] sm:text-xs">
+                            <thead className="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 uppercase tracking-wider text-[10px] sm:text-xs">
                                 <tr>
                                     <th className="py-3 px-3.5 sm:px-4">Tanggal & Waktu</th>
                                     <th className="py-3 px-3.5 sm:px-4">Mata Pelajaran & Materi</th>
@@ -620,7 +351,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
 
                         return (
                             <div key={date} className="space-y-2.5">
-                                <div className="flex items-center justify-between pb-1 border-b border-slate-200/80 dark:border-[#1c2b44]">
+                                <div className="flex items-center justify-between pb-1 border-b border-slate-200/80 dark:border-slate-700">
                                     <div className="flex items-center gap-2">
                                         <h3 className="font-bold text-sm sm:text-base text-slate-800 dark:text-slate-100 flex items-center gap-2">
                                             <CalendarIcon className="w-4 h-4 text-brand-600 dark:text-cyan-400" />
@@ -649,7 +380,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                         return (
                                             <div
                                                 key={item.id}
-                                                className="bg-white/95 dark:bg-[#111c2e]/80 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-[#1c2b44] p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-3 group"
+                                                className="bg-white/95 dark:bg-slate-900/80 rounded-2xl border border-slate-200/80 dark:border-slate-700 p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-3 group"
                                             >
                                                 <div className="flex items-start justify-between gap-2">
                                                     <div className="flex items-start gap-2.5 min-w-0">
@@ -659,7 +390,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                                             <CalendarIcon className="w-4 h-4" />
                                                         </div>
                                                         <div className="min-w-0">
-                                                            <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                                                            <h4 className="font-semibold text-base leading-6 text-slate-900 dark:text-white break-words">
                                                                 {item.subject}
                                                             </h4>
                                                             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -672,14 +403,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
 
                                                     {domain.canManage && (
                                                         <DropdownMenu>
-                                                            <DropdownTrigger>
-                                                                <button
-                                                                    type="button"
-                                                                    className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-                                                                >
-                                                                    <MoreVerticalIcon className="w-4 h-4" />
-                                                                </button>
-                                                            </DropdownTrigger>
+                                                            <DropdownTrigger aria-label={`Aksi jadwal ${item.subject}`} className="!h-11 !w-11 !min-h-11 !min-w-11 !p-0 !rounded-xl"><MoreVerticalIcon className="w-4 h-4" /></DropdownTrigger>
                                                             <DropdownContent align="right">
                                                                 <DropdownItem onClick={() => domain.openEdit(item)}>
                                                                     <EditIcon className="w-4 h-4 mr-2" /> Edit Jadwal
@@ -698,13 +422,13 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                                     )}
                                                 </div>
 
-                                                <div className="pt-2 border-t border-slate-100 dark:border-[#1c2b44]/60 flex items-center justify-between">
+                                                <div className="pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
                                                     <Button
                                                         type="button"
                                                         size="sm"
                                                         variant="primary"
                                                         onClick={() => handleInputNilai(item)}
-                                                        className="h-7 px-2.5 text-xs font-bold rounded-lg"
+                                                        className="min-h-11 px-3 text-sm rounded-xl"
                                                     >
                                                         <ClipboardPenIcon className="w-3.5 h-3.5 mr-1" />
                                                         Input Nilai
@@ -731,9 +455,15 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                 isPending={isPending}
                 subjectSuggestions={domain.subjectSuggestions}
                 rawSchedules={domain.rawSchedules}
+                semester={domain.selectedSemester}
                 currentClassName={domain.currentClassName}
                 currentSemesterName={domain.currentSemesterName}
             />
+            {domain.isBatchOpen && <PhBatchFormModal className={domain.currentClassName} semester={domain.selectedSemester} existing={domain.rawSchedules} initialDate={domain.todayStr} pending={domain.batchMutation.isPending} canManage={domain.canManage} onClose={() => domain.setIsBatchOpen(false)} onSave={(drafts) => domain.batchMutation.mutate(drafts)} />}
+            <Modal isOpen={domain.isReportPreviewOpen} onClose={() => domain.setIsReportPreviewOpen(false)} maxWidth="max-w-2xl" title={`PH di laporan WhatsApp — ${domain.currentClassName}`}>
+                <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">Bagian PH memakai semester aktif, untuk hari ini dan tujuh hari ke depan. Pratinjau ini tidak mengirim pesan.</p>
+                {domain.reportPreview.isLoading ? <p role="status">Memuat pratinjau…</p> : domain.reportPreview.error ? <div role="alert"><p>Pratinjau gagal dimuat.</p><Button onClick={() => void domain.reportPreview.refetch()}>Coba lagi</Button></div> : <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5 dark:border-slate-700 dark:bg-slate-800"><p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Cuplikan pesan</p><pre className="whitespace-pre-wrap break-words font-sans text-sm leading-7 text-slate-800 dark:text-slate-100">{domain.reportPreview.data}</pre></div>}
+            </Modal>
 
             {/* WhatsApp Share Options Modal */}
             <Modal

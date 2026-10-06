@@ -9,7 +9,6 @@ import {
     Clock,
     BookOpen,
     GraduationCap,
-    Sparkles,
     CheckCircle2,
     CalendarDays,
     ArrowUpRight,

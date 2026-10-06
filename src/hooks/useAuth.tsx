@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase, clearStaleAuthTokens } from '../services/supabase';
 import { clearAiCache } from '../utils/aiConfig';
+import { clearAllSubjectGradeDrafts } from '../utils/subjectGradeDraftStorage';
 import type { User, Session, AuthResponse, UserResponse } from '@supabase/supabase-js';
 import type { Database } from '../services/database.types';
 import { getStudentAvatar } from '../utils/avatarUtils';
@@ -398,6 +399,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await supabase.auth.signOut();
       await clearSupabaseCache();
       clearAiCache(); // cache AI memori jangan bocor antar-user di device yang sama
+      clearAllSubjectGradeDrafts(); // drafts hold student scores; never leave them for the next account
     },
     updateUser: (data) => supabase.auth.updateUser({
       password: data.password,

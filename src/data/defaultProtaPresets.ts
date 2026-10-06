@@ -155,7 +155,7 @@ export const CURATED_PROTA_PRESETS: SubjectCurriculumPreset[] = [
   // 3. IPAS KELAS 4 (FASE B)
   {
     subject: 'IPAS',
-    gradeLevels: ['Kelas 4', 'Kelas 3'],
+    gradeLevels: ['Kelas 4'],
     phase: 'B',
     defaultWeeklyJp: 4,
     semester1: [
@@ -415,6 +415,37 @@ export function generateQuickDistributedProta(
   return [...sem1Items, ...sem2Items];
 }
 
+const normalizeGrade = (grade: string) => grade.toLowerCase().replace(/\s+/g, ' ').trim();
+
+/**
+ * Finds the curated preset for a subject and grade. Presets are written for one grade,
+ * so a subject match alone is not enough: Kelas 1 must not receive Kelas 4 chapters.
+ */
+export function findCurriculumPreset(
+  subject: string,
+  gradeLevel: string
+): SubjectCurriculumPreset | null {
+  const normSubject = subject.toLowerCase().trim();
+  const normGrade = normalizeGrade(gradeLevel);
+  if (!normSubject || !normGrade) return null;
+
+  return (
+    CURATED_PROTA_PRESETS.find((p) => {
+      const pSubNorm = p.subject.toLowerCase();
+      const matchSub =
+        normSubject.includes(pSubNorm) ||
+        pSubNorm.includes(normSubject) ||
+        (normSubject.includes('agama') && pSubNorm.includes('agama')) ||
+        (normSubject.includes('matematika') && pSubNorm.includes('matematika')) ||
+        (normSubject.includes('indonesia') && pSubNorm.includes('indonesia')) ||
+        (normSubject.includes('ipas') && pSubNorm.includes('ipas')) ||
+        (normSubject.includes('pancasila') && pSubNorm.includes('pancasila'));
+
+      return matchSub && p.gradeLevels.some((g) => normalizeGrade(g) === normGrade);
+    }) ?? null
+  );
+}
+
 /**
  * Find matching curated preset for subject and grade level, scaling its chapters to target JP.
  */
@@ -424,21 +455,7 @@ export function getCurriculumPreset(
   targetJpSem1: number,
   targetJpSem2: number
 ): ProtaItem[] | null {
-  const normSubject = subject.toLowerCase().trim();
-  const matched = CURATED_PROTA_PRESETS.find((p) => {
-    const pSubNorm = p.subject.toLowerCase();
-    const matchSub =
-      normSubject.includes(pSubNorm) ||
-      pSubNorm.includes(normSubject) ||
-      (normSubject.includes('agama') && pSubNorm.includes('agama')) ||
-      (normSubject.includes('matematika') && pSubNorm.includes('matematika')) ||
-      (normSubject.includes('indonesia') && pSubNorm.includes('indonesia')) ||
-      (normSubject.includes('ipas') && pSubNorm.includes('ipas')) ||
-      (normSubject.includes('pancasila') && pSubNorm.includes('pancasila'));
-
-    return matchSub;
-  });
-
+  const matched = findCurriculumPreset(subject, gradeLevel);
   if (!matched) return null;
 
   const sem1Items = scaleTopicsToTargetJp(matched.semester1, 1, targetJpSem1, 0);

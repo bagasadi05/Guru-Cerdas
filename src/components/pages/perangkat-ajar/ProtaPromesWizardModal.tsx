@@ -10,6 +10,8 @@ import {
   Layers,
   Wand2,
   Info,
+  Bot,
+  Loader2,
 } from 'lucide-react';
 import type {
   CurriculumType,
@@ -19,17 +21,30 @@ import type {
   MatrixCell,
   DocumentIdentity,
 } from '../../../types/perangkatAjar';
-import { getDefaultNationalKaldik } from '../../../data/defaultKaldikPresets';
-import { calculateRme } from '../../../utils/kaldikEngine';
+import { generateKaldikFromCalendar } from '../../../utils/kaldikCalendarGenerator';
+import {
+  calculateRme,
+  getAcademicYearOptions,
+  getPhaseForGrade,
+} from '../../../utils/kaldikEngine';
 import { autoDistributePromes } from '../../../utils/promesEngine';
 import {
+  findCurriculumPreset,
   getCurriculumPreset,
   generateQuickDistributedProta,
 } from '../../../data/defaultProtaPresets';
+import {
+  aiTopicsToProtaItems,
+  generateProtaTopicsWithAi,
+  type AiProtaTopics,
+} from '../../../services/protaAiGenerator';
 
 export type WizardStep = 1 | 2 | 3 | 4;
 
+export type WizardApplyTarget = 'new' | 'replace';
+
 export interface WizardApplyData {
+  target: WizardApplyTarget;
   academicYear: string;
   subject: string;
   gradeLevel: string;
@@ -49,9 +64,17 @@ interface ProtaPromesWizardModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApply: (data: WizardApplyData) => void;
-  initialAcademicYear?: string;
+  initialAcademicYear: string;
   initialSubject?: string;
   initialGradeLevel?: string;
+  initialCurriculum?: CurriculumType;
+  initialWeeklyJpQuota?: number;
+  /** The teacher's Kaldik for `initialAcademicYear`; used instead of the national preset. */
+  currentWeeks: KaldikWeek[];
+  /** The open document already has materi; step 4 then asks whether to replace it. */
+  hasExistingData: boolean;
+  /** Preselects "save as a new document" (used by the "Prota baru" button). */
+  preferNewDocument?: boolean;
 }
 
 const COMMON_SUBJECTS = [
@@ -65,22 +88,23 @@ const COMMON_SUBJECTS = [
   'PJOK',
 ];
 
-const GRADE_LEVELS: { grade: string; phase: PhaseType }[] = [
-  { grade: 'Kelas 1', phase: 'A' },
-  { grade: 'Kelas 2', phase: 'A' },
-  { grade: 'Kelas 3', phase: 'B' },
-  { grade: 'Kelas 4', phase: 'B' },
-  { grade: 'Kelas 5', phase: 'C' },
-  { grade: 'Kelas 6', phase: 'C' },
-];
+const GRADE_LEVELS: { grade: string; phase: PhaseType }[] = Array.from({ length: 12 }, (_, i) => {
+  const grade = `Kelas ${i + 1}`;
+  return { grade, phase: getPhaseForGrade(grade) ?? 'A' };
+});
 
 export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
   isOpen,
   onClose,
   onApply,
-  initialAcademicYear = '2024/2025',
+  initialAcademicYear,
   initialSubject = 'Bahasa Indonesia',
   initialGradeLevel = 'Kelas 4',
+  initialCurriculum = 'MERDEKA',
+  initialWeeklyJpQuota = 4,
+  currentWeeks,
+  hasExistingData,
+  preferNewDocument = false,
 }) => {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
 
@@ -88,24 +112,46 @@ export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
   const [gradeLevel, setGradeLevel] = useState<string>(initialGradeLevel);
   const [subject, setSubject] = useState<string>(initialSubject);
   const [customSubject, setCustomSubject] = useState<string>('');
-  const [curriculum, setCurriculum] = useState<CurriculumType>('MERDEKA');
+  const [curriculum, setCurriculum] = useState<CurriculumType>(initialCurriculum);
   const [academicYear, setAcademicYear] = useState<string>(initialAcademicYear);
 
-  // Auto-derived phase
-  const activePhase = useMemo<PhaseType>(() => {
-    const matched = GRADE_LEVELS.find((g) => g.grade === gradeLevel);
-    return matched ? matched.phase : 'B';
-  }, [gradeLevel]);
+  const activePhase = useMemo<PhaseType>(() => getPhaseForGrade(gradeLevel) ?? 'B', [gradeLevel]);
 
   const effectiveSubject = customSubject.trim() ? customSubject.trim() : subject;
 
   // Step 2: Beban Jam Mengajar & Kaldik
-  const [weeklyJpQuota, setWeeklyJpQuota] = useState<number>(4);
+  const [weeklyJpQuota, setWeeklyJpQuota] = useState<number>(initialWeeklyJpQuota);
   const [reserveJpSem1, setReserveJpSem1] = useState<number>(2);
   const [reserveJpSem2, setReserveJpSem2] = useState<number>(2);
 
-  // Kaldik Preset State (National Preset)
-  const defaultWeeks = useMemo(() => getDefaultNationalKaldik(academicYear), [academicYear]);
+  const [target, setTarget] = useState<WizardApplyTarget>('new');
+
+  // The modal stays mounted, so refresh its answers from the open document on every open.
+  useEffect(() => {
+    if (!isOpen) return;
+    const isPresetSubject = COMMON_SUBJECTS.includes(initialSubject);
+    setStep(1);
+    setGradeLevel(initialGradeLevel);
+    setSubject(isPresetSubject ? initialSubject : COMMON_SUBJECTS[0]);
+    setCustomSubject(isPresetSubject ? '' : initialSubject);
+    setCurriculum(initialCurriculum);
+    setAcademicYear(initialAcademicYear);
+    setWeeklyJpQuota(initialWeeklyJpQuota);
+    // An empty document is reused; one with materi is kept unless the teacher picks replace.
+    setTarget(preferNewDocument || hasExistingData ? 'new' : 'replace');
+    // Only re-seed when the modal opens; later prop changes must not wipe the teacher's answers.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  // A teacher's own Kaldik applies to the year it was made for; other years use that year's dates.
+  const defaultWeeks = useMemo(
+    () =>
+      academicYear === initialAcademicYear && currentWeeks.length > 0
+        ? currentWeeks
+        : generateKaldikFromCalendar(academicYear).weeks,
+    [academicYear, initialAcademicYear, currentWeeks]
+  );
+  const usesOwnKaldik = defaultWeeks === currentWeeks;
 
   // Compute RME for both semesters
   const rmeSem1 = useMemo(
@@ -118,9 +164,41 @@ export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
   );
 
   // Step 3: Pilihan Metode Penentuan Materi
-  const [materiMethod, setMateriMethod] = useState<'preset' | 'divide' | 'custom'>('preset');
+  const [chosenMethod, setMateriMethod] = useState<'preset' | 'divide' | 'ai'>('preset');
   const [numChaptersSem1, setNumChaptersSem1] = useState<number>(4);
   const [numChaptersSem2, setNumChaptersSem2] = useState<number>(4);
+
+  // Bundled chapter lists exist only for a few Kurikulum Merdeka subject/grade pairs.
+  const presetAvailable =
+    curriculum === 'MERDEKA' && findCurriculumPreset(effectiveSubject, gradeLevel) !== null;
+  const materiMethod = chosenMethod === 'preset' && !presetAvailable ? 'divide' : chosenMethod;
+
+  // AI drafts belong to one subject, grade and curriculum; changing any of them discards it.
+  const aiKey = `${effectiveSubject}|${gradeLevel}|${curriculum}`;
+  const [aiDraft, setAiDraft] = useState<{ key: string; topics: AiProtaTopics } | null>(null);
+  const [aiStatus, setAiStatus] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [aiError, setAiError] = useState('');
+  const aiTopics = aiDraft?.key === aiKey ? aiDraft.topics : null;
+  const waitingForAi = materiMethod === 'ai' && !aiTopics;
+
+  const handleGenerateWithAi = async () => {
+    setAiStatus('loading');
+    setAiError('');
+    const key = aiKey;
+    try {
+      const topics = await generateProtaTopicsWithAi({
+        subject: effectiveSubject,
+        gradeLevel,
+        phase: activePhase,
+        curriculum,
+      });
+      setAiDraft({ key, topics });
+      setAiStatus('idle');
+    } catch (err) {
+      setAiStatus('error');
+      setAiError(err instanceof Error ? err.message : 'AI tidak bisa dihubungi. Coba lagi.');
+    }
+  };
 
   // Target core topic hours (excluding reserves)
   const targetTopicJpSem1 = Math.max(1, rmeSem1.netTeachingJp);
@@ -128,6 +206,9 @@ export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
 
   // Generate Prota items based on chosen method
   const generatedProtaItems = useMemo<ProtaItem[]>(() => {
+    if (materiMethod === 'ai') {
+      return aiTopics ? aiTopicsToProtaItems(aiTopics, targetTopicJpSem1, targetTopicJpSem2) : [];
+    }
     if (materiMethod === 'preset') {
       const presetItems = getCurriculumPreset(
         effectiveSubject,
@@ -151,6 +232,7 @@ export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
     );
   }, [
     materiMethod,
+    aiTopics,
     effectiveSubject,
     gradeLevel,
     targetTopicJpSem1,
@@ -170,25 +252,27 @@ export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
 
   const totalAllocatedSem1 = sem1Items.reduce((acc, i) => acc + i.targetJp, 0);
   const totalAllocatedSem2 = sem2Items.reduce((acc, i) => acc + i.targetJp, 0);
+  const diffSem1 = totalAllocatedSem1 - rmeSem1.netTeachingJp;
+  const diffSem2 = totalAllocatedSem2 - rmeSem2.netTeachingJp;
+  const isBalanced = diffSem1 === 0 && diffSem2 === 0;
 
   // Handle final apply
   const handleApply = () => {
-    // Generate Promes cells automatically for Semester 1 and 2
-    const sem1Weeks = defaultWeeks.filter((w) => w.month >= 7 && w.month <= 12);
-    const sem2Weeks = defaultWeeks.filter((w) => w.month >= 1 && w.month <= 6);
-
     const cellsSem1 = autoDistributePromes({
       items: sem1Items.map((i) => ({ id: i.id, targetJp: i.targetJp })),
-      semesterWeeks: sem1Weeks,
+      semesterWeeks: defaultWeeks,
       weeklyJpLimit: weeklyJpQuota,
+      semesterNumber: 1,
     });
     const cellsSem2 = autoDistributePromes({
       items: sem2Items.map((i) => ({ id: i.id, targetJp: i.targetJp })),
-      semesterWeeks: sem2Weeks,
+      semesterWeeks: defaultWeeks,
       weeklyJpLimit: weeklyJpQuota,
+      semesterNumber: 2,
     });
 
     onApply({
+      target,
       academicYear,
       subject: effectiveSubject,
       gradeLevel,
@@ -261,12 +345,9 @@ export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
             <div>
               <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                 <span>Panduan Cepat Prota & Promes</span>
-                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-brand-100 text-brand-700 dark:bg-brand-900/60 dark:text-brand-300">
-                  Otomatis Pas
-                </span>
               </h3>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                Jawab 4 pertanyaan ringkas. Sistem otomatis menghitung alokasi jam dan matriks semester.
+                Empat langkah. Jam per materi dan matriks Promes dihitung dari minggu efektif Kaldik.
               </p>
             </div>
           </div>
@@ -320,9 +401,9 @@ export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
             <div className="space-y-4 animate-in fade-in duration-150">
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  1. Pilih Tingkat Kelas (SD / MI)
+                  1. Pilih Kelas
                 </label>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                   {GRADE_LEVELS.map((g) => (
                     <button
                       key={g.grade}
@@ -402,12 +483,17 @@ export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                     Tahun Ajaran
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={academicYear}
                     onChange={(e) => setAcademicYear(e.target.value)}
                     className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-brand-500"
-                  />
+                  >
+                    {getAcademicYearOptions(new Date(), initialAcademicYear).map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
@@ -456,14 +542,13 @@ export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
                     <Calendar className="w-4 h-4 text-emerald-600" />
-                    Preset Kalender Pendidikan Nasional
-                  </span>
-                  <span className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 px-2 py-0.5 rounded-full font-bold">
-                    Otomatis Dihitung
+                    {usesOwnKaldik ? 'Kalender Pendidikan Anda' : `Kalender ${academicYear}`}
                   </span>
                 </div>
                 <p className="text-[11px] text-emerald-800/90 dark:text-emerald-300/90 leading-snug">
-                  Sistem telah menghitung hari efektif mengajar berdasarkan standar nasional (Semester 1: Juli–Desember, Semester 2: Januari–Juni):
+                  {usesOwnKaldik
+                    ? `Minggu efektif dihitung dari Kaldik ${academicYear} yang sudah Anda atur di tab Kaldik.`
+                    : `Belum ada Kaldik tersimpan untuk ${academicYear}. Dipakai kalender dari tanggal tahun itu dan libur nasional SKB 3 Menteri. Sesuaikan di tab Kaldik bila kalender sekolah berbeda.`}
                 </p>
                 <div className="grid grid-cols-2 gap-2 pt-1 text-xs">
                   <div className="bg-white/80 dark:bg-slate-900/80 p-2.5 rounded-lg border border-emerald-100 dark:border-emerald-900/50">
@@ -556,7 +641,8 @@ export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setMateriMethod('preset')}
-                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                    disabled={!presetAvailable}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${
                       materiMethod === 'preset'
                         ? 'bg-brand-50 border-brand-500 text-brand-800 dark:bg-brand-950/40 dark:border-brand-500 dark:text-brand-200 font-semibold shadow-xs'
                         : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 hover:border-slate-300'
@@ -564,10 +650,12 @@ export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
                   >
                     <div className="font-bold text-xs flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-brand-600" />
-                      Paket Silabus Resmi (Standar Nasional)
+                      Daftar Bab Bawaan
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
-                      Memuat daftar bab, elemen, dan TP standar Kurikulum Merdeka yang alokasi JP-nya sudah seimbang 100%.
+                      {presetAvailable
+                        ? `Bab, elemen, dan TP contoh dari buku Kurikulum Merdeka ${effectiveSubject} ${gradeLevel}. Periksa dan sesuaikan dengan TP sekolah.`
+                        : `Belum tersedia untuk ${effectiveSubject} ${gradeLevel}${curriculum === 'K13' ? ' (K-13)' : ''}. Pakai AI atau pembagian per bab.`}
                     </p>
                   </button>
 
@@ -588,8 +676,47 @@ export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
                       Cukup tentukan berapa bab per semester. Sistem membagi rata seluruh jam tanpa perlu hitung rumus.
                     </p>
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setMateriMethod('ai')}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer sm:col-span-2 ${
+                      materiMethod === 'ai'
+                        ? 'bg-brand-50 border-brand-500 text-brand-800 dark:bg-brand-950/40 dark:border-brand-500 dark:text-brand-200 font-semibold shadow-xs'
+                        : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="font-bold text-xs flex items-center gap-1.5">
+                      <Bot className="w-3.5 h-3.5 text-brand-600" />
+                      Susun dengan AI
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                      AI membuat draf elemen, TP, dan bab untuk {effectiveSubject} {gradeLevel}. Jamnya tetap dihitung dari Kaldik.
+                      Periksa kesesuaiannya dengan CP terbaru sebelum dipakai.
+                    </p>
+                  </button>
                 </div>
               </div>
+
+              {materiMethod === 'ai' && (
+                <div className="p-3.5 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 rounded-xl space-y-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => void handleGenerateWithAi()}
+                    disabled={aiStatus === 'loading'}
+                    className="flex items-center gap-1.5 px-4 py-2 font-bold text-white bg-brand-600 hover:bg-brand-700 rounded-xl disabled:opacity-60"
+                  >
+                    {aiStatus === 'loading' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
+                    <span>
+                      {aiStatus === 'loading' ? 'AI sedang menyusun...' : aiTopics ? 'Buat ulang dengan AI' : 'Buat dengan AI'}
+                    </span>
+                  </button>
+                  {aiStatus === 'error' && <p className="text-rose-600 dark:text-rose-400">{aiError}</p>}
+                  {aiTopics && aiStatus !== 'loading' && (
+                    <p className="text-slate-500 dark:text-slate-400">Draf dari AI. Periksa dan sunting di tab Prota setelah diterapkan.</p>
+                  )}
+                </div>
+              )}
 
               {materiMethod === 'divide' && (
                 <div className="p-3.5 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 rounded-xl space-y-3">
@@ -634,7 +761,7 @@ export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
                     Pratinjau Materi yang Akan Dibuat ({generatedProtaItems.length} Materi):
                   </span>
                   <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">
-                    ✓ Total {targetTopicJpSem1 + targetTopicJpSem2} JP Materi
+                    Total {totalAllocatedSem1 + totalAllocatedSem2} JP materi
                   </span>
                 </div>
                 <div className="max-h-48 overflow-y-auto pr-1 space-y-1.5 text-xs">
@@ -669,10 +796,12 @@ export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                   <div>
                     <h4 className="text-sm font-bold text-emerald-900 dark:text-emerald-200">
-                      Perangkat Ajar Siap Diterapkan!
+                      Ringkasan
                     </h4>
                     <p className="text-[11px] text-emerald-800 dark:text-emerald-300">
-                      Seluruh perhitungan alokasi jam telah seimbang 100% (0 JP selisih) dan siap diterapkan ke Program Tahunan & Program Semester.
+                      {isBalanced
+                        ? 'Jam materi sama dengan jam efektif di kedua semester.'
+                        : 'Jam materi belum sama dengan jam efektif. Seimbangkan di tab Prota setelah diterapkan.'}
                     </p>
                   </div>
                 </div>
@@ -695,7 +824,9 @@ export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
                     </div>
                     <div className="border-t border-slate-100 dark:border-slate-800 pt-1 flex justify-between font-bold text-emerald-700 dark:text-emerald-400">
                       <span>Total Alokasi:</span>
-                      <span>{totalAllocatedSem1 + reserveJpSem1} JP (PAS)</span>
+                      <span>
+                        {totalAllocatedSem1 + reserveJpSem1} JP{diffSem1 === 0 ? '' : ` (${diffSem1 > 0 ? '+' : ''}${diffSem1})`}
+                      </span>
                     </div>
                   </div>
 
@@ -715,7 +846,9 @@ export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
                     </div>
                     <div className="border-t border-slate-100 dark:border-slate-800 pt-1 flex justify-between font-bold text-emerald-700 dark:text-emerald-400">
                       <span>Total Alokasi:</span>
-                      <span>{totalAllocatedSem2 + reserveJpSem2} JP (PAS)</span>
+                      <span>
+                        {totalAllocatedSem2 + reserveJpSem2} JP{diffSem2 === 0 ? '' : ` (${diffSem2 > 0 ? '+' : ''}${diffSem2})`}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -727,10 +860,46 @@ export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
                 <div>
                   <span className="font-bold block">Matriks Program Semester (Promes) Otomatis Terisi</span>
                   <span className="text-[11px] leading-snug">
-                    Seluruh jam materi akan langsung didistribusikan merata ke pekan-pekan efektif KBM tanpa menyentuh minggu libur/asesmen. Anda tetap dapat menggeser jam secara fleksibel di tab Promes kapan pun.
+                    Jam materi diisi berurutan ke minggu KBM; minggu libur dan asesmen dilewati. Jam bisa digeser di tab Promes.
                   </span>
                 </div>
               </div>
+
+              {hasExistingData && !preferNewDocument && (
+                <fieldset className="p-3 border border-slate-200 dark:border-slate-700 rounded-xl space-y-2 text-xs">
+                  <legend className="px-1 font-bold text-slate-700 dark:text-slate-300">Simpan hasilnya ke</legend>
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="wizard-target"
+                      checked={target === 'new'}
+                      onChange={() => setTarget('new')}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      <strong>Dokumen baru</strong>
+                      <span className="block text-[11px] text-slate-500 dark:text-slate-400">
+                        Prota yang sedang dibuka tetap utuh. Pindah dokumen lewat pilihan di atas halaman.
+                      </span>
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="wizard-target"
+                      checked={target === 'replace'}
+                      onChange={() => setTarget('replace')}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      <strong>Ganti isi dokumen ini</strong>
+                      <span className="block text-[11px] text-slate-500 dark:text-slate-400">
+                        Materi dan Promes yang ada diganti. Bisa dibatalkan sesaat setelah diterapkan.
+                      </span>
+                    </span>
+                  </label>
+                </fieldset>
+              )}
             </div>
           )}
 
@@ -768,10 +937,12 @@ export const ProtaPromesWizardModal: React.FC<ProtaPromesWizardModalProps> = ({
             <button
               type="button"
               onClick={handleApply}
-              className="px-5 py-2.5 bg-gradient-to-r from-brand-600 to-emerald-600 hover:from-brand-700 hover:to-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer active:scale-95"
+              disabled={waitingForAi}
+              title={waitingForAi ? 'Buat draf materi dengan AI di langkah 3 terlebih dahulu' : undefined}
+              className="px-5 py-2.5 bg-gradient-to-r from-brand-600 to-emerald-600 hover:from-brand-700 hover:to-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Sparkles className="w-4 h-4" />
-              <span>✨ Terapkan & Buka Dokumen</span>
+              <span>Terapkan</span>
             </button>
           )}
         </div>

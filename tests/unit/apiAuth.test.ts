@@ -38,10 +38,25 @@ describe('api/_auth — authenticateRequest', () => {
   });
 
   it('bypasses in local dev if allowDevWithoutAuth is true', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
     const req = createMockReq({ host: 'localhost:3000' });
     const result = await authenticateRequest(req);
     expect(result.authorized).toBe(true);
     expect(result.userId).toBe('dev-bypass-local');
+  });
+
+  it('does not trust a spoofed localhost host header in production', async () => {
+    const spoofed: Record<string, string>[] = [{ host: 'localhost:3000' }, { 'x-forwarded-host': '127.0.0.1' }];
+    for (const headers of spoofed) {
+      const result = await authenticateRequest(createMockReq(headers));
+      expect(result.authorized).toBe(false);
+    }
+  });
+
+  it('bypasses under vercel dev', async () => {
+    vi.stubEnv('VERCEL_ENV', 'development');
+    const result = await authenticateRequest(createMockReq({}));
+    expect(result.authorized).toBe(true);
   });
 
   it('successfully validates token with Supabase auth endpoint', async () => {

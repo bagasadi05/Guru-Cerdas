@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '../../ui/Button';
 import { Modal } from '../../ui/Modal';
@@ -16,6 +16,8 @@ import { ViolationExportPanel } from './components/ViolationExportPanel';
 import { InputMode, Step, StudentFilter, StudentRow, AcademicRecordRow, ClassRow, ViolationRow, AttitudeRecordRow, QuizPointRow } from './types';
 import { ImportPreviewModal } from './components/ImportPreviewModal';
 import { violationList } from '../../../services/violations.data';
+import { getFrequentViolations, buildViolationStatusMap } from './violationInsights';
+import { findSemesterForDate } from '../../../utils/semesterUtils';
 import { CheckCircle2, Loader2, AlertCircle, XIcon } from 'lucide-react';
 
 export interface MassInputPageViewProps {
@@ -144,10 +146,34 @@ export interface MassInputPageViewProps {
     isScoresDirty?: boolean | React.MutableRefObject<boolean>;
     setIsScoresDirty?: (v: boolean) => void;
     saveSubjectGradeDraft?: (draft: any) => void;
+    /** Draft put back into the grade form; offers keep or discard. */
+    restoredDraft?: { savedAt: string | null; count: number } | null;
+    discardRestoredDraft?: () => void;
+    configResetKey?: number;
+    /** Scores changed elsewhere since this form loaded them. */
+    gradeConflicts?: { student_id: string; serverScore: number | null; localScore: number }[] | null;
+    dismissGradeConflicts?: () => void;
+    overwriteGradeConflicts?: () => void;
+    acceptServerGrades?: () => void;
+    /** Offline save of this assessment: waiting to be sent, or stopped for review. */
+    offlineSaveState?: 'queued' | 'review' | null;
+    offlineSaveMessage?: string | null;
+    /** The form still shows exactly the scores that are queued. */
+    isQueuedSaveCurrent?: boolean;
 }
 
+const formatDraftTime = (iso: string | null) => {
+    if (!iso) return null;
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return null;
+    const sameDay = date.toDateString() === new Date().toDateString();
+    return date.toLocaleString('id-ID', sameDay
+        ? { hour: '2-digit', minute: '2-digit' }
+        : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+};
+
 export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
-    const { semesters } = useSemester();
+    const { semesters, activeSemester } = useSemester();
     const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
     const {
         step, mode, handleModeSelect, handleBack, currentCard,
@@ -182,7 +208,32 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         duplicateList, showDuplicateDialog,
         setShowDuplicateDialog, onHandleSubmit, isCheckingDuplicates,
         isScoresDirty, setIsScoresDirty, saveSubjectGradeDraft,
+        restoredDraft, discardRestoredDraft, configResetKey,
+        gradeConflicts, dismissGradeConflicts, overwriteGradeConflicts, acceptServerGrades,
+        offlineSaveState, offlineSaveMessage, isQueuedSaveCurrent,
     } = props;
+    const studentNameById = useMemo(
+        () => new Map((studentsData || []).map(s => [s.id, s.name])),
+        [studentsData],
+    );
+
+    const frequentViolations = useMemo(
+        () => (mode === 'violation' ? getFrequentViolations(existingViolations) : []),
+        [mode, existingViolations],
+    );
+    const selectedViolationDescription = violationList.find(v => v.code === selectedViolationCode)?.description;
+    // Same date → semester rule as the save path in useMassInputMutations.
+    const violationSemesterId = (findSemesterForDate(semesters, violationDate) ?? activeSemester)?.id ?? null;
+    const violationStatusMap = useMemo(
+        () => mode === 'violation'
+            ? buildViolationStatusMap(existingViolations, {
+                description: selectedViolationDescription,
+                date: violationDate,
+                semesterId: violationSemesterId,
+            })
+            : undefined,
+        [mode, existingViolations, selectedViolationDescription, violationDate, violationSemesterId],
+    );
 
     const isDirty = typeof isScoresDirty === 'object' && isScoresDirty !== null && 'current' in isScoresDirty
         ? Boolean((isScoresDirty as React.MutableRefObject<boolean>).current)
@@ -241,6 +292,45 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                         >
                             ⚙️ Ubah Konfigurasi
                         </Button>
+                    </div>
+                )}
+
+                {mode === 'subject_grade' && (offlineSaveState || (restoredDraft && isDirty)) && (
+                    <div role="status" className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
+                        <p>
+                            {offlineSaveState === 'review' ? (
+                                <>
+                                    <span className="font-bold">Nilai belum terkirim.</span>{' '}
+                                    {offlineSaveMessage
+                                        ? `Penyimpanan offline ditolak: ${offlineSaveMessage} Periksa nilainya, lalu tekan Simpan lagi.`
+                                        : 'Sebagian nilai sudah diubah dari perangkat lain sejak Anda menyimpan offline. Tekan Simpan untuk melihat perbedaannya.'}
+                                </>
+                            ) : offlineSaveState === 'queued' ? (
+                                <>
+                                    <span className="font-bold">Menunggu koneksi.</span>{' '}
+                                    Nilai untuk {subjectGradeInfo.assessment_name || 'penilaian ini'} tersimpan di perangkat ini dan dikirim otomatis begitu online.
+                                    {!isQueuedSaveCurrent && ' Perubahan setelah itu belum ikut; tekan Simpan lagi untuk menyertakannya.'}
+                                </>
+                            ) : (
+                                <>
+                                    <span className="font-bold">Draf belum disimpan.</span>{' '}
+                                    {restoredDraft?.count} nilai untuk {subjectGradeInfo.assessment_name || 'penilaian ini'} dimuat dari perangkat ini
+                                    {formatDraftTime(restoredDraft?.savedAt ?? null) ? ` (terakhir diubah ${formatDraftTime(restoredDraft?.savedAt ?? null)})` : ''}.
+                                    {' '}Tekan Simpan agar nilainya tercatat.
+                                </>
+                            )}
+                        </p>
+                        {discardRestoredDraft && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={discardRestoredDraft}
+                                className="rounded-xl border-amber-300 bg-white text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-100"
+                            >
+                                Buang draf
+                            </Button>
+                        )}
                     </div>
                 )}
 
@@ -303,7 +393,9 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                     setAttitudePoints={setAttitudePoints}
                                     attitudeNotes={attitudeNotes}
                                     setAttitudeNotes={setAttitudeNotes}
+                                    frequentViolations={frequentViolations}
                                     onOpenImport={mode === 'subject_grade' ? () => setShowImportModal(true) : undefined}
+                                    configResetKey={configResetKey}
                                 />
                             </div>
                             <div className={`${isConfigOpen ? 'lg:col-span-2' : 'lg:col-span-3'} transition-all duration-300`}>
@@ -336,6 +428,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                     selectedClass={selectedClass}
                                     kkm={kkm}
                                     onClearRequest={requestClear}
+                                    violationStatusMap={violationStatusMap}
                                 />
                             </div>
                         </>
@@ -525,14 +618,14 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                         pendingClearAction?.kind === 'back'
                             ? 'Ada Nilai Belum Disimpan'
                             : pendingClearAction?.kind === 'switch_config'
-                            ? 'Beralih Penilaian?'
+                            ? 'Pindah ke Penilaian Lain?'
                             : 'Bersihkan Input Belum Disimpan?'
                     }
                     confirmText={
                         pendingClearAction?.kind === 'back'
                             ? 'Ya, Tinggalkan'
                             : pendingClearAction?.kind === 'switch_config'
-                            ? 'Ya, Beralih'
+                            ? 'Pindah'
                             : 'Ya, Bersihkan'
                     }
                     cancelText={pendingClearAction?.kind === 'switch_config' ? 'Tetap di Sini' : 'Batalkan'}
@@ -540,12 +633,57 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                         pendingClearAction?.kind === 'back'
                             ? `${pendingClearAction.count} nilai yang sudah diketik belum tersimpan. Meninggalkan layar ini akan menghapusnya.`
                             : pendingClearAction?.kind === 'switch_config'
-                            ? `Ada ${pendingClearAction.count} nilai yang belum disimpan untuk ${subjectGradeInfo.subject || 'mapel ini'}. Beralih mapel atau penilaian akan membatalkan nilai yang belum disimpan ini.`
+                            ? `${pendingClearAction.count} nilai untuk ${subjectGradeInfo.assessment_name || 'penilaian ini'} (${classes?.find(c => c.id === selectedClass)?.name || 'kelas ini'}) belum disimpan. Nilai itu disimpan sebagai draf di perangkat ini dan muncul lagi saat Anda kembali ke penilaian tersebut.`
                             : pendingClearAction?.kind === 'scores'
                             ? `${pendingClearAction.count} nilai yang sudah diketik akan dihapus dari formulir. Nilai yang sudah tersimpan di database tidak terpengaruh, dan Anda masih bisa mengurungkannya beberapa detik setelah ini.`
                             : `${pendingClearAction?.count ?? 0} siswa akan dihapus dari pilihan. Anda masih bisa mengurungkannya beberapa detik setelah ini.`
                     }
                 />
+
+                {/* Scores changed on another device since this form loaded them */}
+                <Modal
+                    isOpen={Boolean(gradeConflicts && gradeConflicts.length > 0)}
+                    onClose={() => dismissGradeConflicts?.()}
+                    title="Nilai Sudah Diubah di Perangkat Lain"
+                    maxWidth="max-w-lg"
+                >
+                    <div className="space-y-4 pt-2">
+                        <p className="text-sm text-slate-600 dark:text-slate-300">
+                            Belum ada yang disimpan. Sejak formulir ini dibuka, nilai berikut diubah dari perangkat atau akun lain. Pilih nilai yang dipakai.
+                        </p>
+                        <div className="max-h-56 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                            <table className="w-full text-sm">
+                                <thead className="bg-slate-50 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                    <tr>
+                                        <th className="px-3 py-2 text-left font-semibold">Siswa</th>
+                                        <th className="px-3 py-2 text-right font-semibold">Tersimpan</th>
+                                        <th className="px-3 py-2 text-right font-semibold">Isian Anda</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {(gradeConflicts || []).map(conflict => (
+                                        <tr key={conflict.student_id} className="border-t border-slate-100 dark:border-slate-800">
+                                            <td className="px-3 py-2 text-slate-800 dark:text-slate-200">{studentNameById.get(conflict.student_id) || 'Siswa'}</td>
+                                            <td className="px-3 py-2 text-right tabular-nums text-slate-700 dark:text-slate-300">{conflict.serverScore ?? 'dihapus'}</td>
+                                            <td className="px-3 py-2 text-right font-semibold tabular-nums text-slate-900 dark:text-white">{conflict.localScore}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="flex flex-wrap justify-end gap-2 pt-2">
+                            <Button type="button" variant="ghost" onClick={() => dismissGradeConflicts?.()}>
+                                Batal
+                            </Button>
+                            <Button type="button" variant="outline" onClick={() => acceptServerGrades?.()}>
+                                Pakai nilai yang tersimpan
+                            </Button>
+                            <Button type="button" onClick={() => overwriteGradeConflicts?.()} className="bg-amber-600 hover:bg-amber-700 text-white">
+                                Simpan isian saya
+                            </Button>
+                        </div>
+                    </div>
+                </Modal>
 
                 {/* Undo bar — restores the batch that was just cleared */}
                 {undoSnapshot && typeof document !== 'undefined' && createPortal(
@@ -642,7 +780,11 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                             : mode === 'attitude'
                                             ? `Simpan Poin Sikap (${selectedStudentIds.size})`
                                             : mode === 'subject_grade'
-                                            ? isDirty
+                                            ? offlineSaveState === 'queued' && isQueuedSaveCurrent
+                                                ? `Menunggu Koneksi (${gradedCount})`
+                                                : !isOnline && isDirty
+                                                ? `Simpan di Perangkat (${gradedCount})`
+                                                : isDirty
                                                 ? `Simpan Nilai (${gradedCount})`
                                                 : `Tersimpan (${gradedCount})`
                                             : mode === 'bulk_report'

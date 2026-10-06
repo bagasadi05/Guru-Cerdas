@@ -22,11 +22,16 @@ export interface StudentItemProps {
     activeAttitudeCategory: { icon: string; label: string };
     activeQuizCategory: { icon: string; label: string };
     validationError?: string;
+    /** Violation mode: the chosen violation is already recorded on the chosen date. */
+    violationRecordedOnDate?: boolean;
+    /** Violation mode: total points this semester. */
+    violationSemesterPoints?: number;
     onSelect: (id: string) => void;
     onScoreChange: (id: string, value: string) => void;
     onScoreFocus?: (id: string | null) => void;
     registerInputRef: (index: number, el: HTMLInputElement | null) => void;
-    onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+    /** Receives the row's globalIndex so the parent can pass one stable handler to every row. */
+    onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>, index: number) => void;
 }
 
 export const Step2_StudentTableRow: React.FC<StudentItemProps> = React.memo(({
@@ -45,6 +50,8 @@ export const Step2_StudentTableRow: React.FC<StudentItemProps> = React.memo(({
     todayAttitudeRecords,
     activeAttitudeCategory,
     activeQuizCategory,
+    violationRecordedOnDate = false,
+    violationSemesterPoints = 0,
     validationError,
     onSelect,
     onScoreChange,
@@ -132,6 +139,20 @@ export const Step2_StudentTableRow: React.FC<StudentItemProps> = React.memo(({
                                 )}
                             </div>
                         )}
+                        {mode === 'violation' && (violationSemesterPoints > 0 || violationRecordedOnDate) && (
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                {violationSemesterPoints > 0 && (
+                                    <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 w-fit">
+                                        {violationSemesterPoints} poin semester ini
+                                    </span>
+                                )}
+                                {violationRecordedOnDate && (
+                                    <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50 w-fit">
+                                        Sudah tercatat di tanggal ini
+                                    </span>
+                                )}
+                            </div>
+                        )}
                         {mode === 'quiz' && (
                             <div className="flex flex-wrap items-center gap-1.5 mt-1">
                                 <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 flex items-center gap-1 w-fit">
@@ -153,7 +174,7 @@ export const Step2_StudentTableRow: React.FC<StudentItemProps> = React.memo(({
                         <div className="relative">
                             <Input
                                 ref={(el) => registerInputRef(globalIndex, el)}
-                                onKeyDown={onKeyDown}
+                                onKeyDown={onKeyDown ? (e) => onKeyDown(e, globalIndex) : undefined}
                                 type="number"
                                 inputMode="numeric"
                                 min="0"
@@ -259,6 +280,8 @@ export const Step2_StudentMobileCard: React.FC<StudentItemProps> = React.memo(({
     todayAttitudeRecords,
     activeAttitudeCategory,
     activeQuizCategory,
+    violationRecordedOnDate = false,
+    violationSemesterPoints = 0,
     validationError,
     onSelect,
     onScoreChange,
@@ -341,6 +364,20 @@ export const Step2_StudentMobileCard: React.FC<StudentItemProps> = React.memo(({
                                 )}
                             </div>
                         )}
+                        {mode === 'violation' && (violationSemesterPoints > 0 || violationRecordedOnDate) && (
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                {violationSemesterPoints > 0 && (
+                                    <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 w-fit">
+                                        {violationSemesterPoints} poin semester ini
+                                    </span>
+                                )}
+                                {violationRecordedOnDate && (
+                                    <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50 w-fit">
+                                        Sudah tercatat di tanggal ini
+                                    </span>
+                                )}
+                            </div>
+                        )}
                         {mode === 'quiz' && (
                             <div className="flex flex-wrap items-center gap-1.5 mt-1">
                                 <span className="text-xxs font-semibold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 flex items-center gap-1 w-fit">
@@ -366,7 +403,7 @@ export const Step2_StudentMobileCard: React.FC<StudentItemProps> = React.memo(({
                         <div className="flex-1 min-w-0 flex items-center gap-2">
                             <Input
                                 ref={(el) => registerInputRef(globalIndex, el)}
-                                onKeyDown={onKeyDown}
+                                onKeyDown={onKeyDown ? (e) => onKeyDown(e, globalIndex) : undefined}
                                 type="number"
                                 inputMode="numeric"
                                 min="0"

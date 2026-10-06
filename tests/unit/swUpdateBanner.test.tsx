@@ -1,107 +1,148 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { SWUpdateBanner } from '../../src/components/StatusIndicators';
 
-describe('SWUpdateBanner (Smart Auto-Reload)', () => {
+const NOTES = [
+    {
+        id: '2026.10.04',
+        date: '2026-10-04',
+        title: 'Absensi lebih andal',
+        changes: [
+            { type: 'perbaikan', text: 'Absensi yang sudah direset kini bisa disimpan lagi.' },
+            { type: 'baru', text: 'Absensi tidak bisa disimpan di hari Minggu.' },
+        ],
+    },
+    { id: '2026.09.28', date: '2026-09-28', changes: [{ type: 'baru', text: 'Modul Prota & Promes.' }] },
+];
+
+function mockNotes(response: unknown = NOTES, ok = true) {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok, json: async () => response }));
+}
+
+function renderAt(path = '/dashboard') {
+    return render(
+        <MemoryRouter initialEntries={[path]}>
+            <SWUpdateBanner />
+        </MemoryRouter>,
+    );
+}
+
+function announceUpdate(updateSW = vi.fn()) {
+    act(() => {
+        window.dispatchEvent(new CustomEvent('sw-update-available', { detail: { updateSW } }));
+    });
+    return updateSW;
+}
+
+describe('SWUpdateBanner ("Apa yang baru")', () => {
     beforeEach(() => {
-        vi.useFakeTimers();
         sessionStorage.clear();
+        localStorage.clear();
     });
 
     afterEach(() => {
+        vi.unstubAllGlobals();
+        vi.unstubAllEnvs();
         vi.useRealTimers();
     });
 
-    it('is hidden by default when no update event is dispatched', () => {
-        render(<SWUpdateBanner />);
-        expect(screen.queryByText('Pembaruan Terdeteksi!')).not.toBeInTheDocument();
+    it('stays hidden until a new version is announced', () => {
+        mockNotes();
+        renderAt();
+        expect(screen.queryByText('Versi baru tersedia')).not.toBeInTheDocument();
     });
 
-    it('renders countdown banner when sw-update-available event is dispatched', () => {
-        render(<SWUpdateBanner />);
+    it('shows the new release notes before updating, without reloading on its own', async () => {
+        mockNotes();
+        renderAt();
+        const updateSW = announceUpdate();
 
-        act(() => {
-            window.dispatchEvent(new CustomEvent('sw-update-available', {
-                detail: { updateSW: vi.fn() }
-            }));
-        });
-
-        expect(screen.getByText('Pembaruan Terdeteksi!')).toBeInTheDocument();
-        expect(screen.getByText(/3 detik/i)).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /Muat Ulang Sekarang/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /Tunda 1 Menit/i })).toBeInTheDocument();
+        expect(await screen.findByText('Versi baru tersedia')).toBeInTheDocument();
+        expect(screen.getByText('Absensi lebih andal')).toBeInTheDocument();
+        expect(screen.getByText('Absensi yang sudah direset kini bisa disimpan lagi.')).toBeInTheDocument();
+        // Only the latest release when the user has no history yet.
+        expect(screen.queryByText('Modul Prota & Promes.')).not.toBeInTheDocument();
+        expect(updateSW).not.toHaveBeenCalled();
     });
 
-    it('automatically counts down and calls updateSW when countdown reaches 0', () => {
-        const updateSWMock = vi.fn();
-        render(<SWUpdateBanner />);
+    it('lists every release since the one the user last saw', async () => {
+        localStorage.setItem('release-notes-last-seen', '2026.09.20');
+        mockNotes([...NOTES, { id: '2026.09.20', date: '2026-09-20', changes: [{ type: 'baru', text: 'Lama' }] }]);
+        renderAt();
+        announceUpdate();
 
-        act(() => {
-            window.dispatchEvent(new CustomEvent('sw-update-available', {
-                detail: { updateSW: updateSWMock }
-            }));
-        });
+        expect(await screen.findByText('Absensi lebih andal')).toBeInTheDocument();
+        expect(screen.getByText('Modul Prota & Promes.')).toBeInTheDocument();
+        expect(screen.queryByText('Lama')).not.toBeInTheDocument();
+    });
 
-        expect(screen.getByText(/3 detik/i)).toBeInTheDocument();
+    it('updates and remembers the notes as read on "Perbarui sekarang"', async () => {
+        mockNotes();
+        renderAt();
+        const updateSW = announceUpdate();
 
-        // Advance 1s -> 2 detik
-        act(() => {
-            vi.advanceTimersByTime(1000);
-        });
-        expect(screen.getByText(/2 detik/i)).toBeInTheDocument();
+        fireEvent.click(await screen.findByRole('button', { name: /Perbarui sekarang/i }));
 
-        // Advance 1s -> 1 detik
-        act(() => {
-            vi.advanceTimersByTime(1000);
-        });
-        expect(screen.getByText(/1 detik/i)).toBeInTheDocument();
-
-        // Advance 1s -> triggers reboot!
-        act(() => {
-            vi.advanceTimersByTime(1000);
-        });
-
-        expect(updateSWMock).toHaveBeenCalledWith(true);
+        expect(updateSW).toHaveBeenCalledWith(true);
+        expect(localStorage.getItem('release-notes-last-seen')).toBe('2026.10.04');
         expect(sessionStorage.getItem('post-reload-path')).toBe(window.location.pathname + window.location.search);
     });
 
-    it('immediately calls updateSW when clicking Muat Ulang Sekarang', () => {
-        const updateSWMock = vi.fn();
-        render(<SWUpdateBanner />);
+    it('postpones with "Nanti" and asks again 10 minutes later', async () => {
+        mockNotes();
+        renderAt();
+        const updateSW = announceUpdate();
+        const later = await screen.findByRole('button', { name: /Nanti/i });
 
-        act(() => {
-            window.dispatchEvent(new CustomEvent('sw-update-available', {
-                detail: { updateSW: updateSWMock }
-            }));
-        });
+        vi.useFakeTimers();
+        fireEvent.click(later);
+        expect(screen.queryByText('Versi baru tersedia')).not.toBeInTheDocument();
 
-        const reloadBtn = screen.getByRole('button', { name: /Muat Ulang Sekarang/i });
-        fireEvent.click(reloadBtn);
-
-        expect(updateSWMock).toHaveBeenCalledWith(true);
-        expect(sessionStorage.getItem('post-reload-path')).toBe(window.location.pathname + window.location.search);
+        act(() => { vi.advanceTimersByTime(10 * 60 * 1000); });
+        expect(screen.getByText('Versi baru tersedia')).toBeInTheDocument();
+        expect(updateSW).not.toHaveBeenCalled();
     });
 
-    it('pauses auto-reload when user clicks Tunda 1 Menit', () => {
-        const updateSWMock = vi.fn();
-        render(<SWUpdateBanner />);
+    it('still offers the update when the notes cannot be loaded', async () => {
+        mockNotes(null, false);
+        renderAt();
+        announceUpdate();
 
-        act(() => {
-            window.dispatchEvent(new CustomEvent('sw-update-available', {
-                detail: { updateSW: updateSWMock }
-            }));
-        });
+        expect(await screen.findByText(/Ada versi baru aplikasi/i)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Perbarui sekarang/i })).toBeInTheDocument();
+    });
 
-        const snoozeBtn = screen.getByRole('button', { name: /Tunda 1 Menit/i });
-        fireEvent.click(snoozeBtn);
+    it('updates quietly on the parent portal, where teacher notes do not apply', () => {
+        mockNotes();
+        renderAt('/portal/abc');
+        const updateSW = announceUpdate();
 
-        expect(screen.getByText(/Pembaruan ditunda selama 1 menit/i)).toBeInTheDocument();
+        expect(updateSW).toHaveBeenCalledWith(true);
+        expect(screen.queryByText('Versi baru tersedia')).not.toBeInTheDocument();
+    });
 
-        // Advancing 5 seconds does NOT trigger reboot because it is paused
-        act(() => {
-            vi.advanceTimersByTime(5000);
-        });
-        expect(updateSWMock).not.toHaveBeenCalled();
+    it('after an update applied in the background, shows what changed once', async () => {
+        vi.stubEnv('PROD', true);
+        localStorage.setItem('release-notes-last-seen', '2026.09.28');
+        mockNotes();
+        renderAt();
+
+        expect(await screen.findByText('Aplikasi sudah diperbarui')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: /Mengerti/i }));
+
+        await waitFor(() => expect(screen.queryByText('Aplikasi sudah diperbarui')).not.toBeInTheDocument());
+        expect(localStorage.getItem('release-notes-last-seen')).toBe('2026.10.04');
+    });
+
+    it('does not repeat notes the user already read', async () => {
+        vi.stubEnv('PROD', true);
+        localStorage.setItem('release-notes-last-seen', '2026.10.04');
+        mockNotes();
+        renderAt();
+
+        await waitFor(() => expect(fetch).toHaveBeenCalled());
+        expect(screen.queryByText('Aplikasi sudah diperbarui')).not.toBeInTheDocument();
     });
 });

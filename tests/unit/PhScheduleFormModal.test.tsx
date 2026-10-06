@@ -104,7 +104,7 @@ describe('PhScheduleFormModal Component', () => {
         expect(screen.getByText('Kelas 7A')).toBeInTheDocument();
         expect(screen.getByText('Semester Ganjil')).toBeInTheDocument();
         expect(screen.getByLabelText(/Tanggal Pelaksanaan/i)).toBeInTheDocument();
-        expect(screen.getByText(/Mata Pelajaran/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/Mata Pelajaran/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/Materi \/ Topik PH/i)).toBeInTheDocument();
         expect(screen.getByText('Jam Pelajaran Ke-')).toBeInTheDocument();
     });
@@ -225,7 +225,7 @@ describe('PhScheduleFormModal Component', () => {
             />
         );
 
-        expect(screen.getByText('Potensi Bentrok Jadwal!')).toBeInTheDocument();
+        expect(screen.getByText('Jam pelajaran bertumpang tindih')).toBeInTheDocument();
         expect(screen.getByText(/Sudah ada jadwal PH/i)).toBeInTheDocument();
     });
 
@@ -251,7 +251,7 @@ describe('PhScheduleFormModal Component', () => {
         );
 
         // Weekend badge
-        expect(screen.getByText('Hari Libur')).toBeInTheDocument();
+        expect(screen.getByText('Akhir pekan')).toBeInTheDocument();
 
         // Quick date buttons
         const hariIniBtn = screen.getByRole('button', { name: /Hari Ini/i });

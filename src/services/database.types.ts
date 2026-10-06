@@ -14,6 +14,18 @@ export type Database = {
   }
   public: {
     Tables: {
+      user_notification_preferences: {
+        Row: { user_id: string; task_reminders: boolean; task_reminder_days: number; updated_at: string }
+        Insert: { user_id: string; task_reminders?: boolean; task_reminder_days?: number; updated_at?: string }
+        Update: { user_id?: string; task_reminders?: boolean; task_reminder_days?: number; updated_at?: string }
+        Relationships: []
+      }
+      teacher_reminder_deliveries: {
+        Row: { kind: string; entity_id: string; occurrence_date: string; subscription_id: string; lease_token: string | null; lease_until: string | null; delivered_at: string | null; terminal: boolean; attempts: number; last_error: string | null }
+        Insert: { kind: string; entity_id: string; occurrence_date: string; subscription_id: string; lease_token?: string | null; lease_until?: string | null; delivered_at?: string | null; terminal?: boolean; attempts?: number; last_error?: string | null }
+        Update: { kind?: string; entity_id?: string; occurrence_date?: string; subscription_id?: string; lease_token?: string | null; lease_until?: string | null; delivered_at?: string | null; terminal?: boolean; attempts?: number; last_error?: string | null }
+        Relationships: [{ foreignKeyName: 'teacher_reminder_deliveries_subscription_id_fkey'; columns: ['subscription_id']; isOneToOne: false; referencedRelation: 'push_subscriptions'; referencedColumns: ['id'] }]
+      }
       kaldik_entries: {
         Row: {
           academic_year: string
@@ -2970,6 +2982,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_ph_schedule: {
+        Args: { p_class_id: string; p_semester_id: string }
+        Returns: boolean
+      }
+      preview_wa_ph_schedule: {
+        Args: { p_class_id: string; p_report_date?: string }
+        Returns: string
+      }
       get_class_analytics_attendance: {
         Args: Record<PropertyKey, never>
         Returns: Json

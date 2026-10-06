@@ -1,6 +1,41 @@
-import { describe, it, expect } from 'vitest';
-import { cleanHtmlForWordExport, buildHtmlTemplate } from '../../src/components/pages/modul-ajar/utils/template';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  cleanHtmlForWordExport,
+  buildHtmlTemplate,
+} from '../../src/components/pages/modul-ajar/utils/template';
 import type { FormState } from '../../src/components/pages/modul-ajar/types';
+import { exportModulAjarToWord } from '../../src/components/pages/modul-ajar/utils/wordExport';
+
+describe('exportModulAjarToWord', () => {
+  const originalCreateObjectUrl = URL.createObjectURL;
+  const originalRevokeObjectUrl = URL.revokeObjectURL;
+
+  afterEach(() => {
+    URL.createObjectURL = originalCreateObjectUrl;
+    URL.revokeObjectURL = originalRevokeObjectUrl;
+    vi.restoreAllMocks();
+  });
+
+  it('sanitizes the filename and produces a Word download', () => {
+    URL.createObjectURL = vi.fn(() => 'blob:modul-ajar');
+    URL.revokeObjectURL = vi.fn();
+    const click = vi.fn();
+    const anchor = document.createElement('a');
+    vi.spyOn(document, 'createElement').mockReturnValue(anchor);
+    vi.spyOn(anchor, 'click').mockImplementation(click);
+
+    exportModulAjarToWord({
+      htmlContent: '<p>Dokumen aman</p><script>alert(1)</script>',
+      fileName: 'Modul/Ajar: Kelas 3',
+      paperSize: 'F4',
+      title: 'Modul <Ajar>',
+    });
+
+    expect(URL.createObjectURL).toHaveBeenCalledOnce();
+    expect(anchor.download).toBe('Modul_Ajar__Kelas_3.doc');
+    expect(click).toHaveBeenCalledOnce();
+  });
+});
 
 describe('cleanHtmlForWordExport', () => {
   it('removes page-break-inside: avoid on divs to prevent Word page-per-card explosions', () => {
@@ -42,7 +77,9 @@ describe('cleanHtmlForWordExport', () => {
     const rawHtml = `<div style="border-bottom: 1px dotted #888888; height: 24px; width: 100%;"></div>`;
     const cleaned = cleanHtmlForWordExport(rawHtml);
     expect(cleaned).not.toContain('height: 24px');
-    expect(cleaned).toContain('........................................................................................................................');
+    expect(cleaned).toContain(
+      '........................................................................................................................',
+    );
   });
 
   it('preserves page-break-inside: avoid on tr and signature table elements so Word table rows do not split', () => {
@@ -99,8 +136,14 @@ describe('buildHtmlTemplate pagination integrity', () => {
     temaKbc: [],
     materiInsersi: '',
     rubrikAsesmen: [
-      { kriteria: 'Kemandirian Belajar', sangatBaik: 'Sangat mandiri', baik: 'Mandiri', cukup: 'Cukup', perluBimbingan: 'Perlu bantuan' }
-    ]
+      {
+        kriteria: 'Kemandirian Belajar',
+        sangatBaik: 'Sangat mandiri',
+        baik: 'Mandiri',
+        cukup: 'Cukup',
+        perluBimbingan: 'Perlu bantuan',
+      },
+    ],
   };
 
   const dummyData = {
@@ -110,7 +153,7 @@ describe('buildHtmlTemplate pagination integrity', () => {
     pertanyaanPemantik: ['Pemantik 1'],
     kegiatanPendahuluan: ['Salam'],
     kegiatanInti: [
-      { fase: 'Langkah 1', kegiatanGuru: 'Guru mengajar', kegiatanSiswa: 'Siswa belajar' }
+      { fase: 'Langkah 1', kegiatanGuru: 'Guru mengajar', kegiatanSiswa: 'Siswa belajar' },
     ],
     kegiatanPenutup: ['Doa'],
     asesmenSikap: 'Observasi',
@@ -125,7 +168,9 @@ describe('buildHtmlTemplate pagination integrity', () => {
   it('does not have a duplicate page break immediately after cover page', () => {
     const html = buildHtmlTemplate(dummyFormState, dummyData, 2, '');
     // Ensure there is no page-break-after followed by <br style="page-break-before: always
-    const coverBreakMatch = html.match(/page-break-after:\s*always;?\s*clear:\s*both;?"[\s\S]*?<br style="page-break-before:\s*always/);
+    const coverBreakMatch = html.match(
+      /page-break-after:\s*always;?\s*clear:\s*both;?"[\s\S]*?<br style="page-break-before:\s*always/,
+    );
     expect(coverBreakMatch).toBeNull();
   });
 

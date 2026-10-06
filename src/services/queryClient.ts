@@ -26,6 +26,8 @@ export const queryClient = new QueryClient({
 // Cache buster version — bump this when data shape changes to force invalidation
 const CACHE_BUSTER = 'v2';
 
+const PERSIST_THROTTLE_MS = 1000;
+
 /**
  * Initialize query persistence. Call this once during app startup
  * (e.g., inside AppProviders) rather than at module scope to avoid
@@ -34,13 +36,34 @@ const CACHE_BUSTER = 'v2';
 export function initQueryPersistence(): void {
   if (typeof window === 'undefined') return;
 
+  // persistQueryClient calls persistClient on every cache event, and each
+  // call JSON-serializes the whole cache on the main thread. Coalesce bursts
+  // (a page load fires dozens of events) into one write per interval.
+  let pending: PersistedClient | null = null;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  const flush = async () => {
+    if (timer) clearTimeout(timer);
+    timer = null;
+    const client = pending;
+    pending = null;
+    if (!client) return;
+    try {
+      await storageSetJSON('portal_guru_query_cache', client);
+    } catch (err) {
+      logger.error('Failed to persist query client to IndexedDB', undefined, err);
+    }
+  };
+
+  // Write before the tab is hidden or killed so the last burst is not lost.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') void flush();
+  });
+
   const persister: Persister = {
     persistClient: async (client: PersistedClient) => {
-      try {
-        await storageSetJSON('portal_guru_query_cache', client);
-      } catch (err) {
-        logger.error('Failed to persist query client to IndexedDB', undefined, err);
-      }
+      pending = client;
+      if (!timer) timer = setTimeout(() => void flush(), PERSIST_THROTTLE_MS);
     },
     restoreClient: async () => {
       try {
@@ -52,6 +75,9 @@ export function initQueryPersistence(): void {
       }
     },
     removeClient: async () => {
+      pending = null;
+      if (timer) clearTimeout(timer);
+      timer = null;
       try {
         await storageRemove('portal_guru_query_cache');
       } catch (err) {

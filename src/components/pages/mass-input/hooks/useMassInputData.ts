@@ -5,10 +5,22 @@ import { useAuth } from '../../../../hooks/useAuth';
 import { getAssignedSubjects, TeacherClassAssignmentRow } from '../../../../services/teacherAssignments';
 import { dedupeAcademicRecords, dedupeQuizPoints } from '../../../../utils/academicRecordUtils';
 import { SUBJECTS, mergeSubjectLists } from '../../../../constants/subjects';
+import { fetchAllPages } from '../../../../utils/fetchAllPages';
 
 // Dulu daftar ini disalin manual di sini. Salinannya sempat melenceng dari
 // src/constants/subjects.ts dan jadi salah satu sumber beda nama mapel.
 const DEFAULT_SUBJECT_OPTIONS = SUBJECTS;
+
+const VIOLATION_COLUMNS = 'id, student_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, user_id';
+
+// PostgREST caps a single response at the project's max_rows (1000 by
+// default). The school already has more violations than that, so an
+// unpaginated "Semua Kelas" query silently dropped the oldest rows.
+export function fetchAllViolationPages(
+    fetchPage: (from: number, to: number) => PromiseLike<{ data: unknown[] | null; error: unknown }>,
+): Promise<ViolationRow[]> {
+    return fetchAllPages<ViolationRow>(fetchPage);
+}
 
 export const useMassInputData = (selectedClass: string, subject?: string, assessmentName?: string, mode?: string, semesterId?: string) => {
     const { user } = useAuth();
@@ -169,26 +181,30 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
         queryFn: async (): Promise<ViolationRow[]> => {
             if (!selectedClass || !studentsData || studentsData.length === 0) return [];
             
+            // `id` breaks ties between same-date rows so pages never overlap or skip.
             if (selectedClass === 'all') {
-                const { data, error } = await supabase
+                // Filtered client-side rather than with .in(student_id): 600+ ids
+                // would overflow the request URL, and RLS already scopes the rows.
+                const all = await fetchAllViolationPages((from, to) => supabase
                     .from('violations')
-                    .select('id, student_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, user_id')
+                    .select(VIOLATION_COLUMNS)
                     .is('deleted_at', null)
-                    .order('date', { ascending: false });
-                if (error) throw error; 
-                
+                    .order('date', { ascending: false })
+                    .order('id')
+                    .range(from, to));
                 const studentIds = new Set(studentsData.map(s => s.id));
-                const allData = (data || []).filter(v => studentIds.has(v.student_id));
-                return allData as unknown as ViolationRow[];
+                return all.filter(v => studentIds.has(v.student_id));
             }
-            
-            const { data, error } = await supabase
+
+            const classStudentIds = studentsData.map(s => s.id);
+            return fetchAllViolationPages((from, to) => supabase
                 .from('violations')
-                .select('id, student_id, date, description, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, user_id')
-                .in('student_id', studentsData.map(s => s.id))
+                .select(VIOLATION_COLUMNS)
+                .in('student_id', classStudentIds)
                 .is('deleted_at', null)
-                .order('date', { ascending: false });
-            if (error) throw error; return (data || []) as unknown as ViolationRow[];
+                .order('date', { ascending: false })
+                .order('id')
+                .range(from, to));
         },
         enabled: (mode === 'violation' || mode === 'violation_export') && !!selectedClass && !!studentsData,
     });

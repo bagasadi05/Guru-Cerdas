@@ -15,7 +15,7 @@ on:
       deploy_database:
         description: 'Run database migrations'
         type: boolean
-        default: true
+        default: false
       deploy_functions:
         description: 'Deploy Edge Functions'
         type: boolean
@@ -35,6 +35,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify Applied Migrations
+        if: github.event_name == 'push'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          MIGRATION_BEFORE_SHA: ${{ github.event.before }}
+          MIGRATION_AFTER_SHA: ${{ github.sha }}
+        run: node scripts/verify-applied-supabase-migrations.mjs
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
@@ -42,7 +58,8 @@ jobs:
           version: latest
 
       - name: Deploy Database Migrations
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_database || github.event_name == 'push' }}
+        id: database
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_database }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
@@ -54,6 +71,7 @@ jobs:
           supabase db push --db-url "postgresql://postgres:${{ secrets.SUPABASE_DB_PASSWORD }}@db.$SUPABASE_PROJECT_ID.supabase.co:5432/postgres" --include-all
 
       - name: Deploy Edge Functions
+        id: functions
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_functions || github.event_name == 'push' }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -61,39 +79,29 @@ jobs:
         run: |
           echo "🚀 Deploying Edge Functions..."
           supabase functions deploy dispatch-push --project-ref "$SUPABASE_PROJECT_ID" --token "$SUPABASE_ACCESS_TOKEN" --no-verify-jwt
+          supabase functions deploy wa-worker --project-ref "$SUPABASE_PROJECT_ID" --no-verify-jwt
           supabase functions deploy openrouter --project-ref "$SUPABASE_PROJECT_ID" --token "$SUPABASE_ACCESS_TOKEN" --no-verify-jwt || true
 
-      - name: Verify Cron Jobs
-        if: github.event_name == 'push'
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-        run: |
-          echo "🔍 Verifying pg_cron jobs..."
-          PGPASSWORD="$SUPABASE_DB_PASSWORD" psql \
-            "postgresql://postgres:$SUPABASE_DB_PASSWORD@db.$SUPABASE_PROJECT_ID.supabase.co:5432/postgres" \
-            -c "SELECT jobname, schedule, active FROM cron.job WHERE jobname = 'dispatch-scheduled-notifications';"
-
-      - name: Smoke Test - Invoke dispatch-push
-        if: github.event_name == 'push'
+      - name: Verify Teacher Reminders
+        id: reminders
+        if: ${{ github.event_name == 'push' || inputs.deploy_database || inputs.deploy_functions }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
         run: |
-          echo "🧪 Smoke testing dispatch-push function..."
-          supabase functions invoke dispatch-push \
-            --project-ref "$SUPABASE_PROJECT_ID" \
-            --token "$SUPABASE_ACCESS_TOKEN" \
-            --data '{"dryRun": true}' || echo "⚠️  Smoke test inconclusive (expected — no scheduled notifications yet)"
+          node scripts/verify-teacher-reminders.mjs
 
       - name: Deployment summary
         if: always()
+        env:
+          DATABASE_OUTCOME: ${{ steps.database.outcome }}
+          FUNCTIONS_OUTCOME: ${{ steps.functions.outcome }}
+          REMINDERS_OUTCOME: ${{ steps.reminders.outcome }}
         run: |
           echo "## Supabase Deploy Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- Database migrations: deployed" >> $GITHUB_STEP_SUMMARY
-          echo "- Edge Functions: deployed" >> $GITHUB_STEP_SUMMARY
-          echo "- Cron jobs: verified" >> $GITHUB_STEP_SUMMARY
+          echo "- Database migrations: $DATABASE_OUTCOME" >> $GITHUB_STEP_SUMMARY
+          echo "- Edge Functions: $FUNCTIONS_OUTCOME" >> $GITHUB_STEP_SUMMARY
+          echo "- Teacher reminders: $REMINDERS_OUTCOME" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "🔗 Dashboard: https://supabase.com/dashboard/project/${{ secrets.SUPABASE_PROJECT_ID }}" >> $GITHUB_STEP_SUMMARY

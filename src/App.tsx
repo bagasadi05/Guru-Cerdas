@@ -96,9 +96,13 @@ const PrivateRoutes = () => {
     return <AppLoadingScreen />;
   }
 
+  // Suspense sits inside Layout so the header and bottom nav stay on screen
+  // while a page chunk loads, instead of the whole shell being swapped out.
   return session ? (
     <Layout>
-      <Outlet />
+      <Suspense fallback={<RouteAwareFallback />}>
+        <Outlet />
+      </Suspense>
     </Layout>
   ) : (
     <Navigate to="/guru-login" replace />
@@ -167,7 +171,9 @@ function App() {
 
   return (
     <AppProviders queryClient={queryClient}>
-      <BrowserRouter>
+      {/* startTransition keeps the current page visible and responsive while
+          the next one renders, instead of flashing a fallback. */}
+      <BrowserRouter future={{ v7_startTransition: true }}>
         <AppContent />
       </BrowserRouter>
     </AppProviders>

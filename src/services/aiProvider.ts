@@ -33,10 +33,24 @@ export type AiProviderName = 'gemini' | 'groq';
 
 // PROVIDER INTERFACE
 
+export interface AiRequestTimeout {
+  /** Per-request timeout; the provider default (30 s) applies when omitted. */
+  timeoutMs?: number;
+}
+
 export interface AiProvider {
   readonly name: AiProviderName;
-  generateContent(messages: GeminiMessage[], model: string): Promise<GeminiResponse>;
+  generateContent(messages: GeminiMessage[], model: string, options?: AiRequestTimeout): Promise<GeminiResponse>;
 }
+
+/**
+ * A full Modul Ajar is one long JSON answer and regularly takes longer than
+ * the 30 s default; aborting it at 30 s sent teachers back to the template.
+ * Matches maxDuration of api/gemini and api/groq in vercel.json.
+ */
+const TASK_TIMEOUT_MS: Partial<Record<AiTaskType, number>> = {
+  'modul-ajar': 60_000,
+};
 
 // ROUTING CONFIG
 
@@ -88,11 +102,12 @@ export class ProviderRouter {
     const fallback = this.providers.get(fallbackName);
     const fallbackDefaultModel = FALLBACK_MODELS[taskType] || 'llama-3.3-70b-versatile';
     const fallbackModel = fallbackName === 'gemini' ? dynamicGeminiModel : fallbackDefaultModel;
+    const requestOptions: AiRequestTimeout = { timeoutMs: TASK_TIMEOUT_MS[taskType] };
 
     // Try primary
     if (primary && baseIsCircuitAllowed(route.primary)) {
       try {
-        const result = await primary.generateContent(messages, primaryModel);
+        const result = await primary.generateContent(messages, primaryModel, requestOptions);
         baseRecordCircuitSuccess(route.primary);
         return result;
       } catch (err: any) {
@@ -108,7 +123,7 @@ export class ProviderRouter {
     if (fallback && baseIsCircuitAllowed(fallbackName)) {
       try {
         logger.info(`[AI Router] Falling back to ${fallbackName}`, 'AI');
-        const result = await fallback.generateContent(messages, fallbackModel);
+        const result = await fallback.generateContent(messages, fallbackModel, requestOptions);
         baseRecordCircuitSuccess(fallbackName);
         return result;
       } catch (err: any) {

@@ -18,12 +18,8 @@ import type {
   KaldikWeek,
   MatrixCell,
 } from '../../../types/perangkatAjar';
-import {
-  exportProtaToExcel,
-  exportPromesToExcel,
-  exportProtaToWord,
-  exportPromesToWord,
-} from '../../../utils/exportPerangkatAjar';
+// exportPerangkatAjar pulls in docx/JSZip (~400 KB); load it only on export.
+const loadOfficeExport = () => import('../../../utils/exportPerangkatAjar');
 import { exportProtaToPdf } from '../../../utils/protaPdfExport';
 import { exportPromesToPdf } from '../../../utils/promesPdfExport';
 
@@ -59,12 +55,8 @@ export const PreviewTab: React.FC<PreviewTabProps> = ({
   const printRef = useRef<HTMLDivElement>(null);
 
   // Helper to determine cells for a requested semester
-  const getPromesCellsForSemester = (sem: 1 | 2): MatrixCell[] => {
-    if (sem === 2 && promesCellsSem2 && promesCellsSem2.length > 0) {
-      return promesCellsSem2;
-    }
-    return promesCells;
-  };
+  const getPromesCellsForSemester = (sem: 1 | 2): MatrixCell[] =>
+    sem === 2 ? promesCellsSem2 ?? [] : promesCells;
 
   // Safe file download helper with delay before revoking Object URL
   const downloadBlob = (blob: Blob, filename: string) => {
@@ -85,6 +77,7 @@ export const PreviewTab: React.FC<PreviewTabProps> = ({
   const handleExportExcel = async () => {
     setIsExporting('EXCEL');
     try {
+      const { exportProtaToExcel, exportPromesToExcel } = await loadOfficeExport();
       if (selectedDoc === 'PROTA') {
         const blob = await exportProtaToExcel({
           identity,
@@ -115,6 +108,7 @@ export const PreviewTab: React.FC<PreviewTabProps> = ({
   const handleExportWord = async () => {
     setIsExporting('WORD');
     try {
+      const { exportProtaToWord, exportPromesToWord } = await loadOfficeExport();
       if (selectedDoc === 'PROTA') {
         const blob = await exportProtaToWord({
           identity,

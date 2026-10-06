@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Input } from '../../../ui/Input';
 import { CustomDropdown } from '../../../ui/CustomDropdown';
 import { Button } from '../../../ui/Button';
-import { Modal } from '../../../ui/Modal';
-import { XCircleIcon, ChevronDownIcon, SparklesIcon, ClipboardPasteIcon, SearchIcon, CheckIcon, UploadIcon } from '../../../Icons';
+import { ViolationConfigurationFields } from './ViolationConfigurationFields';
+import { XCircleIcon, ChevronDownIcon, SparklesIcon, ClipboardPasteIcon, UploadIcon } from '../../../Icons';
 import { SlidersHorizontal } from 'lucide-react';
-import { violationList } from '../../../../services/violations.data';
+import { type ViolationItem } from '../../../../services/violations.data';
 import { InputMode, ClassRow } from '../types';
 import { QUIZ_ACTIVITY_CATEGORIES, QUIZ_CATEGORY_DEFAULT_NAMES, QUIZ_ACTIVITY_SUGGESTIONS, BINTANG_ATTITUDE_ASPECTS, ATTITUDE_SUGGESTIONS } from '../constants';
 import { SemesterSelector } from '../../../ui/SemesterSelector';
@@ -17,6 +17,44 @@ import { SemesterSelector } from '../../../ui/SemesterSelector';
  * mengetiknya lagi dari awal.
  */
 const DEFAULT_ASSESSMENT_NAMES = ['PH 1', 'PH 2', 'PH 3', 'PH 4', 'PH 5', 'PH 6', 'PH 7', 'PH 8', 'SAS', 'SAT'];
+
+/**
+ * Text input that applies its value on blur or Enter instead of on every
+ * keystroke. Subject and assessment names identify where scores are saved, so
+ * a half-typed name ("PH1" on the way to "PH10") must not switch the context.
+ * Remount it (via `key`) to reset the text to `value`.
+ */
+const CommitOnBlurInput: React.FC<{
+    id: string;
+    value: string;
+    onCommit: (value: string) => void;
+    placeholder: string;
+    className: string;
+}> = ({ id, value, onCommit, placeholder, className }) => {
+    const [text, setText] = useState(value);
+    const commit = () => {
+        const next = text.trim();
+        if (next !== value) onCommit(next);
+    };
+    return (
+        <Input
+            id={id}
+            value={text}
+            onChange={e => setText(e.target.value)}
+            onBlur={commit}
+            onKeyDown={e => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    commit();
+                }
+            }}
+            placeholder={placeholder}
+            autoFocus={!value}
+            required
+            className={className}
+        />
+    );
+};
 
 const buildAssessmentOptions = (savedNames?: string[]) => {
     const names = new Map<string, string>();
@@ -76,6 +114,10 @@ interface Step2_ConfigurationProps {
     setAttitudePoints?: (pts: number) => void;
     attitudeNotes?: string;
     setAttitudeNotes?: (notes: string) => void;
+    /** Most-used violations, shown as one-tap chips above the full picker. */
+    frequentViolations?: ViolationItem[];
+    /** Changes when a subject/assessment switch was cancelled; resets typed names. */
+    configResetKey?: number;
 }
 
 export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
@@ -90,52 +132,40 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
     attitudeName = 'Adab & Kesantunan', setAttitudeName,
     attitudePoints: _attitudePoints = 1, setAttitudePoints: _setAttitudePoints,
     attitudeNotes, setAttitudeNotes,
+    frequentViolations = [],
+    configResetKey = 0,
 }) => {
-    const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
-    const [violationSearchTerm, setViolationSearchTerm] = useState('');
     const [isCustomAssessment, setIsCustomAssessment] = useState(false);
-    const [customAssessmentInput, setCustomAssessmentInput] = useState('');
 
 
-    // Find selected violation
-    const selectedViolation = violationList.find(v => v.code === selectedViolationCode);
-
-    // Filter violations based on search
-    const filteredViolations = violationList.filter(v =>
-        v.description.toLowerCase().includes(violationSearchTerm.toLowerCase()) ||
-        v.code.toLowerCase().includes(violationSearchTerm.toLowerCase())
-    );
-
-    const handleViolationSelect = (code: string) => {
-        setSelectedViolationCode(code);
-        setIsViolationModalOpen(false);
-        setViolationSearchTerm('');
-    };
     return (
         <div className="lg:col-span-1 space-y-6 animate-fade-in-left">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                <div
-                    className="p-5 sm:p-6 rounded-t-3xl border-b border-slate-200 dark:border-slate-700 flex justify-between items-center cursor-pointer bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-visible">
+                <button
+                    type="button"
+                    aria-expanded={isConfigOpen}
+                    aria-controls="mass-input-configuration"
+                    className="w-full p-4 sm:p-5 rounded-t-2xl border-b border-slate-200 dark:border-slate-700 flex justify-between items-center cursor-pointer bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset"
                     onClick={() => setIsConfigOpen(!isConfigOpen)}
                 >
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-500/20 flex items-center justify-center border border-brand-200 dark:border-white/10">
                             <SlidersHorizontal className="w-5 h-5 text-brand-600 dark:text-brand-300" />
                         </div>
-                        <h3 className="font-bold text-xl text-slate-900 dark:text-white tracking-wide">Konfigurasi</h3>
+                        <span className="font-semibold text-lg text-slate-900 dark:text-white">Konfigurasi</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="hidden lg:inline text-xs font-bold text-slate-400 dark:text-slate-500">
+                        <span className="hidden lg:inline text-xs font-medium text-slate-600 dark:text-slate-300">
                             {isConfigOpen ? 'Sembunyikan' : 'Tampilkan'}
                         </span>
                         <ChevronDownIcon className={`w-5 h-5 text-slate-400 dark:text-white/70 transition-transform duration-300 ${isConfigOpen ? 'rotate-180' : ''}`} />
                     </div>
-                </div>
+                </button>
 
-                <div className={`p-5 sm:p-6 space-y-5 bg-white dark:bg-slate-900/50 ${isConfigOpen ? 'block' : 'hidden lg:block'}`}>
+                <div id="mass-input-configuration" className={`rounded-b-2xl p-4 sm:p-5 space-y-5 bg-white dark:bg-slate-900 ${isConfigOpen ? 'block' : 'hidden'}`}>
                     <div className="space-y-5">
                         <div className="space-y-2">
-                            <label htmlFor="class-select" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Kelas</label>
+                            <label htmlFor="class-select" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Kelas</label>
                             <CustomDropdown
                                 id="class-select"
                                 value={selectedClass}
@@ -264,13 +294,12 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                     <label htmlFor="grade-subject" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Mata Pelajaran</label>
                                     {isCustomSubject ? (
                                         <div className="flex gap-2">
-                                            <Input
+                                            <CommitOnBlurInput
+                                                key={`subject::${subjectGradeInfo.subject}::${configResetKey}`}
                                                 id="grade-subject"
                                                 value={subjectGradeInfo.subject}
-                                                onChange={e => setSubjectGradeInfo(p => ({ ...p, subject: e.target.value }))}
+                                                onCommit={subject => setSubjectGradeInfo(p => ({ ...p, subject }))}
                                                 placeholder="Ketik nama mapel baru..."
-                                                autoFocus
-                                                required
                                                 className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30"
                                             />
                                             <Button
@@ -306,23 +335,18 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                     <label htmlFor="assessment-name" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Nama Penilaian</label>
                                     {isCustomAssessment ? (
                                         <div className="flex gap-2">
-                                            <Input
+                                            <CommitOnBlurInput
+                                                key={`assessment::${subjectGradeInfo.assessment_name}::${configResetKey}`}
                                                 id="assessment-name"
-                                                value={customAssessmentInput}
-                                                onChange={e => {
-                                                    setCustomAssessmentInput(e.target.value);
-                                                    setSubjectGradeInfo(p => ({ ...p, assessment_name: e.target.value }));
-                                                }}
+                                                value={subjectGradeInfo.assessment_name}
+                                                onCommit={assessment_name => setSubjectGradeInfo(p => ({ ...p, assessment_name }))}
                                                 placeholder="Ketik nama penilaian baru..."
-                                                autoFocus
-                                                required
                                                 className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30"
                                             />
                                             <Button
                                                 variant="outline"
                                                 onClick={() => {
                                                     setIsCustomAssessment(false);
-                                                    setCustomAssessmentInput('');
                                                     setSubjectGradeInfo(p => ({ ...p, assessment_name: '' }));
                                                 }}
                                                 title="Kembali ke daftar"
@@ -338,7 +362,6 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                             onChange={val => {
                                                 if (val === '__NEW__') {
                                                     setIsCustomAssessment(true);
-                                                    setCustomAssessmentInput('');
                                                     setSubjectGradeInfo(p => ({ ...p, assessment_name: '' }));
                                                 } else {
                                                     setSubjectGradeInfo(p => ({ ...p, assessment_name: val }));
@@ -387,144 +410,15 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                         )}
 
                         {mode === 'violation' && (
-                            <>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Jenis Pelanggaran</label>
-                                    <Button
-                                        type="button"
-                                        onClick={() => setIsViolationModalOpen(true)}
-                                        className="w-full h-12 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-brand-500/50 text-slate-900 dark:text-white rounded-xl flex items-center justify-between px-4 transition-all"
-                                    >
-                                        <span className={selectedViolation ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-white/30'}>
-                                            {selectedViolation ? selectedViolation.description : '-- Pilih Pelanggaran --'}
-                                        </span>
-                                        <ChevronDownIcon className="h-5 w-5 text-brand-600 dark:text-brand-300" />
-                                    </Button>
-                                    {selectedViolation && (
-                                        <p className="text-xs text-brand-600 dark:text-brand-300 mt-1">{selectedViolation.points} poin</p>
-                                    )}
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="violation-date" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Tanggal</label>
-                                    <Input id="violation-date" type="date" value={violationDate} onChange={e => setViolationDate(e.target.value)} className="h-12 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label htmlFor="violation-notes" className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Keterangan (Opsional)</label>
-                                    <textarea
-                                        id="violation-notes"
-                                        placeholder="Contoh: Terlambat 15 menit karena macet..."
-                                        value={violationNotes}
-                                        onChange={(e) => setViolationNotes(e.target.value)}
-                                        className="w-full h-24 p-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-brand-500/50 text-slate-900 dark:text-white rounded-xl focus:ring-2 focus:ring-brand-500 outline-none resize-none transition-all"
-                                    />
-                                </div>
-                                
-
-                                {/* Violation Selection Modal */}
-                                <Modal
-                                    isOpen={isViolationModalOpen}
-                                    onClose={() => { setIsViolationModalOpen(false); setViolationSearchTerm(''); }}
-                                    title="Pilih Jenis Pelanggaran"
-                                    icon={<SparklesIcon className="w-6 h-6" />}
-                                >
-                                    <div className="space-y-4">
-                                        {/* Search Input */}
-                                        <div className="relative sticky top-0 z-10">
-                                            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                                <SearchIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                                            </div>
-                                            <Input
-                                                type="text"
-                                                placeholder="Cari pelanggaran..."
-                                                value={violationSearchTerm}
-                                                onChange={(e) => setViolationSearchTerm(e.target.value)}
-                                                className="pl-10 h-12 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl shadow-sm focus:ring-2 focus:ring-brand-500"
-                                                autoFocus
-                                            />
-                                        </div>
-
-                                        {/* Violations List */}
-                                        <div className="max-h-[60vh] overflow-y-auto space-y-6 pr-2 custom-scrollbar">
-                                            {filteredViolations.length === 0 ? (
-                                                <div className="text-center py-12 text-gray-500 dark:text-gray-400 flex flex-col items-center gap-3">
-                                                    <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                                                        <SearchIcon className="w-8 h-8 opacity-50" />
-                                                    </div>
-                                                    <p className="font-medium">Tidak ada pelanggaran ditemukan</p>
-                                                    <p className="text-sm opacity-70">Coba kata kunci lain</p>
-                                                </div>
-                                            ) : (
-                                                ['Ringan', 'Sedang', 'Berat'].map(category => {
-                                                    const categoryViolations = filteredViolations.filter(v => v.category === category);
-                                                    if (categoryViolations.length === 0) return null;
-
-                                                    const colorClass =
-                                                        category === 'Ringan' ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' :
-                                                            category === 'Sedang' ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800' :
-                                                                'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800';
-
-                                                    return (
-                                                        <div key={category} className="space-y-3">
-                                                            <div className={`sticky top-0 z-0 px-4 py-2 rounded-lg border backdrop-blur-md font-bold text-sm tracking-wide uppercase flex items-center gap-2 ${colorClass}`}>
-                                                                <span className="w-2 h-2 rounded-full bg-current"></span>
-                                                                Pelanggaran {category}
-                                                            </div>
-                                                            <div className="grid gap-3">
-                                                                {categoryViolations.map((violation) => (
-                                                                    <div
-                                                                        key={violation.code}
-                                                                        onClick={() => handleViolationSelect(violation.code)}
-                                                                        className={`
-                                                                            relative p-4 rounded-xl cursor-pointer transition-all duration-200 border group
-                                                                            ${selectedViolationCode === violation.code
-                                                                                ? 'bg-brand-50 dark:bg-brand-900/20 border-brand-500 dark:border-brand-500 shadow-md transform scale-[1.01]'
-                                                                                : 'bg-white dark:bg-gray-800/50 border-gray-100 dark:border-gray-700/50 hover:border-brand-300 dark:hover:border-brand-700 hover:shadow-md'
-                                                                            }
-                                                                        `}
-                                                                    >
-                                                                        <div className="flex items-start gap-4">
-                                                                            <div className={`
-                                                                                flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm transition-colors
-                                                                                ${selectedViolationCode === violation.code
-                                                                                    ? 'bg-brand-600 text-white'
-                                                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 group-hover:bg-brand-100 dark:group-hover:bg-brand-900/30 group-hover:text-brand-600 dark:group-hover:text-brand-400'
-                                                                                }
-                                                                            `}>
-                                                                                {violation.points}
-                                                                            </div>
-                                                                            <div className="flex-1 min-w-0">
-                                                                                <h4 className={`
-                                                                                    font-medium text-sm mb-1.5 leading-relaxed
-                                                                                    ${selectedViolationCode === violation.code
-                                                                                        ? 'text-brand-900 dark:text-brand-100'
-                                                                                        : 'text-gray-900 dark:text-gray-100'
-                                                                                    }
-                                                                                `}>
-                                                                                    {violation.description}
-                                                                                </h4>
-                                                                                <div className="flex items-center gap-3">
-                                                                                    <span className="text-xs text-gray-400 dark:text-gray-500 font-mono bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded border border-gray-100 dark:border-gray-700">
-                                                                                        #{violation.code}
-                                                                                    </span>
-                                                                                    {selectedViolationCode === violation.code && (
-                                                                                        <span className="text-xs font-medium text-brand-600 dark:text-brand-400 flex items-center gap-1 animate-fade-in">
-                                                                                            <CheckIcon className="w-3 h-3" /> Terpilih
-                                                                                        </span>
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })
-                                            )}
-                                        </div>
-                                    </div>
-                                </Modal>
-                            </>
+                            <ViolationConfigurationFields
+                                selectedCode={selectedViolationCode}
+                                onSelect={setSelectedViolationCode}
+                                date={violationDate}
+                                onDateChange={setViolationDate}
+                                notes={violationNotes}
+                                onNotesChange={setViolationNotes}
+                                frequentViolations={frequentViolations}
+                            />
                         )}
 
                         {mode === 'attitude' && (

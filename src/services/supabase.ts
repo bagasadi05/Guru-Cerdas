@@ -35,8 +35,23 @@ export const wasLastResponseQueued = (): boolean => {
   return Date.now() - lastQueued < 2000;
 };
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const rawUrl = import.meta.env.VITE_SUPABASE_URL;
+const rawAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export const isSupabaseConfigured = Boolean(
+  rawUrl &&
+  rawAnonKey &&
+  rawUrl !== 'https://your-project.supabase.co' &&
+  !rawUrl.includes('placeholder')
+);
+
+// Fallback prevents module-level crash "supabaseUrl is required" when env vars are missing
+const supabaseUrl = rawUrl || 'https://placeholder.supabase.co';
+const supabaseAnonKey = rawAnonKey || 'placeholder-anon-key';
+
+if (!isSupabaseConfigured && typeof window !== 'undefined') {
+  logger.warn('Supabase environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY) are not configured. Running in offline/fallback mode.');
+}
 
 // Network Resilience Fetch helpers
 const getRequestPriority = (url: string): 'low' | 'normal' | 'high' | 'critical' => {

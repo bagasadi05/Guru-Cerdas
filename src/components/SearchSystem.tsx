@@ -276,11 +276,16 @@ export const GlobalSearchModal: React.FC<{
     };
 
     const highlightMatch = (text: string, query: string) => {
+        // SECURITY: escape each segment separately so the query never matches inside HTML entities
         if (!query.trim()) return sanitizeHtml(text);
-        // SECURITY: Sanitize text to prevent XSS before adding HTML markup
-        const safeText = sanitizeHtml(text);
-        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-        return safeText.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 rounded px-0.5">$1</mark>');
+        const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+        const needle = query.toLowerCase();
+        return parts
+            .map(part => part.toLowerCase() === needle
+                ? `<mark class="bg-yellow-200 dark:bg-yellow-800 rounded px-0.5">${sanitizeHtml(part)}</mark>`
+                : sanitizeHtml(part))
+            .join('');
     };
 
 

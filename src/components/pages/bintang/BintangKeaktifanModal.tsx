@@ -6,6 +6,7 @@ import { CustomDropdown } from '../../ui/CustomDropdown';
 import { bintangService } from '../../../services/bintangService';
 import { useToast } from '../../../hooks/useToast';
 import { Star, Info } from 'lucide-react';
+import { formatLocalDate } from '../../../hooks/dashboard/dashboardHelpers';
 
 // ─── Kategori Aktivitas ────────────────────────────────────────────────────
 
@@ -57,7 +58,7 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
     const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
     const [category, setCategory] = useState('bertanya');
     const [quizName, setQuizName] = useState('');
-    const [quizDate, setQuizDate] = useState(new Date().toISOString().split('T')[0]);
+    const [quizDate, setQuizDate] = useState(formatLocalDate());
     const [isSubmitting, setIsSubmitting] = useState(false);
     const isSubmittingRef = useRef(false);
     const [studentSearch, setStudentSearch] = useState('');

@@ -6,7 +6,9 @@ import { PhScheduleEngine } from '../../src/components/schedule/engine/PhSchedul
 import type { PhScheduleRow } from '../../src/types';
 
 describe('PhWeeklyScheduleView Component', () => {
-    const currentWeekDays = PhScheduleEngine.getSchoolWeekDays(new Date(), 0);
+    // The view shows a Monday–Sunday week (weekends included). On a Sunday that
+    // is the week ending today, not the next school week, so compute it the same way.
+    const currentWeekDays = PhScheduleEngine.getSchoolWeekDays(new Date(), 0, true);
     const monday = currentWeekDays[0];
     const wednesday = currentWeekDays[2];
 
@@ -146,7 +148,7 @@ describe('PhWeeklyScheduleView Component', () => {
         fireEvent.click(nextBtn);
 
         // Calculate next week monday date formatted
-        const nextWeekDays = PhScheduleEngine.getSchoolWeekDays(new Date(), 1);
+        const nextWeekDays = PhScheduleEngine.getSchoolWeekDays(new Date(), 1, true);
         expect(screen.getByText(nextWeekDays[0].dateFormatted)).toBeInTheDocument();
 
         // "Minggu Ini" button should now be visible and clickable
@@ -159,8 +161,27 @@ describe('PhWeeklyScheduleView Component', () => {
 
         // Click previous week
         fireEvent.click(prevBtn);
-        const prevWeekDays = PhScheduleEngine.getSchoolWeekDays(new Date(), -1);
+        const prevWeekDays = PhScheduleEngine.getSchoolWeekDays(new Date(), -1, true);
         expect(screen.getByText(prevWeekDays[0].dateFormatted)).toBeInTheDocument();
+    });
+
+    it('on a Sunday shows the week that ends today, including its schedules', () => {
+        render(
+            <PhWeeklyScheduleView
+                schedules={[{ ...mockSchedules[0], date: '2026-09-28' }]}
+                canManage={true}
+                onAdd={vi.fn()}
+                onEdit={vi.fn()}
+                onDuplicate={vi.fn()}
+                onDelete={vi.fn()}
+                onInputNilai={vi.fn()}
+                referenceDate="2026-10-04"
+            />
+        );
+
+        expect(screen.getByText('28 Sep')).toBeInTheDocument();
+        expect(screen.getByText('4 Okt')).toBeInTheDocument();
+        expect(screen.getByText('Matematika Wajib')).toBeInTheDocument();
     });
 
     it('hides "+ Tambah PH" and action triggers when canManage is false', () => {

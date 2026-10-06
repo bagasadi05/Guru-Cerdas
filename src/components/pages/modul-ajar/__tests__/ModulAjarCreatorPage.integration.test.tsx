@@ -31,10 +31,17 @@ vi.mock('../../../../services/supabase', () => ({
     from: vi.fn(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
+          is: vi.fn(() => ({
+            order: vi.fn(() => Promise.resolve({ data: [], error: null }))
+          })),
           order: vi.fn(() => Promise.resolve({ data: [], error: null }))
         }))
       })),
-      insert: vi.fn(() => Promise.resolve({ error: null })),
+      insert: vi.fn(() => ({
+        select: vi.fn(() => ({
+          single: vi.fn(() => Promise.resolve({ data: { id: 'plan-1' }, error: null }))
+        }))
+      })),
       delete: vi.fn(() => ({
         eq: vi.fn(() => Promise.resolve({ error: null }))
       }))
@@ -135,8 +142,9 @@ describe('ModulAjarCreatorPage', () => {
     expect(screen.getByText('Preview')).toBeInTheDocument();
     expect(screen.getByText('History')).toBeInTheDocument();
     expect(screen.getByTitle('Salin Teks')).toBeInTheDocument();
-    expect(screen.getByTitle('Langsung Unduh Dokumen ke Format PDF')).toBeInTheDocument();
-    expect(screen.getByTitle('Unduh Dokumen ke Format Microsoft Word (.doc)')).toBeInTheDocument();
-    expect(screen.getByTitle('Cetak Fisik / Buka Dialog Cetak Printer')).toBeInTheDocument();
+    // PDF, Word, and print live in one menu; it stays disabled until a document exists.
+    const downloadTrigger = screen.getByRole('button', { name: /Unduh/ });
+    expect(downloadTrigger).toBeInTheDocument();
+    expect(downloadTrigger).toBeDisabled();
   });
 });

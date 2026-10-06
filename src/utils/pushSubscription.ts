@@ -40,6 +40,18 @@ export function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray;
 }
 
+/**
+ * True when the subscription was created for this VAPID public key. Browsers
+ * that do not expose `options.applicationServerKey` are treated as matching.
+ */
+export function subscriptionMatchesKey(subscription: PushSubscription, vapidPublicKey: string): boolean {
+  const current = subscription.options?.applicationServerKey;
+  if (!current) return true;
+  const expected = urlBase64ToUint8Array(vapidPublicKey);
+  const actual = new Uint8Array(current);
+  return actual.length === expected.length && actual.every((byte, i) => byte === expected[i]);
+}
+
 export async function getServiceWorkerRegistration(): Promise<ServiceWorkerRegistration | null> {
   if (!("serviceWorker" in navigator)) return null;
   // Wait for the SW to be ready so we can call .pushManager
@@ -64,10 +76,14 @@ export async function subscribeToPush(vapidPublicKey: string): Promise<PushSubsc
     throw new Error("Service Worker belum siap.");
   }
 
-  // De-duplicate: if there's an existing subscription, reuse it.
+  // Reuse an existing subscription only if it belongs to the current VAPID key;
+  // one made with a rotated key can never receive our pushes again.
   const existing = await reg.pushManager.getSubscription();
   if (existing) {
-    return existing;
+    if (subscriptionMatchesKey(existing, vapidPublicKey)) {
+      return existing;
+    }
+    await existing.unsubscribe();
   }
 
   const permission = await Notification.requestPermission();

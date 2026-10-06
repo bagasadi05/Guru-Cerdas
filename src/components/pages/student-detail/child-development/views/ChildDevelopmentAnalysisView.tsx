@@ -5,9 +5,7 @@ import {
   BrainCircuitIcon,
   SparklesIcon,
   AlertCircleIcon,
-  DownloadIcon,
   PlayCircleIcon,
-  RefreshCwIcon
 } from '../../../../Icons';
 import { useToast } from '../../../../../hooks/useToast';
 import {
@@ -31,7 +29,6 @@ import { LoadingProgress } from '../components/LoadingProgress';
 import { CompLoadingProgress } from '../components/CompLoadingProgress';
 import { PeriodComparison } from '../components/PeriodComparison';
 import { ActionableRecommendation } from '../components/ActionableRecommendation';
-import { ScoreRing } from '../components/ScoreRing';
 import { GlanceHeroCard } from '../components/GlanceHeroCard';
 import { QuickInsightStrip } from '../components/QuickInsightStrip';
 import { DevelopmentScoreCard } from '../components/DevelopmentScoreCard';

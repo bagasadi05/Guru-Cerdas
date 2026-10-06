@@ -10,6 +10,7 @@
 
 import { supabase } from './supabase';
 import { logger } from './logger';
+import { daysUntilDeadline, schoolDate } from '../utils/reminderDates';
 
 /**
  * Notification types
@@ -29,7 +30,7 @@ export interface Notification {
 
 export interface NotificationPreferences {
     taskReminders: boolean;
-    taskReminderHours: number; // hours before due date
+    taskReminderDays: number;
     dailyDigest: boolean;
     attendanceReminders: boolean;
     messageNotifications: boolean;
@@ -42,12 +43,14 @@ export interface DueTask {
     due_date: string;
     status: string;
     isOverdue: boolean;
-    hoursUntilDue: number;
+    daysUntilDue: number;
 }
 
 // Storage keys
 const NOTIFICATIONS_KEY = 'portal_guru_notifications';
 const PREFERENCES_KEY = 'portal_guru_notification_prefs';
+const PREFERENCES_OWNER_KEY = `${PREFERENCES_KEY}_owner`;
+const LEGACY_OWNER_KEY = `${PREFERENCES_KEY}_legacy_owner`;
 const LAST_CHECK_KEY = 'portal_guru_last_notification_check';
 
 /**
@@ -55,7 +58,7 @@ const LAST_CHECK_KEY = 'portal_guru_last_notification_check';
  */
 const DEFAULT_PREFERENCES: NotificationPreferences = {
     taskReminders: true,
-    taskReminderHours: 24,
+    taskReminderDays: 1,
     dailyDigest: false,
     attendanceReminders: true,
     messageNotifications: true,
@@ -167,22 +170,60 @@ export const getUnreadCount = (): number => {
 /**
  * Get notification preferences
  */
-export const getPreferences = (): NotificationPreferences => {
+export const getPreferences = (userId?: string): NotificationPreferences => {
     try {
-        const stored = localStorage.getItem(PREFERENCES_KEY);
-        if (!stored) return DEFAULT_PREFERENCES;
-        return { ...DEFAULT_PREFERENCES, ...JSON.parse(stored) };
+        const owner = userId ?? localStorage.getItem(PREFERENCES_OWNER_KEY);
+        const stored = localStorage.getItem(owner ? `${PREFERENCES_KEY}:${owner}` : PREFERENCES_KEY);
+        return normalizePreferences(stored ? JSON.parse(stored) : {});
     } catch {
-        return DEFAULT_PREFERENCES;
+        return { ...DEFAULT_PREFERENCES };
     }
 };
+
+/** Validate stored settings and migrate the previous hour-based selector. */
+export function normalizePreferences(value: unknown): NotificationPreferences {
+    const source = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+    const legacyDays = source.taskReminderHours === 6 || source.taskReminderHours === 12 ? 0
+        : source.taskReminderHours === 48 ? 2 : source.taskReminderHours === 72 ? 3 : 1;
+    const days = source.taskReminderDays;
+    return {
+        taskReminders: typeof source.taskReminders === 'boolean' ? source.taskReminders : true,
+        taskReminderDays: typeof days === 'number' && Number.isInteger(days) && days >= 0 && days <= 3 ? days : legacyDays,
+        dailyDigest: typeof source.dailyDigest === 'boolean' ? source.dailyDigest : false,
+        attendanceReminders: typeof source.attendanceReminders === 'boolean' ? source.attendanceReminders : true,
+        messageNotifications: typeof source.messageNotifications === 'boolean' ? source.messageNotifications : true,
+    };
+}
+
+/** Bind local preferences to an account, importing legacy settings only once. */
+export function bindPreferencesToUser(userId: string): NotificationPreferences {
+    const key = `${PREFERENCES_KEY}:${userId}`;
+    if (!localStorage.getItem(key)) {
+        const legacyOwner = localStorage.getItem(LEGACY_OWNER_KEY);
+        const legacy = !legacyOwner || legacyOwner === userId ? localStorage.getItem(PREFERENCES_KEY) : null;
+        let value: unknown = {};
+        try { value = legacy ? JSON.parse(legacy) : {}; } catch { /* Invalid storage uses defaults. */ }
+        localStorage.setItem(key, JSON.stringify(normalizePreferences(value)));
+        if (!legacyOwner) localStorage.setItem(LEGACY_OWNER_KEY, userId);
+    }
+    localStorage.setItem(PREFERENCES_OWNER_KEY, userId);
+    return getPreferences();
+}
+
+/** Stop using the previous account's cache after logout. */
+export function unbindPreferences(): void {
+    localStorage.removeItem(PREFERENCES_OWNER_KEY);
+}
 
 /**
  * Save notification preferences
  */
-export const savePreferences = (prefs: Partial<NotificationPreferences>): void => {
-    const current = getPreferences();
-    localStorage.setItem(PREFERENCES_KEY, JSON.stringify({ ...current, ...prefs }));
+export const savePreferences = (prefs: Partial<NotificationPreferences>, userId?: string): void => {
+    const current = getPreferences(userId);
+    const owner = userId ?? localStorage.getItem(PREFERENCES_OWNER_KEY);
+    localStorage.setItem(owner ? `${PREFERENCES_KEY}:${owner}` : PREFERENCES_KEY,
+        JSON.stringify(normalizePreferences({ ...current, ...prefs })));
+    window.dispatchEvent(new CustomEvent('portal-guru-preferences-updated'));
 };
 
 /**
@@ -193,7 +234,8 @@ export const getDueTasks = async (userId: string): Promise<DueTask[]> => {
         .from('tasks')
         .select('id, title, description, due_date, status')
         .eq('user_id', userId)
-        .neq('status', 'done')
+        .in('status', ['todo', 'in_progress'])
+        .is('deleted_at', null)
         .not('due_date', 'is', null)
         .order('due_date', { ascending: true });
 
@@ -204,15 +246,13 @@ export const getDueTasks = async (userId: string): Promise<DueTask[]> => {
 
     if (!tasks) return [];
 
-    const now = new Date();
-    const preferences = getPreferences();
+    const today = schoolDate();
+    const preferences = getPreferences(userId);
 
     return tasks
         .filter(task => task.due_date !== null)
         .map(task => {
-            const dueDate = new Date(task.due_date!);
-            const timeDiff = dueDate.getTime() - now.getTime();
-            const hoursUntilDue = timeDiff / (1000 * 60 * 60);
+            const daysUntilDue = daysUntilDeadline(task.due_date!, today);
 
             return {
                 id: task.id,
@@ -220,11 +260,11 @@ export const getDueTasks = async (userId: string): Promise<DueTask[]> => {
                 description: task.description ?? undefined,
                 due_date: task.due_date!,
                 status: task.status,
-                isOverdue: timeDiff < 0,
-                hoursUntilDue: Math.round(hoursUntilDue),
+                isOverdue: daysUntilDue < 0,
+                daysUntilDue,
             };
         })
-        .filter(task => task.isOverdue || task.hoursUntilDue <= preferences.taskReminderHours);
+        .filter(task => task.isOverdue || task.daysUntilDue <= preferences.taskReminderDays);
 };
 
 const getTodayDateKey = (): string => {
@@ -355,7 +395,7 @@ const checkGradeTrendNotifications = async (userId: string): Promise<void> => {
  * Check for due tasks and create notifications
  */
 export const checkAndNotify = async (userId: string, preloadedDueTasks?: DueTask[]): Promise<number> => {
-    const preferences = getPreferences();
+    const preferences = getPreferences(userId);
 
     const lastCheck = localStorage.getItem(LAST_CHECK_KEY);
     const now = Date.now();
@@ -380,12 +420,13 @@ export const checkAndNotify = async (userId: string, preloadedDueTasks?: DueTask
                 link: '/tugas',
             });
             _newNotifications++;
-        } else if (task.hoursUntilDue <= 24) {
+        } else if (task.daysUntilDue <= preferences.taskReminderDays) {
             addNotification({
                 type: 'task_due',
                 title: 'Tugas Hampir Deadline',
-                message: `"${task.title}" deadline dalam ${task.hoursUntilDue} jam.`,
-                metadata: { taskId: task.id, hoursLeft: task.hoursUntilDue },
+                message: task.daysUntilDue === 0 ? `"${task.title}" jatuh tempo hari ini.`
+                    : `"${task.title}" jatuh tempo dalam ${task.daysUntilDue} hari.`,
+                metadata: { taskId: task.id, daysLeft: task.daysUntilDue },
                 link: '/tugas',
             });
             _newNotifications++;

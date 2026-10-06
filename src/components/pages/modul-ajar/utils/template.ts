@@ -1,6 +1,50 @@
 import { FormState } from '../types';
 import { normalizeSoalEvaluasi } from '../../../../services/modulAjarAiGenerator';
 
+/**
+ * AI output often packs structure into one line ("Petunjuk: ... Langkah Kerja: 1. ... 2. ...",
+ * "Soal? A. ... B. ..."). These helpers restore the line breaks the formatters expect.
+ */
+const LKPD_LABELS = 'Judul LKPD|Judul|Petunjuk|Alat dan Bahan|Alat|Bahan|Langkah Kerja|Tujuan';
+
+export const expandInlineLkpdLines = (text: string): string[] => {
+  const lines: string[] = [];
+  for (const rawLine of text.split('\n')) {
+    let line = rawLine.trim();
+    if (!line) {
+      lines.push('');
+      continue;
+    }
+    // Labels glued to the previous sentence start their own line.
+    line = line.replace(new RegExp(`(?<=[.!?])\\s+(?=(?:${LKPD_LABELS})\\s*:)`, 'gi'), '\n');
+    // Answer-box placeholders such as "[Kotak untuk Menggambar]" are their own block.
+    line = line.replace(/\s*(\[[^\]\n]{2,}\])\s*/g, '\n$1\n');
+    // A run of "1. ... 2. ..." in one line becomes a list.
+    line = line
+      .split('\n')
+      .map((part) =>
+        /\b1\.\s+\S[\s\S]*\b2\.\s+/.test(part)
+          ? part.replace(/(?<=[.!?:'")\]])\s+(?=\d+\.\s+\S)/g, '\n')
+          : part,
+      )
+      .join('\n');
+    // "Langkah Kerja: 1. Baca ..." keeps the label alone so the list can follow.
+    line = line.replace(new RegExp(`^((?:${LKPD_LABELS})\\s*:)\\s+(?=1\\.\\s+\\S)`, 'i'), '$1\n');
+    lines.push(...line.split('\n').map((part) => part.trim()).filter(Boolean));
+  }
+  return lines;
+};
+
+const INLINE_OPTIONS = /\s+(?=[A-D]\.\s+\S)/g;
+
+/** Splits "Soal? A. x B. y C. z D. w" into the prompt and one line per option. */
+export const expandInlineOptions = (lines: string[]): string[] => {
+  const [first = '', ...rest] = lines;
+  if (!/\sA\.\s+\S[\s\S]*\sB\.\s+\S/.test(first)) return lines;
+  const [prompt, ...options] = first.split(INLINE_OPTIONS);
+  return [prompt.trim(), ...options.map((option) => option.trim()), ...rest];
+};
+
 export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: number, logoBase64: string): string => {
   const sanitize = (text: any): string => {
     if (!text) return '';
@@ -135,7 +179,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
 
   const formatLkpdContent = (text: string): string => {
     if (!text) return '<p>-</p>';
-    const lines = text.split('\n');
+    const lines = expandInlineLkpdLines(text);
     let html = '';
     let inUl = false;
     let inOl = false;
@@ -152,7 +196,11 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
         continue;
       }
 
-      if (/^#{1,4}\s+/.test(line) || /^(bagian\s*\d+|aktivitas\s*\d+|tahap\s*\d+|petunjuk\s*khusus|alat\s*dan\s*bahan)\s*:/i.test(line)) {
+      const labelMatch = line.match(new RegExp(`^(${LKPD_LABELS})\\s*:\\s*(.+)$`, 'i'));
+      if (labelMatch) {
+        closeLists();
+        html += `<p style="margin: 4px 0 6px 0; line-height: 1.55; text-align: left;"><strong>${sanitize(labelMatch[1])}:</strong> ${sanitize(labelMatch[2])}</p>`;
+      } else if (/^#{1,4}\s+/.test(line) || /^(bagian\s*\d+|aktivitas\s*\d+|tahap\s*\d+|petunjuk\s*khusus|alat\s*dan\s*bahan|langkah\s*kerja)\s*:/i.test(line)) {
         closeLists();
         const headingText = line.replace(/^#{1,4}\s+/, '').replace(/\*\*/g, '');
         html += `<div style="font-weight: bold; font-size: 11pt; color: #0d6b3e; margin: 12px 0 6px 0; border-bottom: 1px dashed #0d6b3e; padding-bottom: 3px;">${sanitize(headingText)}</div>`;
@@ -205,7 +253,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
     }
 
     return questions.map((q, idx) => {
-      const lines = q.trim().split('\n').filter(l => l.trim() !== '');
+      const lines = expandInlineOptions(q.trim().split('\n').filter(l => l.trim() !== ''));
       if (lines.length === 0) return '';
       
       const qPrompt = lines[0].replace(/^\d+\.\s*/, '');
@@ -280,7 +328,17 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
     return html;
   };
 
-  const formatGlosariumContent = (glosarium: any, topik: string): string => {
+  const formatKompetensiAwal = (value: string): string => {
+    const fallback = 'Peserta didik sebaiknya sudah memiliki pemahaman awal terkait topik pembelajaran ini.';
+    const items = expandInlineLkpdLines(String(value || '')).filter(Boolean);
+    if (items.length === 0) return fallback;
+    if (items.length === 1) return sanitize(items[0]);
+    return `<ol style="margin: 0; padding-left: 20px; line-height: 1.5; text-align: justify;">${items
+      .map((item) => `<li>${sanitize(item.replace(/^(\d+[.)]|[-*•])\s*/, ''))}</li>`)
+      .join('')}</ol>`;
+  };
+
+  const formatGlosariumContent = (glosarium: any): string => {
     if (glosarium && Array.isArray(glosarium) && glosarium.length > 0) {
       return `
         <ul style="margin: 0; padding-left: 20px; line-height: 1.5;">
@@ -299,7 +357,6 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
     }
     return `
       <ul style="margin: 0; padding-left: 20px; line-height: 1.5;">
-        <li style="margin-bottom: 4px;"><strong>${sanitize(topik)}:</strong> Fokus kompetensi dan ruang lingkup materi pembelajaran yang dipelajari pada modul ajar ini.</li>
         <li style="margin-bottom: 4px;"><strong>Diferensiasi:</strong> Penyesuaian proses dan konten pembelajaran berdasarkan kesiapan dan kebutuhan belajar siswa.</li>
         <li style="margin-bottom: 4px;"><strong>Asesmen Formatif:</strong> Penilaian yang bertujuan memantau proses perkembangan belajar dan memberikan umpan balik berkelanjutan.</li>
       </ul>
@@ -365,7 +422,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
           <table style="width: 100%; border-collapse: collapse; border: none; font-size: 10.5pt; font-family: 'Times New Roman';">
             <tr style="border: none;"><td style="width: 32%; padding: 3px 0; border: none;">Nama Penyusun</td><td style="width: 3%; padding: 3px 0; border: none;">:</td><td style="padding: 3px 0; border: none;"><strong>${formState.guru || 'Guru Mata Pelajaran'}</strong></td></tr>
             <tr style="border: none;"><td style="padding: 3px 0; border: none;">Satuan Pendidikan</td><td style="padding: 3px 0; border: none;">:</td><td style="padding: 3px 0; border: none;">${formState.satuanPendidikan}</td></tr>
-            <tr style="border: none;"><td style="padding: 3px 0; border: none;">Tahun Penyusunan</td><td style="padding: 3px 0; border: none;">:</td><td style="padding: 3px 0; border: none;">Tahun ${formState.tahunAjaran}</td></tr>
+            <tr style="border: none;"><td style="padding: 3px 0; border: none;">Tahun Ajaran</td><td style="padding: 3px 0; border: none;">:</td><td style="padding: 3px 0; border: none;">${formState.tahunAjaran}</td></tr>
             <tr style="border: none;"><td style="padding: 3px 0; border: none;">Jenjang / Fase / Kelas</td><td style="padding: 3px 0; border: none;">:</td><td style="padding: 3px 0; border: none;">${formState.jenjang} / Fase ${formState.fase} / Kelas ${formState.kelas}</td></tr>
             <tr style="border: none;"><td style="padding: 3px 0; border: none;">Mata Pelajaran</td><td style="padding: 3px 0; border: none;">:</td><td style="padding: 3px 0; border: none;">${formState.mataPelajaran}</td></tr>
             <tr style="border: none;"><td style="padding: 3px 0; border: none;">Materi Pokok / Topik</td><td style="padding: 3px 0; border: none;">:</td><td style="padding: 3px 0; border: none;"><strong>${formState.topik}</strong></td></tr>
@@ -391,7 +448,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
           <div style="margin-bottom: 10px; page-break-inside: avoid; break-inside: avoid;">
             <p style="margin: 0 0 4px 0; page-break-after: avoid; break-after: avoid;"><strong>1. Kompetensi Awal (Prasyarat):</strong></p>
             <div style="margin: 0 0 0 12px; text-align: justify; line-height: 1.5;">
-              ${sanitize(formState.kompetensiAwal) || 'Peserta didik sebaiknya sudah memiliki pemahaman awal terkait topik pembelajaran ini.'}
+              ${formatKompetensiAwal(formState.kompetensiAwal)}
             </div>
           </div>
 
@@ -610,14 +667,14 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
         <div style="padding: 15px;">
           
           <!-- LKPD SHEET -->
-          <div style="border: 2px dashed #000000; padding: 18px; margin-bottom: 25px; border-radius: 8px; page-break-inside: avoid;">
+          <div data-sheet="lkpd" style="border: 2px dashed #000000; padding: 18px; margin-bottom: 25px; border-radius: 8px; page-break-inside: avoid;">
             <h3 style="text-align: center; margin: 0 0 12px 0; font-size: 12pt; font-weight: bold; text-decoration: underline; text-transform: uppercase;">
               LEMBAR KERJA PESERTA DIDIK (LKPD)
             </h3>
             
             <!-- Student Header Block -->
             <table style="width: 100%; border: none; margin-bottom: 15px; font-size: 10pt; font-family: 'Times New Roman';">
-              <tr style="border: none;"><td style="border: none; padding: 2px; width: 15%;">Hari/Tanggal</td><td style="border: none; padding: 2px; width: 35%;">: ...................................</td><td style="border: none; padding: 2px; width: 15%;">Nama Kelompok</td><td style="border: none; padding: 2px; width: 35%;">: ...................................</td></tr>
+              <tr style="border: none;"><td style="border: none; padding: 2px; width: 18%;">Hari/Tanggal</td><td style="border: none; padding: 2px; width: 32%;">: ...................................</td><td style="border: none; padding: 2px; width: 18%;">Nama Kelompok</td><td style="border: none; padding: 2px; width: 32%;">: ...................................</td></tr>
               <tr style="border: none;"><td style="border: none; padding: 2px;">Anggota</td><td style="border: none; padding: 2px;" colspan="3">: 1. ....................................  2. ....................................  3. ....................................</td></tr>
             </table>
             
@@ -638,7 +695,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
           </div>
 
           <!-- EVALUATION SHEET -->
-          <div style="border: 2px dashed #000000; padding: 18px; border-radius: 8px; page-break-before: always; page-break-inside: avoid;">
+          <div data-sheet="evaluasi" style="border: 2px dashed #000000; padding: 18px; border-radius: 8px; page-break-before: always; page-break-inside: avoid;">
             <h3 style="text-align: center; margin: 0 0 12px 0; font-size: 12pt; font-weight: bold; text-decoration: underline; text-transform: uppercase;">
               LEMBAR EVALUASI PENGETAHUAN
             </h3>
@@ -738,7 +795,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
           ${data.materiAjar ? 'D' : 'C'}. GLOSARIUM
         </div>
         <div style="padding: 6px 10px; font-size: 9.5pt; line-height: 1.35; margin-bottom: 6px;">
-          ${formatGlosariumContent(data.glosarium, formState.topik)}
+          ${formatGlosariumContent(data.glosarium)}
         </div>
 
         <!-- DAFTAR PUSTAKA -->
@@ -793,7 +850,7 @@ export const buildStudentHtmlTemplate = (formState: FormState, data: any, logoBa
 
   const formatLkpdContent = (text: string): string => {
     if (!text) return '<p>-</p>';
-    const lines = text.split('\n');
+    const lines = expandInlineLkpdLines(text);
     let html = '';
     let inUl = false;
     let inOl = false;
@@ -810,7 +867,11 @@ export const buildStudentHtmlTemplate = (formState: FormState, data: any, logoBa
         continue;
       }
 
-      if (/^#{1,4}\s+/.test(line) || /^(bagian\s*\d+|aktivitas\s*\d+|tahap\s*\d+|petunjuk\s*khusus|alat\s*dan\s*bahan)\s*:/i.test(line)) {
+      const labelMatch = line.match(new RegExp(`^(${LKPD_LABELS})\\s*:\\s*(.+)$`, 'i'));
+      if (labelMatch) {
+        closeLists();
+        html += `<p style="margin: 4px 0 6px 0; line-height: 1.55; text-align: left;"><strong>${sanitize(labelMatch[1])}:</strong> ${sanitize(labelMatch[2])}</p>`;
+      } else if (/^#{1,4}\s+/.test(line) || /^(bagian\s*\d+|aktivitas\s*\d+|tahap\s*\d+|petunjuk\s*khusus|alat\s*dan\s*bahan|langkah\s*kerja)\s*:/i.test(line)) {
         closeLists();
         const headingText = line.replace(/^#{1,4}\s+/, '').replace(/\*\*/g, '');
         html += `<div style="font-weight: bold; font-size: 11pt; color: #0d6b3e; margin: 12px 0 6px 0; border-bottom: 1px dashed #0d6b3e; padding-bottom: 3px;">${sanitize(headingText)}</div>`;
@@ -894,7 +955,7 @@ export const buildStudentHtmlTemplate = (formState: FormState, data: any, logoBa
     }
 
     return questions.map((q, idx) => {
-      const lines = q.trim().split('\n').filter(l => l.trim() !== '');
+      const lines = expandInlineOptions(q.trim().split('\n').filter(l => l.trim() !== ''));
       if (lines.length === 0) return '';
       
       const qPrompt = lines[0].replace(/^\d+\.\s*/, '');
@@ -989,7 +1050,7 @@ export const buildStudentHtmlTemplate = (formState: FormState, data: any, logoBa
         </h3>
         
         <table style="width: 100%; border: none; margin-bottom: 15px; font-size: 10pt; font-family: 'Times New Roman';">
-          <tr style="border: none;"><td style="border: none; padding: 2px; width: 15%;">Hari/Tanggal</td><td style="border: none; padding: 2px; width: 35%;">: ...................................</td><td style="border: none; padding: 2px; width: 15%;">Nama Kelompok</td><td style="border: none; padding: 2px; width: 35%;">: ...................................</td></tr>
+          <tr style="border: none;"><td style="border: none; padding: 2px; width: 18%;">Hari/Tanggal</td><td style="border: none; padding: 2px; width: 32%;">: ...................................</td><td style="border: none; padding: 2px; width: 18%;">Nama Kelompok</td><td style="border: none; padding: 2px; width: 32%;">: ...................................</td></tr>
           <tr style="border: none;"><td style="border: none; padding: 2px;">Anggota</td><td style="border: none; padding: 2px;" colspan="3">: 1. ....................................  2. ....................................  3. ....................................</td></tr>
         </table>
         
@@ -1067,10 +1128,17 @@ export const extractStudentHtml = (fullHtml: string, formState: FormState, logoB
       const parser = new DOMParser();
       const doc = parser.parseFromString(fullHtml, 'text/html');
       
-      const dashedBoxes = Array.from(doc.querySelectorAll('div')).filter(el => {
-        const style = el.getAttribute('style') || '';
-        return style.includes('dashed');
-      });
+      // The two sheets carry data-sheet markers. Documents saved before the
+      // markers existed are recognised by the sheet frame (2px dashed); the
+      // headings and answer boxes inside the LKPD use thinner dashed borders.
+      const markedLkpd = doc.querySelector('[data-sheet="lkpd"]');
+      const markedEvaluasi = doc.querySelector('[data-sheet="evaluasi"]');
+      const dashedBoxes = markedLkpd && markedEvaluasi
+        ? [markedLkpd, markedEvaluasi]
+        : Array.from(doc.querySelectorAll('div')).filter(el => {
+            const style = (el.getAttribute('style') || '').replace(/\s+/g, ' ');
+            return /border:\s*2px dashed/.test(style);
+          });
 
       const listItems = Array.from(doc.querySelectorAll('td, div')).filter(el => {
         const text = el.textContent || '';

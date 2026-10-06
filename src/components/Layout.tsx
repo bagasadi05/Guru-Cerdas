@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { usePushSubscriptionSync } from '../hooks/useScheduleNotifications';
+import { usePushClickNavigation } from '../hooks/usePushClickNavigation';
 import { useAuth } from '../hooks/useAuth';
 import PageTransition from './ui/PageTransition';
 import { supabase } from '../services/supabase';
@@ -13,6 +15,8 @@ import { useParentMessageNotifications } from '../hooks/useParentMessageNotifica
 import PullToRefresh from './ui/PullToRefresh';
 import { useQueryClient } from '@tanstack/react-query';
 import { setNavigationInProgress } from '../utils/navigationState';
+import { prefetchRoutesWhenIdle } from '../utils/routePreloader';
+import { useQueuedGradeSync } from '../hooks/useQueuedGradeSync';
 
 // Enhanced Mobile Navigation Components
 import { useOrientation } from '../hooks/useOrientation';
@@ -40,6 +44,8 @@ const TutorialPicker = React.lazy(() =>
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, userRole } = useAuth();
+  usePushSubscriptionSync(user?.id);
+  useQueuedGradeSync();
   const { showTour, endTour } = useOnboarding();
 
   const [isAdmin, setIsAdmin] = useState(false);
@@ -73,6 +79,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const dynamicMobileNavItems = useMemo(() => {
     return getMobileNavItems(userRole);
   }, [userRole]);
+
+  // Warm up the bottom-nav pages after first paint so switching menus
+  // renders from cache instead of waiting on a chunk download.
+  useEffect(() => {
+    return prefetchRoutesWhenIdle(dynamicMobileNavItems.map((item) => item.href));
+  }, [dynamicMobileNavItems]);
 
   // Listen for real-time parent messages and show notifications
   useParentMessageNotifications();
@@ -258,6 +270,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 const LayoutWithTutorial: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
+  usePushClickNavigation();
 
   return (
     <InteractiveTutorialProvider onNavigate={(path) => navigate(path)}>

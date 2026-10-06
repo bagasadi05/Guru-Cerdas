@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback, Suspense, lazy } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Calendar,
@@ -12,6 +12,11 @@ import {
   ArrowRight,
   ArrowLeft,
   Sparkles,
+  Plus,
+  X,
+  CalendarClock,
+  Download,
+  Trash2,
 } from 'lucide-react';
 import type {
   KaldikWeek,
@@ -24,15 +29,25 @@ import type {
   PhaseType,
   DocumentIdentity,
 } from '../../../types/perangkatAjar';
-import { calculateRme } from '../../../utils/kaldikEngine';
+import {
+  calculateRme,
+  getAcademicYearOptions,
+  getCurrentAcademicYear,
+  getPhaseForGrade,
+} from '../../../utils/kaldikEngine';
 import {
   validateProtaBalance,
   moveProtaItem,
   swapItemSemester,
   autoBalanceProtaJp,
 } from '../../../utils/protaEngine';
-import { autoDistributePromes } from '../../../utils/promesEngine';
-import { getDefaultNationalKaldik } from '../../../data/defaultKaldikPresets';
+import {
+  autoDistributePromes,
+  applyKaldikLocks,
+  getLockedWeekSlots,
+} from '../../../utils/promesEngine';
+import { generateKaldikFromCalendar } from '../../../utils/kaldikCalendarGenerator';
+import { findCurriculumPreset, getCurriculumPreset } from '../../../data/defaultProtaPresets';
 import {
   loadKaldikWeeks,
   saveKaldikWeeks,
@@ -42,7 +57,27 @@ import {
   savePromes,
   saveDocumentIdentity,
   loadDocumentIdentity,
+  listProta,
+  loadTeachingSchedule,
+  deleteProta,
+  loadSchoolKaldik,
+  publishSchoolKaldik,
+  type ProtaSummary,
+  type SchoolKaldik,
 } from '../../../services/perangkatAjarService';
+import { writeModulAjarPrefill } from '../modul-ajar/utils/protaPrefill';
+import {
+  buildProtaDocument,
+  planProtaFromSchedule,
+  type PlannedProta,
+} from '../../../utils/protaSchedulePlanner';
+import type { PackageDocument } from '../../../utils/perangkatAjarPackage';
+import { ScheduleBatchModal } from './ScheduleBatchModal';
+import {
+  aiTopicsToProtaItems,
+  generateProtaTopicsWithAi,
+  type AiProtaTopics,
+} from '../../../services/protaAiGenerator';
 import { useUserSettings } from '../../../hooks/useUserSettings';
 import { useAuth } from '../../../hooks/useAuth';
 import { useToast } from '../../../hooks/useToast';
@@ -55,10 +90,50 @@ import { ModulAjarCreatorPageSkeleton } from '../../skeletons/PageSkeletons';
 
 const ModulAjarCreatorPage = lazy(() => import('../modul-ajar/ModulAjarCreatorPage'));
 
-const DEFAULT_ACADEMIC_YEAR = '2024/2025';
+const DEFAULT_ACADEMIC_YEAR = getCurrentAcademicYear();
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const ACTIVE_PROTA_KEY = 'guru_cerdas_perangkat_ajar_active_prota_id';
+const HEADER_AUTOSAVE_DELAY_MS = 800;
+const PROMES_SAVE_DELAY_MS = 600;
+const UNDO_WINDOW_MS = 10_000;
+
+type HeaderFields = Omit<ProtaHeader, 'userId' | 'createdAt' | 'updatedAt'>;
+
+interface UndoSnapshot {
+  message: string;
+  header: HeaderFields;
+  protaItems: ProtaItem[];
+  promesCellsSem1: MatrixCell[];
+  promesCellsSem2: MatrixCell[];
+  /** Set when the action replaced the Kaldik. */
+  weeks?: KaldikWeek[];
+  /** Set when a whole document was deleted; undo saves it again and reopens it. */
+  deletedDocument?: {
+    header: ProtaHeader;
+    items: ProtaItem[];
+    cellsSem1: MatrixCell[];
+    cellsSem2: MatrixCell[];
+  };
+}
+
+const headerKeyOf = (h: HeaderFields) =>
+  JSON.stringify([
+    h.id,
+    h.academicYear,
+    h.subject,
+    h.gradeLevel,
+    h.phase ?? null,
+    h.curriculum,
+    h.weeklyJpQuota,
+    h.reserveJpSem1,
+    h.reserveJpSem2,
+  ]);
+
+const formatDocumentLabel = (doc: Pick<ProtaSummary, 'subject' | 'gradeLevel' | 'academicYear'>) =>
+  [doc.subject || 'Tanpa mapel', doc.gradeLevel, doc.academicYear].filter(Boolean).join(' · ');
 
 export const PerangkatAjarPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { settings: userSettings, schoolName } = useUserSettings();
   const toast = useToast();
 
@@ -83,23 +158,24 @@ export const PerangkatAjarPage: React.FC = () => {
   const [phase, setPhase] = useState<PhaseType | undefined>('B');
   const [curriculum, setCurriculum] = useState<CurriculumType>('MERDEKA');
   const [weeklyJpQuota, setWeeklyJpQuota] = useState<number>(4);
+  const weeklyJpLimit = weeklyJpQuota;
   const [reserveJpSem1, setReserveJpSem1] = useState<number>(0);
   const [reserveJpSem2, setReserveJpSem2] = useState<number>(0);
 
   // Promes Tab active semester and limit
   const [promesSemester, setPromesSemester] = useState<1 | 2>(1);
-  const [weeklyJpLimit, setWeeklyJpLimit] = useState<number>(4);
+  // Promes uses the same weekly JP as the Prota; there is no separate limit to keep in sync.
 
   // Core Data States - Distinct states for Semester 1 and Semester 2 Promes matrices
-  const [weeks, setWeeks] = useState<KaldikWeek[]>(() => getDefaultNationalKaldik(DEFAULT_ACADEMIC_YEAR));
+  const [weeks, setWeeks] = useState<KaldikWeek[]>(() => generateKaldikFromCalendar(DEFAULT_ACADEMIC_YEAR).weeks);
   const [protaItems, setProtaItems] = useState<ProtaItem[]>([]);
   const [promesCellsSem1, setPromesCellsSem1] = useState<MatrixCell[]>([]);
   const [promesCellsSem2, setPromesCellsSem2] = useState<MatrixCell[]>([]);
   const [protaId, setProtaId] = useState<string>(() => {
-    const cached = localStorage.getItem('guru_cerdas_perangkat_ajar_active_prota_id');
-    const isUuid = cached && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cached);
-    return isUuid ? cached : crypto.randomUUID();
+    const cached = localStorage.getItem(ACTIVE_PROTA_KEY);
+    return cached && UUID_REGEX.test(cached) ? cached : crypto.randomUUID();
   });
+  const [protaList, setProtaList] = useState<ProtaSummary[]>([]);
 
   // Save/Sync status indicator
   const [isSaving, setIsSaving] = useState(false);
@@ -107,7 +183,28 @@ export const PerangkatAjarPage: React.FC = () => {
 
   // Quick Setup Wizard state
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [wizardPrefersNew, setWizardPrefersNew] = useState(false);
   const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
+
+  const [undo, setUndo] = useState<UndoSnapshot | null>(null);
+
+  const [isScheduleBatchOpen, setIsScheduleBatchOpen] = useState(false);
+  const [scheduleStatus, setScheduleStatus] = useState<'loading' | 'error' | 'ready'>('loading');
+  const [schedulePlans, setSchedulePlans] = useState<PlannedProta[]>([]);
+  const [isCreatingBatch, setIsCreatingBatch] = useState(false);
+  const [isPackaging, setIsPackaging] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<{ done: number; total: number } | null>(null);
+  const [isAiBusy, setIsAiBusy] = useState(false);
+
+  const protaItemsRef = useRef(protaItems);
+  useEffect(() => {
+    protaItemsRef.current = protaItems;
+  }, [protaItems]);
+
+  // Header values last written (or loaded); autosave skips when nothing changed.
+  const savedHeaderKeyRef = useRef<string | null>(null);
+  const promesSaveTimersRef = useRef<Partial<Record<1 | 2, ReturnType<typeof setTimeout>>>>({});
+  const pendingPromesSavesRef = useRef<Partial<Record<1 | 2, () => void>>>({});
 
   // Document Identity for official exports with persistence fallback
   const [identity, setIdentity] = useState<DocumentIdentity>(() => {
@@ -166,47 +263,84 @@ export const PerangkatAjarPage: React.FC = () => {
     });
   };
 
-  // 1. Initial Data Load
+  const currentHeader: HeaderFields = {
+    id: protaId,
+    academicYear,
+    subject,
+    gradeLevel,
+    phase: phase || undefined,
+    curriculum,
+    weeklyJpQuota,
+    reserveJpSem1,
+    reserveJpSem2,
+  };
+  const headerKey = headerKeyOf(currentHeader);
+  const userId = user?.id || 'offline_user';
+
+  const refreshProtaList = useCallback(() => {
+    listProta()
+      .then(setProtaList)
+      .catch((err) => console.warn('[PerangkatAjarPage] Failed to list Prota documents:', err));
+  }, []);
+
+  const flushPendingPromesSaves = useCallback(() => {
+    for (const sem of [1, 2] as const) {
+      clearTimeout(promesSaveTimersRef.current[sem]);
+      pendingPromesSavesRef.current[sem]?.();
+    }
+  }, []);
+
+  // Promes edits are batched; write the last one out before the page goes away.
+  useEffect(() => {
+    window.addEventListener('pagehide', flushPendingPromesSaves);
+    return () => {
+      window.removeEventListener('pagehide', flushPendingPromesSaves);
+      flushPendingPromesSaves();
+    };
+  }, [flushPendingPromesSaves]);
+
+  const applyDocument = useCallback(
+    async (header: ProtaHeader, items: ProtaItem[], isCurrent: () => boolean = () => true) => {
+      const [promesRes1, promesRes2] = await Promise.all([
+        loadPromes(header.id, 1),
+        loadPromes(header.id, 2),
+      ]);
+      if (!isCurrent()) return;
+
+      savedHeaderKeyRef.current = headerKeyOf(header);
+      setProtaId(header.id);
+      setAcademicYear(header.academicYear || DEFAULT_ACADEMIC_YEAR);
+      setSubject(header.subject);
+      setGradeLevel(header.gradeLevel);
+      setPhase(header.phase);
+      setCurriculum(header.curriculum);
+      setWeeklyJpQuota(header.weeklyJpQuota);
+      setReserveJpSem1(header.reserveJpSem1);
+      setReserveJpSem2(header.reserveJpSem2);
+      setProtaItems(items);
+      setPromesCellsSem1(promesRes1.cells);
+      setPromesCellsSem2(promesRes2.cells);
+      setUndo(null);
+      try {
+        localStorage.setItem(ACTIVE_PROTA_KEY, header.id);
+      } catch (_err) {
+        void _err;
+      }
+    },
+    []
+  );
+
+  // 1. Initial document load
   useEffect(() => {
     let isMounted = true;
 
     async function initData() {
       try {
-        const loadedWeeks = await loadKaldikWeeks(academicYear);
-        if (isMounted && loadedWeeks.length > 0) {
-          setWeeks(loadedWeeks);
-        }
-
-        const { header, items } = await loadProta();
-        if (isMounted) {
-          if (header) {
-            setProtaId(header.id);
-            setSubject(header.subject);
-            setGradeLevel(header.gradeLevel);
-            if (header.phase) setPhase(header.phase);
-            setCurriculum(header.curriculum);
-            setWeeklyJpQuota(header.weeklyJpQuota);
-            setReserveJpSem1(header.reserveJpSem1);
-            setReserveJpSem2(header.reserveJpSem2);
-            setWeeklyJpLimit(header.weeklyJpQuota);
-          }
-          if (items && items.length > 0) {
-            setProtaItems(items);
-          }
-
-          // Load Promes cells for BOTH semesters if prota exists
-          if (header?.id) {
-            const [promesRes1, promesRes2] = await Promise.all([
-              loadPromes(header.id, 1),
-              loadPromes(header.id, 2),
-            ]);
-            if (promesRes1.cells.length > 0) {
-              setPromesCellsSem1(promesRes1.cells);
-            }
-            if (promesRes2.cells.length > 0) {
-              setPromesCellsSem2(promesRes2.cells);
-            }
-          }
+        const [{ header, items }, list] = await Promise.all([loadProta(), listProta()]);
+        if (!isMounted) return;
+        setProtaList(list);
+        if (header) {
+          await applyDocument(header, items, () => isMounted);
         }
       } catch (err) {
         console.warn('Error loading initial perangkat ajar:', err);
@@ -221,17 +355,58 @@ export const PerangkatAjarPage: React.FC = () => {
     return () => {
       isMounted = false;
     };
+  }, [applyDocument]);
+
+  // Kaldik belongs to the academic year, not to a single Prota.
+  useEffect(() => {
+    let isMounted = true;
+    loadKaldikWeeks(academicYear)
+      .then((loadedWeeks) => {
+        if (isMounted && loadedWeeks.length > 0) setWeeks(loadedWeeks);
+      })
+      .catch((err) => console.warn('[PerangkatAjarPage] Failed to load Kaldik:', err));
+    return () => {
+      isMounted = false;
+    };
   }, [academicYear]);
 
-  // Auto-prompt Quick Wizard if user enters Prota & Promes with zero items
+  // First visit with nothing to show: offer to build everything from the timetable when there
+  // is one, otherwise open the Quick Wizard. Shown once per session.
+  const firstVisitHandledRef = useRef(false);
   useEffect(() => {
-    if (mode === 'prota-promes' && hasLoadedInitial && protaItems.length === 0) {
-      const sessionKey = `guru_cerdas_prota_wizard_dismissed_${user?.id || 'guest'}`;
-      const isDismissed = sessionStorage.getItem(sessionKey);
-      if (!isDismissed) {
-        setIsWizardOpen(true);
-      }
+    if (mode !== 'prota-promes' || !hasLoadedInitial || protaItems.length > 0) return;
+    if (firstVisitHandledRef.current) return;
+    const sessionKey = `guru_cerdas_prota_wizard_dismissed_${user?.id || 'guest'}`;
+    if (sessionStorage.getItem(sessionKey)) return;
+    firstVisitHandledRef.current = true;
+
+    let isMounted = true;
+    const openFallbackWizard = () => {
+      if (isMounted) setIsWizardOpen(true);
+    };
+    if (protaList.length > 0) {
+      openFallbackWizard();
+      return;
     }
+    loadTeachingSchedule()
+      .then((entries) => {
+        if (!isMounted) return;
+        const plans = planProtaFromSchedule(entries, protaList, academicYear, curriculum);
+        if (plans.length === 0) {
+          openFallbackWizard();
+          return;
+        }
+        sessionStorage.setItem(sessionKey, 'true');
+        setSchedulePlans(plans);
+        setScheduleStatus('ready');
+        setIsScheduleBatchOpen(true);
+      })
+      .catch(openFallbackWizard);
+    return () => {
+      isMounted = false;
+    };
+    // Runs once per visit; later changes to these values must not reopen the dialog.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, hasLoadedInitial, protaItems.length, user?.id]);
 
   // 2. Pure Calculations (RME & Prota Validation)
@@ -250,7 +425,155 @@ export const PerangkatAjarPage: React.FC = () => {
     [protaItems, rmeSem1, rmeSem2]
   );
 
-  // 3. Handlers
+  const lockedPromesCellsSem1 = useMemo(
+    () => applyKaldikLocks(promesCellsSem1, weeks, 1),
+    [promesCellsSem1, weeks]
+  );
+
+  const lockedPromesCellsSem2 = useMemo(
+    () => applyKaldikLocks(promesCellsSem2, weeks, 2),
+    [promesCellsSem2, weeks]
+  );
+
+  const presetAvailable =
+    curriculum === 'MERDEKA' && findCurriculumPreset(subject, gradeLevel) !== null;
+
+  // 3. Persistence helpers
+  const buildPromesHeader = (semesterNumber: 1 | 2, id: string = protaId, limit = weeklyJpLimit): PromesHeader => ({
+    id: crypto.randomUUID(),
+    protaId: id,
+    userId,
+    semesterNumber,
+    weeklyJpLimit: limit,
+  });
+
+  const triggerProtaSave = useCallback(
+    (itemsToSave: ProtaItem[]) => {
+      setIsSaving(true);
+      savedHeaderKeyRef.current = headerKeyOf(currentHeader);
+      saveProta({ ...currentHeader, userId }, itemsToSave)
+        .then(() => {
+          setLastSaved(new Date());
+          refreshProtaList();
+        })
+        .catch((err) => {
+          console.warn('[PerangkatAjarPage] Auto-save prota failed:', err);
+        })
+        .finally(() => setIsSaving(false));
+    },
+    // currentHeader is rebuilt every render; headerKey captures every field it holds.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [headerKey, userId, refreshProtaList]
+  );
+
+  // Header fields (mapel, kelas, JP, cadangan, ...) save on their own after a short pause.
+  // A brand-new document without materi is not written until it has content.
+  const isKnownDocument = protaList.some((doc) => doc.id === protaId);
+  useEffect(() => {
+    if (!hasLoadedInitial || savedHeaderKeyRef.current === headerKey) return;
+    if (!isKnownDocument && protaItemsRef.current.length === 0) return;
+    const timer = setTimeout(() => triggerProtaSave(protaItemsRef.current), HEADER_AUTOSAVE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [headerKey, hasLoadedInitial, isKnownDocument, triggerProtaSave]);
+
+  const schedulePromesSave = (semesterNumber: 1 | 2, cells: MatrixCell[]) => {
+    const header = buildPromesHeader(semesterNumber);
+    const run = () => {
+      delete pendingPromesSavesRef.current[semesterNumber];
+      void savePromes(header, cells).then(() => setLastSaved(new Date()));
+    };
+    clearTimeout(promesSaveTimersRef.current[semesterNumber]);
+    pendingPromesSavesRef.current[semesterNumber] = run;
+    promesSaveTimersRef.current[semesterNumber] = setTimeout(run, PROMES_SAVE_DELAY_MS);
+  };
+
+  /** Writes the Prota first, then both Promes, so allocations never point at missing items. */
+  const persistDocument = async (
+    header: ProtaHeader,
+    items: ProtaItem[],
+    cellsSem1: MatrixCell[],
+    cellsSem2: MatrixCell[],
+    limit: number
+  ) => {
+    for (const sem of [1, 2] as const) {
+      clearTimeout(promesSaveTimersRef.current[sem]);
+      delete pendingPromesSavesRef.current[sem];
+    }
+    savedHeaderKeyRef.current = headerKeyOf(header);
+    const savedId = await saveProta(header, items);
+    await Promise.all([
+      savePromes(buildPromesHeader(1, savedId, limit), cellsSem1),
+      savePromes(buildPromesHeader(2, savedId, limit), cellsSem2),
+    ]);
+    setLastSaved(new Date());
+    refreshProtaList();
+    return savedId;
+  };
+
+  const rememberForUndo = (message: string, extra: Pick<UndoSnapshot, 'weeks'> = {}) => {
+    setUndo({ message, header: currentHeader, protaItems, promesCellsSem1, promesCellsSem2, ...extra });
+  };
+
+  useEffect(() => {
+    if (!undo) return;
+    const timer = setTimeout(() => setUndo(null), UNDO_WINDOW_MS);
+    return () => clearTimeout(timer);
+  }, [undo]);
+
+  const handleUndo = async () => {
+    if (!undo) return;
+    const snapshot = undo;
+    setUndo(null);
+    if (snapshot.deletedDocument) {
+      const { header: deletedHeader, items, cellsSem1, cellsSem2 } = snapshot.deletedDocument;
+      setIsSaving(true);
+      try {
+        await persistDocument(deletedHeader, items, cellsSem1, cellsSem2, deletedHeader.weeklyJpQuota);
+        await applyDocument(deletedHeader, items);
+        toast.info('Dokumen dikembalikan.');
+      } catch (err) {
+        console.warn('[PerangkatAjarPage] Restoring deleted Prota failed:', err);
+        toast.error('Dokumen gagal dikembalikan. Periksa koneksi lalu coba lagi.');
+      } finally {
+        setIsSaving(false);
+      }
+      return;
+    }
+    const { header } = snapshot;
+    setAcademicYear(header.academicYear);
+    setSubject(header.subject);
+    setGradeLevel(header.gradeLevel);
+    setPhase(header.phase);
+    setCurriculum(header.curriculum);
+    setWeeklyJpQuota(header.weeklyJpQuota);
+    setReserveJpSem1(header.reserveJpSem1);
+    setReserveJpSem2(header.reserveJpSem2);
+    setProtaItems(snapshot.protaItems);
+    setPromesCellsSem1(snapshot.promesCellsSem1);
+    setPromesCellsSem2(snapshot.promesCellsSem2);
+    if (snapshot.weeks) {
+      setWeeks(snapshot.weeks);
+      void saveKaldikWeeks(header.academicYear, snapshot.weeks);
+    }
+    setIsSaving(true);
+    try {
+      await persistDocument(
+        { ...header, userId },
+        snapshot.protaItems,
+        snapshot.promesCellsSem1,
+        snapshot.promesCellsSem2,
+        weeklyJpLimit
+      );
+      toast.info('Perubahan dibatalkan.');
+    } catch (err) {
+      console.warn('[PerangkatAjarPage] Undo save failed:', err);
+      toast.error('Perubahan dibatalkan di layar, tetapi gagal disimpan. Tekan Simpan Semua.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // 4. Handlers
   const handleUpdateWeek = (month: number, weekNumber: number, type: WeekType) => {
     const isExisting = weeks.some((w) => w.month === month && w.weekNumber === weekNumber);
     const updated = isExisting
@@ -260,11 +583,22 @@ export const PerangkatAjarPage: React.FC = () => {
     void saveKaldikWeeks(academicYear, updated);
   };
 
+  const semestersWithoutHolidayData = useMemo(
+    () => generateKaldikFromCalendar(academicYear).semestersWithoutHolidayData,
+    [academicYear]
+  );
+
   const handleResetKaldikToPreset = () => {
-    const preset = getDefaultNationalKaldik(academicYear);
-    setWeeks(preset);
-    void saveKaldikWeeks(academicYear, preset);
-    toast.success('Kalender Pendidikan berhasil direset ke Preset Nasional.');
+    const { weeks: generated } = generateKaldikFromCalendar(academicYear);
+    rememberForUndo(`Kaldik ${academicYear} disusun ulang dari tanggal.`, { weeks });
+    setWeeks(generated);
+    void saveKaldikWeeks(academicYear, generated);
+  };
+
+  const handleChangeGradeLevel = (value: string) => {
+    setGradeLevel(value);
+    const derivedPhase = getPhaseForGrade(value);
+    if (derivedPhase) setPhase(derivedPhase);
   };
 
   const handleAddProtaItem = (newItem: Omit<ProtaItem, 'id' | 'orderIndex'>) => {
@@ -285,6 +619,8 @@ export const PerangkatAjarPage: React.FC = () => {
   };
 
   const handleDeleteProtaItem = (id: string) => {
+    const target = protaItems.find((it) => it.id === id);
+    rememberForUndo(target?.learningObjectiveCode ? `Materi ${target.learningObjectiveCode} dihapus.` : 'Materi dihapus.');
     const updated = protaItems.filter((it) => it.id !== id);
     setProtaItems(updated);
     triggerProtaSave(updated);
@@ -300,189 +636,37 @@ export const PerangkatAjarPage: React.FC = () => {
     const updated = swapItemSemester(protaItems, id);
     setProtaItems(updated);
     triggerProtaSave(updated);
-    toast.success('Materi berhasil dipindahkan semester.');
+    toast.success('Materi dipindahkan ke semester lain.');
   };
 
   const handleAutoBalanceProta = () => {
     if (protaItems.length === 0) {
-      toast.info('Belum ada materi pembelajaran. Silakan muat contoh materi atau buka Panduan Cepat terlebih dahulu.');
+      toast.info('Belum ada materi. Tambahkan materi atau buka Panduan Cepat.');
       return;
     }
 
     const result = autoBalanceProtaJp(protaItems, rmeSem1, rmeSem2);
     if (!result.isBalanced && result.adjustedItemIds.length === 0) {
-      toast.info('Alokasi jam sudah pas atau data minggu efektif di Kalender Pendidikan belum terisi.');
+      toast.info('Jam sudah pas, atau minggu efektif di Kaldik belum diisi.');
       return;
     }
 
+    rememberForUndo(result.message || 'Jam materi diseimbangkan.');
     setProtaItems(result.items);
     triggerProtaSave(result.items);
-    toast.success(result.message || '✨ Alokasi JP berhasil diseimbangkan otomatis! Target minggu efektif kini pas.');
   };
 
-  const handleLoadSampleCurriculum = (currType: CurriculumType) => {
-    let sampleItems: ProtaItem[] = [];
-
-    if (currType === 'MERDEKA') {
-      sampleItems = [
-        // Semester 1
-        {
-          id: crypto.randomUUID(),
-          semesterNumber: 1,
-          elementOrDomain: 'Menyimak',
-          learningObjectiveCode: 'TP 4.1',
-          learningObjectiveText: 'Memahami ide pokok dan ide pendukung pada teks informatif lisan',
-          coreTopic: 'Bab 1: Sudah Besar',
-          targetJp: 18,
-          orderIndex: 0,
-        },
-        {
-          id: crypto.randomUUID(),
-          semesterNumber: 1,
-          elementOrDomain: 'Membaca dan Memirsa',
-          learningObjectiveCode: 'TP 4.2',
-          learningObjectiveText: 'Membaca nyaring teks narasi dengan intonasi yang tepat',
-          coreTopic: 'Bab 2: Di Bawah Atap',
-          targetJp: 18,
-          orderIndex: 1,
-        },
-        {
-          id: crypto.randomUUID(),
-          semesterNumber: 1,
-          elementOrDomain: 'Berbicara',
-          learningObjectiveCode: 'TP 4.3',
-          learningObjectiveText: 'Mempresentasikan gagasan dengan volume dan pelafalan yang jelas',
-          coreTopic: 'Bab 3: Lihat Sekitar',
-          targetJp: 20,
-          orderIndex: 2,
-        },
-        {
-          id: crypto.randomUUID(),
-          semesterNumber: 1,
-          elementOrDomain: 'Menulis',
-          learningObjectiveCode: 'TP 4.4',
-          learningObjectiveText: 'Menulis teks narasi sederhana menggunakan kalimat efektif',
-          coreTopic: 'Bab 4: Meliuk dan Menerjang',
-          targetJp: 20,
-          orderIndex: 3,
-        },
-        // Semester 2
-        {
-          id: crypto.randomUUID(),
-          semesterNumber: 2,
-          elementOrDomain: 'Menyimak',
-          learningObjectiveCode: 'TP 4.5',
-          learningObjectiveText: 'Mengidentifikasi informasi penting dari teks instruksional',
-          coreTopic: 'Bab 5: Bertukar dan Membayar',
-          targetJp: 18,
-          orderIndex: 4,
-        },
-        {
-          id: crypto.randomUUID(),
-          semesterNumber: 2,
-          elementOrDomain: 'Membaca dan Memirsa',
-          learningObjectiveCode: 'TP 4.6',
-          learningObjectiveText: 'Menemukan makna kosakata baru menggunakan kamus',
-          coreTopic: 'Bab 6: Satu Titik',
-          targetJp: 18,
-          orderIndex: 5,
-        },
-        {
-          id: crypto.randomUUID(),
-          semesterNumber: 2,
-          elementOrDomain: 'Berbicara',
-          learningObjectiveCode: 'TP 4.7',
-          learningObjectiveText: 'Berpartisipasi aktif dalam diskusi kelompok',
-          coreTopic: 'Bab 7: Asal Usul',
-          targetJp: 20,
-          orderIndex: 6,
-        },
-        {
-          id: crypto.randomUUID(),
-          semesterNumber: 2,
-          elementOrDomain: 'Menulis',
-          learningObjectiveCode: 'TP 4.8',
-          learningObjectiveText: 'Menulis surat pribadi dengan struktur yang benar',
-          coreTopic: 'Bab 8: Sehatlah Ragaku',
-          targetJp: 20,
-          orderIndex: 7,
-        },
-      ];
-    } else {
-      sampleItems = [
-        // K-13 Samples
-        {
-          id: crypto.randomUUID(),
-          semesterNumber: 1,
-          elementOrDomain: 'KI-3 & KI-4',
-          learningObjectiveCode: 'KD 3.1 / 4.1',
-          learningObjectiveText: 'Mencermati gagasan pokok dan gagasan pendukung dalam teks tulis',
-          coreTopic: 'Indahnya Kebersamaan',
-          targetJp: 38,
-          orderIndex: 0,
-        },
-        {
-          id: crypto.randomUUID(),
-          semesterNumber: 1,
-          elementOrDomain: 'KI-3 & KI-4',
-          learningObjectiveCode: 'KD 3.2 / 4.2',
-          learningObjectiveText: 'Mencermati keterhubungan antargagasan dalam teks lisan dan tulis',
-          coreTopic: 'Selalu Berhemat Energi',
-          targetJp: 38,
-          orderIndex: 1,
-        },
-        {
-          id: crypto.randomUUID(),
-          semesterNumber: 2,
-          elementOrDomain: 'KI-3 & KI-4',
-          learningObjectiveCode: 'KD 3.6 / 4.6',
-          learningObjectiveText: 'Menggali isi dan amanat puisi yang disajikan secara lisan dan tulis',
-          coreTopic: 'Cita-Citaku',
-          targetJp: 38,
-          orderIndex: 2,
-        },
-        {
-          id: crypto.randomUUID(),
-          semesterNumber: 2,
-          elementOrDomain: 'KI-3 & KI-4',
-          learningObjectiveCode: 'KD 3.7 / 4.7',
-          learningObjectiveText: 'Menggali pengetahuan baru yang terdapat pada teks nonfiksi',
-          coreTopic: 'Indahnya Negeriku',
-          targetJp: 38,
-          orderIndex: 3,
-        },
-      ];
-    }
-
-    setProtaItems(sampleItems);
-    triggerProtaSave(sampleItems);
-    toast.success(`Contoh materi ${currType === 'MERDEKA' ? 'Kurikulum Merdeka' : 'Kurikulum 2013'} berhasil dimuat!`);
-  };
-
-  const triggerProtaSave = (itemsToSave: ProtaItem[]) => {
-    setIsSaving(true);
-    const header: ProtaHeader = {
-      id: protaId || crypto.randomUUID(),
-      userId: user?.id || 'offline_user',
-      academicYear,
+  const handleLoadPresetMateri = () => {
+    const presetItems = getCurriculumPreset(
       subject,
       gradeLevel,
-      phase: phase || undefined,
-      curriculum,
-      weeklyJpQuota,
-      reserveJpSem1,
-      reserveJpSem2,
-    };
-
-    saveProta(header, itemsToSave)
-      .then((savedId) => {
-        setProtaId(savedId);
-        setLastSaved(new Date());
-      })
-      .catch((err) => {
-        console.warn('[PerangkatAjarPage] Auto-save prota failed:', err);
-      })
-      .finally(() => setIsSaving(false));
+      rmeSem1.netTeachingJp,
+      rmeSem2.netTeachingJp
+    );
+    if (!presetItems?.length) return;
+    setProtaItems(presetItems);
+    triggerProtaSave(presetItems);
+    toast.success(`Bab bawaan ${subject} ${gradeLevel} dimuat. Sesuaikan TP-nya dengan sekolah.`);
   };
 
   const handleUpdatePromesCell = (
@@ -491,62 +675,66 @@ export const PerangkatAjarPage: React.FC = () => {
     weekNumber: number,
     jp: number
   ) => {
-    const targetCells = promesSemester === 1 ? promesCellsSem1 : promesCellsSem2;
+    if (getLockedWeekSlots(weeks, promesSemester).has(`${monthIndex}-${weekNumber}`)) {
+      return;
+    }
+
+    const targetCells = promesSemester === 1 ? lockedPromesCellsSem1 : lockedPromesCellsSem2;
     const setTargetCells = promesSemester === 1 ? setPromesCellsSem1 : setPromesCellsSem2;
 
     const existingIdx = targetCells.findIndex(
       (c) => c.rowId === rowId && c.monthIndex === monthIndex && c.weekNumber === weekNumber
     );
 
-    let updatedCells: MatrixCell[];
-    if (existingIdx >= 0) {
-      updatedCells = targetCells.map((c, i) =>
-        i === existingIdx ? { ...c, allocatedJp: jp } : c
-      );
-    } else {
-      updatedCells = [
-        ...targetCells,
-        {
-          rowId,
-          monthIndex,
-          weekNumber,
-          allocatedJp: jp,
-          isLocked: false,
-        },
-      ];
-    }
+    const updatedCells: MatrixCell[] =
+      existingIdx >= 0
+        ? targetCells.map((c, i) => (i === existingIdx ? { ...c, allocatedJp: jp, isManual: true } : c))
+        : [...targetCells, { rowId, monthIndex, weekNumber, allocatedJp: jp, isLocked: false, isManual: true }];
 
     setTargetCells(updatedCells);
+    schedulePromesSave(promesSemester, updatedCells);
+  };
 
-    // Save Promes for the active semester
-    const effectiveProtaId = (protaId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(protaId))
-      ? protaId
-      : crypto.randomUUID();
-    if (effectiveProtaId !== protaId) {
-      setProtaId(effectiveProtaId);
-    }
-
-    const header: PromesHeader = {
-      id: crypto.randomUUID(),
-      protaId: effectiveProtaId,
-      userId: user?.id || 'offline_user',
-      semesterNumber: promesSemester,
-      weeklyJpLimit,
-    };
-    void savePromes(header, updatedCells);
+  /** Hands a week back to "Bagi ulang": keeps its hours for now but no longer protects them. */
+  const handleReleasePromesCell = (rowId: string, monthIndex: number, weekNumber: number) => {
+    const targetCells = promesSemester === 1 ? lockedPromesCellsSem1 : lockedPromesCellsSem2;
+    const setTargetCells = promesSemester === 1 ? setPromesCellsSem1 : setPromesCellsSem2;
+    const updatedCells = targetCells.map((c) =>
+      c.rowId === rowId && c.monthIndex === monthIndex && c.weekNumber === weekNumber
+        ? { ...c, isManual: false }
+        : c
+    );
+    setTargetCells(updatedCells);
+    schedulePromesSave(promesSemester, updatedCells);
   };
 
   const handleAutoDistributePromes = () => {
-    const semesterItems = protaItems.filter((i) => i.semesterNumber === promesSemester);
+    const semesterItems = protaItems
+      .filter((i) => i.semesterNumber === promesSemester)
+      .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
     if (semesterItems.length === 0) {
-      toast.warning('Tambahkan Tujuan Pembelajaran di Program Tahunan (Prota) terlebih dahulu.');
+      toast.warning('Tambahkan materi di Program Tahunan (Prota) terlebih dahulu.');
       return;
+    }
+
+    const currentCells = promesSemester === 1 ? lockedPromesCellsSem1 : lockedPromesCellsSem2;
+    const manualCount = currentCells.filter((c) => c.isManual).length;
+    if (currentCells.some((c) => c.allocatedJp > 0)) {
+      rememberForUndo(
+        manualCount > 0
+          ? `Jam Semester ${promesSemester} dibagi ulang; ${manualCount} pekan yang Anda atur tetap.`
+          : `Jam Promes Semester ${promesSemester} dibagi ulang.`
+      );
+    } else {
+      toast.success(`Jam Semester ${promesSemester} sudah dibagi ke minggu efektif.`);
     }
 
     const newCells = autoDistributePromes({
       items: semesterItems.map((i) => ({ id: i.id, targetJp: i.targetJp })),
       semesterWeeks: weeks,
       weeklyJpLimit,
+      semesterNumber: promesSemester,
+      fixedCells: currentCells,
     });
 
     if (promesSemester === 1) {
@@ -554,43 +742,20 @@ export const PerangkatAjarPage: React.FC = () => {
     } else {
       setPromesCellsSem2(newCells);
     }
-
-    const effectiveProtaId = (protaId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(protaId))
-      ? protaId
-      : crypto.randomUUID();
-    if (effectiveProtaId !== protaId) {
-      setProtaId(effectiveProtaId);
-    }
-
-    const header: PromesHeader = {
-      id: crypto.randomUUID(),
-      protaId: effectiveProtaId,
-      userId: user?.id || 'offline_user',
-      semesterNumber: promesSemester,
-      weeklyJpLimit,
-    };
-    void savePromes(header, newCells);
-    toast.success(`Distribusi otomatis Semester ${promesSemester} berhasil dilakukan!`);
+    schedulePromesSave(promesSemester, newCells);
   };
 
   const handleResetPromesMatrix = () => {
+    const currentCells = promesSemester === 1 ? lockedPromesCellsSem1 : lockedPromesCellsSem2;
+    if (!currentCells.some((c) => c.allocatedJp > 0)) return;
+
+    rememberForUndo(`Matriks Semester ${promesSemester} dikosongkan.`);
     if (promesSemester === 1) {
       setPromesCellsSem1([]);
     } else {
       setPromesCellsSem2([]);
     }
-    const effectiveProtaId = (protaId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(protaId))
-      ? protaId
-      : crypto.randomUUID();
-    const header: PromesHeader = {
-      id: crypto.randomUUID(),
-      protaId: effectiveProtaId,
-      userId: user?.id || 'offline_user',
-      semesterNumber: promesSemester,
-      weeklyJpLimit,
-    };
-    void savePromes(header, []);
-    toast.info(`Matriks distribusi Semester ${promesSemester} berhasil dikosongkan.`);
+    schedulePromesSave(promesSemester, []);
   };
 
   const handleSaveAll = async () => {
@@ -598,51 +763,42 @@ export const PerangkatAjarPage: React.FC = () => {
     try {
       await saveKaldikWeeks(academicYear, weeks);
       saveDocumentIdentity(identity);
-
-      const header: ProtaHeader = {
-        id: protaId || crypto.randomUUID(),
-        userId: user?.id || 'offline_user',
-        academicYear,
-        subject,
-        gradeLevel,
-        phase: phase || undefined,
-        curriculum,
-        weeklyJpQuota,
-        reserveJpSem1,
-        reserveJpSem2,
-      };
-
-      const savedProtaId = await saveProta(header, protaItems);
-      setProtaId(savedProtaId);
-
-      const promesHdr1: PromesHeader = {
-        id: crypto.randomUUID(),
-        protaId: savedProtaId,
-        userId: user?.id || 'offline_user',
-        semesterNumber: 1,
-        weeklyJpLimit,
-      };
-      const promesHdr2: PromesHeader = {
-        id: crypto.randomUUID(),
-        protaId: savedProtaId,
-        userId: user?.id || 'offline_user',
-        semesterNumber: 2,
-        weeklyJpLimit,
-      };
-
-      await Promise.all([
-        savePromes(promesHdr1, promesCellsSem1),
-        savePromes(promesHdr2, promesCellsSem2),
-      ]);
-
-      setLastSaved(new Date());
-      toast.success('Seluruh perangkat ajar (Kaldik, Prota, Promes Sem 1 & 2) berhasil disimpan!');
+      await persistDocument(
+        { ...currentHeader, userId },
+        protaItems,
+        lockedPromesCellsSem1,
+        lockedPromesCellsSem2,
+        weeklyJpLimit
+      );
+      toast.success('Kaldik, Prota, dan Promes Semester 1 & 2 tersimpan.');
     } catch (err) {
       console.error('[PerangkatAjarPage] Error saving all:', err);
       toast.error('Gagal menyimpan perangkat ajar. Silakan coba lagi.');
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleSwitchDocument = async (id: string) => {
+    if (id === protaId) return;
+    flushPendingPromesSaves();
+    try {
+      const { header, items } = await loadProta(id);
+      if (!header) {
+        toast.error('Dokumen tidak ditemukan.');
+        refreshProtaList();
+        return;
+      }
+      await applyDocument(header, items);
+    } catch (err) {
+      console.warn('[PerangkatAjarPage] Failed to open Prota:', err);
+      toast.error('Gagal membuka dokumen. Periksa koneksi lalu coba lagi.');
+    }
+  };
+
+  const handleOpenWizard = (preferNew: boolean) => {
+    setWizardPrefersNew(preferNew);
+    setIsWizardOpen(true);
   };
 
   const handleCloseWizard = () => {
@@ -652,17 +808,29 @@ export const PerangkatAjarPage: React.FC = () => {
   };
 
   const handleApplyWizard = async (data: WizardApplyData) => {
+    flushPendingPromesSaves();
+    const isReplacing = data.target === 'replace';
+    if (isReplacing && protaItems.length > 0) {
+      rememberForUndo('Isi dokumen diganti hasil Panduan Cepat.');
+    } else {
+      setUndo(null);
+    }
+    const targetId = isReplacing ? protaId : crypto.randomUUID();
+    const sameYear = data.academicYear === academicYear;
+
     // 1. Sync academic configuration
+    setProtaId(targetId);
     setAcademicYear(data.academicYear);
     setSubject(data.subject);
     setGradeLevel(data.gradeLevel);
     setPhase(data.phase);
     setCurriculum(data.curriculum);
     setWeeklyJpQuota(data.weeklyJpQuota);
-    setWeeklyJpLimit(data.weeklyJpQuota);
     setReserveJpSem1(data.reserveJpSem1);
     setReserveJpSem2(data.reserveJpSem2);
-    setWeeks(data.weeks);
+    // Another year's Kaldik is loaded by the academic-year effect; the teacher's saved
+    // calendar for that year must not be overwritten with the wizard's preset.
+    if (sameYear) setWeeks(data.weeks);
     setProtaItems(data.protaItems);
     setPromesCellsSem1(data.promesCellsSem1);
     setPromesCellsSem2(data.promesCellsSem2);
@@ -675,56 +843,346 @@ export const PerangkatAjarPage: React.FC = () => {
     // 3. Persist everything to database/storage
     setIsSaving(true);
     try {
-      await saveKaldikWeeks(data.academicYear, data.weeks);
+      await persistDocument(
+        {
+          id: targetId,
+          userId,
+          academicYear: data.academicYear,
+          subject: data.subject,
+          gradeLevel: data.gradeLevel,
+          phase: data.phase,
+          curriculum: data.curriculum,
+          weeklyJpQuota: data.weeklyJpQuota,
+          reserveJpSem1: data.reserveJpSem1,
+          reserveJpSem2: data.reserveJpSem2,
+        },
+        data.protaItems,
+        data.promesCellsSem1,
+        data.promesCellsSem2,
+        data.weeklyJpQuota
+      );
+      try {
+        localStorage.setItem(ACTIVE_PROTA_KEY, targetId);
+      } catch (_err) {
+        void _err;
+      }
 
-      const header: ProtaHeader = {
-        id: protaId || crypto.randomUUID(),
-        userId: user?.id || 'offline_user',
-        academicYear: data.academicYear,
-        subject: data.subject,
-        gradeLevel: data.gradeLevel,
-        phase: data.phase,
-        curriculum: data.curriculum,
-        weeklyJpQuota: data.weeklyJpQuota,
-        reserveJpSem1: data.reserveJpSem1,
-        reserveJpSem2: data.reserveJpSem2,
-      };
-
-      const savedProtaId = await saveProta(header, data.protaItems);
-      setProtaId(savedProtaId);
-
-      const promesHdr1: PromesHeader = {
-        id: crypto.randomUUID(),
-        protaId: savedProtaId,
-        userId: user?.id || 'offline_user',
-        semesterNumber: 1,
-        weeklyJpLimit: data.weeklyJpQuota,
-      };
-      const promesHdr2: PromesHeader = {
-        id: crypto.randomUUID(),
-        protaId: savedProtaId,
-        userId: user?.id || 'offline_user',
-        semesterNumber: 2,
-        weeklyJpLimit: data.weeklyJpQuota,
-      };
-
-      await Promise.all([
-        savePromes(promesHdr1, data.promesCellsSem1),
-        savePromes(promesHdr2, data.promesCellsSem2),
-      ]);
-
-      setLastSaved(new Date());
       setIsWizardOpen(false);
       setActiveTab('prota');
-      toast.success('✨ Prota dan Promes berhasil dibuat dan disimpan otomatis!');
+      if (!isReplacing || protaItems.length === 0) {
+        toast.success(`Prota & Promes ${data.subject} ${data.gradeLevel} dibuat dan disimpan.`);
+      }
     } catch (err) {
       console.error('[PerangkatAjarPage] Error saving wizard generated data:', err);
-      toast.error('Data berhasil diterapkan di layar. Klik tombol Simpan Semua untuk memastikan penyimpanan.');
+      toast.error('Hasil sudah tampil di layar, tetapi gagal disimpan. Tekan Simpan Semua.');
       setIsWizardOpen(false);
     } finally {
       setIsSaving(false);
     }
   };
+
+  // School Kaldik published by an admin for this academic year.
+  const [schoolKaldik, setSchoolKaldik] = useState<SchoolKaldik | null>(null);
+  useEffect(() => {
+    let isMounted = true;
+    loadSchoolKaldik(academicYear).then((result) => {
+      if (isMounted) setSchoolKaldik(result);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [academicYear]);
+
+  const matchesSchoolKaldik = useMemo(() => {
+    if (!schoolKaldik) return true;
+    const key = (w: KaldikWeek) => `${w.month}-${w.weekNumber}`;
+    const own = new Map(weeks.map((w) => [key(w), w.type]));
+    return schoolKaldik.weeks.every((w) => own.get(key(w)) === w.type);
+  }, [schoolKaldik, weeks]);
+
+  const handleUseSchoolKaldik = () => {
+    if (!schoolKaldik) return;
+    rememberForUndo(`Kaldik diganti Kaldik sekolah ${academicYear}.`, { weeks });
+    setWeeks(schoolKaldik.weeks);
+    void saveKaldikWeeks(academicYear, schoolKaldik.weeks);
+  };
+
+  const handlePublishSchoolKaldik = async () => {
+    try {
+      await publishSchoolKaldik(academicYear, weeks);
+      setSchoolKaldik({ weeks, updatedAt: new Date().toISOString() });
+      toast.success(`Kaldik ${academicYear} diterbitkan untuk semua guru.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Gagal menerbitkan Kaldik sekolah.');
+    }
+  };
+
+  const handleDeleteDocument = async () => {
+    if (!isKnownDocument && protaItems.length === 0) return;
+    flushPendingPromesSaves();
+    const deletedDocument = {
+      header: { ...currentHeader, userId },
+      items: protaItems,
+      cellsSem1: lockedPromesCellsSem1,
+      cellsSem2: lockedPromesCellsSem2,
+    };
+    const label = formatDocumentLabel(currentHeader);
+    try {
+      await deleteProta(protaId);
+    } catch (err) {
+      console.warn('[PerangkatAjarPage] Failed to delete Prota:', err);
+      toast.error('Gagal menghapus dokumen. Periksa koneksi lalu coba lagi.');
+      return;
+    }
+
+    const next = protaList.find((doc) => doc.id !== protaId);
+    if (next) {
+      await handleSwitchDocument(next.id);
+    } else {
+      const blankId = crypto.randomUUID();
+      savedHeaderKeyRef.current = null;
+      setProtaId(blankId);
+      setSubject('');
+      setGradeLevel('');
+      setProtaItems([]);
+      setPromesCellsSem1([]);
+      setPromesCellsSem2([]);
+    }
+    setUndo({
+      message: `Prota ${label} dihapus.`,
+      header: currentHeader,
+      protaItems: [],
+      promesCellsSem1: [],
+      promesCellsSem2: [],
+      deletedDocument,
+    });
+    refreshProtaList();
+  };
+
+  const handleCreateModulAjar = (item: ProtaItem) => {
+    writeModulAjarPrefill({
+      subject,
+      gradeLevel,
+      phase,
+      academicYear,
+      curriculum,
+      semesterNumber: item.semesterNumber,
+      learningObjectiveCode: item.learningObjectiveCode,
+      learningObjectiveText: item.learningObjectiveText,
+      coreTopic: item.coreTopic,
+      targetJp: item.targetJp,
+    });
+    handleSelectMode('modul-ajar');
+  };
+
+  const handleOpenScheduleBatch = async () => {
+    setIsScheduleBatchOpen(true);
+    setScheduleStatus('loading');
+    try {
+      const entries = await loadTeachingSchedule();
+      setSchedulePlans(planProtaFromSchedule(entries, protaList, academicYear, curriculum));
+      setScheduleStatus('ready');
+    } catch (err) {
+      console.warn('[PerangkatAjarPage] Failed to read teaching schedule:', err);
+      setScheduleStatus('error');
+    }
+  };
+
+  const handleCreateFromSchedule = async (keys: string[], useAi: boolean) => {
+    const plans = schedulePlans.filter((plan) => keys.includes(plan.key));
+    if (plans.length === 0) return;
+    flushPendingPromesSaves();
+    setIsCreatingBatch(true);
+
+    const created: Array<{ header: ProtaHeader; items: ProtaItem[] }> = [];
+    let failed = 0;
+    let aiFailed = 0;
+    for (const [index, plan] of plans.entries()) {
+      setBatchProgress({ done: index, total: plans.length });
+      let topics: AiProtaTopics | undefined;
+      if (useAi && !plan.hasPreset) {
+        try {
+          topics = await generateProtaTopicsWithAi({
+            subject: plan.subject,
+            gradeLevel: plan.gradeLevel,
+            phase: plan.phase,
+            curriculum,
+          });
+        } catch (err) {
+          console.warn('[PerangkatAjarPage] AI draft failed, using outline:', plan.key, err);
+          aiFailed++;
+        }
+      }
+      const built = buildProtaDocument(plan, weeks, academicYear, curriculum, { topics });
+      const header: ProtaHeader = { ...built.header, userId };
+      try {
+        await saveProta(header, built.items);
+        await Promise.all([
+          savePromes(buildPromesHeader(1, header.id, plan.weeklyJp), built.cellsSem1),
+          savePromes(buildPromesHeader(2, header.id, plan.weeklyJp), built.cellsSem2),
+        ]);
+        created.push({ header, items: built.items });
+      } catch (err) {
+        console.warn('[PerangkatAjarPage] Failed to create Prota from schedule:', plan.key, err);
+        failed++;
+      }
+    }
+
+    setIsCreatingBatch(false);
+    setBatchProgress(null);
+    refreshProtaList();
+    if (created.length > 0) {
+      setIsScheduleBatchOpen(false);
+      await applyDocument(created[0].header, created[0].items);
+      setActiveTab('prota');
+      toast.success(
+        `${created.length} Prota & Promes dibuat. Unduh semuanya sekaligus lewat tombol Unduh Paket.`
+      );
+    }
+    if (failed > 0) {
+      toast.error(`${failed} Prota gagal dibuat. Periksa koneksi lalu coba lagi.`);
+    }
+    if (aiFailed > 0) {
+      toast.warning(`AI gagal menyusun TP untuk ${aiFailed} mapel; mapel itu memakai kerangka 4 + 4 bab.`);
+    }
+  };
+
+  const handleFillWithAi = async () => {
+    if (!subject.trim() || !gradeLevel.trim()) {
+      toast.info('Isi mata pelajaran dan kelas terlebih dahulu.');
+      return;
+    }
+    flushPendingPromesSaves();
+    setIsAiBusy(true);
+    try {
+      const topics = await generateProtaTopicsWithAi({ subject, gradeLevel, phase, curriculum });
+      const items = aiTopicsToProtaItems(topics, rmeSem1.netTeachingJp, rmeSem2.netTeachingJp);
+      // New items get new ids, so both Promes are rebuilt for them.
+      const distribute = (semesterNumber: 1 | 2) =>
+        autoDistributePromes({
+          items: items
+            .filter((it) => it.semesterNumber === semesterNumber)
+            .map((it) => ({ id: it.id, targetJp: it.targetJp })),
+          semesterWeeks: weeks,
+          weeklyJpLimit,
+          semesterNumber,
+        });
+      const cellsSem1 = distribute(1);
+      const cellsSem2 = distribute(2);
+
+      if (protaItems.length > 0) {
+        rememberForUndo('Materi diganti draf dari AI.');
+      }
+      setProtaItems(items);
+      setPromesCellsSem1(cellsSem1);
+      setPromesCellsSem2(cellsSem2);
+      await persistDocument({ ...currentHeader, userId }, items, cellsSem1, cellsSem2, weeklyJpLimit);
+      if (protaItems.length === 0) {
+        toast.success(`Draf materi ${subject} ${gradeLevel} dari AI siap. Periksa dengan CP terbaru.`);
+      }
+    } catch (err) {
+      console.warn('[PerangkatAjarPage] AI Prota draft failed:', err);
+      toast.error(err instanceof Error ? err.message : 'AI tidak bisa dihubungi. Coba lagi.');
+    } finally {
+      setIsAiBusy(false);
+    }
+  };
+
+  const yearDocumentIds = useMemo(() => {
+    const ids = protaList.filter((doc) => doc.academicYear === academicYear).map((doc) => doc.id);
+    return ids.includes(protaId) || protaItems.length === 0 ? ids : [protaId, ...ids];
+  }, [protaList, academicYear, protaId, protaItems.length]);
+
+  const identityFor = (h: Pick<ProtaHeader, 'subject' | 'gradeLevel' | 'phase' | 'curriculum' | 'academicYear'>): DocumentIdentity => ({
+    ...effectiveIdentity,
+    subject: h.subject,
+    gradeLevel: h.gradeLevel,
+    phase: h.phase ? `Fase ${h.phase}` : undefined,
+    curriculum: h.curriculum,
+    academicYear: h.academicYear,
+  });
+
+  const currentPackageDocument = (): PackageDocument => ({
+    identity: identityFor(currentHeader),
+    items: protaItems,
+    validation: protaValidation,
+    weeks,
+    cellsSem1: lockedPromesCellsSem1,
+    cellsSem2: lockedPromesCellsSem2,
+  });
+
+  const loadPackageDocument = async (id: string): Promise<PackageDocument | null> => {
+    if (id === protaId) return currentPackageDocument();
+    const { header, items } = await loadProta(id);
+    if (!header) return null;
+    const [promes1, promes2] = await Promise.all([loadPromes(id, 1), loadPromes(id, 2)]);
+    const validation = validateProtaBalance(
+      items,
+      calculateRme(weeks, 1, header.weeklyJpQuota, header.reserveJpSem1),
+      calculateRme(weeks, 2, header.weeklyJpQuota, header.reserveJpSem2)
+    );
+    return {
+      identity: identityFor(header),
+      items,
+      validation,
+      weeks,
+      cellsSem1: applyKaldikLocks(promes1.cells, weeks, 1),
+      cellsSem2: applyKaldikLocks(promes2.cells, weeks, 2),
+    };
+  };
+
+  const handleDownloadPackage = async (scope: 'current' | 'year') => {
+    if (protaItems.length === 0 && scope === 'current') {
+      toast.info('Dokumen ini belum berisi materi.');
+      return;
+    }
+    flushPendingPromesSaves();
+    setIsPackaging(true);
+    try {
+      const documents =
+        scope === 'current'
+          ? [currentPackageDocument()]
+          : (await Promise.all(yearDocumentIds.map(loadPackageDocument))).filter(
+              (doc): doc is PackageDocument => doc !== null && doc.items.length > 0
+            );
+      if (documents.length === 0) {
+        toast.info('Belum ada Prota berisi materi untuk tahun ajaran ini.');
+        return;
+      }
+
+      const { buildPerangkatAjarPackage, toSafeFileName } = await import('../../../utils/perangkatAjarPackage');
+      const blob = await buildPerangkatAjarPackage(documents);
+      const fileName =
+        scope === 'current'
+          ? `Prota Promes ${subject} ${gradeLevel}.zip`
+          : `Perangkat Ajar ${academicYear.replace('/', '-')}.zip`;
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = toSafeFileName(fileName);
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        link.remove();
+        URL.revokeObjectURL(url);
+      }, 1500);
+      toast.success(
+        documents.length === 1
+          ? 'Paket Prota & Promes diunduh.'
+          : `Paket ${documents.length} Prota & Promes diunduh.`
+      );
+    } catch (err) {
+      console.error('[PerangkatAjarPage] Package download failed:', err);
+      toast.error('Gagal membuat paket. Coba lagi, atau unduh satu per satu di tab Pratinjau.');
+    } finally {
+      setIsPackaging(false);
+    }
+  };
+
+  const documentOptions = isKnownDocument
+    ? protaList
+    : [{ id: protaId, subject, gradeLevel, academicYear }, ...protaList];
 
   if (!mode) {
     return (
@@ -936,15 +1394,38 @@ export const PerangkatAjarPage: React.FC = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-2 self-start md:self-center">
+            <div className="flex flex-wrap items-center gap-2 self-start md:self-center">
               <button
                 type="button"
-                onClick={() => setIsWizardOpen(true)}
+                onClick={() => handleOpenWizard(false)}
                 className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold text-brand-700 dark:text-brand-300 bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/60 dark:hover:bg-brand-900/60 border border-brand-200 dark:border-brand-800 rounded-2xl transition-all shadow-xs hover:shadow cursor-pointer active:scale-95"
                 title="Buka panduan cepat pembuatan Prota & Promes"
               >
-                <Sparkles className="w-4 h-4 text-brand-500 animate-pulse" />
-                <span>✨ Panduan Cepat</span>
+                <Sparkles className="w-4 h-4 text-brand-500" />
+                <span>Panduan Cepat</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleOpenScheduleBatch()}
+                className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-2xl transition-all"
+                title="Buat Prota & Promes untuk semua mapel dan kelas di jadwal mengajar"
+              >
+                <CalendarClock className="w-4 h-4" />
+                <span>Buat dari Jadwal</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleDownloadPackage(yearDocumentIds.length > 1 ? 'year' : 'current')}
+                disabled={isPackaging}
+                className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-2xl transition-all disabled:opacity-50"
+                title={
+                  yearDocumentIds.length > 1
+                    ? `Unduh Prota & Promes untuk ${yearDocumentIds.length} dokumen tahun ${academicYear} dalam satu ZIP`
+                    : 'Unduh Prota (Word) dan Promes Semester 1 & 2 (Excel) dalam satu ZIP'
+                }
+              >
+                <Download className="w-4 h-4" />
+                <span>{isPackaging ? 'Menyiapkan...' : 'Unduh Paket'}</span>
               </button>
               <button
                 onClick={handleSaveAll}
@@ -958,7 +1439,49 @@ export const PerangkatAjarPage: React.FC = () => {
           </div>
 
       {/* 2. Global Metadata Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-xs">
+      <div className="p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-xs space-y-3">
+      <div className="flex flex-col sm:flex-row sm:items-end gap-2">
+        <div className="flex-1 min-w-0">
+          <label htmlFor="prota-document-picker" className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+            Dokumen Prota
+          </label>
+          <select
+            id="prota-document-picker"
+            value={protaId}
+            onChange={(e) => void handleSwitchDocument(e.target.value)}
+            className="w-full min-h-[40px] px-3 py-2 font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-brand-500"
+          >
+            {documentOptions.map((doc) => (
+              <option key={doc.id} value={doc.id}>
+                {doc.id === protaId && !isKnownDocument
+                  ? `${formatDocumentLabel(doc)} (belum tersimpan)`
+                  : formatDocumentLabel(doc)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button
+          type="button"
+          onClick={() => handleOpenWizard(true)}
+          className="flex items-center justify-center gap-1.5 min-h-[40px] px-3.5 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Prota baru</span>
+        </button>
+        {(isKnownDocument || protaItems.length > 0) && (
+          <button
+            type="button"
+            onClick={() => void handleDeleteDocument()}
+            aria-label="Hapus dokumen Prota ini"
+            title="Hapus dokumen ini beserta Promes-nya (bisa dibatalkan sesaat)"
+            className="flex items-center justify-center gap-1.5 min-h-[40px] px-3.5 text-xs font-bold text-rose-700 dark:text-rose-300 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-900/60 rounded-xl transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>Hapus</span>
+          </button>
+        )}
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <div>
           <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
             Tahun Ajaran
@@ -969,9 +1492,11 @@ export const PerangkatAjarPage: React.FC = () => {
             onChange={(e) => setAcademicYear(e.target.value)}
             className="w-full min-h-[40px] px-3 py-2 font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-brand-500"
           >
-            <option value="2024/2025">2024/2025</option>
-            <option value="2025/2026">2025/2026</option>
-            <option value="2026/2027">2026/2027</option>
+            {getAcademicYearOptions(new Date(), academicYear).map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -998,7 +1523,7 @@ export const PerangkatAjarPage: React.FC = () => {
             value={gradeLevel}
             aria-label="Tingkat Kelas"
             placeholder="Kelas 4"
-            onChange={(e) => setGradeLevel(e.target.value)}
+            onChange={(e) => handleChangeGradeLevel(e.target.value)}
             className="w-full min-h-[40px] px-3 py-2 font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>
@@ -1036,6 +1561,7 @@ export const PerangkatAjarPage: React.FC = () => {
             <option value="K13">Kurikulum 2013 (K-13)</option>
           </select>
         </div>
+      </div>
       </div>
 
       {/* 3. Navigation Tabs */}
@@ -1103,13 +1629,16 @@ export const PerangkatAjarPage: React.FC = () => {
             weeks={weeks}
             onUpdateWeek={handleUpdateWeek}
             onResetToPreset={handleResetKaldikToPreset}
+            academicYear={academicYear}
+            semestersWithoutHolidayData={semestersWithoutHolidayData}
+            schoolKaldikUpdatedAt={schoolKaldik && !matchesSchoolKaldik ? schoolKaldik.updatedAt ?? '' : null}
+            onUseSchoolKaldik={handleUseSchoolKaldik}
+            onPublishSchoolKaldik={isAdmin ? () => void handlePublishSchoolKaldik() : undefined}
+            isSchoolKaldik={Boolean(schoolKaldik) && matchesSchoolKaldik}
             rmeSem1={rmeSem1}
             rmeSem2={rmeSem2}
             weeklyJpQuota={weeklyJpQuota}
-            onChangeWeeklyJpQuota={(q) => {
-              setWeeklyJpQuota(q);
-              setWeeklyJpLimit(q);
-            }}
+            onChangeWeeklyJpQuota={setWeeklyJpQuota}
             reserveJpSem1={reserveJpSem1}
             onChangeReserveJpSem1={setReserveJpSem1}
             reserveJpSem2={reserveJpSem2}
@@ -1125,9 +1654,12 @@ export const PerangkatAjarPage: React.FC = () => {
             onDeleteItem={handleDeleteProtaItem}
             onMoveItem={handleMoveProtaItem}
             onSwapSemester={handleSwapSemesterProtaItem}
-            onLoadSampleData={handleLoadSampleCurriculum}
-            onOpenWizard={() => setIsWizardOpen(true)}
+            onLoadSampleData={presetAvailable ? handleLoadPresetMateri : undefined}
+            onOpenWizard={() => handleOpenWizard(false)}
             onAutoBalance={handleAutoBalanceProta}
+            onFillWithAi={() => void handleFillWithAi()}
+            onCreateModulAjar={handleCreateModulAjar}
+            isAiBusy={isAiBusy}
             curriculum={curriculum}
             onChangeCurriculum={setCurriculum}
             validation={protaValidation}
@@ -1143,12 +1675,46 @@ export const PerangkatAjarPage: React.FC = () => {
             semesterNumber={promesSemester}
             onChangeSemester={setPromesSemester}
             weeklyJpLimit={weeklyJpLimit}
-            onChangeWeeklyJpLimit={setWeeklyJpLimit}
-            cells={promesSemester === 1 ? promesCellsSem1 : promesCellsSem2}
+            onChangeWeeklyJpLimit={setWeeklyJpQuota}
+            cells={promesSemester === 1 ? lockedPromesCellsSem1 : lockedPromesCellsSem2}
             onUpdateCell={handleUpdatePromesCell}
             onAutoDistribute={handleAutoDistributePromes}
+            onReleaseCell={handleReleasePromesCell}
             onResetMatrix={handleResetPromesMatrix}
           />
+        )}
+
+        {activeTab === 'preview' && (
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-xs">
+            <div>
+              <p className="font-bold text-slate-800 dark:text-slate-100">Paket lengkap (ZIP)</p>
+              <p className="text-slate-500 dark:text-slate-400 mt-0.5">
+                Prota (Word) serta Promes Semester 1 dan 2 (Excel, lengkap dengan matriks pekan) sekaligus.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:flex gap-2">
+              <button
+                type="button"
+                onClick={() => void handleDownloadPackage('current')}
+                disabled={isPackaging}
+                className="flex items-center justify-center gap-1.5 min-h-[40px] px-3.5 font-bold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-50"
+              >
+                <Download className="w-4 h-4" />
+                <span>Dokumen ini</span>
+              </button>
+              {yearDocumentIds.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => void handleDownloadPackage('year')}
+                  disabled={isPackaging}
+                  className="flex items-center justify-center gap-1.5 min-h-[40px] px-3.5 font-bold text-white bg-brand-600 hover:bg-brand-700 rounded-xl disabled:opacity-50"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Semua Prota {academicYear} ({yearDocumentIds.length})</span>
+                </button>
+              )}
+            </div>
+          </div>
         )}
 
         {activeTab === 'preview' && (
@@ -1158,8 +1724,8 @@ export const PerangkatAjarPage: React.FC = () => {
             protaItems={protaItems}
             validation={protaValidation}
             kaldikWeeks={weeks}
-            promesCells={promesCellsSem1}
-            promesCellsSem2={promesCellsSem2}
+            promesCells={lockedPromesCellsSem1}
+            promesCellsSem2={lockedPromesCellsSem2}
           />
         )}
       </div>
@@ -1174,7 +1740,47 @@ export const PerangkatAjarPage: React.FC = () => {
     initialAcademicYear={academicYear}
     initialSubject={subject}
     initialGradeLevel={gradeLevel}
+    initialCurriculum={curriculum}
+    initialWeeklyJpQuota={weeklyJpQuota}
+    currentWeeks={weeks}
+    hasExistingData={protaItems.length > 0}
+    preferNewDocument={wizardPrefersNew}
   />
+
+  <ScheduleBatchModal
+    isOpen={isScheduleBatchOpen}
+    onClose={() => setIsScheduleBatchOpen(false)}
+    status={scheduleStatus}
+    plans={schedulePlans}
+    academicYear={academicYear}
+    isCreating={isCreatingBatch}
+    progress={batchProgress}
+    onCreate={(keys, useAi) => void handleCreateFromSchedule(keys, useAi)}
+  />
+
+  {undo && mode === 'prota-promes' && (
+    <div
+      role="status"
+      className="fixed bottom-24 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 max-w-[calc(100vw-32px)] pl-4 pr-1.5 py-1.5 rounded-xl bg-slate-900 dark:bg-slate-700 text-white text-xs shadow-lg"
+    >
+      <span className="truncate">{undo.message}</span>
+      <button
+        type="button"
+        onClick={() => void handleUndo()}
+        className="shrink-0 min-h-[36px] px-3 font-bold text-emerald-300 hover:text-emerald-200 rounded-lg hover:bg-white/10"
+      >
+        Batalkan
+      </button>
+      <button
+        type="button"
+        onClick={() => setUndo(null)}
+        aria-label="Tutup"
+        className="shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg text-slate-300 hover:text-white hover:bg-white/10"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  )}
 </div>
   );
 };

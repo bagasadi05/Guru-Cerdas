@@ -1,5 +1,5 @@
 import type { GeminiMessage, GeminiResponse, AiTaskType } from './aiProvider';
-import type { AiProvider } from './aiProvider';
+import type { AiProvider, AiRequestTimeout } from './aiProvider';
 import { aiRouter } from './aiProvider';
 import { logger } from './logger';
 import { supabase } from './supabase';
@@ -59,7 +59,7 @@ function usesDirectEndpoint(): boolean {
 export class GroqProvider implements AiProvider {
   readonly name = 'groq' as const;
 
-  async generateContent(messages: GeminiMessage[], model: string): Promise<GeminiResponse> {
+  async generateContent(messages: GeminiMessage[], model: string, options: AiRequestTimeout = {}): Promise<GeminiResponse> {
     if (isDev() && !import.meta.env.VITE_GROQ_PROXY_URL && !devApiKey()) {
       throw new Error('Groq API key tidak dikonfigurasi. Tambahkan VITE_GROQ_API_KEY di .env.');
     }
@@ -73,19 +73,19 @@ export class GroqProvider implements AiProvider {
     }
 
     try {
-      return await this.callWithRetry(messages, model);
+      return await this.callWithRetry(messages, model, options.timeoutMs);
     } catch (err: any) {
       logger.warn(`[Groq] Failed: ${err.message}`, 'AI');
       throw err;
     }
   }
 
-  private async callWithRetry(messages: GeminiMessage[], model: string): Promise<GeminiResponse> {
+  private async callWithRetry(messages: GeminiMessage[], model: string, timeoutMs = BASE_TIMEOUT): Promise<GeminiResponse> {
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
-        return await this.callOnce(messages, model);
+        return await this.callOnce(messages, model, timeoutMs);
       } catch (err: any) {
         lastError = err;
         const isTransient = isTransientError(err);
@@ -109,7 +109,7 @@ export class GroqProvider implements AiProvider {
     throw lastError || new Error('Groq gagal setelah beberapa percobaan.');
   }
 
-  private async callOnce(messages: GeminiMessage[], model: string): Promise<GeminiResponse> {
+  private async callOnce(messages: GeminiMessage[], model: string, timeoutMs = BASE_TIMEOUT): Promise<GeminiResponse> {
     const systemMessage = messages.find(m => m.role === 'system');
     const chatMessages = messages
       .filter(m => m.role !== 'system')
@@ -130,7 +130,7 @@ export class GroqProvider implements AiProvider {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), BASE_TIMEOUT);
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       let url: string;

@@ -39,7 +39,40 @@ const FASE_DESC: Record<string, string> = {
   'C': 'Kelas 5-6 SD/MI (usia 10-12 tahun, transisi operasional formal, penalaran kritis & proyek)',
 };
 
-function buildPrompt(mapel: string, topik: string, fase: string, modelPembelajaran?: string, metodePembelajaran?: string[]): string {
+/** Lesson details the teacher already chose; the AI must build on them. */
+export interface ModulAjarPromptContext {
+  kelas?: string;
+  capaianPembelajaran?: string;
+  /** Objectives the teacher wrote; the scenario must serve exactly these. */
+  tujuanPembelajaran?: string;
+  profilPelajar?: string[];
+  alokasiWaktu?: string;
+  /** Kurikulum Berbasis Cinta themes and insertion material. */
+  kbc?: { tema: string[]; materiInsersi: string };
+}
+
+const describeContext = (ctx?: ModulAjarPromptContext): string => {
+  if (!ctx) return '';
+  const lines: string[] = [];
+  if (ctx.kelas) lines.push(`Kelas: ${ctx.kelas}`);
+  if (ctx.alokasiWaktu) lines.push(`Alokasi Waktu: ${ctx.alokasiWaktu}`);
+  if (ctx.capaianPembelajaran?.trim()) lines.push(`Capaian Pembelajaran (CP): ${ctx.capaianPembelajaran.trim()}`);
+  if (ctx.tujuanPembelajaran?.trim()) {
+    lines.push(`Tujuan Pembelajaran yang sudah ditetapkan guru (gunakan persis, jangan diganti):\n${ctx.tujuanPembelajaran.trim()}`);
+  }
+  if (ctx.profilPelajar?.length) lines.push(`Dimensi Profil Pelajar yang dikuatkan: ${ctx.profilPelajar.join(', ')}`);
+  if (ctx.kbc) {
+    const tema = ctx.kbc.tema.length ? ctx.kbc.tema.join(', ') : 'Panca Cinta';
+    lines.push(
+      `Pendekatan: Kurikulum Berbasis Cinta (KBC) Kemenag. Tema: ${tema}.` +
+      (ctx.kbc.materiInsersi.trim() ? ` Materi insersi: ${ctx.kbc.materiInsersi.trim()}.` : '') +
+      ' Integrasikan nilai cinta tersebut secara nyata di pendahuluan, kegiatan inti, LKPD, dan penutup.',
+    );
+  }
+  return lines.length ? `\n${lines.join('\n')}` : '';
+};
+
+function buildPrompt(mapel: string, topik: string, fase: string, modelPembelajaran?: string, metodePembelajaran?: string[], context?: ModulAjarPromptContext): string {
   const faseInfo = FASE_DESC[fase] || `Fase ${fase}`;
   const modelInfo = modelPembelajaran ? `\nModel Pembelajaran yang Digunakan: ${modelPembelajaran}` : '';
   const metodeInfo = (metodePembelajaran && metodePembelajaran.length > 0)
@@ -50,7 +83,7 @@ function buildPrompt(mapel: string, topik: string, fase: string, modelPembelajar
 
 Mata Pelajaran: ${mapel}
 Topik/Materi Pokok: ${topik}
-Fase / Sasaran: Fase ${fase} (${faseInfo})${modelInfo}${metodeInfo}
+Fase / Sasaran: Fase ${fase} (${faseInfo})${modelInfo}${metodeInfo}${describeContext(context)}
 
 Hasilkan JSON dengan struktur persis berikut:
 {
@@ -149,25 +182,29 @@ export interface CacheToDatabaseResult {
   error?: string;
 }
 
-export async function generateModulAjarAiContent(
-  mapel: string,
-  topik: string,
-  fase: string,
-  modelPembelajaran?: string,
-  metodePembelajaran?: string[],
-  onCacheError?: (message: string) => void
-): Promise<AiModulAjarContent> {
-  const prompt = buildPrompt(mapel, topik, fase, modelPembelajaran, metodePembelajaran);
+const MAX_CONTENT_ATTEMPTS = 2;
 
-  logger.info(`[AI Modul Ajar] Generating: ${mapel} / ${topik} / Fase ${fase}`, 'ModulAjarAI');
+const hasText = (value: unknown): boolean =>
+  typeof value === 'string'
+    ? value.trim() !== ''
+    : Array.isArray(value) && value.some((item) => typeof item === 'string' && item.trim() !== '');
 
-  const result = await generateGeminiJson<AiModulAjarContent>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar');
+/** Parts a usable document cannot do without. Returns their names, empty when complete. */
+export function findMissingModulAjarParts(content: AiModulAjarContent): string[] {
+  const missing: string[] = [];
+  if (!hasText(content.tujuanPembelajaran)) missing.push('tujuan pembelajaran');
+  const steps = (content.skenarioPembelajaran || []).filter(
+    (step) => String(step.guru || '').trim() && String(step.siswa || '').trim(),
+  );
+  if (steps.length < 2) missing.push('langkah kegiatan inti');
+  if (!hasText(content.lkpdTugas)) missing.push('LKPD');
+  if (!hasText(content.soalEvaluasi)) missing.push('soal evaluasi');
+  return missing;
+}
 
-  if (!result.tujuanPembelajaran || !Array.isArray(result.tujuanPembelajaran) || result.tujuanPembelajaran.length === 0) {
-    throw new Error('AI menghasilkan konten tidak lengkap (tujuan pembelajaran kosong).');
-  }
-
-  const normalized: AiModulAjarContent = {
+/** Maps the many field spellings models use onto AiModulAjarContent. */
+function normalizeAiModulAjar(result: AiModulAjarContent): AiModulAjarContent {
+  return {
     tujuanPembelajaran: result.tujuanPembelajaran || [],
     pemahamanBermakna: result.pemahamanBermakna || [],
     pertanyaanPemantik: result.pertanyaanPemantik || [],
@@ -203,6 +240,37 @@ export async function generateModulAjarAiContent(
     remedial: result.remedial || [],
     daftarPustaka: result.daftarPustaka || [],
   };
+}
+
+export async function generateModulAjarAiContent(
+  mapel: string,
+  topik: string,
+  fase: string,
+  modelPembelajaran?: string,
+  metodePembelajaran?: string[],
+  onCacheError?: (message: string) => void,
+  context?: ModulAjarPromptContext
+): Promise<AiModulAjarContent> {
+  const prompt = buildPrompt(mapel, topik, fase, modelPembelajaran, metodePembelajaran, context);
+
+  logger.info(`[AI Modul Ajar] Generating: ${mapel} / ${topik} / Fase ${fase}`, 'ModulAjarAI');
+
+  // Generating is a deliberate request for a new document; never replay a cached one.
+  // A document missing these parts is unusable and the template has no
+  // fallback for them. One retry, then a clear error instead of empty sections.
+  let normalized: AiModulAjarContent | null = null;
+  let missing: string[] = [];
+  for (let attempt = 1; attempt <= MAX_CONTENT_ATTEMPTS; attempt++) {
+    // Generating is a deliberate request for a new document; never replay a cached one.
+    const result = await generateGeminiJson<AiModulAjarContent>(prompt, SYSTEM_INSTRUCTION, 'modul-ajar', { bypassCache: true });
+    normalized = normalizeAiModulAjar(result);
+    missing = findMissingModulAjarParts(normalized);
+    if (missing.length === 0) break;
+    logger.warn(`[AI Modul Ajar] Attempt ${attempt} incomplete: ${missing.join(', ')}`, 'ModulAjarAI');
+  }
+  if (!normalized || missing.length > 0) {
+    throw new Error(`AI mengembalikan modul yang belum lengkap (kurang: ${missing.join(', ')}). Silakan susun ulang.`);
+  }
 
   // Simpan draf ke Bank Bersama — non-blocking, tapi error dilaporkan ke UI
   // agar guru tahu draf-nya gagal masuk antrian review admin (bukan diam-diam).
