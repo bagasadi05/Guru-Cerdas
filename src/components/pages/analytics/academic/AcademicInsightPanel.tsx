@@ -1,12 +1,21 @@
 import React from 'react';
 import { Sparkles, AlertTriangle, AlertCircle, Info, CheckCircle2 } from 'lucide-react';
-import type { AcademicInsight } from '../../../../services/academicAnalyticsService';
+import type { AcademicInsight, AcademicInsightResult, InsightAction } from '../../../../services/academicAnalyticsService';
 
 interface AcademicInsightPanelProps {
     insights: AcademicInsight[];
-    isLoading: boolean;
-    onAction?: (action: string) => void;
+    /** null until the teacher asks for an AI analysis. */
+    source: AcademicInsightResult['source'] | null;
+    isAiLoading: boolean;
+    onGenerateAi: () => void;
+    onAction?: (action: InsightAction) => void;
 }
+
+const SOURCE_NOTE: Record<'none' | AcademicInsightResult['source'], string> = {
+    none: 'Dihitung otomatis dari nilai yang sudah masuk.',
+    ai: 'Disusun AI dari ringkasan nilai. Nama siswa tidak dikirim ke AI.',
+    offline: 'AI sedang tidak tersedia, jadi ini hasil hitungan otomatis.',
+};
 
 const SEV_CONFIG: Record<string, { ring: string; bg: string; text: string; iconText: string; icon: React.ElementType }> = {
     high: {
@@ -39,37 +48,38 @@ const SEV_CONFIG: Record<string, { ring: string; bg: string; text: string; iconT
     },
 };
 
-export const AcademicInsightPanel: React.FC<AcademicInsightPanelProps> = ({ insights, isLoading, onAction }) => {
-    if (isLoading) {
-        return (
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 animate-pulse">
-                <div className="flex items-center gap-2 mb-3">
-                    <div className="w-5 h-5 rounded bg-slate-200 dark:bg-slate-700" />
-                    <div className="w-40 h-4 rounded bg-slate-200 dark:bg-slate-700" />
-                </div>
-                <div className="space-y-2">
-                    <div className="h-16 rounded-xl bg-slate-100 dark:bg-slate-800" />
-                    <div className="h-16 rounded-xl bg-slate-100 dark:bg-slate-800" />
-                </div>
-            </div>
-        );
-    }
-
+export const AcademicInsightPanel: React.FC<AcademicInsightPanelProps> = ({
+    insights, source, isAiLoading, onGenerateAi, onAction,
+}) => {
     if (insights.length === 0) return null;
 
     return (
-        <div className="space-y-3">
-            <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-brand-500" />
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Insight Akademik</h3>
+        <div className="space-y-3" aria-busy={isAiLoading}>
+            <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                    <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-brand-500" />
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">Insight Akademik</h3>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{SOURCE_NOTE[source ?? 'none']}</p>
+                </div>
+                <button
+                    type="button"
+                    onClick={onGenerateAi}
+                    disabled={isAiLoading}
+                    className="inline-flex items-center gap-1.5 min-h-[44px] sm:min-h-[36px] px-3 rounded-xl border border-brand-200 dark:border-brand-500/30 text-xs font-semibold text-brand-700 dark:text-brand-300 hover:bg-brand-50 dark:hover:bg-brand-500/10 disabled:opacity-60 disabled:cursor-wait focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                >
+                    <Sparkles className={`w-3.5 h-3.5 ${isAiLoading ? 'animate-pulse' : ''}`} />
+                    {isAiLoading ? 'Menganalisis…' : source === 'ai' ? 'Analisis ulang dengan AI' : 'Analisis dengan AI'}
+                </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {insights.map((ins) => {
+                {insights.map((ins, index) => {
                     const sev = SEV_CONFIG[ins.severity] || SEV_CONFIG.info;
                     const Icon = sev.icon;
                     return (
                         <div
-                            key={ins.id}
+                            key={`${ins.id}-${index}`}
                             className={`rounded-2xl border ${sev.ring} ${sev.bg} p-4`}
                         >
                             <div className="flex items-start gap-3">

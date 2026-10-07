@@ -679,8 +679,7 @@ export const componentStyles = {
     buttonPrimary: cx(
         componentRadius.button,
         shadowClasses.sm,
-        colorClasses.primary.bg,
-        colorClasses.primary.bgHover,
+        'bg-emerald-700 hover:bg-emerald-800',
         'text-white font-semibold',
         transitionClasses.all,
         'active:scale-95'

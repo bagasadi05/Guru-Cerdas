@@ -21,9 +21,9 @@ export const gradeTextColors: Record<BintangGrade, string> = {
 // ─── Aspect Metadata ────────────────────────────────────────────────────────
 
 export const aspectMeta = {
-    ADAB: { icon: Shield, label: 'Adab', color: 'text-indigo-500', bgLight: 'bg-indigo-50 dark:bg-indigo-900/20', borderColor: 'border-indigo-200 dark:border-indigo-800' },
-    KEDISIPLINAN: { icon: AlertTriangle, label: 'Kedisiplinan', color: 'text-amber-500', bgLight: 'bg-amber-50 dark:bg-amber-900/20', borderColor: 'border-amber-200 dark:border-amber-800' },
-    KERAPIAN: { icon: Sparkles, label: 'Kerapian', color: 'text-teal-500', bgLight: 'bg-teal-50 dark:bg-teal-900/20', borderColor: 'border-teal-200 dark:border-teal-800' },
+    ADAB: { icon: Shield, label: 'Adab', color: 'text-indigo-500', bgLight: 'bg-indigo-50 dark:bg-indigo-900/20', borderColor: 'border-indigo-200 dark:border-indigo-800', badgeBg: 'bg-indigo-600' },
+    KEDISIPLINAN: { icon: AlertTriangle, label: 'Kedisiplinan', color: 'text-amber-500', bgLight: 'bg-amber-50 dark:bg-amber-900/20', borderColor: 'border-amber-200 dark:border-amber-800', badgeBg: 'bg-amber-500' },
+    KERAPIAN: { icon: Sparkles, label: 'Kerapian', color: 'text-teal-500', bgLight: 'bg-teal-50 dark:bg-teal-900/20', borderColor: 'border-teal-200 dark:border-teal-800', badgeBg: 'bg-teal-600' },
 } as const;
 
 // ─── Auto-Note Generators ───────────────────────────────────────────────────

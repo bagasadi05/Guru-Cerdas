@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CardTitle, CardDescription } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { PrinterIcon, StarIcon } from '../../Icons';
+import { Heart, Clock, Sparkles } from 'lucide-react';
 import { bintangService, calculateAspectPoints, type BintangGrade } from '../../../services/bintangService';
 import { ViolationRow } from './types';
 import { useToast } from '../../../hooks/useToast';
@@ -23,7 +24,7 @@ interface BintangTabProps {
     violations: ViolationRow[];
 }
 
-/** Bulan berjalan dalam WIB (UTC+7) — hindari off-by-one di 00:00–07:00 WIB. */
+/** Bulan berjalan dalam WIB (UTC+7) - hindari off-by-one di 00:00-07:00 WIB. */
 function getCurrentMonthWib(): string {
     const now = new Date(Date.now() + 7 * 60 * 60 * 1000);
     return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
@@ -209,24 +210,43 @@ export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: 
     );
 };
 
+const getAspectIcon = (title: string) => {
+    switch (title.toLowerCase()) {
+        case 'adab':
+            return <Heart className="w-4 h-4 text-rose-500 shrink-0" />;
+        case 'kedisiplinan':
+            return <Clock className="w-4 h-4 text-blue-500 shrink-0" />;
+        case 'kerapian':
+            return <Sparkles className="w-4 h-4 text-purple-500 shrink-0" />;
+        default:
+            return <StarIcon className="w-4 h-4 text-amber-500 shrink-0" />;
+    }
+};
+
 const AspectCard = ({ title, score, points, notes }: { title: string, score: BintangGrade, points: number, notes?: string }) => {
     return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden flex flex-col shadow-sm">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden flex flex-col shadow-sm transition-all hover:border-slate-300 dark:hover:border-slate-700">
             <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/20">
-                <h3 className="font-bold text-slate-700 dark:text-slate-300">{title}</h3>
-                <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${GRADE_COLORS[score]}`}>
+                <div className="flex items-center gap-2">
+                    {getAspectIcon(title)}
+                    <h3 className="font-bold text-slate-800 dark:text-slate-200 text-base">{title}</h3>
+                </div>
+                <span className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-base shadow-sm ${GRADE_COLORS[score]}`}>
                     {score}
                 </span>
             </div>
-            <div className="p-5 flex-1 flex flex-col">
-                <div className="mb-4">
-                    <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 font-semibold">Total Poin Pelanggaran</p>
-                    <p className="text-2xl font-black text-slate-800 dark:text-slate-100">{points}</p>
+            <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700/50">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-0.5">Total Poin Pelanggaran</p>
+                    <div className="flex items-baseline gap-1.5">
+                        <span className="text-2xl font-black text-slate-800 dark:text-slate-100">{points}</span>
+                        <span className="text-xs text-slate-400">poin</span>
+                    </div>
                 </div>
-                <div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 font-semibold">Catatan</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-300 italic min-h-[40px]">
-                        {notes || '-'}
+                <div className="flex-1">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">Catatan Evaluasi</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-300 italic min-h-[44px] leading-relaxed">
+                        {notes || 'Tidak ada catatan khusus.'}
                     </p>
                 </div>
             </div>

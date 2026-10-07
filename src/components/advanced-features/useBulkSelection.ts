@@ -16,11 +16,20 @@ export interface BulkSelectionState {
 export function useBulkSelection<T extends { id: string }>(
   items: T[]
 ): BulkSelectionState {
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [selection, setSelectedItems] = useState<Set<string>>(new Set());
 
   const allIds = useMemo(() => new Set(items.map((item) => item.id)), [items]);
+  const selectedItems = useMemo(
+    () => new Set([...selection].filter((id) => allIds.has(id))),
+    [selection, allIds],
+  );
+
+  if (selectedItems.size !== selection.size) {
+    setSelectedItems(selectedItems);
+  }
 
   const toggleItem = useCallback((id: string) => {
+    if (!allIds.has(id)) return;
     setSelectedItems((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -30,11 +39,11 @@ export function useBulkSelection<T extends { id: string }>(
       }
       return next;
     });
-  }, []);
+  }, [allIds]);
 
   const toggleAll = useCallback(() => {
     setSelectedItems((prev) => {
-      if (prev.size === allIds.size) {
+      if ([...allIds].every((id) => prev.has(id))) {
         return new Set();
       }
       return new Set(allIds);
@@ -46,8 +55,8 @@ export function useBulkSelection<T extends { id: string }>(
   }, [allIds]);
 
   const selectItems = useCallback((ids: string[]) => {
-    setSelectedItems(new Set(ids));
-  }, []);
+    setSelectedItems(new Set(ids.filter((id) => allIds.has(id))));
+  }, [allIds]);
 
   const clearSelection = useCallback(() => {
     setSelectedItems(new Set());

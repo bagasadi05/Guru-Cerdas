@@ -1,5 +1,5 @@
 /**
- * @fileoverview SchoolStatsGrid — Leadership Dashboard Statistics Widget
+ * @fileoverview SchoolStatsGrid - Leadership Dashboard Statistics Widget
  *
  * Displays school-wide metrics (total students, classes, teachers, attendance)
  * for leadership roles. Self-contained component with its own data fetching,
@@ -78,8 +78,8 @@ const SchoolStatsGrid: React.FC = () => {
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="rounded-3xl bg-white/80 dark:bg-slate-900/60 p-6 animate-pulse border border-slate-200/80 dark:border-slate-700/60">
-            <div className="h-10 w-10 rounded-lg bg-slate-200 dark:bg-slate-700 mb-4" />
+          <div key={i} className="rounded-2xl bg-white/80 dark:bg-slate-900/60 p-6 animate-pulse border border-slate-200/80 dark:border-slate-700/60">
+            <div className="h-10 w-10 rounded-xl bg-slate-200 dark:bg-slate-700 mb-4" />
             <div className="h-8 w-20 bg-slate-200 dark:bg-slate-700 rounded mb-2" />
             <div className="h-4 w-16 bg-slate-100 dark:bg-slate-800 rounded" />
           </div>
@@ -146,16 +146,16 @@ const SchoolStatsGrid: React.FC = () => {
           custom={index}
         >
           <Link to={card.link} className="group block h-full">
-            <div className="bg-white dark:bg-slate-900 rounded-xl p-6 h-full flex flex-col justify-between relative overflow-hidden border transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 border-slate-200/80 dark:border-slate-800">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 h-full flex flex-col justify-between relative overflow-hidden border transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 border-slate-200/80 dark:border-slate-800">
               {/* Hover overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent dark:from-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
               {/* Header: Icon + Badge */}
-              <div className="relative z-10 mb-4 sm:mb-6 flex items-start justify-between gap-2 sm:gap-3">
-                <div className={`w-9 h-9 sm:w-11 sm:h-11 shrink-0 rounded-lg flex items-center justify-center bg-gradient-to-br ${card.color} shadow-sm text-white transform group-hover:scale-105 transition-transform duration-300`}>
+              <div className="relative z-10 mb-4 sm:mb-5 flex items-start justify-between gap-2 sm:gap-3">
+                <div className={`w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl flex items-center justify-center bg-gradient-to-br ${card.color} shadow-sm text-white transform group-hover:scale-105 transition-transform duration-300`}>
                   <card.icon className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
-                <span className={`max-w-[108px] truncate rounded-full px-2.5 py-1 text-xxs font-bold uppercase tracking-[0.12em] ${getToneBadgeClass(card.tone)}`}>
+                <span className={`max-w-[116px] truncate rounded-full px-2.5 py-1 text-xxs font-bold uppercase tracking-[0.12em] whitespace-nowrap shrink-0 ${getToneBadgeClass(card.tone)}`}>
                   {card.statusLabel}
                 </span>
               </div>

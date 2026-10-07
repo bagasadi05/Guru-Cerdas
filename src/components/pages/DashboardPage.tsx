@@ -178,32 +178,38 @@ const DashboardPage: React.FC = () => {
           data && <StatsGrid data={data} currentTime={currentTime} />
         )}
 
-        {/* Unified 2-Column Command Center: Agenda Hari Ini vs Aksi Cepat & Tugas */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-4 mt-4 items-start">
-          {/* Kolom Kiri: Agenda Hari Ini (Jadwal Mengajar + Jadwal PH) */}
-          <div className="space-y-4">
-            <TodayAgendaCard
-              schedule={todaySchedule}
-              currentTime={currentTime}
-              classes={classes}
-            />
+        {/* Unified 2-Column Command Center: Agenda & Jurnal (Left 5/12) + Prioritas & Tugas (Right 7/12) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4 items-stretch">
+          {/* Kolom Kiri (5/12): Agenda Hari Ini + Jurnal Mengajar */}
+          <div className="lg:col-span-5 flex flex-col gap-4">
+            <div className="flex-1 flex flex-col">
+              <TodayAgendaCard
+                schedule={todaySchedule}
+                currentTime={currentTime}
+                classes={classes}
+              />
+            </div>
+            <TodayJournalWidget status={journalStatus} />
+          </div>
+
+          {/* Kolom Kanan (7/12): Prioritas Guru, Pintasan Aksi, & Tenggat Tugas */}
+          <div className="lg:col-span-7 flex flex-col">
             <TodayActionPanel
               data={data}
               isLoading={isLoading}
               currentTime={currentTime}
             />
-            <TodayJournalWidget status={journalStatus} />
-          </div>
-
-          {/* Kolom Kanan: Insight untuk peran manajemen */}
-          <div className="space-y-4">
-            {isGlobalRole && (
-              <Suspense fallback={<CardSkeleton />}>
-                <LazySmartInsightsPanel />
-              </Suspense>
-            )}
           </div>
         </div>
+
+        {/* Full-Width Smart Insights Bento Grid for Management / Admin Roles */}
+        {isGlobalRole && (
+          <div className="mt-4">
+            <Suspense fallback={<CardSkeleton />}>
+              <LazySmartInsightsPanel />
+            </Suspense>
+          </div>
+        )}
       </DashboardSection>
 
       {/* ============================================ */}
@@ -218,12 +224,19 @@ const DashboardPage: React.FC = () => {
       >
         <div className={`grid grid-cols-1 ${isLeadershipOnly ? 'lg:grid-cols-1' : 'lg:grid-cols-2'} gap-4 items-stretch`}>
           {/* AI Insight */}
-          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-sm flex flex-col h-full w-full">
-            <div className="p-4 border-b border-slate-200/80 dark:border-slate-700/60 bg-gradient-to-r from-brand-500/10 to-brand-400/5">
-              <h3 className="flex items-center gap-2 font-semibold text-base text-slate-900 dark:text-white">
-                <BrainCircuitIcon className="w-4 h-4 text-brand-600" />
-                Analisis Cerdas Harian
-              </h3>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col h-full w-full">
+            <div className="p-4 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/50 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-brand-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-brand-600/20">
+                <BrainCircuitIcon className="w-4.5 h-4.5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-slate-900 dark:text-white leading-tight">
+                  Analisis Cerdas Harian
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Ringkasan otomatis kondisi akademik dan kehadiran siswa
+                </p>
+              </div>
             </div>
             <div className="p-4 flex-1">
               <AIInsightWidget dashboardData={data || null} userId={user?.id} />
@@ -244,7 +257,7 @@ const DashboardPage: React.FC = () => {
         collapsible
         defaultOpen={true}
       >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        <div className={`grid grid-cols-1 ${data && data.classes.length > 0 ? 'lg:grid-cols-2' : 'lg:grid-cols-1'} gap-4 items-stretch`}>
           {/* Attendance Chart */}
           <Suspense fallback={<CardSkeleton />}>
             <LazyAttendanceStatsWidget weeklyData={weeklyAttendance} />
@@ -289,7 +302,7 @@ const DashboardPage: React.FC = () => {
         collapsible
         defaultOpen={false}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
+        <div className={`grid grid-cols-1 md:grid-cols-2 ${isLeadershipOnly ? 'lg:grid-cols-2' : 'lg:grid-cols-3'} gap-4 items-stretch`}>
           {/* Wall of Fame */}
           <Suspense fallback={<CardSkeleton />}>
             <LazyWallOfFameWidget data={data} />

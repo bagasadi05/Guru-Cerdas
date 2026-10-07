@@ -210,7 +210,7 @@ Format JSON yang diharapkan:
             toast.error(`Gagal mengambil nilai: ${err instanceof Error ? err.message : 'periksa koneksi lalu coba lagi.'}`);
             return;
         }
-        const allSubjectGrades = dedupeAcademicRecords(rawAllSubjectGrades as never) as { student_id: string; assessment_name?: string; score: number }[];
+        const allSubjectGrades = dedupeAcademicRecords(rawAllSubjectGrades as { student_id: string; subject: string; created_at: string; assessment_name?: string; score: number }[]);
         const allAssessments = [...new Set(allSubjectGrades.map((r) => r.assessment_name || 'Lainnya'))].sort();
         const head = [['No', 'Nama Siswa', ...allAssessments]];
         const tableData = (studentsData || [])

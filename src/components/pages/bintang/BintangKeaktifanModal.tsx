@@ -5,18 +5,18 @@ import { Modal } from '../../ui/Modal';
 import { CustomDropdown } from '../../ui/CustomDropdown';
 import { bintangService } from '../../../services/bintangService';
 import { useToast } from '../../../hooks/useToast';
-import { Star, Info } from 'lucide-react';
+import { Star, HelpCircle, Lightbulb, Presentation, MessageSquare, FileCheck, Zap } from 'lucide-react';
 import { formatLocalDate } from '../../../hooks/dashboard/dashboardHelpers';
 
 // ─── Kategori Aktivitas ────────────────────────────────────────────────────
 
 const ACTIVITY_CATEGORIES = [
-    { value: 'bertanya', label: 'Bertanya', icon: '❓' },
-    { value: 'menjawab', label: 'Menjawab', icon: '💡' },
-    { value: 'presentasi', label: 'Presentasi', icon: '🎤' },
-    { value: 'diskusi', label: 'Diskusi', icon: '💬' },
-    { value: 'tugas_tambahan', label: 'Tugas Tambahan', icon: '📝' },
-    { value: 'lainnya', label: 'Lainnya', icon: '⭐' },
+    { value: 'bertanya', label: 'Bertanya', icon: HelpCircle, badgeColor: 'bg-sky-500' },
+    { value: 'menjawab', label: 'Menjawab', icon: Lightbulb, badgeColor: 'bg-amber-500' },
+    { value: 'presentasi', label: 'Presentasi', icon: Presentation, badgeColor: 'bg-indigo-500' },
+    { value: 'diskusi', label: 'Diskusi', icon: MessageSquare, badgeColor: 'bg-emerald-500' },
+    { value: 'tugas_tambahan', label: 'Tugas Tambahan', icon: FileCheck, badgeColor: 'bg-violet-500' },
+    { value: 'lainnya', label: 'Lainnya', icon: Star, badgeColor: 'bg-teal-500' },
 ] as const;
 
 const QUICK_SUGGESTIONS: Record<string, string[]> = {
@@ -36,7 +36,7 @@ interface BintangKeaktifanModalProps {
     students: Array<{ id: string; name: string }>;
     userId: string;
     onSuccess: () => void;
-    /** Semester yang sedang aktif — diikat ke poin keaktifan baru agar semester lock tetap berlaku. */
+    /** Semester yang sedang aktif, diikat ke poin keaktifan baru agar semester lock tetap berlaku. */
     semesterId?: string | null;
 }
 
@@ -170,11 +170,13 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
         >
             <form onSubmit={handleSubmit} className="space-y-4 pt-2">
                 {/* ─── Info Banner ─────────────────────────────────── */}
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
-                    <Info size={18} className="text-emerald-500 mt-0.5 shrink-0" />
-                    <div className="text-xs text-emerald-700 dark:text-emerald-300">
-                        <p className="font-medium mb-1">⚡ Bagaimana poin keaktifan bekerja?</p>
-                        <p>Setiap <strong>+1 poin</strong> akan <strong>meng-offset poin pelanggaran</strong> siswa (Adab → Disiplin → Kerapian). Semakin banyak poin keaktifan, semakin baik grade BINTANG siswa.</p>
+                <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-700/60">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/20">
+                        <Zap size={18} className="text-white" />
+                    </div>
+                    <div className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <p className="font-semibold text-slate-800 dark:text-white mb-0.5">Bagaimana poin keaktifan bekerja?</p>
+                        <p>Setiap <strong>+1 poin</strong> akan <strong>meng-offset poin pelanggaran</strong> siswa (Adab &rarr; Disiplin &rarr; Kerapian). Semakin banyak poin keaktifan, semakin baik grade BINTANG siswa.</p>
                     </div>
                 </div>
 
@@ -273,25 +275,31 @@ export const BintangKeaktifanModal: React.FC<BintangKeaktifanModalProps> = ({
 
                 {/* ─── Category ────────────────────────────────────── */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                         Kategori Aktivitas
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        {ACTIVITY_CATEGORIES.map(cat => (
-                            <button
-                                key={cat.value}
-                                type="button"
-                                onClick={() => setCategory(cat.value)}
-                                className={`flex items-center gap-2 px-3 py-2.5 min-h-[44px] text-xs font-semibold rounded-xl border transition-all text-left min-w-0 overflow-hidden cursor-pointer active:scale-95 duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
-                                    category === cat.value
-                                        ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 shadow-sm'
-                                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
-                                }`}
-                            >
-                                <span className="flex-shrink-0 text-base">{cat.icon}</span>
-                                <span className="truncate min-w-0 leading-tight">{cat.label}</span>
-                            </button>
-                        ))}
+                        {ACTIVITY_CATEGORIES.map(cat => {
+                            const CatIcon = cat.icon;
+                            const isSelected = category === cat.value;
+                            return (
+                                <button
+                                    key={cat.value}
+                                    type="button"
+                                    onClick={() => setCategory(cat.value)}
+                                    className={`flex items-center gap-2.5 px-3 py-2.5 min-h-[44px] text-xs font-semibold rounded-xl border transition-all text-left min-w-0 overflow-hidden cursor-pointer active:scale-95 duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+                                        isSelected
+                                            ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 shadow-sm'
+                                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
+                                    }`}
+                                >
+                                    <span className={`w-7 h-7 rounded-lg ${cat.badgeColor} flex items-center justify-center shrink-0 text-white shadow-sm`}>
+                                        <CatIcon size={14} />
+                                    </span>
+                                    <span className="truncate min-w-0 leading-tight">{cat.label}</span>
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 

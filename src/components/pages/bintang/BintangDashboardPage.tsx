@@ -3,7 +3,7 @@ import { MotionDiv, AnimatePresence } from '../../ui/MotionComponents';
 import { Star, ClipboardCheck, BarChart3,
     Sparkles, Zap, Send, PlusCircle, Printer,
     ChevronDown, TrendingUp, Eye, FileSpreadsheet,
-    ShieldAlert, Download, RotateCcw, AlertTriangle
+    ShieldAlert, Download, RotateCcw, AlertTriangle, Users, CheckCircle2
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../../hooks/useAuth';
@@ -56,7 +56,7 @@ const getViolationSeverityFromCategory = (category?: string): SeverityLevel | nu
     return null;
 };
 
-/** Bulan berjalan dalam WIB (UTC+7) — hindari off-by-one di 00:00–07:00 WIB. */
+/** Bulan berjalan dalam WIB (UTC+7), hindari off-by-one di 00:00 sampai 07:00 WIB. */
 function getCurrentMonthWib(): string {
     const now = new Date(Date.now() + 7 * 60 * 60 * 1000);
     return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
@@ -945,52 +945,78 @@ const BintangDashboardPage: React.FC = () => {
 
     return (
         <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-            {/* ─── Header ─────────────────────────────────────────────────── */}
-            <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2.5">
-                            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-700 border border-amber-500/20">
-                                <Star size={22} className="fill-amber-500/20" />
+            {/* ─── Hero Header & Filters Card ─────────────────────────────── */}
+            <div className="relative z-20 bg-white dark:bg-slate-800/90 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs">
+                <div className="h-1.5 w-full rounded-t-2xl bg-gradient-to-r from-amber-500 via-emerald-500 to-teal-500" />
+                <div className="p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white shadow-sm shadow-amber-500/25 flex items-center justify-center shrink-0">
+                            <Star size={24} className="fill-white/25" />
+                        </div>
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                                    Program BINTANG
+                                </h1>
+                                {selectedClass && !isLoading && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-700/70 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-600/60">
+                                        <Users size={12} className="text-brand-500" />
+                                        {students.length} Siswa
+                                    </span>
+                                )}
                             </div>
-                            <span>Program BINTANG</span>
-                        </h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                            Bina Tertib &amp; Tanggung Jawab Siswa
-                        </p>
+                            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                                Bina Tertib &amp; Tanggung Jawab Siswa
+                            </p>
+                        </div>
                     </div>
-                </div>
 
-                {/* ─── Filters ────────────────────────────────────────────── */}
-                <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="flex-1 max-w-xs">
-                        <CustomDropdown value={selectedClass} onChange={setSelectedClass} placeholder="Pilih Kelas" options={classes.map(c => ({ value: c.id, label: c.name }))} />
-                    </div>
-                    <div className="flex-1 max-w-xs">
-                        <CustomDropdown value={selectedMonth} onChange={setSelectedMonth} options={
-                            Array.from({ length: 6 }).map((_, i) => {
-                                const nowWib = new Date(Date.now() + 7 * 60 * 60 * 1000);
-                                const d = new Date(nowWib.getUTCFullYear(), nowWib.getUTCMonth() - i, 1);
-                                const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                                const label = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-                                return { value: val, label };
-                            })
-                        } />
+                    {/* ─── Filters ────────────────────────────────────────────── */}
+                    <div className="flex flex-col sm:flex-row gap-2.5 w-full lg:w-auto sm:min-w-[400px]">
+                        <div className="flex-1 min-w-[180px]">
+                            <CustomDropdown
+                                value={selectedClass}
+                                onChange={setSelectedClass}
+                                placeholder="Pilih Kelas"
+                                options={classes.map(c => ({ value: c.id, label: c.name }))}
+                            />
+                        </div>
+                        <div className="flex-1 min-w-[190px]">
+                            <CustomDropdown
+                                value={selectedMonth}
+                                onChange={setSelectedMonth}
+                                options={
+                                    Array.from({ length: 6 }).map((_, i) => {
+                                        const nowWib = new Date(Date.now() + 7 * 60 * 60 * 1000);
+                                        const d = new Date(nowWib.getUTCFullYear(), nowWib.getUTCMonth() - i, 1);
+                                        const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                                        const label = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+                                        return { value: val, label };
+                                    })
+                                }
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* ─── Empty state ────────────────────────────────────────────── */}
             {!selectedClass && (
-                <div className="text-center py-16 text-slate-500 dark:text-slate-400">
-                    <BarChart3 size={48} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" />
-                    <p className="text-lg font-medium">Pilih kelas untuk memulai</p>
-                    <p className="text-sm mt-1">Semua data (ringkasan, poin, evaluasi, pembinaan) ada di satu halaman</p>
+                <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 py-14 px-6 text-center text-slate-500 dark:text-slate-400">
+                    <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 mx-auto mb-3.5 flex items-center justify-center border border-amber-500/20">
+                        <BarChart3 size={28} />
+                    </div>
+                    <p className="text-base sm:text-lg font-bold text-slate-800 dark:text-white">Pilih kelas untuk memulai</p>
+                    <p className="text-xs sm:text-sm mt-1 max-w-md mx-auto">
+                        Semua data ringkasan karakter, poin keaktifan, evaluasi rapor bulanan, dan catatan pembinaan ditampilkan di satu halaman.
+                    </p>
                 </div>
             )}
 
             {selectedClass && isLoading && (
-                <div className="text-center py-16 text-slate-500">Memuat data...</div>
+                <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 py-14 text-center text-slate-500 dark:text-slate-400 text-sm font-medium">
+                    Memuat data karakter kelas...
+                </div>
             )}
 
             {/* ─── Main Content (Tabbed) ──────────────────────────────────── */}
@@ -1003,7 +1029,7 @@ const BintangDashboardPage: React.FC = () => {
                     </TabsList>
 
                     <TabsContent value="rekap" className="mt-6">
-                    <div className="space-y-6">
+                    <div className="space-y-5">
 
                     {/* ══════════════════════════════════════════════════════════
                         1. SCORING INFO BANNER (collapsible)
@@ -1011,32 +1037,62 @@ const BintangDashboardPage: React.FC = () => {
                     <BintangScoringBanner />
 
                     {/* ══════════════════════════════════════════════════════════
-                        2. SUMMARY CARDS (3 Aspek)
+                        2. SUMMARY CARDS (5 Squircle Icon Badge Cards)
                        ══════════════════════════════════════════════════════════ */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5">
                         {(['ADAB', 'KEDISIPLINAN', 'KERAPIAN'] as const).map(aspect => {
                             const data = classSummary[aspect];
                             const meta = aspectMeta[aspect];
                             const Icon = meta.icon;
                             return (
-                                <div key={aspect} className={`rounded-2xl border ${meta.borderColor} ${meta.bgLight} p-4 sm:p-5 transition-all hover:shadow-md`}>
-                                    <div className="flex items-center gap-2.5 mb-3">
-                                        <div className={`p-1.5 rounded-lg ${meta.bgLight}`}>
-                                            <Icon size={18} className={meta.color} />
-                                        </div>
-                                        <span className="font-bold text-sm text-slate-700 dark:text-slate-200">
-                                            {meta.label}
-                                        </span>
+                                <div
+                                    key={aspect}
+                                    className="bg-slate-50/80 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 p-3 sm:p-3.5 flex items-center gap-3 transition-all hover:border-slate-300 dark:hover:border-slate-600"
+                                >
+                                    <div className={`w-11 h-11 rounded-xl ${meta.badgeBg} flex items-center justify-center shrink-0 shadow-sm`}>
+                                        <Icon size={20} className="text-white" />
                                     </div>
-                                    <div className="flex items-end justify-between">
-                                        <div>
-                                            <p className="text-2xl font-bold text-slate-900 dark:text-white">{data.points} <span className="text-sm font-normal text-slate-500">poin</span></p>
-                                            <p className="text-xs text-slate-500 mt-1">{data.count} pelanggaran total kelas</p>
-                                        </div>
+                                    <div className="min-w-0">
+                                        <p className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white leading-tight">
+                                            {data.points} <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">poin</span>
+                                        </p>
+                                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                                            {meta.label} ({data.count})
+                                        </p>
                                     </div>
                                 </div>
                             );
                         })}
+
+                        {/* Card 4: Poin Keaktifan Kelas */}
+                        <div className="bg-slate-50/80 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 p-3 sm:p-3.5 flex items-center gap-3 transition-all hover:border-slate-300 dark:hover:border-slate-600">
+                            <div className="w-11 h-11 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/20">
+                                <Zap size={20} className="text-white" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white leading-tight">
+                                    +{quizPoints.reduce((sum, q) => sum + (q.points || 0), 0)} <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">poin</span>
+                                </p>
+                                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                                    Keaktifan ({quizPoints.length})
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Card 5: Status Rapor Terbit */}
+                        <div className="col-span-2 sm:col-span-1 bg-slate-50/80 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 p-3 sm:p-3.5 flex items-center gap-3 transition-all hover:border-slate-300 dark:hover:border-slate-600">
+                            <div className="w-11 h-11 rounded-xl bg-sky-500 flex items-center justify-center shrink-0 shadow-sm shadow-sky-500/20">
+                                <CheckCircle2 size={20} className="text-white" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white leading-tight">
+                                    {evalHook.evalStats.published}<span className="text-sm font-semibold text-slate-400">/{students.length}</span>
+                                </p>
+                                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                                    Terbit ({evalHook.evalStats.filled} terisi)
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
                     {loadError && (
@@ -1066,9 +1122,9 @@ const BintangDashboardPage: React.FC = () => {
                     )}
 
                     {/* ══════════════════════════════════════════════════════════
-                        3. ACTION BAR — simplified
+                        3. ACTION BAR (simplified)
                        ══════════════════════════════════════════════════════════ */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs">
 
                         {/* Kiri: Aksi Input Utama */}
                         <div className="flex flex-wrap items-center gap-2">
@@ -1093,7 +1149,7 @@ const BintangDashboardPage: React.FC = () => {
                                 <span>+ Pelanggaran</span>
                             </Button>
 
-                            {/* Tombol sekunder — toggle */}
+                            {/* Tombol sekunder (toggle) */}
                             <div className="relative">
                                 <Button
                                     variant="outline"
@@ -1214,20 +1270,25 @@ const BintangDashboardPage: React.FC = () => {
                     {/* ══════════════════════════════════════════════════════════
                         8. COLLAPSIBLE: TREN BULANAN
                        ══════════════════════════════════════════════════════════ */}
-                    <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden">
+                    <div className="rounded-2xl border border-slate-200/80 dark:border-slate-700/60 bg-white dark:bg-slate-900 overflow-hidden shadow-xs">
                         <button
                             type="button"
                             onClick={() => setShowTrendChart(!showTrendChart)}
-                            className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer active:scale-[0.99] duration-150"
+                            className="w-full flex items-center justify-between px-4 py-3.5 sm:px-5 sm:py-4 text-left hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-all cursor-pointer active:scale-[0.99] duration-150"
                         >
                             <div className="flex items-center gap-3">
-                                <TrendingUp size={20} className="text-brand-500" />
+                                <div className="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center shrink-0 shadow-sm shadow-brand-600/20">
+                                    <TrendingUp size={18} className="text-white" />
+                                </div>
                                 <div>
-                                    <p className="font-semibold text-sm text-slate-800 dark:text-white">Tren Bulanan</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">Grafik perkembangan poin per aspek</p>
+                                    <p className="font-bold text-sm text-slate-800 dark:text-white leading-tight">Tren Bulanan</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Grafik perkembangan poin per aspek karakter</p>
                                 </div>
                             </div>
-                            <ChevronDown size={20} className={`text-slate-400 transition-transform duration-300 ${showTrendChart ? 'rotate-180' : ''}`} />
+                            <div className="flex items-center gap-1.5 shrink-0 ml-3 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-medium text-slate-600 dark:text-slate-300">
+                                <span className="hidden sm:inline">{showTrendChart ? 'Tutup' : 'Grafik'}</span>
+                                <ChevronDown size={15} className={`text-slate-500 transition-transform duration-300 ${showTrendChart ? 'rotate-180' : ''}`} />
+                            </div>
                         </button>
 
                         <AnimatePresence>

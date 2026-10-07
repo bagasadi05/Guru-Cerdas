@@ -190,16 +190,16 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
                     custom={index}
                 >
                     <Link to={stat.link} className="group block h-full cursor-pointer active:scale-[0.98] transition-transform duration-150">
-                        <div className={`bg-white dark:bg-slate-900 rounded-xl p-6 h-full flex flex-col justify-between relative overflow-hidden border transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 border-slate-200/80 dark:border-slate-800`}>
+                        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 h-full flex flex-col justify-between relative overflow-hidden border transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 border-slate-200/80 dark:border-slate-800">
                             {/* Hover overlay effect */}
                             <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent dark:from-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                             {/* Icon container */}
-                            <div className="relative z-10 mb-4 sm:mb-6 flex items-start justify-between gap-2 sm:gap-3">
-                                <div className={`${'w-9 h-9 sm:w-11 sm:h-11'} shrink-0 rounded-lg flex items-center justify-center bg-gradient-to-br ${stat.color} shadow-sm text-white transform group-hover:scale-105 transition-transform duration-300`}>
-                                    <stat.icon className={'w-5 h-5 sm:w-6 sm:h-6'} />
+                            <div className="relative z-10 mb-4 sm:mb-5 flex items-start justify-between gap-2 sm:gap-3">
+                                <div className={`w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-xl flex items-center justify-center bg-gradient-to-br ${stat.color} shadow-sm text-white transform group-hover:scale-105 transition-transform duration-300`}>
+                                    <stat.icon className="w-5 h-5 sm:w-6 sm:h-6" />
                                 </div>
-                                <span className={`max-w-[108px] truncate rounded-full px-2.5 py-1 text-xxs font-bold uppercase tracking-[0.12em] ${getToneBadgeClass(stat.tone)}`}>
+                                <span className={`max-w-[116px] truncate rounded-full px-2.5 py-1 text-xxs font-bold uppercase tracking-[0.12em] whitespace-nowrap shrink-0 ${getToneBadgeClass(stat.tone)}`}>
                                     {stat.statusLabel}
                                 </span>
                             </div>

@@ -84,34 +84,34 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
     };
 
     return (
-        <footer className="sticky bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:bottom-6 md:bottom-8 z-30 animate-fade-in-up">
-            <div className="bg-white/90 dark:bg-gray-900/80 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-2xl shadow-black/10 dark:shadow-black/50 mx-auto max-w-4xl ring-1 ring-slate-200 dark:ring-white/10">
-                <div className="flex items-center gap-4">
-                    <div className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                        <p className="text-sm font-medium text-emerald-700 dark:text-emerald-200">{summaryText}</p>
+        <footer className="mt-6 animate-fade-in-up">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-sm mx-auto w-full">
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="px-3.5 py-2 rounded-xl bg-emerald-50/80 dark:bg-emerald-500/10 border border-emerald-200/80 dark:border-emerald-500/20">
+                        <p className="text-xs sm:text-sm font-bold text-emerald-700 dark:text-emerald-300">{summaryText}</p>
                     </div>
                     {(mode !== 'subject_grade' && selectedStudentIds.size > 0) || (mode === 'subject_grade' && gradedCount > 0) ? (
                         <Button
                             variant="ghost"
                             size="sm"
                             onClick={onClearRequest}
-                            className="min-h-[44px] px-3 text-gray-400 hover:text-red-600 dark:hover:text-white hover:bg-red-50 dark:hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                            className="min-h-[44px] px-3 rounded-xl text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 font-semibold"
                         >
-                            <XCircleIcon className="w-4 h-4 mr-1" /> Bersihkan
+                            <XCircleIcon className="w-4 h-4 mr-1.5" /> Bersihkan
                         </Button>
                     ) : null}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
                     {/* Chart Button */}
                     {mode === 'subject_grade' && onShowChart && gradedCount > 0 && (
                         <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             onClick={onShowChart}
-                            className="min-h-[44px] px-3 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 hover:bg-emerald-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                            className="min-h-[44px] px-3.5 rounded-xl border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 font-semibold"
                         >
-                            <BarChartIcon className="w-4 h-4 mr-1" />
+                            <BarChartIcon className="w-4 h-4 mr-1.5 text-emerald-600 dark:text-emerald-400" />
                             Chart
                         </Button>
                     )}
@@ -119,12 +119,12 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                     {/* Export Button */}
                     {mode === 'subject_grade' && scores && students && gradedCount > 0 && (
                         <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
                             onClick={handleExportExcel}
-                            className="min-h-[44px] px-3 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 hover:bg-emerald-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                            className="min-h-[44px] px-3.5 rounded-xl border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 font-semibold"
                         >
-                            <DownloadIcon className="w-4 h-4 mr-1" />
+                            <DownloadIcon className="w-4 h-4 mr-1.5 text-brand-600 dark:text-brand-400" />
                             Export
                         </Button>
                     )}
@@ -132,35 +132,35 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                     {/* Violation Export Button */}
                     {mode === 'violation' && existingViolations && existingViolations.length > 0 && (
                         <DropdownMenu>
-                            <DropdownTrigger className="relative inline-flex items-center gap-2 bg-gradient-to-r from-orange-500/10 to-amber-500/10 border border-orange-500/30 text-orange-500 dark:text-orange-400 hover:from-orange-500/20 hover:to-amber-500/20 hover:border-orange-500/50 transition-all duration-300 text-sm px-3.5 py-2.5 min-h-[44px] rounded-xl font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500">
+                            <DropdownTrigger className="relative inline-flex items-center gap-2 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-all duration-200 text-sm px-3.5 py-2.5 min-h-[44px] rounded-xl font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500">
                                 <DownloadIcon className="w-4 h-4" />
                                 <span>Export Data</span>
-                                <span className="absolute -top-2 -right-2 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xxs font-bold rounded-full bg-orange-500 text-white shadow-sm">
+                                <span className="ml-0.5 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xxs font-bold rounded-full bg-amber-500 text-white shadow-sm">
                                     {existingViolations.length}
                                 </span>
                             </DropdownTrigger>
                             <DropdownContent className="min-w-[180px]">
-                                <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
-                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Export {existingViolations.length} pelanggaran</p>
+                                <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-700">
+                                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Export {existingViolations.length} pelanggaran</p>
                                 </div>
                                 <DropdownItem
                                     onClick={() => handleViolationExport('pdf')}
-                                    icon={<FileTextIcon className="w-4 h-4 text-red-500" />}
+                                    icon={<FileTextIcon className="w-4 h-4 text-rose-500" />}
                                     className="gap-3"
                                 >
                                     <div>
                                         <p className="font-medium">PDF (Formal)</p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">Laporan formal dengan kop</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">Laporan formal dengan kop</p>
                                     </div>
                                 </DropdownItem>
                                 <DropdownItem
                                     onClick={() => handleViolationExport('excel')}
-                                    icon={<FileSpreadsheetIcon className="w-4 h-4 text-green-600" />}
+                                    icon={<FileSpreadsheetIcon className="w-4 h-4 text-emerald-600" />}
                                     className="gap-3"
                                 >
                                     <div>
                                         <p className="font-medium">Excel</p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">Data terstruktur untuk analisis</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">Data terstruktur untuk analisis</p>
                                     </div>
                                 </DropdownItem>
                             </DropdownContent>
@@ -171,9 +171,9 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                         <Button
                             onClick={onShowAdjustment}
                             variant="outline"
-                            className="w-full sm:w-auto min-h-[44px] px-4 font-bold border-brand-200 dark:border-brand-900 bg-white dark:bg-gray-900 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/20 shadow-sm flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                            className="w-full sm:w-auto min-h-[44px] px-4 rounded-xl font-bold border-brand-200 dark:border-brand-800 bg-brand-50/70 dark:bg-brand-500/10 text-brand-700 dark:text-brand-300 hover:bg-brand-100 dark:hover:bg-brand-500/20 shadow-sm flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                         >
-                            <SparklesIcon className="w-4 h-4 text-brand-600 dark:text-brand-400 animate-pulse" />
+                            <SparklesIcon className="w-4 h-4 text-brand-600 dark:text-brand-400" />
                             Katrol & Pratinjau
                         </Button>
                     )}
@@ -181,7 +181,7 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                     {mode === 'subject_grade' && selectedStudentIds.size > 0 && onDeleteSelected && (
                         <Button
                             onClick={onDeleteSelected}
-                            className="w-full sm:w-auto min-h-[44px] px-4 font-bold tracking-wide text-white bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-600 hover:to-red-600 shadow-sm flex items-center justify-center gap-2 transition-all duration-300 transform hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                            className="w-full sm:w-auto min-h-[44px] px-4 rounded-xl font-bold tracking-wide text-white bg-rose-600 hover:bg-rose-700 shadow-sm flex items-center justify-center gap-2 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
                         >
                             <XCircleIcon className="w-4 h-4 text-white" />
                             Hapus Nilai Terpilih ({selectedStudentIds.size})
@@ -191,12 +191,12 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
                     {isExporting ? (
                         <div className="w-full sm:w-64 text-center">
                             <div className="relative pt-1">
-                                <div className="overflow-hidden h-2 mb-2 text-xs flex rounded-full bg-white/10">
-                                    <div style={{ width: exportProgress }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-emerald-700 to-emerald-800 transition-all duration-500 relative">
+                                <div className="overflow-hidden h-2 mb-2 text-xs flex rounded-full bg-slate-100 dark:bg-slate-800">
+                                    <div style={{ width: exportProgress }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-emerald-600 transition-all duration-500 relative">
                                         <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
                                     </div>
                                 </div>
-                                <p className="text-xs font-bold text-emerald-300 animate-pulse">{exportProgress} - Memproses...</p>
+                                <p className="text-xs font-bold text-emerald-600 dark:text-emerald-300 animate-pulse">{exportProgress} - Memproses...</p>
                             </div>
                         </div>
                     ) : null}
@@ -207,3 +207,4 @@ export const Step2_Footer: React.FC<Step2_FooterProps> = ({
         </footer>
     );
 };
+

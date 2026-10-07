@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { CardTitle, CardDescription } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { PlusIcon, ShieldAlertIcon, PencilIcon, TrashIcon, AlertTriangleIcon, CameraIcon, BellIcon, FilterIcon, FileTextIcon, FileSpreadsheetIcon, DownloadIcon, LockIcon, UserIcon, MessageCircle } from 'lucide-react';
+import { PlusIcon, ShieldAlertIcon, PencilIcon, TrashIcon, AlertTriangleIcon, CameraIcon, BellIcon, FilterIcon, FileTextIcon, FileSpreadsheetIcon, DownloadIcon, LockIcon, UserIcon, MessageCircle, AlertCircle } from 'lucide-react';
 import { ViolationRow } from './types';
 import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../../ui/DropdownMenu';
 import { exportViolationsToPDF, exportViolationsToExcel } from '../../../services/violationExport';
@@ -12,14 +12,22 @@ import { useSemester } from '../../../contexts/SemesterContext';
 
 // Severity levels configuration
 export const SEVERITY_LEVELS = {
-    ringan: { label: 'Ringan', color: 'yellow', points: '1-10', icon: '⚠️', bgClass: 'bg-yellow-50 dark:bg-yellow-900/20', textClass: 'text-yellow-700 dark:text-yellow-400', borderClass: 'border-yellow-200 dark:border-yellow-800' },
-    sedang: { label: 'Sedang', color: 'orange', points: '11-25', icon: '🔶', bgClass: 'bg-orange-50 dark:bg-orange-900/20', textClass: 'text-orange-700 dark:text-orange-400', borderClass: 'border-orange-200 dark:border-orange-800' },
-    berat: { label: 'Berat', color: 'red', points: '26+', icon: '🔴', bgClass: 'bg-red-50 dark:bg-red-900/20', textClass: 'text-red-700 dark:text-red-400', borderClass: 'border-red-200 dark:border-red-800' },
+    ringan: { label: 'Ringan', color: 'yellow', points: '1-10', bgClass: 'bg-yellow-50 dark:bg-yellow-900/20', textClass: 'text-yellow-700 dark:text-yellow-400', borderClass: 'border-yellow-200 dark:border-yellow-800' },
+    sedang: { label: 'Sedang', color: 'orange', points: '11-25', bgClass: 'bg-orange-50 dark:bg-orange-900/20', textClass: 'text-orange-700 dark:text-orange-400', borderClass: 'border-orange-200 dark:border-orange-800' },
+    berat: { label: 'Berat', color: 'red', points: '26+', bgClass: 'bg-red-50 dark:bg-red-900/20', textClass: 'text-red-700 dark:text-red-400', borderClass: 'border-red-200 dark:border-red-800' },
 } as const;
 
 export type SeverityLevel = keyof typeof SEVERITY_LEVELS;
-const isSeverityLevel = (value: string | null | undefined): value is SeverityLevel =>
+export const isSeverityLevel = (value: string | null | undefined): value is SeverityLevel =>
     !!value && value in SEVERITY_LEVELS;
+
+export const renderSeverityIcon = (severity: SeverityLevel, className = "w-4 h-4 shrink-0") => {
+    switch (severity) {
+        case 'berat': return <ShieldAlertIcon className={`${className} text-rose-600 dark:text-rose-400`} />;
+        case 'sedang': return <AlertTriangleIcon className={`${className} text-orange-600 dark:text-orange-400`} />;
+        default: return <AlertCircle className={`${className} text-amber-600 dark:text-amber-400`} />;
+    }
+};
 
 
 
@@ -71,7 +79,7 @@ const ThresholdAlert: React.FC<{ totalPoints: number; studentName?: string }> = 
     const alertStyles = {
         warning: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800',
         danger: 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800',
-        critical: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 animate-pulse',
+        critical: 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-800',
     };
 
     const textStyles = {
@@ -118,28 +126,36 @@ const ViolationStats: React.FC<{ violations: ViolationRow[] }> = ({ violations }
         return { totalPoints, bySeverity, notified, total: violations.length };
     }, [violations]);
 
+    const statItems = [
+        { label: 'Total Poin', value: stats.totalPoints, badgeBg: 'bg-red-700', icon: ShieldAlertIcon },
+        { label: 'Ringan', value: stats.bySeverity.ringan, badgeBg: 'bg-amber-500', icon: AlertCircle },
+        { label: 'Sedang', value: stats.bySeverity.sedang, badgeBg: 'bg-orange-500', icon: AlertTriangleIcon },
+        { label: 'Berat', value: stats.bySeverity.berat, badgeBg: 'bg-rose-600', icon: ShieldAlertIcon },
+        { label: 'Notifikasi', value: stats.notified, badgeBg: 'bg-blue-600', icon: BellIcon },
+    ];
+
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3 mb-6">
-            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30">
-                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.totalPoints}</p>
-                <p className="text-[11px] text-red-500 truncate" title="Total Poin">Total Poin</p>
-            </div>
-            <div className="p-3 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-800/30">
-                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.bySeverity.ringan}</p>
-                <p className="text-[11px] text-yellow-500 truncate" title="Ringan">Ringan</p>
-            </div>
-            <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800/30">
-                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.bySeverity.sedang}</p>
-                <p className="text-[11px] text-orange-500 truncate" title="Sedang">Sedang</p>
-            </div>
-            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800/30">
-                <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">{stats.bySeverity.berat}</p>
-                <p className="text-[11px] text-rose-500 truncate" title="Berat">Berat</p>
-            </div>
-            <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
-                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.notified}</p>
-                <p className="text-[11px] text-blue-500 truncate" title="Notifikasi">Notifikasi</p>
-            </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+            {statItems.map((item) => (
+                <div
+                    key={item.label}
+                    className={`bg-slate-50/80 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 p-3 sm:p-3.5 flex items-center gap-3 transition-all hover:border-slate-300 dark:hover:border-slate-600 shadow-xs ${
+                        item.label === 'Notifikasi' ? 'col-span-2 sm:col-span-1 lg:col-span-1' : ''
+                    }`}
+                >
+                    <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${item.badgeBg}`}>
+                        <item.icon className="w-5 h-5 text-white" strokeWidth={2.2} />
+                    </div>
+                    <div className="flex flex-col justify-center min-w-0">
+                        <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight truncate">
+                            {item.value}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate mt-0.5" title={item.label}>
+                            {item.label}
+                        </p>
+                    </div>
+                </div>
+            ))}
         </div>
     );
 };
@@ -208,7 +224,7 @@ const ViolationCard: React.FC<{
             {/* Header */}
             <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
-                    <span className="text-xl">{severity.icon}</span>
+                    {renderSeverityIcon(violation.severity as SeverityLevel)}
                     <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${severity.bgClass} ${severity.textClass} border ${severity.borderClass}`}>
                         {severity.label}
                     </span>
@@ -219,11 +235,11 @@ const ViolationCard: React.FC<{
                         </span>
                     )}
                 </div>
-                <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity">
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+                        className="h-10 w-10 sm:h-8 sm:w-8 min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
                         onClick={handleSendWhatsApp}
                         disabled={!isOnline}
                         title={parentPhone ? `Kirim WA ke Orang Tua (${parentPhone})` : 'Nomor WA orang tua belum diisi'}
@@ -235,7 +251,7 @@ const ViolationCard: React.FC<{
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-blue-500 hover:text-blue-600"
+                            className="h-10 w-10 sm:h-8 sm:w-8 min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 text-blue-500 hover:text-blue-600"
                             onClick={onNotifyParent}
                             disabled={!isOnline}
                             title="Notifikasi Portal Siswa"
@@ -243,10 +259,10 @@ const ViolationCard: React.FC<{
                             <BellIcon className="h-4 w-4" />
                         </Button>
                     )}
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit} disabled={!isOnline || !canModify} title={!canModify ? 'Semester Terkunci' : 'Edit'} aria-label={!canModify ? 'Semester Terkunci' : 'Edit pelanggaran'}>
+                    <Button variant="ghost" size="icon" className="h-10 w-10 sm:h-8 sm:w-8 min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0" onClick={onEdit} disabled={!isOnline || !canModify} title={!canModify ? 'Semester Terkunci' : 'Edit'} aria-label={!canModify ? 'Semester Terkunci' : 'Edit pelanggaran'}>
                         {canModify ? <PencilIcon className="h-4 w-4" /> : <LockIcon className="h-4 w-4 text-amber-500" />}
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 dark:text-red-400" onClick={onDelete} disabled={!isOnline || !canModify} title={!canModify ? 'Semester Terkunci' : 'Hapus'} aria-label={!canModify ? 'Semester Terkunci' : 'Hapus pelanggaran'}>
+                    <Button variant="ghost" size="icon" className="h-10 w-10 sm:h-8 sm:w-8 min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 text-red-600 dark:text-red-400" onClick={onDelete} disabled={!isOnline || !canModify} title={!canModify ? 'Semester Terkunci' : 'Hapus'} aria-label={!canModify ? 'Semester Terkunci' : 'Hapus pelanggaran'}>
                         <TrashIcon className="h-4 w-4" />
                     </Button>
                 </div>
@@ -264,7 +280,7 @@ const ViolationCard: React.FC<{
                         <UserIcon className="w-3 h-3 text-slate-400" />
                         Dicatat oleh: {violation.recorded_by_name}
                         {!isCreator && (
-                            <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                            <span className="ml-1.5 px-1.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                                 Guru Lain
                             </span>
                         )}
@@ -289,8 +305,9 @@ const ViolationCard: React.FC<{
 
             {/* Keterangan / Konteks */}
             {violation.context_notes && (
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 pt-3 border-t border-gray-200 dark:border-gray-700">
-                    📄 {violation.context_notes}
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 pt-3 border-t border-gray-200 dark:border-gray-700 flex items-start gap-2">
+                    <FileTextIcon className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" />
+                    <span>{violation.context_notes}</span>
                 </p>
             )}
         </div>
@@ -407,9 +424,9 @@ export const ViolationsTab: React.FC<ViolationsTabProps> = ({
                     className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                 >
                     <option value="all">Semua Tingkat</option>
-                    <option value="ringan">⚠️ Ringan</option>
-                    <option value="sedang">🔶 Sedang</option>
-                    <option value="berat">🔴 Berat</option>
+                    <option value="ringan">Ringan</option>
+                    <option value="sedang">Sedang</option>
+                    <option value="berat">Berat</option>
                 </select>
 
                 {severityFilter !== 'all' && (

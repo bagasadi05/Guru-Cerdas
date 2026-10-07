@@ -9,6 +9,7 @@ import { StudentRow, ClassRow, ConfirmModalState } from './types';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { AlertCircleIcon } from '../Icons';
+import { buildStudentExportRows, studentExportColumns } from './studentExportData';
 
 interface StudentsModalStackProps {
   confirmModalState: ConfirmModalState;
@@ -111,18 +112,9 @@ export const StudentsModalStack: React.FC<StudentsModalStackProps> = ({
       <ExportPreviewModal
         isOpen={isExportModalOpen}
         onClose={onCloseExportModal}
-        data={studentsForExport}
-        columns={[
-          { key: 'name', label: 'Nama Lengkap' },
-          { key: 'gender', label: 'Jenis Kelamin' },
-          { key: 'nis', label: 'NIS' },
-          { key: 'nisn', label: 'NISN' },
-          { key: 'birth_date', label: 'Tanggal Lahir' },
-          { key: 'class_id', label: 'Kelas' },
-          { key: 'parent_name', label: 'Nama Orang Tua' },
-          { key: 'parent_phone', label: 'No. WhatsApp Orang Tua' },
-          { key: 'access_code', label: 'Kode Akses' },
-        ]}
+        data={buildStudentExportRows(studentsForExport, classes)}
+        columns={studentExportColumns}
+        supportedFormats={['xlsx', 'csv']}
         onExport={onExportConfirm}
         title="Ekspor Data Siswa"
       />
@@ -131,7 +123,7 @@ export const StudentsModalStack: React.FC<StudentsModalStackProps> = ({
         isOpen={isImportModalOpen}
         onClose={onCloseImportModal}
         onImport={onImportStudents}
-        title="Import Data Siswa"
+        title="Impor Data Siswa"
       />
 
       {isIDCardModalOpen && (

@@ -38,6 +38,12 @@ interface AnalyticsData {
         totalStudentsWithGrades: number;
         distribution: { label: string; range: string; count: number; percentage: number }[];
     };
+    academic: {
+        kktp: number;
+        semesterName: string | null;
+        subjectStats: { subject: string; studentCount: number; assessmentCount: number; average: number; lowest: number; highest: number; kktpStatus: 'safe' | 'warning' | 'critical' }[];
+        studentsBelowKKTP: { studentName: string; className: string; subject: string; average: number; gap: number }[];
+    };
     taskStats: {
         total: number;
         todo: number;
@@ -242,19 +248,51 @@ export const generateAnalyticsPdf = async (data: AnalyticsData, options: ExportO
         afterTable();
     }
 
-    // ===== 4. Distribusi Nilai Akademik =====
+    // ===== 4. Nilai Akademik =====
     if (options.grades) {
-        heading('Distribusi Nilai Akademik');
+        const { kktp, semesterName, subjectStats, studentsBelowKKTP } = data.academic;
+        heading('Nilai Akademik');
         doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...MUTED);
-        doc.text(`Rata-rata nilai: ${(data.gradeStats.overallAverage ?? 0).toFixed(1)} - ${data.gradeStats.totalStudentsWithGrades} siswa memiliki nilai`, MARGIN, y);
+        doc.text(
+            `Cakupan: ${semesterName ? `seluruh semester ${semesterName}` : 'semua semester'} - KKTP ${kktp}. Rata-rata ${(data.gradeStats.overallAverage ?? 0).toFixed(0)} dari ${data.gradeStats.totalStudentsWithGrades} siswa bernilai.`,
+            MARGIN, y,
+        );
         y += 4;
         autoTable(doc, tableBase({
             startY: y,
-            head: [['Kategori', 'Rentang', 'Jumlah Siswa', 'Persentase']],
-            body: data.gradeStats.distribution.map((d) => [d.label, d.range, `${d.count}`, `${d.percentage.toFixed(1)}%`]),
+            head: [['Predikat', 'Rentang', 'Jumlah Siswa', 'Persentase']],
+            body: data.gradeStats.distribution.map((d) => [d.label, d.range, `${d.count}`, `${d.percentage.toFixed(0)}%`]),
             columnStyles: { 0: { fontStyle: 'bold', cellWidth: 55 }, 1: { cellWidth: 45 }, 2: { halign: 'right' }, 3: { halign: 'right' } },
         }));
         afterTable();
+
+        if (subjectStats.length > 0) {
+            ensureSpace(20);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...TEXT);
+            doc.text('Rekap per Mata Pelajaran', MARGIN, y);
+            const statusLabel = { safe: 'Tuntas', warning: 'Di bawah KKTP', critical: 'Jauh di bawah KKTP' } as const;
+            autoTable(doc, tableBase({
+                startY: y + 2,
+                head: [['Mata Pelajaran', 'Siswa', 'Penilaian', 'Rata-rata', 'Rentang', 'Status']],
+                body: subjectStats.map((s) => [s.subject, `${s.studentCount}`, `${s.assessmentCount}`, `${s.average}`, `${s.lowest}-${s.highest}`, statusLabel[s.kktpStatus]]),
+                columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'center' } },
+            }));
+            afterTable();
+        }
+
+        if (studentsBelowKKTP.length > 0) {
+            ensureSpace(20);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...TEXT);
+            doc.text(`Siswa di Bawah KKTP (${new Set(studentsBelowKKTP.map((s) => s.studentName + s.className)).size} siswa)`, MARGIN, y);
+            autoTable(doc, tableBase({
+                startY: y + 2,
+                head: [['No', 'Nama Siswa', 'Kelas', 'Mata Pelajaran', 'Rata-rata', 'Selisih']],
+                body: studentsBelowKKTP.map((s, i) => [`${i + 1}`, s.studentName, s.className, s.subject, `${s.average}`, `${s.gap}`]),
+                headStyles: { fillColor: [180, 83, 9], textColor: 255, fontStyle: 'bold', fontSize: 9, cellPadding: 2.8 },
+                columnStyles: { 0: { cellWidth: 10, halign: 'center' }, 1: { fontStyle: 'bold' }, 4: { halign: 'right' }, 5: { halign: 'right' } },
+            }));
+            afterTable();
+        }
     }
 
     // ===== 5. Catatan Pelanggaran =====

@@ -358,7 +358,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
     const noSubject = subjectOptions.length === 0;
 
     return (
-        <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg">
+        <Card>
             <CardHeader>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex items-center gap-2">
@@ -451,7 +451,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                     </div>
                     <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                            Jenis Penilaian {phOnly && <span className="normal-case font-normal text-slate-400">(filter PH)</span>}
+                            Jenis Penilaian {phOnly && <span className="normal-case font-normal text-slate-500">(filter PH)</span>}
                         </label>
                         <Select
                             value={assessmentFilter}
@@ -475,19 +475,19 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                 {/* Stats summary */}
                 {effectiveSubject && totalConsidered > 0 && (
                     <div className="grid grid-cols-3 gap-3 mb-5">
-                        <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-center">
+                        <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 text-center">
                             <p className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">
                                 {totalConsidered}
                             </p>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                                 Total Siswa
                             </p>
                         </div>
                         <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-center">
-                            <p className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                            <p className="text-xl sm:text-2xl font-bold text-emerald-700 dark:text-emerald-400">
                                 {totalConsidered - missingStudents.length}
                             </p>
-                            <p className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">
+                            <p className="text-xs text-emerald-700 dark:text-emerald-400/80 mt-0.5">
                                 Sudah Dinilai
                             </p>
                         </div>
@@ -495,7 +495,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                             <p className="text-xl sm:text-2xl font-bold text-rose-600 dark:text-rose-400">
                                 {missingStudents.length}
                             </p>
-                            <p className="text-[11px] text-rose-600/80 dark:text-rose-400/80 mt-0.5">
+                            <p className="text-xs text-rose-700 dark:text-rose-400/80 mt-0.5">
                                 Belum Dinilai
                             </p>
                         </div>
@@ -506,20 +506,20 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                 {effectiveSubject && totalConsidered > 0 && (
                     <div className="mb-5">
                         <div className="flex justify-between text-xs mb-2 font-semibold uppercase tracking-wider">
-                            <span className="text-slate-400">Kelengkapan</span>
+                            <span className="text-slate-500">Kelengkapan</span>
                             <span
                                 className={
                                     completionPercentage >= 80
-                                        ? 'text-emerald-600'
+                                        ? 'text-emerald-700'
                                         : completionPercentage >= 50
-                                            ? 'text-amber-600'
+                                            ? 'text-amber-700'
                                             : 'text-rose-600'
                                 }
                             >
                                 {completionPercentage}%
                             </span>
                         </div>
-                        <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+                        <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
                             <div
                                 className={`h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r ${completionPercentage >= 80
                                     ? 'from-emerald-500 to-emerald-600'
@@ -536,7 +536,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                 {/* Body */}
                 {!effectiveSubject ? (
                     <div className="py-10 text-center">
-                        <div className="w-14 h-14 mx-auto rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
+                        <div className="w-14 h-14 mx-auto rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mb-3">
                             <ClipboardPenIcon className="w-6 h-6 text-slate-400" />
                         </div>
                         <p className="text-sm font-medium text-slate-900 dark:text-white">
@@ -556,7 +556,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                         <div className="w-14 h-14 mx-auto rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-3">
                             <CheckCircleIcon className="w-7 h-7 text-emerald-500" />
                         </div>
-                        <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                        <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
                             Semua siswa sudah dinilai
                         </p>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -588,7 +588,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                                     key={className}
                                     className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden"
                                 >
-                                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 px-4 py-2">
+                                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 px-4 py-2">
                                         <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                                             {className}
                                             <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">
@@ -628,7 +628,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                                                             </p>
                                                         )}
                                                 </div>
-                                                <span className="flex-shrink-0 text-[11px] font-semibold uppercase tracking-wide px-2 py-1 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+                                                <span className="flex-shrink-0 text-xs font-semibold uppercase tracking-wide px-2 py-1 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
                                                     Belum
                                                 </span>
                                             </li>

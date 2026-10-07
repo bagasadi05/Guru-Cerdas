@@ -50,6 +50,7 @@ interface ViolationSpikeData {
     schoolAvg: number;
     pctAboveAvg: number;
     spike: boolean;
+    topClasses?: { className: string; count: number }[];
 }
 
 interface InsightCardData {
@@ -85,7 +86,7 @@ const SEV: Record<
         bg: 'bg-gradient-to-br from-rose-50/80 via-white to-rose-50/30 dark:from-rose-950/20 dark:via-slate-900/80 dark:to-rose-950/10',
         hover: 'hover:border-rose-300 dark:hover:border-rose-700/60',
         title: 'text-rose-950 dark:text-rose-100',
-        iconBox: 'bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-500/20',
+        iconBox: 'bg-rose-500 text-white shadow-sm shadow-rose-500/25',
         badge: 'bg-rose-100/90 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border border-rose-200/60 dark:border-rose-800/40',
         btn: 'bg-rose-600 hover:bg-rose-700 text-white shadow-sm',
     },
@@ -94,7 +95,7 @@ const SEV: Record<
         bg: 'bg-gradient-to-br from-amber-50/80 via-white to-amber-50/30 dark:from-amber-950/20 dark:via-slate-900/80 dark:to-amber-950/10',
         hover: 'hover:border-amber-300 dark:hover:border-amber-700/60',
         title: 'text-amber-950 dark:text-amber-100',
-        iconBox: 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/20',
+        iconBox: 'bg-amber-500 text-white shadow-sm shadow-amber-500/25',
         badge: 'bg-amber-100/90 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/40',
         btn: 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm',
     },
@@ -103,7 +104,7 @@ const SEV: Record<
         bg: 'bg-gradient-to-br from-sky-50/80 via-white to-sky-50/30 dark:from-sky-950/20 dark:via-slate-900/80 dark:to-sky-950/10',
         hover: 'hover:border-sky-300 dark:hover:border-sky-700/60',
         title: 'text-sky-950 dark:text-sky-100',
-        iconBox: 'bg-sky-500/10 dark:bg-sky-500/20 text-sky-700 dark:text-sky-400 border border-sky-500/20',
+        iconBox: 'bg-sky-500 text-white shadow-sm shadow-sky-500/25',
         badge: 'bg-sky-100/90 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 border border-sky-200/60 dark:border-sky-800/40',
         btn: 'bg-sky-600 hover:bg-sky-700 text-white shadow-sm',
     },
@@ -112,7 +113,7 @@ const SEV: Record<
         bg: 'bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/30 dark:from-emerald-950/20 dark:via-slate-900/80 dark:to-emerald-950/10',
         hover: 'hover:border-emerald-300 dark:hover:border-emerald-700/60',
         title: 'text-emerald-950 dark:text-emerald-100',
-        iconBox: 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20',
+        iconBox: 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/25',
         badge: 'bg-emerald-100/90 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40',
         btn: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm',
     },
@@ -237,6 +238,10 @@ export const SmartInsightsPanel: React.FC = () => {
                     schoolAvg: Number(avgVio.toFixed(1)),
                     pctAboveAvg: pctAbove,
                     spike,
+                    topClasses: sortedVioClasses.slice(0, 3).map(([cid, cnt]) => ({
+                        className: className.get(cid) || 'Kelas',
+                        count: cnt,
+                    })),
                 },
                 cta: { label: 'Lihat Analisis Kelas', onClick: () => navigate('/analytics') },
             });
@@ -366,7 +371,7 @@ export const SmartInsightsPanel: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800/80 bg-white/60 dark:bg-slate-900/60 p-5 mb-6 animate-pulse text-sm text-slate-400 flex items-center gap-3">
+            <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white/60 dark:bg-slate-900/60 p-5 animate-pulse text-sm text-slate-400 flex items-center gap-3">
                 <div className="w-5 h-5 rounded-full bg-slate-300 dark:bg-slate-700 animate-spin" />
                 <span>Menganalisis anomali dan data madrasah...</span>
             </div>
@@ -376,12 +381,12 @@ export const SmartInsightsPanel: React.FC = () => {
     const activeAlertCount = insights.filter(i => i.severity === 'high' || i.severity === 'warning').length;
 
     return (
-        <div className="mb-6">
+        <div>
             {/* Header Section */}
             <div className="flex items-center justify-between gap-2 mb-3.5">
-                <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-600/10 dark:from-brand-400/20 dark:to-brand-500/10 flex items-center justify-center border border-brand-500/20 shadow-sm">
-                        <Sparkles className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-brand-500/25">
+                        <Sparkles className="w-5 h-5" />
                     </div>
                     <div>
                         <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white leading-tight">
@@ -398,19 +403,19 @@ export const SmartInsightsPanel: React.FC = () => {
                         type="button"
                         onClick={() => refetch()}
                         disabled={isFetching}
-                        className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer disabled:opacity-50"
+                        className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer disabled:opacity-50"
                         title="Segarkan data insight"
                         aria-label="Segarkan data insight"
                     >
                         <RotateCw className={`w-4 h-4 ${isFetching ? 'animate-spin text-brand-600' : ''}`} />
                     </button>
                     {activeAlertCount > 0 ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-500/20">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 border border-rose-500/20 whitespace-nowrap shrink-0">
                             <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
                             {activeAlertCount} Perlu Perhatian
                         </span>
                     ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 whitespace-nowrap shrink-0">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                             Kondisi Normal
                         </span>
@@ -419,7 +424,7 @@ export const SmartInsightsPanel: React.FC = () => {
             </div>
 
             {/* Bento Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-stretch">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
                 {insights.map((ins, index) => {
                     const sev = SEV[ins.severity] || SEV.info;
                     const Icon = ins.icon;
@@ -430,14 +435,14 @@ export const SmartInsightsPanel: React.FC = () => {
                     return (
                         <div
                             key={ins.id}
-                            className={`rounded-3xl border ${sev.ring} ${sev.bg} ${sev.hover} p-4 sm:p-5 flex flex-col justify-between transition-all duration-200 shadow-sm ${colSpanClass}`}
+                            className={`rounded-2xl border ${sev.ring} ${sev.bg} ${sev.hover} p-4 sm:p-5 flex flex-col justify-between transition-all duration-200 shadow-sm ${colSpanClass}`}
                         >
                             {/* Card Top: Header & Badge */}
                             <div>
                                 <div className="flex items-start justify-between gap-3 mb-2">
-                                    <div className="flex items-center gap-2.5">
-                                        <div className={`w-9 h-9 rounded-2xl ${sev.iconBox} flex items-center justify-center shrink-0`}>
-                                            <Icon className="w-4.5 h-4.5" />
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-xl ${sev.iconBox} flex items-center justify-center shrink-0`}>
+                                            <Icon className="w-5 h-5" />
                                         </div>
                                         <div>
                                             <h4 className={`text-sm sm:text-[15px] font-bold ${sev.title} leading-snug`}>
@@ -497,6 +502,37 @@ export const SmartInsightsPanel: React.FC = () => {
                                                 />
                                             </div>
                                         </div>
+
+                                        {ins.spikeData.topClasses && ins.spikeData.topClasses.length > 1 && (
+                                            <div className="pt-2 space-y-1.5">
+                                                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-0.5">
+                                                    Distribusi Kelas Tertinggi
+                                                </span>
+                                                {ins.spikeData.topClasses.map((tc, tcIdx) => (
+                                                    <div
+                                                        key={tc.className}
+                                                        onClick={() => navigate('/analytics')}
+                                                        className="flex items-center justify-between p-2 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800/70 hover:border-amber-300 dark:hover:border-amber-700/60 transition-all cursor-pointer"
+                                                    >
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`w-5 h-5 rounded-lg text-[10px] font-extrabold flex items-center justify-center ${
+                                                                tcIdx === 0
+                                                                    ? 'bg-rose-500 text-white'
+                                                                    : 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
+                                                            }`}>
+                                                                #{tcIdx + 1}
+                                                            </span>
+                                                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                                                {tc.className}
+                                                            </span>
+                                                        </div>
+                                                        <span className="text-xs font-bold text-rose-600 dark:text-rose-400">
+                                                            {tc.count} kasus
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 

@@ -34,7 +34,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
     isOpen,
     onClose,
     onImport,
-    title = 'Import Data Siswa'
+    title = 'Impor Data Siswa'
 }) => {
     const [step, setStep] = useState<ImportStep>('upload');
     const [file, setFile] = useState<File | null>(null);
@@ -109,6 +109,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
     };
 
     const handlePreview = () => {
+        setError(null);
         const validated = parseAndValidate(headers, rows, mappings);
         setParsedRows(validated);
         setStep('preview');
@@ -118,6 +119,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
         const validRows = parsedRows.filter(r => r.isValid);
         if (validRows.length === 0) return;
 
+        setError(null);
         setStep('importing');
         setIsProcessing(true);
 
@@ -261,7 +263,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                     className="flex-1 bg-brand-600 hover:bg-brand-700 text-white"
                     disabled={!mappings.some(m => m.targetField === 'name')}
                 >
-                    Lanjut ke Preview
+                    Lanjut ke Pratinjau
                 </Button>
             </div>
         </div>
@@ -269,6 +271,12 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 
     const renderPreviewStep = () => (
         <div className="space-y-4">
+            {error && (
+                <div role="alert" className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
+                    <AlertTriangleIcon aria-hidden="true" className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                    <p className="min-w-0 break-words text-sm text-red-700 dark:text-red-300">{error}</p>
+                </div>
+            )}
             {/* Summary Stats */}
             <div className="grid grid-cols-3 gap-3">
                 <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-center">
@@ -293,7 +301,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                             <th className="px-3 py-2 text-left font-medium text-slate-600 dark:text-slate-300">Status</th>
                             <th className="px-3 py-2 text-left font-medium text-slate-600 dark:text-slate-300">Baris</th>
                             <th className="px-3 py-2 text-left font-medium text-slate-600 dark:text-slate-300">Nama</th>
-                            <th className="px-3 py-2 text-left font-medium text-slate-600 dark:text-slate-300">Gender</th>
+                            <th className="px-3 py-2 text-left font-medium text-slate-600 dark:text-slate-300">Jenis Kelamin</th>
                             <th className="px-3 py-2 text-left font-medium text-slate-600 dark:text-slate-300">Kelas</th>
                         </tr>
                     </thead>
@@ -361,10 +369,10 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                     {isProcessing ? (
                         <>
                             <RefreshCwIcon className="w-4 h-4 animate-spin mr-2" />
-                            Mengimport...
+                            Mengimpor...
                         </>
                     ) : (
-                        `Import ${validCount} Siswa`
+                        `Impor ${validCount} Siswa`
                     )}
                 </Button>
             </div>
@@ -379,7 +387,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 
             <div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                    Import Berhasil!
+                    Impor Berhasil!
                 </h3>
                 <p className="text-slate-600 dark:text-slate-400">
                     {importResult?.success} siswa berhasil ditambahkan
@@ -405,7 +413,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             {step === 'importing' && (
                 <div className="py-12 text-center">
                     <RefreshCwIcon className="w-12 h-12 mx-auto text-brand-600 animate-spin mb-4" />
-                    <p className="text-slate-600 dark:text-slate-400">Mengimport data...</p>
+                    <p className="text-slate-600 dark:text-slate-400">Mengimpor data...</p>
                 </div>
             )}
             {step === 'complete' && renderCompleteStep()}

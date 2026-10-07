@@ -1,272 +1,108 @@
-import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../../../services/supabase';
+import { useMemo } from 'react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../../hooks/useAuth';
+import { useUserSettings } from '../../../hooks/useUserSettings';
 import { useSemester } from '../../../contexts/SemesterContext';
-import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../../utils/academicRecordUtils';
 import { violationList } from '../../../services/violations.data';
+import { calculateOverallGradeStats, calculateStudentAverages } from '../../../services/academicAnalyticsService';
 import {
-    AnalyticsClass, Student, AnalyticsAttendance, AnalyticsTask,
-    AnalyticsAcademicRecord, AnalyticsViolation, AnalyticsQuizPoint,
-    GradeDistribution, AttendanceStats, ClassStats, DailyAttendance, AtRiskItem,
+    AnalyticsClass, Student, AnalyticsAttendance,
+    AttendanceStats, ClassStats, DailyAttendance, AtRiskItem,
     StudentAttendanceSummary, AutoFillStats
 } from './types';
 import { attendanceAutoFillService, MissingWeekday } from '../../../services/attendanceAutoFillService';
+import { EMPTY_ANALYTICS_DATA, fetchAllowedClasses, fetchAnalyticsData, getMonthBounds } from './fetchAnalyticsData';
 
-// Constants
 const EMPTY_CLASSES: AnalyticsClass[] = [];
-const _EMPTY_STUDENTS: Student[] = [];
 
-export const useAnalyticsData = () => {
-    const { user, userRole } = useAuth();
-    const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum' || userRole === 'admin';
-    const { activeSemester } = useSemester();
+/** Overview flags a student academically once their average sits this far under the KKTP. */
+const AT_RISK_GRADE_MARGIN = 10;
+const AT_RISK_ATTENDANCE_RATE = 75;
+
+export const isLeadershipRole = (role: string | null | undefined) =>
+    role === 'kepala_madrasah' || role === 'waka_kesiswaan' || role === 'waka_kurikulum' || role === 'admin';
+
+export const getCurrentMonthWib = () => {
     const nowWib = new Date(Date.now() + 7 * 60 * 60 * 1000);
-    const currentMonthStr = `${nowWib.getUTCFullYear()}-${String(nowWib.getUTCMonth() + 1).padStart(2, '0')}`;
-    const [dateRange, setDateRange] = useState<string>(currentMonthStr);
-    const [selectedClassId, setSelectedClassId] = useState<string>('all');
+    return `${nowWib.getUTCFullYear()}-${String(nowWib.getUTCMonth() + 1).padStart(2, '0')}`;
+};
 
-    // Fetch Security: Get classes the teacher is allowed to see
-    const { data: allowedClasses = EMPTY_CLASSES, isLoading: isLoadingAllowedClasses } = useQuery({
+const countStatuses = (records: AnalyticsAttendance[]) => {
+    const counts = { hadir: 0, izin: 0, sakit: 0, alpha: 0 };
+    for (const a of records) {
+        if (a.status === 'Hadir') counts.hadir++;
+        else if (a.status === 'Izin') counts.izin++;
+        else if (a.status === 'Sakit') counts.sakit++;
+        else if (a.status === 'Alpha') counts.alpha++;
+    }
+    return counts;
+};
+
+const groupBy = <T,>(items: T[], key: (item: T) => string) => {
+    const map = new Map<string, T[]>();
+    for (const item of items) {
+        const k = key(item);
+        const list = map.get(k);
+        if (list) list.push(item);
+        else map.set(k, [item]);
+    }
+    return map;
+};
+
+export const useAnalyticsData = ({ dateRange, selectedClassId }: { dateRange: string; selectedClassId: string }) => {
+    const { user, userRole } = useAuth();
+    const isLeadership = isLeadershipRole(userRole);
+    const { activeSemester } = useSemester();
+    const { kkm } = useUserSettings();
+
+    const allowedClassesQuery = useQuery({
         queryKey: ['analytics_allowed_classes', user?.id, userRole],
-        queryFn: async () => {
-            if (!user) return EMPTY_CLASSES;
-
-            // Pimpinan (kepala madrasah / waka / admin) melihat SELURUH kelas madrasah,
-            // bukan hanya kelas miliknya. RLS leadership-read sudah mengizinkan.
-            if (isLeadership) {
-                const { data: allClasses, error: allErr } = await supabase
-                    .from('classes')
-                    .select('id, name')
-                    .is('deleted_at', null)
-                    .eq('is_archived', false);
-                if (allErr) throw allErr;
-                return (allClasses || []) as AnalyticsClass[];
-            }
-            
-            // 1. Get assignments
-            const { data: assignments } = await supabase
-                .from('teacher_class_assignments')
-                .select('class_id')
-                .eq('teacher_user_id', user.id)
-                .is('deleted_at', null);
-
-            const assignedClassIds = Array.from(new Set(assignments?.map(a => a.class_id).filter(Boolean))) as string[];
-
-            // 2. Get classes created by teacher OR assigned to teacher
-            let query = supabase.from('classes').select('id, name').is('deleted_at', null).eq('is_archived', false);
-            if (assignedClassIds.length > 0) {
-                query = query.or(`user_id.eq.${user.id},id.in.(${assignedClassIds.map(id => `"${id}"`).join(',')})`);
-            } else {
-                query = query.eq('user_id', user.id);
-            }
-
-            const { data, error } = await query;
-            if (error) throw error;
-            return (data || []) as AnalyticsClass[];
-        },
+        queryFn: () => fetchAllowedClasses(user!.id, isLeadership),
         enabled: !!user,
     });
+    const allowedClasses = allowedClassesQuery.data ?? EMPTY_CLASSES;
 
-    // Fetch main analytics data
-    const { data, isLoading: isLoadingData, refetch } = useQuery({
-        queryKey: ['analyticsData', user?.id, dateRange, selectedClassId, activeSemester?.id, allowedClasses.length],
-        queryFn: async () => {
-            if (!user || allowedClasses.length === 0) {
-                return {
-                    classes: [], students: [], attendance: [], tasks: [],
-                    academicRecords: [], violations: [], quizPoints: []
-                };
-            }
+    // An unknown class id (stale URL, revoked access) falls back to every allowed class.
+    const scopedClassIds = useMemo(() => {
+        const ids = allowedClasses.map((c) => c.id);
+        return selectedClassId !== 'all' && ids.includes(selectedClassId) ? [selectedClassId] : ids;
+    }, [allowedClasses, selectedClassId]);
 
-            const allowedClassIds = allowedClasses.map(c => c.id);
-            
-            // If selectedClassId is not 'all', check if it's allowed.
-            let filterClassIds = allowedClassIds;
-            if (selectedClassId !== 'all') {
-                if (allowedClassIds.includes(selectedClassId)) {
-                    filterClassIds = [selectedClassId];
-                } else {
-                    // Fallback to all allowed if somehow they selected an invalid one
-                    filterClassIds = allowedClassIds;
-                }
-            }
-
-            let startDateStr: string | null = null;
-            let endDateStr: string | null = null;
-
-            if (dateRange.match(/^\d{4}-\d{2}$/)) {
-                const [yStr, mStr] = dateRange.split('-');
-                const year = parseInt(yStr, 10);
-                const month = parseInt(mStr, 10);
-                const lastDay = new Date(year, month, 0).getDate();
-                startDateStr = `${dateRange}-01`;
-                endDateStr = `${dateRange}-${String(lastDay).padStart(2, '0')}`;
-            } else if (dateRange === '7d') {
-                const d = new Date();
-                d.setDate(d.getDate() - 7);
-                startDateStr = d.toISOString().split('T')[0];
-            } else if (dateRange === '30d') {
-                const d = new Date();
-                d.setDate(d.getDate() - 30);
-                startDateStr = d.toISOString().split('T')[0];
-            } else if (dateRange === '90d') {
-                const d = new Date();
-                d.setDate(d.getDate() - 90);
-                startDateStr = d.toISOString().split('T')[0];
-            } else {
-                startDateStr = null;
-                endDateStr = null;
-            }
-
-            // 1. Students in allowed classes
-            const { data: studentsRes, error: studentsErr } = await supabase
-                .from('students')
-                .select('id, name, class_id, gender, parent_phone')
-                .in('class_id', filterClassIds)
-                .is('deleted_at', null);
-            if (studentsErr) throw studentsErr;
-
-            const students = (studentsRes || []) as Student[];
-            const studentIds = students.map(s => s.id);
-
-            // If no students, we don't need to fetch their records
-            if (studentIds.length === 0) {
-                return {
-                    classes: allowedClasses, students: [], attendance: [], tasks: [],
-                    academicRecords: [], violations: [], quizPoints: []
-                };
-            }
-
-            // Chunk student IDs if there are too many, but usually Supabase IN handles ~1000 fine
-            // We use chunking just in case.
-            const chunkArray = (arr: string[], size: number) => 
-                Array.from({ length: Math.ceil(arr.length / size) }, (v, i) => arr.slice(i * size, i * size + size));
-            
-            const studentIdChunks = chunkArray(studentIds, 100); // chunk by 100 for safety
-
-            let allAttendance: AnalyticsAttendance[] = [];
-            let allAcademicRecords: AnalyticsAcademicRecord[] = [];
-            let allViolations: AnalyticsViolation[] = [];
-            let allQuizPoints: AnalyticsQuizPoint[] = [];
-
-            for (const chunk of studentIdChunks) {
-                let attendanceQuery = supabase.from('attendance').select('student_id, date, status, notes').in('student_id', chunk).is('deleted_at', null);
-                if (startDateStr) attendanceQuery = attendanceQuery.gte('date', startDateStr);
-                if (endDateStr) attendanceQuery = attendanceQuery.lte('date', endDateStr);
-                if (activeSemester?.id) attendanceQuery = attendanceQuery.eq('semester_id', activeSemester.id); // Add semester filter
-
-                let academicQuery = supabase.from('academic_records').select('student_id, score, subject, assessment_name, created_at').in('student_id', chunk).is('deleted_at', null);
-                if (activeSemester?.id) academicQuery = academicQuery.eq('semester_id', activeSemester.id);
-
-                let violationsQuery = supabase.from('violations').select('id, student_id, type, description, points, date, created_at').in('student_id', chunk).is('deleted_at', null);
-                if (startDateStr) violationsQuery = violationsQuery.gte('date', startDateStr);
-                if (endDateStr) violationsQuery = violationsQuery.lte('date', endDateStr);
-                if (activeSemester?.id) violationsQuery = violationsQuery.eq('semester_id', activeSemester.id); // Add semester filter
-
-                let quizPointsQuery = supabase.from('quiz_points').select('id, student_id, points, category, created_at').in('student_id', chunk).is('deleted_at', null);
-                if (startDateStr) quizPointsQuery = quizPointsQuery.gte('created_at', `${startDateStr}T00:00:00`);
-                if (endDateStr) quizPointsQuery = quizPointsQuery.lte('created_at', `${endDateStr}T23:59:59.999Z`);
-                if (activeSemester?.id) quizPointsQuery = quizPointsQuery.eq('semester_id', activeSemester.id); // Add semester filter
-
-                const [att, aca, vio, qpz] = await Promise.all([attendanceQuery, academicQuery, violationsQuery, quizPointsQuery]);
-                
-                if (att.data) allAttendance = [...allAttendance, ...att.data];
-                if (aca.data) allAcademicRecords = [...allAcademicRecords, ...aca.data as AnalyticsAcademicRecord[]];
-                if (vio.data) allViolations = [...allViolations, ...vio.data as AnalyticsViolation[]];
-                if (qpz.data) allQuizPoints = [...allQuizPoints, ...qpz.data as AnalyticsQuizPoint[]];
-            }
-
-            // Tasks (Not bound to student ids, but to teacher)
-            const { data: tasksRes } = await supabase
-                .from('tasks')
-                .select('id, status, due_date')
-                .eq('user_id', user.id)
-                .is('deleted_at', null);
-
-            // Deduplicate data before returning!
-            const dedupedAcademic = dedupeAcademicRecords(allAcademicRecords as any) as AnalyticsAcademicRecord[];
-            const dedupedViolations = dedupeViolations(allViolations as any) as AnalyticsViolation[];
-            const dedupedQuizPoints = dedupeQuizPoints(allQuizPoints as any) as AnalyticsQuizPoint[];
-
-            return {
-                classes: allowedClasses,
-                students: students,
-                attendance: allAttendance,
-                tasks: (tasksRes || []) as AnalyticsTask[],
-                academicRecords: dedupedAcademic,
-                violations: dedupedViolations,
-                quizPoints: dedupedQuizPoints,
-            };
-        },
-        enabled: !!user && !isLoadingAllowedClasses && allowedClasses.length > 0
+    const dataQuery = useQuery({
+        queryKey: ['analyticsData', user?.id, dateRange, scopedClassIds.join(','), activeSemester?.id],
+        queryFn: () => fetchAnalyticsData({
+            userId: user!.id,
+            classIds: scopedClassIds,
+            dateRange,
+            semesterId: activeSemester?.id ?? null,
+        }),
+        enabled: !!user && allowedClassesQuery.isSuccess,
+        placeholderData: keepPreviousData,
     });
 
-    const isLoading = isLoadingAllowedClasses || isLoadingData;
-    const { classes = [], students = [], attendance = [], tasks = [], academicRecords = [], violations = [], quizPoints = [] } = data || {};
+    const { students, attendance, tasks, academicRecords, violations, quizPoints } = dataQuery.data ?? EMPTY_ANALYTICS_DATA;
 
-    // ============================================
-    // CALCULATION LOGIC (Memoized)
-    // ============================================
+    const isLoading = allowedClassesQuery.isLoading || (allowedClasses.length > 0 && dataQuery.isLoading);
+    const error = allowedClassesQuery.error ?? dataQuery.error;
+    const refetch = async () => {
+        if (allowedClassesQuery.isError) await allowedClassesQuery.refetch();
+        await dataQuery.refetch();
+    };
 
-    const gradeStats = useMemo(() => {
-        const distribution: GradeDistribution[] = [
-            { label: 'A', range: '90-100', count: 0, color: '#22c55e', percentage: 0 },
-            { label: 'B', range: '80-89', count: 0, color: '#3b82f6', percentage: 0 },
-            { label: 'C', range: '70-79', count: 0, color: '#eab308', percentage: 0 },
-            { label: 'D', range: '60-69', count: 0, color: '#f97316', percentage: 0 },
-            { label: 'E', range: '<60', count: 0, color: '#ef4444', percentage: 0 },
-        ];
-
-        const studentAverages = new Map<string, { total: number; count: number }>();
-        academicRecords.forEach(r => {
-            const current = studentAverages.get(r.student_id) || { total: 0, count: 0 };
-            studentAverages.set(r.student_id, { total: current.total + r.score, count: current.count + 1 });
-        });
-
-        let totalStudentsWithGrades = 0;
-        let totalSum = 0;
-        studentAverages.forEach(avg => {
-            if (avg.count === 0) return;
-            const finalScore = avg.total / avg.count;
-            totalSum += finalScore;
-            totalStudentsWithGrades++;
-
-            if (finalScore >= 90) distribution[0].count++;
-            else if (finalScore >= 80) distribution[1].count++;
-            else if (finalScore >= 70) distribution[2].count++;
-            else if (finalScore >= 60) distribution[3].count++;
-            else distribution[4].count++;
-        });
-
-        distribution.forEach(d => {
-            d.percentage = totalStudentsWithGrades > 0 ? Math.round((d.count / totalStudentsWithGrades) * 100) : 0;
-        });
-
-        const overallAverage = totalStudentsWithGrades > 0 ? Math.round(totalSum / totalStudentsWithGrades) : 0;
-        return { distribution, overallAverage, totalStudentsWithGrades };
-    }, [academicRecords]);
+    const gradeStats = useMemo(() => calculateOverallGradeStats(academicRecords, kkm), [academicRecords, kkm]);
+    const studentAverages = useMemo(() => calculateStudentAverages(academicRecords), [academicRecords]);
+    const attendanceByStudent = useMemo(() => groupBy(attendance, (a) => a.student_id), [attendance]);
 
     const attendanceStats = useMemo((): AttendanceStats => {
+        const counts = countStatuses(attendance);
         const total = attendance.length;
-        const hadir = attendance.filter(a => a.status === 'Hadir').length;
-        const izin = attendance.filter(a => a.status === 'Izin').length;
-        const sakit = attendance.filter(a => a.status === 'Sakit').length;
-        const alpha = attendance.filter(a => a.status === 'Alpha').length;
-
-        return {
-            total, hadir, izin, sakit, alpha,
-            hadirRate: total > 0 ? Math.round((hadir / total) * 100) : 0,
-        };
+        return { total, ...counts, hadirRate: total > 0 ? Math.round((counts.hadir / total) * 100) : 0 };
     }, [attendance]);
 
     const studentAttendanceSummaries = useMemo((): StudentAttendanceSummary[] => {
         return students.map(student => {
-            const records = attendance.filter(a => a.student_id === student.id);
-            const hadir = records.filter(a => a.status === 'Hadir').length;
-            const izin = records.filter(a => a.status === 'Izin').length;
-            const sakit = records.filter(a => a.status === 'Sakit').length;
-            const alpha = records.filter(a => a.status === 'Alpha').length;
+            const records = attendanceByStudent.get(student.id) ?? [];
+            const { hadir, izin, sakit, alpha } = countStatuses(records);
             const total = records.length;
             const rate = total > 0 ? Math.round((hadir / total) * 100) : 0;
             const isAtRisk = alpha >= 2 || (total >= 5 && rate < 85);
@@ -276,29 +112,30 @@ export const useAnalyticsData = () => {
             if (a.rate !== b.rate) return a.rate - b.rate;
             return b.alpha - a.alpha;
         });
-    }, [students, attendance]);
+    }, [students, attendanceByStudent]);
 
     const autoFillStats = useMemo((): AutoFillStats => {
         const total = attendance.length;
         const autoFilled = attendance.filter(a => a.notes?.includes('[Auto-fill')).length;
-        const manual = total - autoFilled;
         return {
             totalRecords: total,
             autoFilledRecords: autoFilled,
-            manualRecords: manual,
+            manualRecords: total - autoFilled,
             autoFillPercentage: total > 0 ? Math.round((autoFilled / total) * 100) : 0,
         };
     }, [attendance]);
 
     const classStats = useMemo((): ClassStats[] => {
-        return classes.map(cls => {
-            const classStudents = students.filter(s => s.class_id === cls.id);
-            const studentIds = new Set(classStudents.map(s => s.id));
-            const classAttendance = attendance.filter(a => studentIds.has(a.student_id));
-
-            const total = classAttendance.length;
-            const hadir = classAttendance.filter(a => a.status === 'Hadir').length;
-
+        const studentsByClass = groupBy(students, (s) => s.class_id ?? '');
+        return allowedClasses.map(cls => {
+            const classStudents = studentsByClass.get(cls.id) ?? [];
+            let total = 0;
+            let hadir = 0;
+            for (const s of classStudents) {
+                const records = attendanceByStudent.get(s.id) ?? [];
+                total += records.length;
+                hadir += records.filter((a) => a.status === 'Hadir').length;
+            }
             return {
                 id: cls.id,
                 name: cls.name,
@@ -306,104 +143,73 @@ export const useAnalyticsData = () => {
                 attendanceRate: total > 0 ? Math.round((hadir / total) * 100) : 0,
             };
         }).sort((a, b) => b.attendanceRate - a.attendanceRate);
-    }, [classes, students, attendance]);
+    }, [allowedClasses, students, attendanceByStudent]);
 
     const atRiskStudents = useMemo(() => {
-        const risks: AtRiskItem[] = [];
-        const getStudentAvg = (studentId: string) => {
-            const records = academicRecords.filter(r => r.student_id === studentId);
-            if (records.length === 0) return null;
-            return records.reduce((sum, r) => sum + r.score, 0) / records.length;
-        };
-        const getStudentAttendance = (studentId: string) => {
-            const records = attendance.filter(a => a.student_id === studentId);
-            if (records.length === 0) return null;
-            const hadir = records.filter(r => r.status === 'Hadir').length;
-            return (hadir / records.length) * 100;
-        };
+        const risks: (AtRiskItem & { severity: number })[] = [];
+        for (const student of students) {
+            const avg = studentAverages.get(student.id);
+            const records = attendanceByStudent.get(student.id) ?? [];
+            const att = records.length > 0
+                ? (records.filter((r) => r.status === 'Hadir').length / records.length) * 100
+                : null;
+            const isLowGrade = avg !== undefined && avg < kkm - AT_RISK_GRADE_MARGIN;
+            const isLowAtt = att !== null && att < AT_RISK_ATTENDANCE_RATE;
+            const severity = (isLowGrade ? kkm - avg! : 0) + (isLowAtt ? AT_RISK_ATTENDANCE_RATE - att! : 0);
 
-        students.forEach(student => {
-            const avg = getStudentAvg(student.id);
-            const att = getStudentAttendance(student.id);
-            const isLowGrade = avg !== null && avg < 65;
-            const isLowAtt = att !== null && att < 75;
-
-            if (isLowGrade && isLowAtt) risks.push({ student, reason: 'both', details: `Nilai: ${avg?.toFixed(0)}, Hadir: ${att?.toFixed(0)}%` });
-            else if (isLowGrade) risks.push({ student, reason: 'academic', details: `Rata-rata Nilai: ${avg?.toFixed(0)}` });
-            else if (isLowAtt) risks.push({ student, reason: 'attendance', details: `Kehadiran: ${att?.toFixed(0)}%` });
-        });
-        return risks.slice(0, 5);
-    }, [students, academicRecords, attendance]);
+            if (isLowGrade && isLowAtt) risks.push({ student, reason: 'both', details: `Nilai: ${avg!.toFixed(0)}, Hadir: ${att!.toFixed(0)}%`, severity });
+            else if (isLowGrade) risks.push({ student, reason: 'academic', details: `Rata-rata Nilai: ${avg!.toFixed(0)}`, severity });
+            else if (isLowAtt) risks.push({ student, reason: 'attendance', details: `Kehadiran: ${att!.toFixed(0)}%`, severity });
+        }
+        return risks
+            .sort((a, b) => b.severity - a.severity)
+            .slice(0, 5)
+            .map(({ severity: _severity, ...item }): AtRiskItem => item);
+    }, [students, studentAverages, attendanceByStudent, kkm]);
 
     const topPerformingStudents = useMemo(() => {
-        // Just students with highest averages
-        const getStudentAvg = (studentId: string) => {
-            const records = academicRecords.filter(r => r.student_id === studentId);
-            if (records.length === 0) return null;
-            return records.reduce((sum, r) => sum + r.score, 0) / records.length;
-        };
-        const mapped = students.map(s => ({ student: s, avg: getStudentAvg(s.id) })).filter(s => s.avg !== null) as {student: Student, avg: number}[];
-        return mapped.sort((a, b) => b.avg - a.avg).slice(0, 3);
-    }, [students, academicRecords]);
+        return students
+            .filter((s) => studentAverages.has(s.id))
+            .map((s) => ({ student: s, avg: studentAverages.get(s.id)! }))
+            .sort((a, b) => b.avg - a.avg)
+            .slice(0, 3);
+    }, [students, studentAverages]);
 
     const dailyAttendance = useMemo((): DailyAttendance[] => {
         const fullRangeMap = new Map<string, DailyAttendance>();
+        const emptyDay = (date: string): DailyAttendance => ({ date, hadir: 0, izin: 0, sakit: 0, alpha: 0, total: 0 });
 
-        if (dateRange.match(/^\d{4}-\d{2}$/)) {
-            const [yStr, mStr] = dateRange.split('-');
-            const year = parseInt(yStr, 10);
-            const month = parseInt(mStr, 10);
-            const lastDay = new Date(year, month, 0).getDate();
+        const bounds = getMonthBounds(dateRange);
+        if (bounds) {
+            const lastDay = Number(bounds.end.slice(-2));
             for (let day = 1; day <= lastDay; day++) {
                 const dateStr = `${dateRange}-${String(day).padStart(2, '0')}`;
-                fullRangeMap.set(dateStr, { date: dateStr, hadir: 0, izin: 0, sakit: 0, alpha: 0, total: 0 });
-            }
-        } else if (dateRange === 'all') {
-            const dateSet = new Set<string>();
-            attendance.forEach(a => { if (a.date) dateSet.add(a.date); });
-            if (dateSet.size > 0) {
-                Array.from(dateSet).sort().forEach(dateStr => {
-                    fullRangeMap.set(dateStr, { date: dateStr, hadir: 0, izin: 0, sakit: 0, alpha: 0, total: 0 });
-                });
-            } else {
-                const now = new Date();
-                for (let i = 0; i < 30; i++) {
-                    const d = new Date();
-                    d.setDate(now.getDate() - i);
-                    const dateStr = d.toISOString().split('T')[0];
-                    fullRangeMap.set(dateStr, { date: dateStr, hadir: 0, izin: 0, sakit: 0, alpha: 0, total: 0 });
-                }
+                fullRangeMap.set(dateStr, emptyDay(dateStr));
             }
         } else {
-            const daysToCheck = dateRange === '7d' ? 7 : dateRange === '90d' ? 90 : 30;
-            const now = new Date();
-            for (let i = 0; i < daysToCheck; i++) {
-                const d = new Date();
-                d.setDate(now.getDate() - i);
-                const dateStr = d.toISOString().split('T')[0];
-                fullRangeMap.set(dateStr, { date: dateStr, hadir: 0, izin: 0, sakit: 0, alpha: 0, total: 0 });
-            }
+            Array.from(new Set(attendance.map((a) => a.date).filter(Boolean))).sort()
+                .forEach((dateStr) => fullRangeMap.set(dateStr, emptyDay(dateStr)));
         }
 
-        attendance.forEach(a => {
-            if (fullRangeMap.has(a.date)) {
-                const day = fullRangeMap.get(a.date)!;
-                day.total++;
-                if (a.status === 'Hadir') day.hadir++;
-                else if (a.status === 'Izin') day.izin++;
-                else if (a.status === 'Sakit') day.sakit++;
-                else if (a.status === 'Alpha') day.alpha++;
-            }
-        });
+        for (const a of attendance) {
+            const day = fullRangeMap.get(a.date);
+            if (!day) continue;
+            day.total++;
+            if (a.status === 'Hadir') day.hadir++;
+            else if (a.status === 'Izin') day.izin++;
+            else if (a.status === 'Sakit') day.sakit++;
+            else if (a.status === 'Alpha') day.alpha++;
+        }
 
         return Array.from(fullRangeMap.values()).sort((a, b) => a.date.localeCompare(b.date));
     }, [attendance, dateRange]);
 
     const taskStats = useMemo(() => {
+        const now = new Date();
         const todo = tasks.filter(t => t.status === 'todo').length;
         const inProgress = tasks.filter(t => t.status === 'in_progress').length;
         const done = tasks.filter(t => t.status === 'done').length;
-        const overdue = tasks.filter(t => t.status !== 'done' && t.due_date && new Date(t.due_date) < new Date()).length;
+        const overdue = tasks.filter(t => t.status !== 'done' && t.due_date && new Date(t.due_date) < now).length;
         return { todo, inProgress, done, overdue, total: tasks.length };
     }, [tasks]);
 
@@ -413,123 +219,100 @@ export const useAnalyticsData = () => {
         return { male, female, total: students.length };
     }, [students]);
 
+    const studentById = useMemo(() => new Map<string, Student>(students.map((s) => [s.id, s])), [students]);
+
     const violationsStats = useMemo(() => {
         const byType: Record<string, number> = {};
+        const studentViolations: Record<string, { count: number; points: number }> = {};
         let totalPoints = 0;
-        violations.forEach(v => {
+        for (const v of violations) {
             const rawType = v.type || '';
             const rawDesc = v.description || '';
             const matched = violationList.find(item => item.code === rawType || item.description === rawType || item.code === rawDesc);
             const label = matched?.description || rawDesc || rawType || 'Lainnya';
             byType[label] = (byType[label] || 0) + 1;
             totalPoints += v.points || 0;
-        });
 
-        const studentViolations: Record<string, { count: number; points: number }> = {};
-        violations.forEach(v => {
-            if (!studentViolations[v.student_id]) studentViolations[v.student_id] = { count: 0, points: 0 };
-            studentViolations[v.student_id].count++;
-            studentViolations[v.student_id].points += v.points || 0;
-        });
+            const entry = studentViolations[v.student_id] ?? { count: 0, points: 0 };
+            entry.count++;
+            entry.points += v.points || 0;
+            studentViolations[v.student_id] = entry;
+        }
 
         const topViolators = Object.entries(studentViolations)
             .sort((a, b) => b[1].count - a[1].count)
             .slice(0, 5)
-            .map(([studentId, data]) => ({ student: students.find(s => s.id === studentId), ...data }));
+            .map(([studentId, data]) => ({ student: studentById.get(studentId), ...data }));
 
         return {
             total: violations.length, totalPoints,
             byType: Object.entries(byType).map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count),
             topViolators,
         };
-    }, [violations, students]);
+    }, [violations, studentById]);
 
     const quizPointsStats = useMemo(() => {
         const totalPoints = quizPoints.reduce((sum, q) => sum + (q.points || 0), 0);
         const avgPoints = quizPoints.length > 0 ? Math.round(totalPoints / quizPoints.length) : 0;
 
         const byCategory: Record<string, { count: number; points: number }> = {};
-        quizPoints.forEach(q => {
-            const cat = q.category || 'Lainnya';
-            if (!byCategory[cat]) byCategory[cat] = { count: 0, points: 0 };
-            byCategory[cat].count++;
-            byCategory[cat].points += q.points || 0;
-        });
-
         const studentPoints: Record<string, number> = {};
-        quizPoints.forEach(q => {
+        for (const q of quizPoints) {
+            const cat = q.category || 'Lainnya';
+            const entry = byCategory[cat] ?? { count: 0, points: 0 };
+            entry.count++;
+            entry.points += q.points || 0;
+            byCategory[cat] = entry;
             studentPoints[q.student_id] = (studentPoints[q.student_id] || 0) + (q.points || 0);
-        });
+        }
 
         const topEngaged = Object.entries(studentPoints)
             .sort((a, b) => b[1] - a[1])
             .slice(0, 5)
-            .map(([studentId, points]) => ({ student: students.find(s => s.id === studentId), points }));
+            .map(([studentId, points]) => ({ student: studentById.get(studentId), points }));
 
         return {
             total: quizPoints.length, totalPoints, avgPoints,
             byCategory: Object.entries(byCategory).map(([category, data]) => ({ category, ...data })),
             topEngaged,
         };
-    }, [quizPoints, students]);
+    }, [quizPoints, studentById]);
 
-    // Check missing weekdays for current week
+    // Missing weekdays for the current week; checks at most 10 classes to bound the request fan-out.
     const { data: missingWeekdays = [] } = useQuery({
-        queryKey: ['analytics_missing_weekdays', selectedClassId, allowedClasses.map(c => c.id).join(','), students.length],
+        queryKey: ['analytics_missing_weekdays', scopedClassIds.join(','), students.length],
         queryFn: async (): Promise<MissingWeekday[]> => {
-            const targetClasses = selectedClassId !== 'all'
-                ? allowedClasses.filter(c => c.id === selectedClassId)
-                : allowedClasses;
-
-            if (targetClasses.length === 0) return [];
-
-            if (targetClasses.length === 1) {
-                const cls = targetClasses[0];
-                const classStudents = students.filter(s => s.class_id === cls.id);
-                if (classStudents.length === 0) return [];
-                return await attendanceAutoFillService.getMissingWeekdaysForClass(
-                    cls.id,
-                    classStudents.map(s => s.id)
-                );
-            }
-
-            // If multiple classes, check up to 10 classes concurrently
-            const classesToCheck = targetClasses.slice(0, 10);
+            const studentsByClass = groupBy(students, (s) => s.class_id ?? '');
             const results = await Promise.all(
-                classesToCheck.map(cls => {
-                    const classStudents = students.filter(s => s.class_id === cls.id);
+                scopedClassIds.slice(0, 10).map((classId) => {
+                    const classStudents = studentsByClass.get(classId) ?? [];
                     if (classStudents.length === 0) return Promise.resolve([]);
-                    return attendanceAutoFillService.getMissingWeekdaysForClass(
-                        cls.id,
-                        classStudents.map(s => s.id)
-                    );
+                    return attendanceAutoFillService.getMissingWeekdaysForClass(classId, classStudents.map((s) => s.id));
                 })
             );
 
             const dateMap = new Map<string, MissingWeekday>();
-            for (const list of results) {
-                for (const item of list) {
-                    if (!dateMap.has(item.date)) {
-                        dateMap.set(item.date, item);
-                    }
-                }
+            for (const item of results.flat()) {
+                if (!dateMap.has(item.date)) dateMap.set(item.date, item);
             }
             return Array.from(dateMap.values()).sort((a, b) => a.date.localeCompare(b.date));
         },
-        enabled: allowedClasses.length > 0 && students.length > 0,
+        enabled: scopedClassIds.length > 0 && students.length > 0,
     });
 
     return {
-        // State and setters
-        dateRange, setDateRange,
-        selectedClassId, setSelectedClassId,
-        classes: allowedClasses, // Only allowed classes!
-        isLoading, refetch,
-        
-        // Raw Data
+        classes: allowedClasses,
+        isLeadership,
+        kktp: kkm,
+        activeSemester,
+        isLoading,
+        isFetching: dataQuery.isFetching || allowedClassesQuery.isFetching,
+        isError: !!error,
+        hasData: !!dataQuery.data,
+        refetch,
+
         students, attendance, academicRecords, violations, quizPoints, tasks,
 
-        // Computed Stats
         gradeStats, attendanceStats, classStats, atRiskStudents, topPerformingStudents,
         dailyAttendance, taskStats, genderStats, violationsStats, quizPointsStats,
         studentAttendanceSummaries, autoFillStats, missingWeekdays,

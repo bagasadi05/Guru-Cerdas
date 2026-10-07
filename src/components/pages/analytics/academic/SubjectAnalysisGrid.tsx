@@ -13,19 +13,19 @@ const kktpBadge = (status: SubjectStats['kktpStatus'], gap: number) => {
     switch (status) {
         case 'safe':
             return (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                     <CheckCircle className="w-3 h-3" /> KKTP
                 </span>
             );
         case 'warning':
             return (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                     <AlertCircle className="w-3 h-3" /> {gapLabel}
                 </span>
             );
         case 'critical':
             return (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
                     <AlertTriangle className="w-3 h-3" /> {gapLabel}
                 </span>
             );
@@ -34,17 +34,17 @@ const kktpBadge = (status: SubjectStats['kktpStatus'], gap: number) => {
 
 const TrendIcon: React.FC<{ trend: SubjectStats['trend']; delta: number }> = ({ trend, delta }) => {
     if (trend === 'up') return (
-        <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+        <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
             <TrendingUp className="w-3 h-3" /> +{delta}
         </span>
     );
     if (trend === 'down') return (
-        <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+        <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-rose-600 dark:text-rose-400">
             <TrendingDown className="w-3 h-3" /> {delta}
         </span>
     );
     return (
-        <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-slate-400">
+        <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-slate-500">
             <Minus className="w-3 h-3" /> stabil
         </span>
     );
@@ -54,14 +54,13 @@ const MiniDistributionBar: React.FC<{ distribution: SubjectStats['distribution']
     const total = distribution.reduce((s, d) => s + d.count, 0);
     if (total === 0) return null;
     return (
-        <div className="flex h-2 rounded-full overflow-hidden w-full">
-            {distribution.map((d, i) => (
+        <div className="flex h-2 rounded-full overflow-hidden w-full" aria-hidden>
+            {distribution.map((d) => (
                 d.count > 0 && (
                     <div
-                        key={i}
+                        key={d.label}
                         style={{ width: `${d.percentage}%`, backgroundColor: d.color }}
-                        className="h-full transition-all"
-                        title={`${d.label}: ${d.count} siswa`}
+                        className="h-full"
                     />
                 )
             ))}
@@ -69,15 +68,19 @@ const MiniDistributionBar: React.FC<{ distribution: SubjectStats['distribution']
     );
 };
 
+/** Band D holds every student whose subject average is under the KKTP. */
+const belowKKTPCount = (distribution: SubjectStats['distribution']) =>
+    distribution.find((d) => d.label === 'D')?.count ?? 0;
+
 export const SubjectAnalysisGrid: React.FC<SubjectAnalysisGridProps> = ({ subjectStats, onSelectSubject }) => {
     if (subjectStats.length === 0) {
         return (
-            <Card className="bg-white dark:bg-slate-900 border-0 shadow-lg">
+            <Card>
                 <CardContent className="py-12 text-center">
                     <p className="text-sm text-slate-500 dark:text-slate-400">
                         Belum ada data nilai per mata pelajaran.
                     </p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         Input nilai melalui menu Input Penilaian untuk melihat analisis per mapel.
                     </p>
                 </CardContent>
@@ -99,7 +102,7 @@ export const SubjectAnalysisGrid: React.FC<SubjectAnalysisGridProps> = ({ subjec
                 {subjectStats.map((stat) => (
                     <Card
                         key={stat.subject}
-                        className="bg-white dark:bg-slate-900 border-0 shadow-md hover:shadow-lg transition-all duration-150 active:scale-[0.98] cursor-pointer group rounded-2xl"
+                        className="cursor-pointer group active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                         onClick={() => onSelectSubject(stat)}
                         role="button"
                         tabIndex={0}
@@ -117,7 +120,7 @@ export const SubjectAnalysisGrid: React.FC<SubjectAnalysisGridProps> = ({ subjec
                                     <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">
                                         {stat.subject}
                                     </h4>
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
                                         {stat.studentCount} siswa &middot; {stat.assessmentCount} penilaian
                                     </p>
                                 </div>
@@ -129,17 +132,28 @@ export const SubjectAnalysisGrid: React.FC<SubjectAnalysisGridProps> = ({ subjec
                                 <span className="text-2xl font-extrabold text-slate-900 dark:text-white">
                                     {stat.average}
                                 </span>
-                                <TrendIcon trend={stat.trend} delta={stat.trendDelta} />
+                                {stat.trendFrom === null ? (
+                                    <span className="text-xs text-slate-500">baru 1 penilaian</span>
+                                ) : (
+                                    <span title={`${stat.trendTo} dibanding ${stat.trendFrom}`}>
+                                        <TrendIcon trend={stat.trend} delta={stat.trendDelta} />
+                                    </span>
+                                )}
                             </div>
 
                             {/* Mini Distribution */}
                             <MiniDistributionBar distribution={stat.distribution} />
+                            <p className={`text-xs mt-1.5 ${belowKKTPCount(stat.distribution) > 0 ? 'text-rose-700 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                                {belowKKTPCount(stat.distribution) > 0
+                                    ? `${belowKKTPCount(stat.distribution)} dari ${stat.studentCount} siswa di bawah KKTP`
+                                    : 'Semua siswa mencapai KKTP'}
+                            </p>
 
                             {/* Footer: KKTP + Range */}
                             <div className="flex items-center justify-between mt-2">
                                 {kktpBadge(stat.kktpStatus, stat.kktpGap)}
-                                <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                                    {stat.lowest}–{stat.highest}
+                                <span className="text-xs text-slate-500 dark:text-slate-400">
+                                    Nilai {stat.lowest}–{stat.highest}
                                 </span>
                             </div>
                         </CardContent>

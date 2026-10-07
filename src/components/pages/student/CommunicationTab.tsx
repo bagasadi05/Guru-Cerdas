@@ -331,12 +331,12 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
                                     </div>
                                 )}
                                 {msg.sender === 'teacher' && (
-                                    <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-blue-100/90 dark:text-blue-200/90">
+                                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-blue-100/90 dark:text-blue-200/90">
                                         {getTeacherLabel(msg)}
                                     </p>
                                 )}
                                 {msg.sender === 'parent' && (
-                                    <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                                         Orang tua / wali
                                     </p>
                                 )}
@@ -346,9 +346,9 @@ export const CommunicationTab: React.FC<CommunicationTabProps> = ({
                                     {msg.sender === 'teacher' && msg.is_read && <CheckCircleIcon className="w-3.5 h-3.5" />}
                                 </div>
                                 {msg.sender === 'teacher' && msg.user_id === currentUserId && isOnline && (
-                                    <div className="absolute top-0 -left-20 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 bg-gray-200 dark:bg-black/30" onClick={() => onEditMessage(msg)} aria-label="Edit pesan"><PencilIcon className="w-3.5 h-3.5" /></Button>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 bg-gray-200 dark:bg-black/30 text-red-600 dark:text-red-400" onClick={() => onDeleteMessage(msg.id)} aria-label="Hapus pesan"><TrashIcon className="w-3.5 h-3.5" /></Button>
+                                    <div className="flex justify-end gap-1 mt-1 -mr-2 -mb-1 lg:absolute lg:top-0 lg:-left-20 lg:m-0 sm:reveal-on-hover sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity">
+                                        <Button variant="ghost" size="icon" className="h-10 w-10 sm:h-8 sm:w-8 min-h-[40px] min-w-[40px] sm:min-h-[32px] sm:min-w-[32px] text-white hover:bg-white/15 lg:text-slate-700 lg:bg-slate-200 lg:dark:text-slate-200 lg:dark:bg-slate-800 rounded-lg focus-visible:ring-2 focus-visible:ring-emerald-500" onClick={() => onEditMessage(msg)} aria-label="Edit pesan"><PencilIcon className="w-3.5 h-3.5" /></Button>
+                                        <Button variant="ghost" size="icon" className="h-10 w-10 sm:h-8 sm:w-8 min-h-[40px] min-w-[40px] sm:min-h-[32px] sm:min-w-[32px] text-white hover:bg-white/15 lg:text-rose-600 lg:bg-slate-200 lg:dark:text-rose-400 lg:dark:bg-slate-800 rounded-lg focus-visible:ring-2 focus-visible:ring-rose-500" onClick={() => onDeleteMessage(msg.id)} aria-label="Hapus pesan"><TrashIcon className="w-3.5 h-3.5" /></Button>
                                     </div>
                                 )}
                             </div>

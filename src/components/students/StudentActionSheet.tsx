@@ -12,7 +12,7 @@ interface StudentActionSheetProps {
   onEdit: (student: StudentRow) => void;
   onDelete: (student: StudentRow) => void;
   onCopyCode: (code: string) => void;
-  onGenerateCodeInfo: () => void;
+  onGenerateCode: (student: StudentRow) => void;
   isAdmin?: boolean;
 }
 
@@ -24,7 +24,7 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
   onEdit,
   onDelete,
   onCopyCode,
-  onGenerateCodeInfo,
+  onGenerateCode,
   isAdmin = false,
 }) => {
   if (!student) return null;
@@ -64,11 +64,11 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
           </button>
         ) : null}
 
-        {canManageActiveClass && !student.access_code && (
+        {(canManageActiveClass || isAdmin) && !student.access_code && (
           <button type="button"
             className="flex items-center gap-3.5 p-3.5 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-left w-full cursor-pointer active:scale-[0.98]"
             onClick={() => {
-              onGenerateCodeInfo();
+              onGenerateCode(student);
               onClose();
             }}
           >
@@ -82,7 +82,7 @@ export const StudentActionSheet: React.FC<StudentActionSheetProps> = ({
           </button>
         )}
 
-        {canManageActiveClass && student.access_code && (
+        {(canManageActiveClass || isAdmin) && student.access_code && (
           <button type="button"
             className="flex items-center gap-3.5 p-3.5 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-left w-full cursor-pointer active:scale-[0.98]"
             onClick={() => {

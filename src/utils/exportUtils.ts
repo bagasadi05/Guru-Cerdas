@@ -80,6 +80,15 @@ export const exportToExcel = async (data: ExportRow[], fileName: string, sheetNa
     await XLSX.writeFile(workbook, `${fileName}.xlsx`);
 };
 
+export const exportToCSV = async (data: ExportRow[], fileName: string, sheetName: string = 'Sheet1') => {
+    if (!data.length) return;
+    const XLSX = await getXLSX();
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+    await XLSX.writeFile(workbook, `${fileName}.csv`);
+};
+
 /**
  * Exports class attendance data to a formatted Excel file
  * 

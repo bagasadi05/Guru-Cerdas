@@ -9,10 +9,13 @@ import type { StudentBelowKKTP } from '../../../../services/academicAnalyticsSer
 interface SubjectDetailModalProps {
     subject: SubjectStats | null;
     studentsBelowKKTP: StudentBelowKKTP[];
+    kktp: number;
+    /** Class to open in Input Nilai; null lets the teacher pick one there. */
+    classId: string | null;
     onClose: () => void;
 }
 
-export const SubjectDetailModal: React.FC<SubjectDetailModalProps> = ({ subject, studentsBelowKKTP, onClose }) => {
+export const SubjectDetailModal: React.FC<SubjectDetailModalProps> = ({ subject, studentsBelowKKTP, kktp, classId, onClose }) => {
     const navigate = useNavigate();
 
     if (!subject) return null;
@@ -24,6 +27,7 @@ export const SubjectDetailModal: React.FC<SubjectDetailModalProps> = ({ subject,
             state: {
                 prefill: {
                     mode: 'subject_grade',
+                    classId,
                     subject: subject.subject,
                 },
             },
@@ -43,22 +47,22 @@ export const SubjectDetailModal: React.FC<SubjectDetailModalProps> = ({ subject,
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-center">
                         <p className="text-xl font-bold text-slate-900 dark:text-white">{subject.average}</p>
-                        <p className="text-[11px] text-slate-500">Rata-rata</p>
+                        <p className="text-xs text-slate-500">Rata-rata</p>
                     </div>
                     <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-center">
-                        <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{subject.highest}</p>
-                        <p className="text-[11px] text-slate-500">Tertinggi</p>
+                        <p className="text-xl font-bold text-emerald-700 dark:text-emerald-400">{subject.highest}</p>
+                        <p className="text-xs text-slate-500">Tertinggi</p>
                     </div>
                     <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-center">
                         <p className="text-xl font-bold text-rose-600 dark:text-rose-400">{subject.lowest}</p>
-                        <p className="text-[11px] text-slate-500">Terendah</p>
+                        <p className="text-xs text-slate-500">Terendah</p>
                     </div>
                     <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-center">
                         <div className="flex items-center justify-center gap-1">
                             <Users className="w-4 h-4 text-slate-500" />
                             <p className="text-xl font-bold text-slate-900 dark:text-white">{subject.studentCount}</p>
                         </div>
-                        <p className="text-[11px] text-slate-500">Siswa</p>
+                        <p className="text-xs text-slate-500">Siswa</p>
                     </div>
                 </div>
 
@@ -70,11 +74,13 @@ export const SubjectDetailModal: React.FC<SubjectDetailModalProps> = ({ subject,
                         {subject.trend === 'stable' && <Minus className="w-5 h-5 text-slate-400" />}
                         <div>
                             <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                                Tren: {subject.trend === 'up' ? 'Naik' : subject.trend === 'down' ? 'Turun' : 'Stabil'}
+                                Tren: {subject.trendFrom === null ? 'Belum bisa dihitung' : subject.trend === 'up' ? 'Naik' : subject.trend === 'down' ? 'Turun' : 'Stabil'}
                                 {subject.trendDelta !== 0 && ` (${subject.trendDelta > 0 ? '+' : ''}${subject.trendDelta} poin)`}
                             </p>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                                Dibandingkan periode sebelumnya
+                                {subject.trendFrom === null
+                                    ? 'Tren muncul setelah ada dua penilaian atau lebih.'
+                                    : `Rata-rata ${subject.trendTo} dibanding ${subject.trendFrom}`}
                             </p>
                         </div>
                     </div>
@@ -108,7 +114,7 @@ export const SubjectDetailModal: React.FC<SubjectDetailModalProps> = ({ subject,
                     <div>
                         <h4 className="text-xs font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                             <AlertTriangle className="w-4 h-4" />
-                            Siswa Di Bawah KKTP ({subjectStudents.length})
+                            Siswa di bawah KKTP {kktp} ({subjectStudents.length})
                         </h4>
                         <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden max-h-48 overflow-y-auto">
                             <table className="w-full text-xs" aria-label="Tabel Siswa di Bawah KKTP">
@@ -135,11 +141,11 @@ export const SubjectDetailModal: React.FC<SubjectDetailModalProps> = ({ subject,
                     </div>
                 )}
 
-                {subjectStudents.length === 0 && subject.kktpStatus === 'safe' && (
+                {subjectStudents.length === 0 && (
                     <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 flex items-center gap-3">
                         <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" />
                         <p className="text-xs text-emerald-700 dark:text-emerald-300">
-                            Semua siswa telah memenuhi target KKTP untuk mapel ini.
+                            Semua siswa sudah mencapai KKTP {kktp} untuk mapel ini.
                         </p>
                     </div>
                 )}

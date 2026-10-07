@@ -126,12 +126,12 @@ export const TodayAgendaCard: React.FC<TodayAgendaCardProps> = ({
   const phCount = todayPhSchedules.length + upcomingPhSchedules.length;
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col self-start overflow-hidden transition-all duration-200">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col h-full flex-1 overflow-hidden transition-all duration-200">
       {/* Card Header with Tab Switcher */}
       <div className="p-4 sm:p-5 pb-3 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/50">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-brand-500/10 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 flex items-center justify-center border border-brand-500/20 shrink-0 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-brand-500/25">
               <CalendarDays className="w-5 h-5" />
             </div>
             <div>
@@ -194,14 +194,14 @@ export const TodayAgendaCard: React.FC<TodayAgendaCardProps> = ({
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto min-h-[300px] max-h-[460px] custom-scrollbar p-4">
+      <div className="flex-1 overflow-y-auto min-h-[260px] custom-scrollbar p-4 flex flex-col">
         {activeTab === 'mengajar' ? (
-          <div>
+          <div className="flex-1 flex flex-col">
             {schedule.length > 0 ? (
               <ScheduleTimeline schedule={schedule} currentTime={currentTime} />
             ) : (
-              <div className="py-12 px-4 text-center rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 flex items-center justify-center border border-brand-200/80 dark:border-brand-800/60 shadow-xs">
+              <div className="flex-1 py-10 px-4 text-center rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-brand-600 text-white flex items-center justify-center shadow-sm shadow-brand-500/25">
                   <BookOpen className="w-6 h-6 stroke-[1.8]" />
                 </div>
                 <div className="max-w-xs space-y-1">
@@ -216,15 +216,15 @@ export const TodayAgendaCard: React.FC<TodayAgendaCardProps> = ({
             )}
           </div>
         ) : (
-          <div>
+          <div className="flex-1 flex flex-col">
             {isPhLoading ? (
               <div className="space-y-3 py-4 animate-pulse">
                 <div className="h-16 rounded-xl bg-slate-100 dark:bg-slate-800" />
                 <div className="h-16 rounded-xl bg-slate-100 dark:bg-slate-800" />
               </div>
             ) : phCount === 0 ? (
-              <div className="py-10 px-4 text-center rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-200/80 dark:border-emerald-800/60 shadow-xs">
+              <div className="flex-1 py-10 px-4 text-center rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-sm shadow-emerald-500/25">
                   <CheckCircle2 className="w-6 h-6 stroke-[2]" />
                 </div>
                 <div className="max-w-xs space-y-1">

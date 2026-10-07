@@ -173,6 +173,7 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({ children, onClick, c
     const handleClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (disabled) return;
+        context?.triggerRef.current?.focus();
         if (onClick) onClick();
         context?.setIsOpen(false);
     };

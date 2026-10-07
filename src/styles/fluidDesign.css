@@ -89,7 +89,7 @@
 .f-mt-sm    { margin-top: var(--f-space-sm); }
 .f-mt-md    { margin-top: var(--f-space-md); }
 .f-mt-lg    { margin-top: var(--f-space-lg); }
-.f-mb-md    { margin-top: var(--f-space-md); }
+.f-mb-md    { margin-bottom: var(--f-space-md); }
 
 
 /* ==========================================================================
@@ -237,4 +237,15 @@
   font-weight: 500;
   border-radius: var(--f-radius);
   cursor: pointer;
+}
+
+/* ==========================================================================
+   ROW ACTIONS
+   Touch screens have no hover, so edit/delete stay visible there; mouse
+   pointers reveal them on hover or keyboard focus.
+   ========================================================================== */
+@media (hover: hover) and (pointer: fine) {
+  .reveal-on-hover { opacity: 0; transition: opacity 0.15s ease; }
+  .group:hover .reveal-on-hover,
+  .group:focus-within .reveal-on-hover { opacity: 1; }
 }

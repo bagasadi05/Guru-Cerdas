@@ -13,7 +13,7 @@ import { BatchFillInput } from '../../../ui/BatchFillInput';
 import { VoiceGradeModal } from './VoiceGradeModal';
 import { Step2_StudentTableRow, Step2_StudentMobileCard } from './Step2_StudentItems';
 import type { StudentViolationStatus } from '../violationInsights';
-import { Mic, ChevronDown, ChevronUp, Zap } from 'lucide-react';
+import { Mic, ChevronDown, ChevronUp, Zap, Star, Sparkles } from 'lucide-react';
 
 // Shared empty value so rows without records keep the same prop identity
 // and React.memo can skip them.
@@ -213,7 +213,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     const quizCategory = quizInfo?.category;
     const activeQuizCategory = useMemo(() => {
         const catKey = quizCategory || 'bertanya';
-        return QUIZ_ACTIVITY_CATEGORIES.find(c => c.value === catKey) || { value: catKey, label: 'Keaktifan', icon: '⭐' };
+        return QUIZ_ACTIVITY_CATEGORIES.find(c => c.value === catKey) || { value: catKey, label: 'Keaktifan', icon: '⭐', IconComponent: Star };
     }, [quizCategory]);
 
     const currentAttitudeDate = attitudeDate;
@@ -221,7 +221,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
 
     const activeAttitudeCategory = useMemo(() => {
         const catKey = currentAttitudeCategory || 'Adab & Akhlak';
-        return BINTANG_ATTITUDE_ASPECTS.find(c => c.value === catKey) || { value: catKey, label: 'Sikap', icon: '🌟', menunjang: 'Menunjang Aspek Sikap', defaultActivity: 'Adab & Kesantunan' };
+        return BINTANG_ATTITUDE_ASPECTS.find(c => c.value === catKey) || { value: catKey, label: 'Sikap', icon: '🌟', IconComponent: Sparkles, menunjang: 'Menunjang Aspek Sikap', defaultActivity: 'Adab & Kesantunan' };
     }, [currentAttitudeCategory]);
 
     const studentAttitudePointsCountMap = useMemo(() => {
@@ -257,9 +257,9 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
     }, [flatStudentList]);
 
     return (
-        <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden shadow-sm animate-fade-in-right">
+        <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 flex flex-col overflow-hidden shadow-sm animate-fade-in-right">
             {/* Header with Search, Filters, and Tools */}
-            <div className="p-3.5 sm:p-5 lg:p-6 border-b border-slate-200 dark:border-slate-700 flex-shrink-0 space-y-2.5 sm:space-y-3 bg-slate-50/80 dark:bg-slate-800/50 backdrop-blur-md">
+            <div className="p-3.5 sm:p-5 border-b border-slate-200/80 dark:border-slate-800 flex-shrink-0 space-y-3 bg-slate-50/70 dark:bg-slate-800/40">
                 {/* Row 1: Search + Voice Dictation + Quick Stats */}
                 <div className="flex items-center gap-2">
                     <div className="relative flex-1 min-w-0 group">
@@ -268,17 +268,17 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             placeholder="Cari nama siswa..."
-                            className="pl-9 sm:pl-10 pr-3 w-full h-9 sm:h-10 bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-white/30 focus:ring-brand-500 focus:border-brand-500 transition-all text-xs sm:text-sm"
+                            className="pl-9 sm:pl-10 pr-3 w-full h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700/80 text-slate-900 dark:text-white rounded-xl placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-brand-500 focus:border-brand-500 transition-all text-xs sm:text-sm"
                         />
                     </div>
 
                     <button
                         type="button"
                         onClick={() => setIsVoiceModalOpen(true)}
-                        className="flex items-center gap-1.5 min-h-[44px] sm:min-h-[40px] h-11 sm:h-10 px-3 sm:px-3.5 rounded-xl text-xs sm:text-sm font-semibold transition-all bg-gradient-to-r from-rose-600 to-brand-700 hover:from-rose-700 hover:to-brand-800 text-white shadow-sm active:scale-95 flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+                        className="flex items-center gap-1.5 min-h-[44px] sm:min-h-[40px] h-11 sm:h-10 px-3 sm:px-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all bg-brand-600 hover:bg-brand-700 text-white shadow-sm shadow-brand-600/20 active:scale-95 flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
                         title="Input nilai menggunakan suara (Dikte)"
                     >
-                        <Mic className="w-3.5 h-3.5 animate-pulse text-rose-100" />
+                        <Mic className="w-3.5 h-3.5 text-brand-100" />
                         <span className="whitespace-nowrap">Dikte</span>
                         <span className="hidden md:inline whitespace-nowrap">Suara</span>
                     </button>
@@ -287,10 +287,10 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                         <button
                             type="button"
                             onClick={() => setShowStats(!showStats)}
-                            className={`flex items-center justify-center gap-1.5 min-h-[44px] sm:min-h-[40px] h-11 sm:h-10 px-3 sm:px-3.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
+                            className={`flex items-center justify-center gap-1.5 min-h-[44px] sm:min-h-[40px] h-11 sm:h-10 px-3 sm:px-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
                                 showStats
-                                    ? 'bg-brand-600 text-white shadow-sm'
-                                    : 'bg-white dark:bg-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/20 border border-slate-200 dark:border-white/10 shadow-sm'
+                                    ? 'bg-emerald-600 text-white shadow-sm'
+                                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/80 shadow-sm'
                             }`}
                             title="Grafik Statistik Nilai"
                         >
@@ -308,14 +308,14 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                         <button
                             type="button"
                             onClick={() => setShowBatchFill(prev => !prev)}
-                            className={`flex items-center gap-1 min-h-[44px] sm:min-h-[36px] px-3 py-2 sm:py-1 text-xs font-semibold rounded-full transition-all flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
+                            className={`flex items-center gap-1 min-h-[44px] sm:min-h-[36px] px-3 py-2 sm:py-1.5 text-xs font-bold rounded-full transition-all flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
                                 showBatchFill
                                     ? 'bg-amber-500 text-white shadow-sm'
                                     : 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 hover:bg-amber-100 dark:hover:bg-amber-500/20'
                             }`}
                             title="Isi nilai massal sekaligus"
                         >
-                            <Zap className="w-3.5 h-3.5 shrink-0 text-amber-500 group-hover:scale-110 transition-transform" />
+                            <Zap className={`w-3.5 h-3.5 shrink-0 ${showBatchFill ? 'text-white' : 'text-amber-500'}`} />
                             <span className="whitespace-nowrap">Isi Massal</span>
                             {showBatchFill ? <ChevronUp className="w-3 h-3 ml-0.5" /> : <ChevronDown className="w-3 h-3 ml-0.5" />}
                         </button>
@@ -345,7 +345,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
 
                 {/* Row 3: Sorting & Grouping Controls */}
                 {mode === 'subject_grade' && students && students.length > 0 && (
-                    <div className="pt-2 border-t border-slate-200/80 dark:border-white/10">
+                    <div className="pt-2 border-t border-slate-200/80 dark:border-slate-800">
                         <StudentSortControls
                             sortConfig={sortConfig}
                             onSortChange={setSortConfig}
@@ -358,7 +358,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
 
                 {/* Mini Stats Display */}
                 {showStats && mode === 'subject_grade' && (
-                    <div className="pt-2 border-t border-slate-200/80 dark:border-white/10 animate-fade-in-down">
+                    <div className="pt-2 border-t border-slate-200/80 dark:border-slate-800 animate-fade-in-down">
                         <GradeDistributionMini scores={scores} kkm={kkm} />
                     </div>
                 )}
@@ -368,7 +368,7 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                 {isLoadingStudents ? (
                     <div className="flex flex-col items-center justify-center h-64 text-brand-600 dark:text-brand-200">
                         <div className="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p>Memuat data siswa...</p>
+                        <p className="text-sm font-medium">Memuat data siswa...</p>
                     </div>
                 ) : students && students.length > 0 ? (
                     <>
@@ -376,19 +376,19 @@ export const Step2_StudentList: React.FC<Step2_StudentListProps> = ({
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm border-separate border-spacing-y-2" aria-label="Tabel Input Nilai Siswa">
                                 <thead>
-                                    <tr className="text-emerald-600 dark:text-emerald-200">
-                                        <th className="p-4 text-left w-14 font-bold tracking-wide uppercase text-xs">
+                                    <tr className="text-slate-600 dark:text-slate-300">
+                                        <th className="p-3.5 text-left w-14 font-extrabold tracking-wider uppercase text-[11px] bg-slate-100/80 dark:bg-slate-800/70 rounded-l-xl border-y border-l border-slate-200/80 dark:border-slate-700/80">
                                             <Checkbox
                                                 checked={isAllSelected}
                                                 onChange={e => handleSelectAllStudents(e.target.checked)}
                                                 aria-label="Pilih semua siswa"
-                                                className="border-white/30 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                                                className="border-slate-300 dark:border-white/30 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                                             />
                                         </th>
-                                        <th className="p-4 text-center w-12 font-bold tracking-wide uppercase text-xs">No.</th>
-                                        <th className="p-4 text-left font-bold tracking-wide uppercase text-xs">Nama Siswa</th>
-                                        <th className={`p-4 text-left font-bold tracking-wide uppercase text-xs ${mode === 'subject_grade' ? 'w-80 min-w-[280px]' : mode === 'attitude' || mode === 'quiz' ? 'w-80 min-w-[280px]' : ''}`}>
-                                            {mode === 'subject_grade' ? 'Input Nilai' : mode === 'attitude' ? 'Apresiasi Sikap (BINTANG)' : mode === 'quiz' ? 'Poin Keaktifan (BINTANG)' : mode === 'academic_print' ? 'Nilai Saat Ini' : 'Status'}
+                                        <th className="p-3.5 text-center w-12 font-extrabold tracking-wider uppercase text-[11px] bg-slate-100/80 dark:bg-slate-800/70 border-y border-slate-200/80 dark:border-slate-700/80">No.</th>
+                                        <th className="p-3.5 text-left font-extrabold tracking-wider uppercase text-[11px] bg-slate-100/80 dark:bg-slate-800/70 border-y border-slate-200/80 dark:border-slate-700/80">Nama Siswa</th>
+                                        <th className={`p-3.5 text-left font-extrabold tracking-wider uppercase text-[11px] bg-slate-100/80 dark:bg-slate-800/70 rounded-r-xl border-y border-r border-slate-200/80 dark:border-slate-700/80 ${mode === 'subject_grade' ? 'w-80 min-w-[280px]' : mode === 'attitude' || mode === 'quiz' ? 'w-80 min-w-[280px]' : ''}`}>
+                                            {mode === 'subject_grade' ? 'Input Nilai' : mode === 'attitude' ? 'Apresiasi Sikap (BINTANG)' : mode === 'quiz' ? 'Poin Keaktifan (BINTANG)' : mode === 'academic_print' ? 'Nilai Saat Ini' : 'Status Pilihan'}
                                         </th>
                                     </tr>
                                 </thead>

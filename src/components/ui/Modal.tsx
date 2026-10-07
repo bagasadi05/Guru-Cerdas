@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
+import { X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, MotionDiv } from './MotionComponents';
 import { Button } from './Button';
@@ -10,6 +11,7 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  footer?: React.ReactNode;
   icon?: React.ReactNode;
   maxWidth?: string;
   placement?: 'center' | 'bottom';
@@ -20,44 +22,39 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   title,
   children,
+  footer,
   icon,
   maxWidth = 'max-w-lg',
   placement = 'center',
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
-  const previousActiveElement = useRef<HTMLElement | null>(null);
+  const titleId = useId();
   const isClient = typeof document !== 'undefined';
   const { shouldReduceMotion } = useReducedMotion();
 
   useEffect(() => {
-    if (isOpen) {
-      // Store the currently focused element
-      previousActiveElement.current = document.activeElement as HTMLElement;
+    if (!isOpen) return;
+    const previousActiveElement = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const focusTimer = setTimeout(() => {
+      const modalContainer = modalRef.current;
+      if (modalContainer) {
+        const focusableElements = modalContainer.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        );
 
-      // Prevent scrolling on body when modal is open
-      document.body.style.overflow = 'hidden';
-
-      // Focus the modal after a brief delay to ensure DOM is ready
-      setTimeout(() => {
-        const modalContainer = modalRef.current;
-        if (modalContainer) {
-          const focusableElements = modalContainer.querySelectorAll<HTMLElement>(
-            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-          );
-
-          if (focusableElements.length > 0) {
-            focusableElements[0].focus();
-          }
+        if (focusableElements.length > 0) {
+          focusableElements[0].focus();
         }
-      }, 100);
-    }
+      }
+    }, 100);
 
     return () => {
-      document.body.style.overflow = 'unset';
-
-      // Restore focus to previously focused element
-      if (previousActiveElement.current && !isOpen) {
-        previousActiveElement.current.focus();
+      clearTimeout(focusTimer);
+      document.body.style.overflow = previousOverflow;
+      if (previousActiveElement instanceof HTMLElement && previousActiveElement.isConnected) {
+        previousActiveElement.focus();
       }
     };
   }, [isOpen]);
@@ -75,7 +72,7 @@ export const Modal: React.FC<ModalProps> = ({
       // Handle Tab key for focus trap
       if (event.key === 'Tab') {
         const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
         );
 
         if (focusableElements.length === 0) return;
@@ -111,11 +108,9 @@ export const Modal: React.FC<ModalProps> = ({
           exit={{ opacity: 0 }}
           transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
           className={`fixed inset-0 z-max flex justify-center bg-black/50 backdrop-blur-sm ${
-            placement === 'bottom'
-              ? 'items-end sm:items-center'
-              : 'items-center p-2 sm:p-4'
+            placement === 'bottom' ? 'items-end sm:items-center' : 'items-center p-2 sm:p-4'
           }`}
-          aria-labelledby="modal-title"
+          aria-labelledby={titleId}
           role="dialog"
           aria-modal="true"
           onClick={onClose}
@@ -132,7 +127,8 @@ export const Modal: React.FC<ModalProps> = ({
                 : 'max-h-[94vh] sm:max-h-[90vh] my-auto'
             }`}
             style={{
-              paddingBottom: placement === 'bottom' ? 'env(safe-area-inset-bottom, 0px)' : undefined,
+              paddingBottom:
+                placement === 'bottom' ? 'env(safe-area-inset-bottom, 0px)' : undefined,
             }}
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
             id="modal-container"
@@ -156,8 +152,8 @@ export const Modal: React.FC<ModalProps> = ({
                       </div>
                     )}
                     <h2
-                      id="modal-title"
-                      className="text-base sm:text-xl font-bold text-slate-900 dark:text-slate-100 leading-tight truncate"
+                      id={titleId}
+                      className="text-base sm:text-xl font-bold text-slate-900 dark:text-slate-100 leading-tight break-words"
                     >
                       {title}
                     </h2>
@@ -166,37 +162,28 @@ export const Modal: React.FC<ModalProps> = ({
                     variant="ghost"
                     size="icon"
                     onClick={onClose}
-                    aria-label="Close modal"
-                    className="rounded-full text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white shrink-0 h-8 w-8 sm:h-9 sm:w-9"
+                    aria-label="Tutup dialog"
+                    title="Tutup dialog"
+                    className="rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white shrink-0 !h-11 !w-11 !min-h-[44px] !min-w-[44px]"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-4 w-4 sm:h-5 sm:w-5"
-                      aria-hidden="true"
-                    >
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
+                    <X className="h-5 w-5" aria-hidden="true" />
                   </Button>
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-3 sm:p-5 sm:p-6" role="document">
+              <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-5 sm:p-6" role="document">
                 {children}
               </div>
+              {footer && (
+                <div className="shrink-0 border-t border-slate-200 dark:border-slate-700 p-3 sm:p-5">
+                  {footer}
+                </div>
+              )}
             </div>
           </MotionDiv>
         </MotionDiv>
-  )}
-</AnimatePresence>,
-    document.body
+      )}
+    </AnimatePresence>,
+    document.body,
   );
 };

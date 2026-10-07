@@ -76,10 +76,6 @@ export const useStudentsPageInteractions = ({
     toast.success('Kode akses disalin!');
   };
 
-  const handleGenerateCodeInfo = () => {
-    toast.info('Fitur generate kode per siswa akan segera hadir. Gunakan fitur massal di menu kelas.');
-  };
-
   const selectedStudentsForIDCard = studentsForActiveClass.filter((student) => isSelected(student.id));
 
   return {
@@ -87,7 +83,6 @@ export const useStudentsPageInteractions = ({
     handleStudentAction,
     handleHeaderAction,
     handleCopyCode,
-    handleGenerateCodeInfo,
     selectedStudentsForIDCard,
   };
 };

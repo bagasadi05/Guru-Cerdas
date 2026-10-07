@@ -1,17 +1,46 @@
 import React, { useMemo, useState } from 'react';
 import { CardTitle, CardDescription } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { PlusIcon, BookOpenIcon, PencilIcon, TrashIcon, SearchIcon, CalendarIcon, FileTextIcon, XIcon } from 'lucide-react';
+import { PlusIcon, BookOpenIcon, PencilIcon, TrashIcon, SearchIcon, CalendarIcon, FileTextIcon, XIcon, User, HeartPulse, Trophy, Paperclip } from 'lucide-react';
 import { ReportRow } from './types';
 
 // Report Categories
 export const REPORT_CATEGORIES = {
-    akademik: { label: 'Akademik', color: 'indigo', icon: '📚', description: 'Catatan terkait pembelajaran & nilai' },
-    perilaku: { label: 'Perilaku', color: 'slate', icon: '👤', description: 'Catatan sikap & perilaku siswa' },
-    kesehatan: { label: 'Kesehatan', color: 'emerald', icon: '🏥', description: 'Catatan kondisi kesehatan' },
-    prestasi: { label: 'Prestasi', color: 'indigo', icon: '🏆', description: 'Pencapaian & prestasi siswa' },
-    lainnya: { label: 'Lainnya', color: 'slate', icon: '📝', description: 'Catatan umum lainnya' },
+    akademik: { label: 'Akademik', color: 'indigo', description: 'Catatan terkait pembelajaran & nilai' },
+    perilaku: { label: 'Perilaku', color: 'slate', description: 'Catatan sikap & perilaku siswa' },
+    kesehatan: { label: 'Kesehatan', color: 'emerald', description: 'Catatan kondisi kesehatan' },
+    prestasi: { label: 'Prestasi', color: 'indigo', description: 'Pencapaian & prestasi siswa' },
+    lainnya: { label: 'Lainnya', color: 'slate', description: 'Catatan umum lainnya' },
 } as const;
+
+export const renderReportCategoryIcon = (category: string | null | undefined, className = "w-3.5 h-3.5 shrink-0 inline mr-1") => {
+    switch (category) {
+        case 'akademik': return <BookOpenIcon className={className} />;
+        case 'perilaku': return <User className={className} />;
+        case 'kesehatan': return <HeartPulse className={className} />;
+        case 'prestasi': return <Trophy className={className} />;
+        default: return <FileTextIcon className={className} />;
+    }
+};
+
+// Spelled out in full so Tailwind's scanner generates every class.
+const CATEGORY_TONES: Record<string, { dot: string; card: string; chip: string }> = {
+    indigo: {
+        dot: 'bg-indigo-500',
+        card: 'from-indigo-50/50 dark:from-indigo-900/10 border-indigo-100 dark:border-indigo-800/30',
+        chip: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300',
+    },
+    emerald: {
+        dot: 'bg-emerald-500',
+        card: 'from-emerald-50/50 dark:from-emerald-900/10 border-emerald-100 dark:border-emerald-800/30',
+        chip: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300',
+    },
+    slate: {
+        dot: 'bg-slate-500',
+        card: 'from-slate-50/50 dark:from-slate-900/10 border-slate-200 dark:border-slate-700/50',
+        chip: 'bg-slate-100 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300',
+    },
+};
 
 export type ReportCategory = keyof typeof REPORT_CATEGORIES;
 
@@ -55,32 +84,35 @@ const ReportsStats: React.FC<{ reports: ReportRow[] }> = ({ reports }) => {
         return { total: reports.length, byCategory, withAttachment, thisMonth };
     }, [reports]);
 
+    const statItems = [
+        { label: 'Total Catatan', value: stats.total, badgeBg: 'bg-slate-600', icon: FileTextIcon },
+        { label: 'Akademik', value: stats.byCategory.akademik || 0, badgeBg: 'bg-blue-600', icon: BookOpenIcon },
+        { label: 'Perilaku', value: stats.byCategory.perilaku || 0, badgeBg: 'bg-violet-600', icon: User },
+        { label: 'Prestasi', value: stats.byCategory.prestasi || 0, badgeBg: 'bg-amber-500', icon: Trophy },
+        { label: 'Bulan Ini', value: stats.thisMonth, badgeBg: 'bg-emerald-600', icon: CalendarIcon },
+        { label: 'Lampiran', value: stats.withAttachment, badgeBg: 'bg-teal-600', icon: Paperclip },
+    ];
+
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800/30">
-                <p className="text-2xl font-bold text-slate-700 dark:text-slate-300">{stats.total}</p>
-                <p className="text-xs text-slate-500">Total Catatan</p>
-            </div>
-            <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30">
-                <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{stats.byCategory.akademik || 0}</p>
-                <p className="text-xs text-indigo-500">📚 Akademik</p>
-            </div>
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800/30">
-                <p className="text-2xl font-bold text-slate-600 dark:text-slate-400">{stats.byCategory.perilaku || 0}</p>
-                <p className="text-xs text-slate-500">👤 Perilaku</p>
-            </div>
-            <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/30">
-                <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{stats.byCategory.prestasi || 0}</p>
-                <p className="text-xs text-indigo-500">🏆 Prestasi</p>
-            </div>
-            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30">
-                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.thisMonth}</p>
-                <p className="text-xs text-emerald-500">Bulan Ini</p>
-            </div>
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800/30">
-                <p className="text-2xl font-bold text-slate-700 dark:text-slate-300">{stats.withAttachment}</p>
-                <p className="text-xs text-slate-500">📎 Lampiran</p>
-            </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+            {statItems.map((item) => (
+                <div
+                    key={item.label}
+                    className="bg-slate-50/80 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 p-3 sm:p-3.5 flex items-center gap-3 transition-all hover:border-slate-300 dark:hover:border-slate-600 shadow-xs"
+                >
+                    <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${item.badgeBg}`}>
+                        <item.icon className="w-5 h-5 text-white" strokeWidth={2.2} />
+                    </div>
+                    <div className="flex flex-col justify-center min-w-0">
+                        <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight truncate">
+                            {item.value}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate mt-0.5">
+                            {item.label}
+                        </p>
+                    </div>
+                </div>
+            ))}
         </div>
     );
 };
@@ -143,7 +175,7 @@ const TimelineView: React.FC<{
                     <div className="ml-6 space-y-4">
                         {groupedReports[monthKey].map((report) => {
                             const category = getReportCategory(report.category);
-                            const categoryColor = category?.color || 'gray';
+                            const tone = CATEGORY_TONES[category?.color ?? 'slate'] ?? CATEGORY_TONES.slate;
 
                             return (
                                 <div
@@ -151,25 +183,26 @@ const TimelineView: React.FC<{
                                     className="group relative pl-8 pb-4 border-l-2 border-gray-200 dark:border-gray-700 last:border-l-0"
                                 >
                                     {/* Timeline dot */}
-                                    <div className={`absolute -left-1.5 top-0 w-3 h-3 rounded-full bg-${categoryColor}-500 ring-4 ring-white dark:ring-gray-900`} />
+                                    <div className={`absolute -left-1.5 top-0 w-3 h-3 rounded-full ${tone.dot} ring-4 ring-white dark:ring-slate-800`} />
 
                                     {/* Card */}
-                                    <div className={`relative p-4 rounded-xl bg-gradient-to-r from-${categoryColor}-50/50 to-transparent dark:from-${categoryColor}-900/10 border border-${categoryColor}-100 dark:border-${categoryColor}-800/30 hover:shadow-lg transition-shadow`}>
+                                    <div className={`relative p-4 rounded-xl bg-gradient-to-r to-transparent border hover:shadow-lg transition-shadow ${tone.card}`}>
                                         {/* Actions */}
-                                        <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(report)} disabled={!isOnline || report.user_id !== currentUserId} aria-label="Edit laporan">
+                                        <div className="reveal-on-hover absolute top-2 right-2 flex gap-1">
+                                            <Button variant="ghost" size="icon" className="h-11 w-11 lg:h-9 lg:w-9" onClick={() => onEdit(report)} disabled={!isOnline || report.user_id !== currentUserId} aria-label="Edit laporan">
                                                 <PencilIcon className="h-4 w-4" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 dark:text-red-400" onClick={() => onDelete(report.id)} disabled={!isOnline || report.user_id !== currentUserId} aria-label="Hapus laporan">
+                                            <Button variant="ghost" size="icon" className="h-11 w-11 lg:h-9 lg:w-9 text-red-600 dark:text-red-400" onClick={() => onDelete(report.id)} disabled={!isOnline || report.user_id !== currentUserId} aria-label="Hapus laporan">
                                                 <TrashIcon className="h-4 w-4" />
                                             </Button>
                                         </div>
 
                                         {/* Header */}
-                                        <div className="flex items-start gap-3 mb-2">
+                                        <div className="flex flex-wrap items-start gap-x-3 gap-y-1 mb-2 pr-24 lg:pr-20">
                                             {category && (
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium bg-${categoryColor}-100 dark:bg-${categoryColor}-900/30 text-${categoryColor}-700 dark:text-${categoryColor}-400`}>
-                                                    {category.icon} {category.label}
+                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${tone.chip}`}>
+                                                    {renderReportCategoryIcon(report.category)}
+                                                    <span>{category.label}</span>
                                                 </span>
                                             )}
                                             <span className="text-xs text-gray-400">
@@ -333,7 +366,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports, onAdd, onEdit, 
                 >
                     <option value="all">Semua Kategori</option>
                     {Object.entries(REPORT_CATEGORIES).map(([key, cat]) => (
-                        <option key={key} value={key}>{cat.icon} {cat.label}</option>
+                        <option key={key} value={key}>{cat.label}</option>
                     ))}
                 </select>
 
@@ -410,18 +443,16 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({ reports, onAdd, onEdit, 
                                 const category = getReportCategory(r.category);
                                 return (
                                     <div key={r.id} className="group relative p-4 rounded-lg bg-gray-50 dark:bg-black/20 hover:bg-gray-100 dark:hover:bg-black/30 transition-colors">
-                                        <div className="absolute top-3 right-3 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(r)} disabled={!isOnline || r.user_id !== currentUserId} aria-label="Edit laporan">
+                                        <div className="absolute top-3 right-3 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition-opacity">
+                                            <Button variant="ghost" size="icon" className="h-10 w-10 lg:h-8 lg:w-8 min-h-[40px] min-w-[40px] lg:min-h-0 lg:min-w-0" onClick={() => onEdit(r)} disabled={!isOnline || r.user_id !== currentUserId} aria-label="Edit laporan">
                                                 <PencilIcon className="h-4 w-4" />
                                             </Button>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 dark:text-red-400" onClick={() => onDelete(r.id)} disabled={!isOnline || r.user_id !== currentUserId} aria-label="Hapus laporan">
+                                            <Button variant="ghost" size="icon" className="h-10 w-10 lg:h-8 lg:w-8 min-h-[40px] min-w-[40px] lg:min-h-0 lg:min-w-0 text-red-600 dark:text-red-400" onClick={() => onDelete(r.id)} disabled={!isOnline || r.user_id !== currentUserId} aria-label="Hapus laporan">
                                                 <TrashIcon className="h-4 w-4" />
                                             </Button>
                                         </div>
                                         <div className="flex items-center gap-2 mb-1">
-                                            {category && (
-                                                <span className="text-sm">{category.icon}</span>
-                                            )}
+                                            {category && renderReportCategoryIcon(r.category)}
                                             <h4 className="font-bold text-gray-900 dark:text-white">{r.title}</h4>
                                         </div>
                                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">

@@ -15,6 +15,7 @@ import {
     FileSpreadsheetIcon,
     DownloadIcon,
     AlertCircle,
+    Star,
 } from 'lucide-react';
 import { isAchievementsBackendMissing } from '../../../utils/achievementBackend';
 import { StudentAchievement, AchievementCategory, AchievementLevel } from '../../../types/studentAchievement';
@@ -68,26 +69,33 @@ const AchievementsStats: React.FC<{ achievements: StudentAchievement[] }> = ({ a
         return { total, totalPoints, topPlacements, levelCounts };
     }, [achievements]);
 
+    const statItems = [
+        { label: 'Total Prestasi', value: stats.total, badgeBg: 'bg-indigo-600', icon: Trophy },
+        { label: 'Podium (Juara 1-3)', value: stats.topPlacements, badgeBg: 'bg-amber-500', icon: Trophy },
+        { label: 'Total Poin Prestasi', value: stats.totalPoints, badgeBg: 'bg-emerald-600', icon: Star },
+        { label: 'Level Nasional/Int', value: (stats.levelCounts.nasional || 0) + (stats.levelCounts.internasional || 0), badgeBg: 'bg-blue-600', icon: GlobeIcon },
+    ];
+
     return (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800/30">
-                <p className="text-2xl font-bold text-slate-700 dark:text-slate-300">{stats.total}</p>
-                <p className="text-xs text-slate-500">Total Prestasi</p>
-            </div>
-            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-800/30">
-                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.topPlacements}</p>
-                <p className="text-xs text-amber-500">🏆 Podium (Juara 1-3)</p>
-            </div>
-            <div className="p-3 rounded-xl bg-brand-50 dark:bg-brand-900/20 border border-brand-100 dark:border-brand-800/30">
-                <p className="text-2xl font-bold text-brand-600 dark:text-brand-400">{stats.totalPoints}</p>
-                <p className="text-xs text-brand-500">⭐️ Total Poin Prestasi</p>
-            </div>
-            <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30">
-                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                    {(stats.levelCounts.nasional || 0) + (stats.levelCounts.internasional || 0)}
-                </p>
-                <p className="text-xs text-emerald-500">🌍 Level Nasional/Int</p>
-            </div>
+            {statItems.map((item) => (
+                <div
+                    key={item.label}
+                    className="bg-slate-50/80 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 p-3 sm:p-3.5 flex items-center gap-3 transition-all hover:border-slate-300 dark:hover:border-slate-600 shadow-xs"
+                >
+                    <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${item.badgeBg}`}>
+                        <item.icon className="w-5 h-5 text-white" strokeWidth={2.2} />
+                    </div>
+                    <div className="flex flex-col justify-center min-w-0">
+                        <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight truncate">
+                            {item.value}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate mt-0.5">
+                            {item.label}
+                        </p>
+                    </div>
+                </div>
+            ))}
         </div>
     );
 };
@@ -316,11 +324,11 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
                             >
                                 <div>
                                     {/* Action Buttons */}
-                                    <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="reveal-on-hover absolute top-3 right-3 flex gap-1">
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-8 w-8"
+                                            className="h-11 w-11 lg:h-9 lg:w-9"
                                             onClick={() => handleEdit(item)}
                                             disabled={!isOnline || item.user_id !== currentUserId}
                                             aria-label="Edit prestasi"
@@ -330,7 +338,7 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-8 w-8 text-red-600 dark:text-red-400"
+                                            className="h-11 w-11 lg:h-9 lg:w-9 text-red-600 dark:text-red-400"
                                             onClick={() => onDelete(item.id)}
                                             disabled={!isOnline || item.user_id !== currentUserId}
                                             aria-label="Hapus prestasi"
@@ -340,7 +348,7 @@ export const AchievementsTab: React.FC<AchievementsTabProps> = ({
                                     </div>
 
                                     {/* Header Badges */}
-                                    <div className="flex flex-wrap gap-2 items-center mb-3">
+                                    <div className="flex flex-wrap gap-2 items-center mb-3 pr-24 lg:pr-20">
                                         <span
                                             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${catMeta.bgClass} ${catMeta.textClass} border ${catMeta.borderClass}`}
                                         >

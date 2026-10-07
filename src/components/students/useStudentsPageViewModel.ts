@@ -21,7 +21,7 @@ interface UseStudentsPageViewModelOptions {
 }
 
 export const useStudentsPageViewModel = ({ userId, toast, isAdmin = false, canViewAll = false }: UseStudentsPageViewModelOptions) => {
-  const data = useStudentsPageData({ userId, toast, isAdmin: isAdmin || canViewAll });
+  const data = useStudentsPageData({ userId, toast, isAdmin, canViewAll });
 
   const ui = useStudentsPageUiState({ classes: data.classes, toast });
 
@@ -35,7 +35,6 @@ export const useStudentsPageViewModel = ({ userId, toast, isAdmin = false, canVi
   const actions = useStudentsPageActions({
     userId,
     classes: data.classes,
-    students: data.students,
     studentsForActiveClass: data.studentsForActiveClass,
     activeClassId: data.activeClassId,
     selectedItems,
@@ -51,7 +50,6 @@ export const useStudentsPageViewModel = ({ userId, toast, isAdmin = false, canVi
     setIsClassModalOpen: ui.setIsClassModalOpen,
     setIsBulkMoveModalOpen: ui.setIsBulkMoveModalOpen,
     setIsExportModalOpen: ui.setIsExportModalOpen,
-    setIsImportModalOpen: ui.setIsImportModalOpen,
     setConfirmModalState: ui.setConfirmModalState,
   });
 
@@ -109,7 +107,7 @@ export const useStudentsPageViewModel = ({ userId, toast, isAdmin = false, canVi
       onEditStudent: (student: StudentRow) => ui.handleOpenStudentModal('edit', student),
       onDeleteStudent: actions.handleDeleteStudentClick,
       onCopyCode: interactions.handleCopyCode,
-      onGenerateCodeInfo: interactions.handleGenerateCodeInfo,
+      onGenerateCode: actions.handleGenerateStudentCode,
     },
     studentModal: {
       isStudentModalOpen: ui.isStudentModalOpen,
@@ -184,6 +182,8 @@ export const useStudentsPageViewModel = ({ userId, toast, isAdmin = false, canVi
 
   return {
     isLoading: data.isLoading,
+    isError: data.isError,
+    retryData: data.retryData,
     viewProps,
   };
 };

@@ -220,18 +220,25 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
 
   if (!hasData) return null;
 
+  const hasBothCards = classesNeedAttention.length > 0 && priorityStudents.length > 0;
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full h-full items-stretch">
+    <div className={`grid grid-cols-1 ${hasBothCards ? 'md:grid-cols-2' : ''} gap-4 w-full h-full items-stretch`}>
       {/* CARD 1: Kelas Perlu Perhatian */}
       {classesNeedAttention.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group h-full">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group h-full">
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                Kelas Perlu Perhatian
-              </span>
-              <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 group-hover:scale-110 transition-transform">
-                <AlertTriangle className="w-4 h-4" />
+            <div className="flex items-center justify-between mb-3.5">
+              <div>
+                <span className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider block">
+                  Kelas Perlu Perhatian
+                </span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Prioritas tindak lanjut akademik & disiplin
+                </span>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-rose-500/25 group-hover:scale-105 transition-transform">
+                <AlertTriangle className="w-5 h-5" />
               </div>
             </div>
 
@@ -240,13 +247,13 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
                 <div
                   key={idx}
                   onClick={() => navigate(item.link)}
-                  className={`flex items-center justify-between p-2 rounded-xl border border-transparent hover:border-slate-200 dark:hover:border-slate-700/60 transition-all cursor-pointer group/item ${item.color}`}
+                  className={`flex items-center justify-between p-2.5 rounded-xl border border-transparent hover:border-slate-200 dark:hover:border-slate-700/60 transition-all cursor-pointer group/item ${item.color}`}
                 >
                   <div className="flex items-center gap-2 overflow-hidden">
-                    <span className="font-extrabold text-xs px-2 py-0.5 rounded-lg bg-white/60 dark:bg-slate-950/40 shadow-sm border border-slate-200/10">
+                    <span className="font-extrabold text-xs px-2 py-0.5 rounded-lg bg-white/80 dark:bg-slate-950/50 shadow-2xs border border-slate-200/30 whitespace-nowrap shrink-0">
                       {item.className}
                     </span>
-                    <span className="text-xs font-medium truncate">
+                    <span className="text-xs font-semibold truncate">
                       {item.label}
                     </span>
                   </div>
@@ -264,14 +271,19 @@ export const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({ da
 
       {/* CARD 2: Siswa Prioritas (real data) */}
       {priorityStudents.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group h-full">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group h-full">
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                Siswa Prioritas
-              </span>
-              <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 group-hover:scale-110 transition-transform">
-                <UserX className="w-4 h-4" />
+            <div className="flex items-center justify-between mb-3.5">
+              <div>
+                <span className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider block">
+                  Siswa Prioritas
+                </span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Pemantauan nilai dan poin kedisiplinan
+                </span>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-amber-500/25 group-hover:scale-105 transition-transform">
+                <UserX className="w-5 h-5" />
               </div>
             </div>
 

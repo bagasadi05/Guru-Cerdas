@@ -7,7 +7,7 @@ type AcademicRecordIdentity = Pick<
 
 const normalizeText = (value?: string | null) => value?.trim().toLowerCase() || '';
 
-export const buildAcademicRecordIdentityKey = (record: Omit<AcademicRecordIdentity, 'user_id'>) => (
+export const buildAcademicRecordIdentityKey = (record: Partial<Omit<AcademicRecordIdentity, 'user_id'>> & Pick<AcademicRecordIdentity, 'student_id'>) => (
     [
         record.student_id,
         normalizeText(record.subject),
@@ -16,14 +16,17 @@ export const buildAcademicRecordIdentityKey = (record: Omit<AcademicRecordIdenti
     ].join('::')
 );
 
-const getRecordPriority = (record: AcademicRecordRow) => {
+type DedupableAcademicRecord = Pick<AcademicRecordRow, 'student_id' | 'subject' | 'created_at'>
+    & Partial<Pick<AcademicRecordRow, 'assessment_name' | 'semester_id' | 'version'>>;
+
+const getRecordPriority = (record: DedupableAcademicRecord) => {
     const versionScore = typeof record.version === 'number' ? record.version : 0;
     const createdAtScore = new Date(record.created_at).getTime();
     return Number.isNaN(createdAtScore) ? versionScore : versionScore * 1_000_000_000_000 + createdAtScore;
 };
 
-export const dedupeAcademicRecords = (records: AcademicRecordRow[]) => {
-    const latestByKey = new Map<string, AcademicRecordRow>();
+export const dedupeAcademicRecords = <T extends DedupableAcademicRecord>(records: T[]): T[] => {
+    const latestByKey = new Map<string, T>();
 
     records.forEach((record) => {
         const key = buildAcademicRecordIdentityKey(record);
@@ -101,8 +104,8 @@ export const buildViolationIdentityKey = (record: ViolationIdentity) => (
     ].join('::')
 );
 
-export const dedupeViolations = (records: ViolationRow[]) => {
-    const latestByKey = new Map<string, ViolationRow>();
+export const dedupeViolations = <T extends ViolationIdentity & { created_at?: string | null }>(records: T[]): T[] => {
+    const latestByKey = new Map<string, T>();
 
     records.forEach((record) => {
         const key = buildViolationIdentityKey(record);

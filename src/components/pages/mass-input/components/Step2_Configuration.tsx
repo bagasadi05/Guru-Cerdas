@@ -140,22 +140,25 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
 
     return (
         <div className="lg:col-span-1 space-y-6 animate-fade-in-left">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-visible">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-visible">
                 <button
                     type="button"
                     aria-expanded={isConfigOpen}
                     aria-controls="mass-input-configuration"
-                    className="w-full p-4 sm:p-5 rounded-t-2xl border-b border-slate-200 dark:border-slate-700 flex justify-between items-center cursor-pointer bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset"
+                    className="w-full p-4 sm:p-5 rounded-t-2xl border-b border-slate-200/80 dark:border-slate-800 flex justify-between items-center cursor-pointer bg-slate-50/70 dark:bg-slate-800/40 hover:bg-slate-100/80 dark:hover:bg-slate-800/70 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset"
                     onClick={() => setIsConfigOpen(!isConfigOpen)}
                 >
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-500/20 flex items-center justify-center border border-brand-200 dark:border-white/10">
-                            <SlidersHorizontal className="w-5 h-5 text-brand-600 dark:text-brand-300" />
+                    <div className="flex items-center gap-3 text-left">
+                        <div className="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-sm shadow-brand-600/20 flex-shrink-0">
+                            <SlidersHorizontal className="w-5 h-5" />
                         </div>
-                        <span className="font-semibold text-lg text-slate-900 dark:text-white">Konfigurasi</span>
+                        <div>
+                            <span className="block font-extrabold text-base text-slate-900 dark:text-white leading-tight">Konfigurasi</span>
+                            <span className="block text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Parameter kelas & penilaian</span>
+                        </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="hidden lg:inline text-xs font-medium text-slate-600 dark:text-slate-300">
+                        <span className="hidden lg:inline text-xs font-semibold text-slate-500 dark:text-slate-400">
                             {isConfigOpen ? 'Sembunyikan' : 'Tampilkan'}
                         </span>
                         <ChevronDownIcon className={`w-5 h-5 text-slate-400 dark:text-white/70 transition-transform duration-300 ${isConfigOpen ? 'rotate-180' : ''}`} />
@@ -165,7 +168,7 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                 <div id="mass-input-configuration" className={`rounded-b-2xl p-4 sm:p-5 space-y-5 bg-white dark:bg-slate-900 ${isConfigOpen ? 'block' : 'hidden'}`}>
                     <div className="space-y-5">
                         <div className="space-y-2">
-                            <label htmlFor="class-select" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Kelas</label>
+                            <label htmlFor="class-select" className="block text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-300">Kelas</label>
                             <CustomDropdown
                                 id="class-select"
                                 value={selectedClass}
@@ -183,10 +186,11 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                             <>
                                 {/* Activity Category Selection */}
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">Kategori Aktivitas</label>
+                                    <label className="text-xs font-bold text-brand-600 dark:text-brand-300 tracking-wider uppercase">Kategori Aktivitas</label>
                                     <div className="grid grid-cols-2 gap-2.5">
                                         {QUIZ_ACTIVITY_CATEGORIES.map((cat) => {
                                             const isSelected = (quizInfo.category || 'bertanya') === cat.value;
+                                            const CatIcon = cat.IconComponent;
                                             return (
                                                 <button
                                                     key={cat.value}
@@ -198,13 +202,19 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                                             name: QUIZ_CATEGORY_DEFAULT_NAMES[cat.value] || cat.label
                                                         }));
                                                     }}
-                                                    className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all text-left ${isSelected
-                                                        ? 'border-brand-500 bg-brand-50/90 dark:bg-brand-900/30 ring-2 ring-brand-500/50 shadow-sm'
-                                                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 hover:border-brand-300 dark:hover:border-slate-600'
+                                                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all text-left min-h-[44px] ${isSelected
+                                                        ? 'border-brand-500 bg-brand-50/90 dark:bg-brand-900/30 ring-2 ring-brand-500/40 shadow-sm'
+                                                        : 'border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/60 hover:border-brand-300 dark:hover:border-slate-600'
                                                         }`}
                                                 >
-                                                    <span className="text-xl flex-shrink-0">{cat.icon}</span>
-                                                    <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-white leading-tight">
+                                                    <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                                                        isSelected
+                                                            ? 'bg-brand-600 text-white shadow-sm'
+                                                            : 'bg-slate-100 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300'
+                                                    }`}>
+                                                        <CatIcon className="w-4 h-4" />
+                                                    </span>
+                                                    <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white leading-tight">
                                                         {cat.label}
                                                     </span>
                                                 </button>
@@ -440,12 +450,13 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
 
                                 {/* 2. Kategori Aspek BINTANG */}
                                 <div className="space-y-2">
-                                    <label className="text-sm font-bold text-brand-600 dark:text-brand-200 tracking-wide uppercase">
+                                    <label className="text-xs font-bold text-brand-600 dark:text-brand-300 tracking-wider uppercase">
                                         Kategori Sikap / Aspek BINTANG
                                     </label>
                                     <div className="flex flex-col gap-2">
                                         {BINTANG_ATTITUDE_ASPECTS.map(asp => {
                                             const isSelected = attitudeCategory === asp.value;
+                                            const AspIcon = asp.IconComponent;
                                             return (
                                                 <button
                                                     key={asp.value}
@@ -454,13 +465,19 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                                                         setAttitudeCategory?.(asp.value);
                                                         setAttitudeName?.(asp.defaultActivity);
                                                     }}
-                                                    className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                                                    className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all min-h-[52px] ${
                                                         isSelected
-                                                            ? 'border-brand-500 bg-brand-50/90 dark:bg-brand-900/30 ring-2 ring-brand-500/50 shadow-sm'
-                                                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 hover:border-brand-300 dark:hover:border-slate-600'
+                                                            ? 'border-brand-500 bg-brand-50/90 dark:bg-brand-900/30 ring-2 ring-brand-500/40 shadow-sm'
+                                                            : 'border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/60 hover:border-brand-300 dark:hover:border-slate-600'
                                                     }`}
                                                 >
-                                                    <span className="text-2xl flex-shrink-0">{asp.icon}</span>
+                                                    <span className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
+                                                        isSelected
+                                                            ? 'bg-brand-600 text-white shadow-sm'
+                                                            : 'bg-slate-100 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300'
+                                                    }`}>
+                                                        <AspIcon className="w-4 h-4" />
+                                                    </span>
                                                     <div className="min-w-0 flex-1">
                                                         <div className="flex items-center justify-between gap-2">
                                                             <p className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white leading-snug">{asp.label}</p>
@@ -622,34 +639,40 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
             </div>
 
             {mode === 'subject_grade' && isOnline && (
-                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
-                    <h3 className="font-bold text-lg mb-4 border-b border-slate-200 dark:border-slate-700 pb-3 flex items-center gap-2 text-slate-900 dark:text-white">
-                        <ClipboardPasteIcon className="w-5 h-5 text-brand-600 dark:text-brand-300" />
-                        Tempel Data Nilai
-                    </h3>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm">
+                    <div className="flex items-center gap-3 mb-4 pb-3.5 border-b border-slate-200/80 dark:border-slate-800">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-sm shadow-emerald-500/20 flex-shrink-0">
+                            <ClipboardPasteIcon className="w-4 h-4" />
+                        </div>
+                        <div>
+                            <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white leading-tight">
+                                Tempel Data Nilai (AI)
+                            </h3>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                Cocokkan daftar nama & nilai secara otomatis
+                            </p>
+                        </div>
+                    </div>
 
                     {/* Format Guide */}
-                    <div className="mb-4 p-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
-                        <p className="text-xs font-bold text-brand-600 dark:text-brand-200 mb-2 uppercase tracking-wide">Format yang Didukung:</p>
-                        <div className="space-y-1 font-mono text-xs text-slate-600 dark:text-white/70">
+                    <div className="mb-3.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/70">
+                        <p className="text-[11px] font-bold text-brand-600 dark:text-brand-300 mb-1.5 uppercase tracking-wider">Contoh Format Teks:</p>
+                        <div className="grid grid-cols-2 gap-1 font-mono text-xs text-slate-600 dark:text-slate-300">
                             <p>Ahmad Fauzi - 85</p>
                             <p>Budi Santoso: 90</p>
                             <p>Citra Dewi 78</p>
                             <p>1. Diana Putri 92</p>
                         </div>
-                        <p className="mt-2 text-xxs text-brand-500 dark:text-brand-300/70">
-                            AI akan mencocokkan nama dengan daftar siswa secara otomatis.
-                        </p>
                     </div>
 
                     <textarea
                         value={pasteData}
                         onChange={e => setPasteData(e.target.value)}
                         placeholder="Paste data nilai di sini...&#10;Contoh: Budi Santoso 95"
-                        rows={5}
-                        className="w-full p-3 border rounded-xl bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all mb-3"
+                        rows={4}
+                        className="w-full p-3 text-sm border rounded-xl bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/80 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all mb-3"
                     ></textarea>
-                    <Button onClick={handleAiParse} disabled={isParsing} className="w-full bg-brand-600 hover:bg-brand-700 text-white border-none h-12 rounded-xl font-bold tracking-wide">
+                    <Button onClick={handleAiParse} disabled={isParsing} className="w-full bg-brand-600 hover:bg-brand-700 text-white border-none h-11 rounded-xl font-bold tracking-wide shadow-sm">
                         {isParsing ? 'Memproses...' : 'Proses dengan AI'}
                     </Button>
                 </div>

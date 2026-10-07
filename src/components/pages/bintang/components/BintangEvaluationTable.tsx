@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Users, CheckCircle, Eye, FileText, RotateCcw, Printer,
-  Download, Loader2, X, FileSpreadsheet, MessageCircle
+  Download, Loader2, X, FileSpreadsheet, MessageCircle, Search
 } from 'lucide-react';
 import { MotionDiv, AnimatePresence } from '../../../ui/MotionComponents';
 import { Card } from '../../../ui/Card';
@@ -49,6 +49,13 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
   staleStudentIds,
 }) => {
   const toast = useToast();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredStudents = useMemo(() => {
+    if (!searchQuery.trim()) return students;
+    const q = searchQuery.toLowerCase();
+    return students.filter(s => s.name.toLowerCase().includes(q));
+  }, [students, searchQuery]);
 
   const handleSendWhatsAppEvaluation = (student: StudentData, ev: any, aspect: AspectPointsSummary) => {
     if (!student.parent_phone || student.parent_phone.trim() === '') {
@@ -72,6 +79,10 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
     window.open(link, '_blank', 'noopener,noreferrer');
   };
 
+  const fillPercentage = evalHook.evalStats.total > 0
+    ? Math.round((evalHook.evalStats.filled / evalHook.evalStats.total) * 100)
+    : 0;
+
   return (
     <div className="space-y-4">
       {/* ─── 1. Bulk Action Bar ────────────────────────────────────────── */}
@@ -87,11 +98,11 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
             <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 dark:bg-slate-850 text-white p-3 sm:px-4 sm:py-3 rounded-2xl shadow-md border border-slate-700/80">
               {/* Kiri: Status pilihan */}
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-brand-500/20 border border-brand-500/30 text-brand-700">
+                <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-brand-500/20 border border-brand-400/30 text-white">
                   <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-brand-600 text-white text-xs font-bold shadow-sm">
                     {bulkSelection.selectedCount}
                   </span>
-                  <span className="text-sm font-semibold">siswa dipilih</span>
+                  <span className="text-sm font-semibold text-brand-100">siswa dipilih</span>
                 </div>
 
                 <button
@@ -160,34 +171,72 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
         )}
       </AnimatePresence>
 
-      {/* ─── 2. Progress Bar (Evaluation fill status) ─────────────────── */}
-      {isWalas && students.length > 0 && (
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
-            <div
-              className="bg-brand-600 h-2.5 rounded-full transition-all duration-500"
-              style={{ width: `${(evalHook.evalStats.filled / evalHook.evalStats.total) * 100}%` }}
+      {/* ─── 2. Status Progress & Search Toolbar ──────────────────────── */}
+      {students.length > 0 && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-3 sm:p-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {isWalas ? (
+            <div className="flex-1 min-w-0 space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-700 dark:text-slate-200">
+                  Progres Pengisian Rapor Bulanan
+                </span>
+                <div className="flex items-center gap-2 font-semibold">
+                  <span className="text-slate-700 dark:text-slate-300">
+                    {evalHook.evalStats.filled}/{evalHook.evalStats.total} terisi ({fillPercentage}%)
+                  </span>
+                  {evalHook.evalStats.published > 0 && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-[11px]">
+                      <CheckCircle size={11} /> {evalHook.evalStats.published} terbit
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-brand-500 to-emerald-500 h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${fillPercentage}%` }}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+              Menampilkan {filteredStudents.length} dari {students.length} siswa
+            </div>
+          )}
+
+          {/* Quick Search */}
+          <div className="relative w-full sm:w-64 shrink-0">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari nama siswa..."
+              aria-label="Cari nama siswa"
+              className="w-full h-9 pl-9 pr-8 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 text-xs sm:text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all"
             />
-          </div>
-          <span className="text-slate-600 dark:text-slate-400 whitespace-nowrap font-medium">
-            {evalHook.evalStats.filled}/{evalHook.evalStats.total} terisi
-            {evalHook.evalStats.published > 0 && (
-              <span className="text-emerald-600 dark:text-emerald-400 ml-2">
-                ({evalHook.evalStats.published} published)
-              </span>
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                aria-label="Bersihkan pencarian"
+              >
+                <X size={14} />
+              </button>
             )}
-          </span>
+          </div>
         </div>
       )}
 
       {/* ─── 3. Main Student Table ────────────────────────────────────── */}
-      <Card className="p-0 overflow-hidden">
+      <Card className="p-0 overflow-hidden border border-slate-200/80 dark:border-slate-700/80 rounded-2xl shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[480px]" aria-label="Tabel Evaluasi Karakter Siswa">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
+              <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/60">
                 {isWalas && (
-                  <th className="py-2.5 px-3 w-10 text-center">
+                  <th className="py-3 px-3 w-10 text-center">
                     <input
                       type="checkbox"
                       checked={bulkSelection.isAllSelected}
@@ -200,28 +249,30 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                     />
                   </th>
                 )}
-                <th className="py-2.5 px-3 font-semibold text-xs sm:text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                <th className="py-3 px-3 font-bold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap">
                   <div className="flex items-center gap-1.5">
-                    <Users size={14} /> Nama Siswa
+                    <Users size={14} className="text-brand-500" /> Nama Siswa
                   </div>
                 </th>
-                <th className="py-2.5 px-2 font-semibold text-xs sm:text-sm text-slate-600 dark:text-slate-300 text-center whitespace-nowrap">Poin</th>
-                <th className="py-2.5 px-2 font-semibold text-xs sm:text-sm text-slate-600 dark:text-slate-300 text-center whitespace-nowrap">Adab</th>
-                <th className="py-2.5 px-2 font-semibold text-xs sm:text-sm text-slate-600 dark:text-slate-300 text-center whitespace-nowrap">Disiplin</th>
-                <th className="py-2.5 px-2 font-semibold text-xs sm:text-sm text-slate-600 dark:text-slate-300 text-center whitespace-nowrap">Rapi</th>
-                <th className="hidden md:table-cell py-2.5 px-3 font-semibold text-xs sm:text-sm text-slate-600 dark:text-slate-300 text-center whitespace-nowrap">Status</th>
-                <th className="py-2.5 px-3 font-semibold text-xs sm:text-sm text-slate-600 dark:text-slate-300 text-right whitespace-nowrap">Aksi</th>
+                <th className="py-3 px-2 font-bold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider text-center whitespace-nowrap">Poin</th>
+                <th className="py-3 px-2 font-bold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider text-center whitespace-nowrap">Adab</th>
+                <th className="py-3 px-2 font-bold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider text-center whitespace-nowrap">Disiplin</th>
+                <th className="py-3 px-2 font-bold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider text-center whitespace-nowrap">Rapi</th>
+                <th className="hidden md:table-cell py-3 px-3 font-bold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider text-center whitespace-nowrap">Status</th>
+                <th className="py-3 px-3 font-bold text-xs text-slate-600 dark:text-slate-300 uppercase tracking-wider text-right whitespace-nowrap">Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {students.length === 0 ? (
+              {filteredStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={isWalas ? 8 : 7} className="text-center py-10 text-slate-500">
-                    Tidak ada data siswa ditemukan di kelas ini.
+                  <td colSpan={isWalas ? 8 : 7} className="text-center py-10 text-slate-500 text-sm">
+                    {searchQuery.trim()
+                      ? `Tidak ada siswa dengan nama "${searchQuery}".`
+                      : 'Tidak ada data siswa ditemukan di kelas ini.'}
                   </td>
                 </tr>
               ) : (
-                students.map((student) => {
+                filteredStudents.map((student) => {
                   const ev = evalHook.getEvaluationForStudent(student.id);
                   const aspect = getAspectSummary(student.id);
                   const isCompleted = !!ev;
@@ -233,14 +284,14 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                   return (
                     <tr
                       key={student.id}
-                      className={`border-b border-slate-100 dark:border-slate-800 transition-colors ${
+                      className={`border-b border-slate-100 dark:border-slate-800/80 transition-colors ${
                         bulkSelection.isSelected(student.id)
                           ? 'bg-brand-50/60 dark:bg-brand-900/20'
-                          : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                          : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/40'
                       }`}
                     >
                       {isWalas && (
-                        <td className="py-2 px-3 text-center">
+                        <td className="py-2.5 px-3 text-center">
                           <input
                             type="checkbox"
                             checked={bulkSelection.isSelected(student.id)}
@@ -250,11 +301,11 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                           />
                         </td>
                       )}
-                      <td className="py-2 px-2 sm:py-3 sm:px-4 text-[11px] sm:text-sm font-medium text-slate-900 dark:text-white max-w-[90px] sm:max-w-none truncate" title={student.name}>
-                        <div className="flex items-center gap-1.5 flex-wrap">
+                      <td className="py-2.5 px-2.5 sm:py-3 sm:px-4 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white max-w-[130px] sm:max-w-none truncate" title={student.name}>
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="truncate">{student.name}</span>
                           {hasKeaktifan && (
-                            <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-semibold" title={`+${activePts.totalPoints} poin keaktifan`}>
+                            <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-bold" title={`+${activePts.totalPoints} poin keaktifan`}>
                               +{activePts.totalPoints}
                             </span>
                           )}
@@ -268,8 +319,16 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                           )}
                         </div>
                       </td>
-                      <td className="py-2 px-1 sm:py-3 sm:px-4 text-[10px] sm:text-sm text-center">
-                        <span className={`font-bold ${totalPoints > 20 ? 'text-rose-600' : totalPoints > 10 ? 'text-amber-600' : totalPoints > 0 ? 'text-blue-600' : 'text-emerald-600'}`}>
+                      <td className="py-2.5 px-1 sm:py-3 sm:px-4 text-xs sm:text-sm text-center">
+                        <span className={`inline-flex items-center justify-center min-w-[26px] px-1.5 py-0.5 rounded-lg font-extrabold text-xs ${
+                          totalPoints > 20
+                            ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400'
+                            : totalPoints > 10
+                            ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400'
+                            : totalPoints > 0
+                            ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400'
+                            : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400'
+                        }`}>
                           {totalPoints}
                         </span>
                       </td>
@@ -278,9 +337,9 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                         const score = (ev?.[field] || aspect[aspectKey].grade) as BintangGrade;
                         const isManual = (Array.isArray(ev?.manual_aspects) && ev.manual_aspects.includes(aspectKey)) || (!!ev?.[field] && ev[field] !== aspect[aspectKey].grade);
                         return (
-                          <td key={field} className="py-2 px-1 sm:py-3 sm:px-4 text-center">
+                          <td key={field} className="py-2.5 px-1 sm:py-3 sm:px-4 text-center">
                             <span
-                              className={`inline-flex items-center justify-center gap-1 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold ring-1 ${gradeColors[score]}`}
+                              className={`inline-flex items-center justify-center gap-1 min-w-[28px] px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[11px] sm:text-xs font-extrabold ring-1 ${gradeColors[score]}`}
                               title={isManual ? 'Nilai telah disesuaikan manual oleh guru (aman dari reset generate)' : `Nilai rekomendasi sistem: ${score}`}
                             >
                               {score}
@@ -291,29 +350,29 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                           </td>
                         );
                       })}
-                      <td className="hidden md:table-cell py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm text-center">
+                      <td className="hidden md:table-cell py-2.5 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm text-center">
                         {isPublished ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
                             <CheckCircle size={12} /> Published
                           </span>
                         ) : isCompleted && staleStudentIds?.has(student.id) ? (
                           <span
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300"
                             title="Ada pelanggaran atau poin keaktifan baru setelah rapor ini dibuat. Klik Generate untuk memperbarui."
                           >
                             Perlu diperbarui
                           </span>
                         ) : isCompleted ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                             Draft
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] sm:text-xs font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                             Auto
                           </span>
                         )}
                       </td>
-                      <td className="py-2 px-2 sm:py-3 sm:px-4 text-right">
+                      <td className="py-2.5 px-2 sm:py-3 sm:px-4 text-right">
                         <div className="flex justify-end gap-1 sm:gap-1.5 items-center">
                           {/* ─── Tombol WhatsApp Rapor ─── */}
                           {isWalas && isPublished && (
@@ -397,13 +456,15 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
       </Card>
 
       {/* ─── Grade Legend ───────────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-3 text-xs text-slate-500 dark:text-slate-400">
-        <span className="font-medium text-slate-700 dark:text-slate-300">Keterangan:</span>
+      <div className="bg-slate-50/80 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 px-4 py-3 flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+        <span className="font-bold text-slate-700 dark:text-slate-300">Keterangan Predikat:</span>
         {BINTANG_THRESHOLDS.map(t => (
-          <span key={t.grade} className="flex items-center gap-1">
-            <span className={`inline-flex px-1.5 py-0.5 rounded text-xs font-bold ${gradeColors[t.grade]}`}>{t.grade}</span>
-            {t.grade === 'A' ? '0 poin' : t.grade === 'B' ? '1-10 poin' : t.grade === 'C' ? '11-20 poin' : '>20 poin'}
-            ({t.label})
+          <span key={t.grade} className="inline-flex items-center gap-1.5">
+            <span className={`inline-flex px-2 py-0.5 rounded-md text-xs font-extrabold ring-1 ${gradeColors[t.grade]}`}>{t.grade}</span>
+            <span>
+              {t.grade === 'A' ? '0 poin' : t.grade === 'B' ? '1-10 poin' : t.grade === 'C' ? '11-20 poin' : '>20 poin'}{' '}
+              <span className="text-slate-400 dark:text-slate-500">({t.label})</span>
+            </span>
           </span>
         ))}
       </div>

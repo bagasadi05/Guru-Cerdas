@@ -32,8 +32,8 @@ export const TodayJournalWidget: React.FC<TodayJournalWidgetProps> = ({ status }
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-start justify-between gap-3 border-b border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800/80 dark:bg-slate-900/50">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-brand-500/20 bg-brand-500/10 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm shadow-indigo-500/25">
             <BookOpenCheck className="h-5 w-5" />
           </div>
           <div>
@@ -43,7 +43,7 @@ export const TodayJournalWidget: React.FC<TodayJournalWidgetProps> = ({ status }
             </p>
           </div>
         </div>
-        <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${unfilledItems.length > 0
+        <span className={`rounded-full border px-2.5 py-1 text-xs font-bold whitespace-nowrap shrink-0 ${unfilledItems.length > 0
           ? 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-400'
           : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
         }`}>
@@ -78,7 +78,7 @@ export const TodayJournalWidget: React.FC<TodayJournalWidgetProps> = ({ status }
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{schedule.subject}</span>
                   <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
-                    {schedule.start_time.slice(0, 5)} – {schedule.end_time.slice(0, 5)}
+                    {schedule.start_time.slice(0, 5)} - {schedule.end_time.slice(0, 5)}
                   </span>
                 </span>
                 <span className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-brand-600 dark:text-brand-400">

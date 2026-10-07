@@ -23,7 +23,7 @@ import {
 import type { AnalyticsAcademicRecord } from '../types';
 
 interface AcademicTrendChartProps {
-    trends: SubjectTrendData[];
+    trends?: SubjectTrendData[];
     kktpThreshold: number;
     academicRecords?: AnalyticsAcademicRecord[];
     subjects?: string[];
@@ -64,7 +64,7 @@ const CustomLineTooltip: React.FC<{
                         </>
                     )}
                 </span>
-                <span className="text-[10px] text-slate-400 font-medium">KKTP: {kktpThreshold}</span>
+                <span className="text-xs text-slate-400 font-medium">KKTP: {kktpThreshold}</span>
             </div>
             <div className="space-y-1.5">
                 {sortedItems.map((item) => {
@@ -81,11 +81,11 @@ const CustomLineTooltip: React.FC<{
                             <div className="flex items-center gap-1.5 shrink-0">
                                 <span className="font-bold text-white text-sm">{item.value}</span>
                                 {isPassing ? (
-                                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/40">
+                                    <span className="text-xs font-semibold text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/40">
                                         ✓ Tuntas
                                     </span>
                                 ) : (
-                                    <span className="text-[10px] font-semibold text-rose-400 bg-rose-950/60 px-1.5 py-0.5 rounded border border-rose-800/40">
+                                    <span className="text-xs font-semibold text-rose-400 bg-rose-950/60 px-1.5 py-0.5 rounded border border-rose-800/40">
                                         &lt; KKTP
                                     </span>
                                 )}
@@ -116,20 +116,20 @@ const CustomBarTooltip: React.FC<{
                     <span className="text-base font-black text-white">{data.average}</span>
                 </div>
                 {data.count > 0 && (
-                    <div className="flex items-center justify-between gap-4 text-[11px]">
+                    <div className="flex items-center justify-between gap-4 text-xs">
                         <span className="text-slate-400">Siswa Dinilai:</span>
                         <span className="text-slate-200 font-semibold">{data.count} siswa</span>
                     </div>
                 )}
                 <div className="pt-1.5 mt-1 border-t border-slate-800 flex items-center justify-between gap-2">
-                    <span className="text-slate-400 text-[11px]">Target KKTP ({kktpThreshold}):</span>
+                    <span className="text-slate-400 text-xs">Target KKTP ({kktpThreshold}):</span>
                     {data.isAboveKKTP ? (
-                        <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+                        <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
                             <CheckCircle className="w-3 h-3" />
                             +{diff} di atas
                         </span>
                     ) : (
-                        <span className="text-[11px] font-bold text-rose-400 flex items-center gap-1">
+                        <span className="text-xs font-bold text-rose-400 flex items-center gap-1">
                             <AlertTriangle className="w-3 h-3" />
                             {diff} di bawah
                         </span>
@@ -140,8 +140,16 @@ const CustomBarTooltip: React.FC<{
     );
 };
 
+const NO_TRENDS: SubjectTrendData[] = [];
+
+const VIEW_MODES: { id: AcademicTrendMode; label: string }[] = [
+    { id: 'weekly', label: 'Mingguan' },
+    { id: 'monthly', label: 'Bulanan' },
+    { id: 'assessment', label: 'Per Asesmen' },
+];
+
 export const AcademicTrendChart: React.FC<AcademicTrendChartProps> = ({
-    trends,
+    trends = NO_TRENDS,
     kktpThreshold,
     academicRecords,
     subjects,
@@ -300,7 +308,7 @@ export const AcademicTrendChart: React.FC<AcademicTrendChartProps> = ({
     const hasSinglePoint = chartData.length === 1;
 
     return (
-        <Card className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-md">
+        <Card>
             <CardHeader className="pb-2.5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <CardTitle className="flex items-center gap-2.5 text-base font-bold text-slate-900 dark:text-white">
@@ -319,40 +327,22 @@ export const AcademicTrendChart: React.FC<AcademicTrendChartProps> = ({
 
                     {/* Mode Toggle Switch: Mingguan vs Bulanan vs Per Asesmen */}
                     {academicRecords && (
-                        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700/70 text-xs self-start sm:self-auto">
-                            <button
-                                type="button"
-                                onClick={() => setViewMode('weekly')}
-                                className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                                    viewMode === 'weekly'
-                                        ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs'
-                                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                                }`}
-                            >
-                                Mingguan
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setViewMode('monthly')}
-                                className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                                    viewMode === 'monthly'
-                                        ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs'
-                                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                                }`}
-                            >
-                                Bulanan
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setViewMode('assessment')}
-                                className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
-                                    viewMode === 'assessment'
-                                        ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-400 shadow-xs'
-                                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                                }`}
-                            >
-                                Per Asesmen
-                            </button>
+                        <div role="group" aria-label="Tampilan grafik" className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/50 p-1 rounded-xl border border-slate-200 dark:border-slate-700/70 text-xs self-start sm:self-auto">
+                            {VIEW_MODES.map((mode) => (
+                                <button
+                                    key={mode.id}
+                                    type="button"
+                                    aria-pressed={viewMode === mode.id}
+                                    onClick={() => setViewMode(mode.id)}
+                                    className={`min-h-[44px] sm:min-h-[36px] px-3 rounded-lg font-semibold transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+                                        viewMode === mode.id
+                                            ? 'bg-white dark:bg-slate-700 text-brand-700 dark:text-brand-300 shadow-xs'
+                                            : 'text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white'
+                                    }`}
+                                >
+                                    {mode.label}
+                                </button>
+                            ))}
                         </div>
                     )}
                 </div>
@@ -366,31 +356,23 @@ export const AcademicTrendChart: React.FC<AcademicTrendChartProps> = ({
                             <button
                                 key={t.subject}
                                 type="button"
+                                aria-pressed={isActive}
                                 onClick={() => toggleSubject(t.subject)}
-                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border cursor-pointer ${
+                                className={`inline-flex items-center gap-1.5 min-h-[44px] sm:min-h-[36px] px-3 rounded-full text-xs font-semibold transition-all border cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
                                     isActive
-                                        ? 'shadow-xs border-transparent'
-                                        : 'border-slate-200 dark:border-slate-700/60 opacity-40 hover:opacity-75 bg-slate-50 dark:bg-slate-800 text-slate-500'
+                                        ? 'bg-white dark:bg-slate-900/60 text-slate-800 dark:text-slate-100 shadow-xs'
+                                        : 'bg-slate-50 dark:bg-transparent text-slate-500 dark:text-slate-400 border-dashed border-slate-300 dark:border-slate-600'
                                 }`}
-                                style={
-                                    isActive
-                                        ? {
-                                              backgroundColor: `${t.color}15`,
-                                              color: t.color,
-                                              borderColor: `${t.color}40`,
-                                          }
-                                        : undefined
-                                }
+                                style={isActive ? { borderColor: t.color } : undefined}
                             >
                                 <span
-                                    className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs"
-                                    style={{ backgroundColor: t.color }}
+                                    aria-hidden
+                                    className="w-2.5 h-2.5 rounded-full shrink-0 border-2"
+                                    style={{ borderColor: t.color, backgroundColor: isActive ? t.color : 'transparent' }}
                                 />
-                                <span>{t.subject}</span>
+                                <span className={isActive ? '' : 'line-through'}>{t.subject}</span>
                                 {isActive && latestPoint && (
-                                    <span
-                                        className="text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-white/80 dark:bg-slate-900/80 border border-current ml-0.5"
-                                    >
+                                    <span className="text-xs font-bold tabular-nums text-slate-600 dark:text-slate-300 ml-0.5">
                                         {latestPoint.average}
                                     </span>
                                 )}
@@ -409,13 +391,13 @@ export const AcademicTrendChart: React.FC<AcademicTrendChartProps> = ({
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-800/80" />
                                 <XAxis
                                     dataKey="label"
-                                    tick={{ fontSize: 11, fill: '#94a3b8' }}
+                                    tick={{ fontSize: 12, fill: '#64748b' }}
                                     tickLine={false}
                                     axisLine={{ stroke: '#e2e8f0' }}
                                 />
                                 <YAxis
                                     domain={[yMin, 100]}
-                                    tick={{ fontSize: 11, fill: '#94a3b8' }}
+                                    tick={{ fontSize: 12, fill: '#64748b' }}
                                     tickLine={false}
                                     axisLine={false}
                                 />
@@ -473,13 +455,13 @@ export const AcademicTrendChart: React.FC<AcademicTrendChartProps> = ({
                                     />
                                     <XAxis
                                         dataKey="subject"
-                                        tick={{ fontSize: 11, fill: '#94a3b8' }}
+                                        tick={{ fontSize: 12, fill: '#64748b' }}
                                         tickLine={false}
                                         axisLine={{ stroke: '#e2e8f0' }}
                                     />
                                     <YAxis
                                         domain={[yMin, 100]}
-                                        tick={{ fontSize: 11, fill: '#94a3b8' }}
+                                        tick={{ fontSize: 12, fill: '#64748b' }}
                                         tickLine={false}
                                         axisLine={false}
                                     />
@@ -534,7 +516,7 @@ export const AcademicTrendChart: React.FC<AcademicTrendChartProps> = ({
                             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
                                 Belum ada data penilaian tercatat
                             </p>
-                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                                 Input penilaian siswa melalui menu Input Penilaian untuk melihat grafik capaian dan tren
                             </p>
                         </div>

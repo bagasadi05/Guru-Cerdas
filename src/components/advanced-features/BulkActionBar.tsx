@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Loader2, X } from 'lucide-react';
 import { MotionDiv, AnimatePresence } from '../ui/MotionComponents';
 
@@ -66,9 +67,9 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
   const getVariantStyles = (variant: BulkAction['variant'] = 'default') => {
     switch (variant) {
       case 'primary':
-        return 'bg-brand-600 hover:bg-brand-500 text-white shadow-md shadow-brand-950/40 active:scale-95';
+        return 'bg-emerald-700 hover:bg-emerald-800 text-white';
       case 'success':
-        return 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-950/40 active:scale-95';
+        return 'bg-emerald-700 hover:bg-emerald-800 text-white';
       case 'danger':
         return 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 active:scale-95';
       case 'default':
@@ -77,93 +78,109 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
     }
   };
 
-  const posClasses = position === 'top' ? 'top-20 lg:top-24' : 'bottom-20 sm:bottom-6';
-  const animInitial = position === 'top' ? { opacity: 0, y: -25, scale: 0.96 } : { opacity: 0, y: 35, scale: 0.96 };
-  const animExit = position === 'top' ? { opacity: 0, y: -20, scale: 0.96 } : { opacity: 0, y: 25, scale: 0.96 };
+  const posClasses =
+    position === 'top'
+      ? 'top-20 lg:top-24'
+      : 'bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] lg:bottom-6';
+  const animInitial =
+    position === 'top' ? { opacity: 0, y: -25, scale: 0.96 } : { opacity: 0, y: 35, scale: 0.96 };
+  const animExit =
+    position === 'top' ? { opacity: 0, y: -20, scale: 0.96 } : { opacity: 0, y: 25, scale: 0.96 };
 
-  return (
-    <AnimatePresence>
-      {selectedCount > 0 && (
-        <MotionDiv
-          initial={animInitial}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={animExit}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
-          className={`fixed ${posClasses} left-1/2 -translate-x-1/2 z-40 max-w-[calc(100vw-1.5rem)] sm:max-w-none flex items-center gap-2 sm:gap-3 rounded-2xl bg-slate-900/95 text-white backdrop-blur-xl px-3 py-2 sm:px-4 sm:py-2.5 shadow-2xl shadow-slate-950/60 border border-slate-700/80 ring-1 ring-white/10 ${className}`}
-        >
-          {/* Badge selection counter */}
-          <div className="flex items-center gap-1.5 sm:gap-2 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-brand-500/20 border border-brand-500/30 text-brand-700 shrink-0">
-            <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-lg bg-brand-600 text-white text-xs sm:text-sm font-bold shadow-sm">
-              {selectedCount}
-            </span>
-            <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
-              {itemLabel} <span className="hidden sm:inline">dipilih</span>
-            </span>
-          </div>
+  if (typeof document === 'undefined') return null;
 
-          {/* Optional Quick Select All / Deselect All */}
-          {(onSelectAll || onDeselectAll) && totalCount !== undefined && totalCount > 0 && (
+  return createPortal(
+    <div className={`fixed ${posClasses} inset-x-3 z-40 flex justify-center pointer-events-none`}>
+      <AnimatePresence>
+        {selectedCount > 0 && (
+          <MotionDiv
+            initial={animInitial}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={animExit}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            role="toolbar"
+            aria-label="Tindakan untuk pilihan"
+            className={`pointer-events-auto w-full max-w-5xl min-w-0 flex items-center gap-2 rounded-lg bg-slate-900 text-white px-2 py-2 shadow-lg border border-slate-600 ${className}`}
+          >
+            {/* Badge selection counter */}
+            <div
+              className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-800 text-slate-100 shrink-0"
+              aria-live="polite"
+            >
+              <span className="flex h-6 min-w-6 items-center justify-center rounded bg-emerald-700 text-white text-sm font-bold">
+                {selectedCount}
+              </span>
+              <span className="text-xs sm:text-sm font-medium whitespace-nowrap">
+                {itemLabel} <span className="hidden sm:inline">dipilih</span>
+              </span>
+            </div>
+
+            {/* Optional Quick Select All / Deselect All */}
+            {(onSelectAll || onDeselectAll) && totalCount !== undefined && totalCount > 0 && (
+              <button
+                type="button"
+                onClick={isAllSelected ? onDeselectAll : onSelectAll}
+                className="hidden md:inline-flex min-h-[44px] items-center px-2 py-1 text-xs font-medium text-slate-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-white"
+                title={isAllSelected ? 'Batalkan pilih semua' : `Pilih semua (${totalCount})`}
+              >
+                {isAllSelected ? 'Batal Semua' : `Pilih Semua (${totalCount})`}
+              </button>
+            )}
+
+            <div className="h-6 w-px bg-slate-700/80 shrink-0" />
+
+            {/* Action buttons */}
+            <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-1">
+              {actions.map((action) => {
+                const isLoading = loadingAction === action.id;
+                const isDisabled = action.disabled || (loadingAction !== null && !isLoading);
+
+                return (
+                  <button
+                    type="button"
+                    key={action.id}
+                    onClick={() => handleAction(action)}
+                    onFocus={event => event.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' })}
+                    disabled={isDisabled || isLoading}
+                    title={action.label}
+                    className={`flex shrink-0 min-h-[44px] items-center gap-2 rounded-lg px-3 py-2 text-xs sm:text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${getVariantStyles(
+                      action.variant,
+                    )} ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                    ) : (
+                      <span className="shrink-0">{action.icon}</span>
+                    )}
+                    {action.shortLabel ? (
+                      <>
+                        <span className="hidden sm:inline whitespace-nowrap">{action.label}</span>
+                        <span className="sm:hidden whitespace-nowrap">{action.shortLabel}</span>
+                      </>
+                    ) : (
+                      <span className="whitespace-nowrap">{action.label}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="h-6 w-px bg-slate-700/80 shrink-0" />
+
+            {/* Cancel button */}
             <button
               type="button"
-              onClick={isAllSelected ? onDeselectAll : onSelectAll}
-              className="hidden md:inline-flex items-center px-2 py-1 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors whitespace-nowrap"
-              title={isAllSelected ? 'Batalkan pilih semua' : `Pilih semua (${totalCount})`}
+              onClick={onClear}
+              className="rounded-lg min-h-[44px] min-w-[44px] flex items-center justify-center text-slate-200 hover:text-white hover:bg-white/10 transition-colors shrink-0 focus-visible:outline-2 focus-visible:outline-white"
+              aria-label="Batalkan pilihan (Esc)"
+              title="Batalkan pilihan (Esc)"
             >
-              {isAllSelected ? 'Batal Semua' : `Pilih Semua (${totalCount})`}
+              <X className="h-4 w-4 sm:h-5 sm:w-5" />
             </button>
-          )}
-
-          <div className="h-6 w-px bg-slate-700/80 shrink-0" />
-
-          {/* Action buttons */}
-          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-0.5">
-            {actions.map((action) => {
-              const isLoading = loadingAction === action.id;
-              const isDisabled = action.disabled || (loadingAction !== null && !isLoading);
-
-              return (
-                <button
-                  type="button"
-                  key={action.id}
-                  onClick={() => handleAction(action)}
-                  disabled={isDisabled || isLoading}
-                  title={action.label}
-                  className={`flex items-center gap-1.5 sm:gap-2 rounded-xl px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm font-medium transition-all ${getVariantStyles(
-                    action.variant
-                  )} ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                  ) : (
-                    <span className="shrink-0">{action.icon}</span>
-                  )}
-                  {action.shortLabel ? (
-                    <>
-                      <span className="hidden sm:inline whitespace-nowrap">{action.label}</span>
-                      <span className="sm:hidden whitespace-nowrap">{action.shortLabel}</span>
-                    </>
-                  ) : (
-                    <span className="whitespace-nowrap">{action.label}</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="h-6 w-px bg-slate-700/80 shrink-0" />
-
-          {/* Cancel button */}
-          <button
-            type="button"
-            onClick={onClear}
-            className="rounded-xl p-1.5 sm:p-2 text-slate-400 hover:text-white hover:bg-white/10 transition-colors shrink-0"
-            aria-label="Batalkan pilihan (Esc)"
-            title="Batalkan pilihan (Esc)"
-          >
-            <X className="h-4 w-4 sm:h-5 sm:w-5" />
-          </button>
-        </MotionDiv>
-      )}
-    </AnimatePresence>
+          </MotionDiv>
+        )}
+      </AnimatePresence>
+    </div>,
+    document.body,
   );
 };

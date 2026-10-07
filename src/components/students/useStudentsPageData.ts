@@ -1,5 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
 import { ClassRow, SortConfig, StudentRow } from './types';
 import { TeacherClassAssignmentRow, hasHomeroomAssignment } from '../../services/teacherAssignments';
@@ -12,13 +12,15 @@ interface UseStudentsPageDataOptions {
   userId?: string;
   toast: ToastApi;
   isAdmin?: boolean;
+  canViewAll?: boolean;
 }
 
 const EMPTY_CLASSES: ClassRow[] = [];
 const EMPTY_STUDENTS: StudentRow[] = [];
 const EMPTY_ASSIGNMENTS: TeacherClassAssignmentRow[] = [];
 
-export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStudentsPageDataOptions) => {
+export const useStudentsPageData = ({ userId, isAdmin = false, canViewAll = false }: UseStudentsPageDataOptions) => {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const deferredSearchTerm = useDeferredValue(searchTerm);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -51,6 +53,7 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
   const {
     data: userAssignments = EMPTY_ASSIGNMENTS,
     isLoading: isLoadingAssignments,
+    isError: isAssignmentsError,
   } = useQuery({
     queryKey: ['teacherClassAssignments', userId],
     queryFn: async () => {
@@ -77,9 +80,8 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
     data: classesData,
     isLoading: isLoadingClasses,
     isError: isClassesError,
-    error: classesError,
   } = useQuery({
-    queryKey: ['classes', userId, assignedClassIdsKey, isAdmin],
+    queryKey: ['classes', userId, assignedClassIdsKey, isAdmin, canViewAll],
     queryFn: async () => {
       if (!userId) return EMPTY_CLASSES;
 
@@ -93,7 +95,7 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
         .is('deleted_at', null)
         .eq('is_archived', false);
 
-      if (!isAdmin) {
+      if (!isAdmin && !canViewAll) {
         if (assignedClassIds.length > 0) {
           query = query.or(`user_id.eq.${userId},id.in.(${assignedClassIds.map((id) => `"${id}"`).join(',')})`);
         } else {
@@ -108,13 +110,13 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
     },
     // Wait for assignments before asking for classes. Otherwise this runs once
     // without assignment access and immediately repeats when assignments arrive.
-    enabled: !!userId && !isLoadingAssignments,
+    enabled: !!userId && !isLoadingAssignments && !isAssignmentsError,
   });
 
   const classes = classesData || EMPTY_CLASSES;
 
   const activeClassId = useMemo(() => {
-    if (!classes.length) return activeClassIdState;
+    if (!classes.length) return '';
     if (activeClassIdState && classes.some((c) => c.id === activeClassIdState)) {
       return activeClassIdState;
     }
@@ -136,7 +138,6 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
     data: studentsData,
     isLoading: isLoadingStudents,
     isError: isStudentsError,
-    error: studentsError,
   } = useQuery({
     queryKey: ['students', userId, activeClassId],
     queryFn: async () => {
@@ -151,21 +152,19 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
       if (error) throw new Error(error.message);
       return (data || EMPTY_STUDENTS) as unknown as StudentRow[];
     },
-    enabled: !!userId && !!activeClassId,
+    enabled: !!userId && !!activeClassId && !isClassesError && !isAssignmentsError,
   });
 
   const students = studentsData || EMPTY_STUDENTS;
   const activeClass = classes.find((classItem) => classItem.id === activeClassId) || null;
-  const canManageActiveClass = activeClass?.user_id === userId || hasHomeroomAssignment(userAssignments, activeClassId);
+  const canManageActiveClass = isAdmin || activeClass?.user_id === userId || hasHomeroomAssignment(userAssignments, activeClassId);
   const isLoading = isLoadingAssignments || isLoadingClasses || (!!activeClassId && isLoadingStudents);
-  const isError = isClassesError || (!!activeClassId && isStudentsError);
-  const queryError = classesError || (activeClassId ? studentsError : null);
-
-  useEffect(() => {
-    if (isError && queryError) {
-      toast.error(`Gagal memuat data: ${(queryError as Error).message}`);
-    }
-  }, [isError, queryError, toast]);
+  const isError = isAssignmentsError || isClassesError || (!!activeClassId && isStudentsError);
+  const retryData = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['teacherClassAssignments', userId] });
+    await queryClient.invalidateQueries({ queryKey: ['classes', userId] });
+    await queryClient.invalidateQueries({ queryKey: ['students', userId] });
+  };
 
   useEffect(() => {
     if (activeClassId) {
@@ -240,6 +239,8 @@ export const useStudentsPageData = ({ userId, toast, isAdmin = false }: UseStude
     canManageActiveClass,
     studentsForActiveClass,
     isLoading,
+    isError,
+    retryData,
     handleSort,
   };
 };

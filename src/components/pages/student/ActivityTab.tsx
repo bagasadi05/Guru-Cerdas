@@ -1,20 +1,47 @@
 import React, { useMemo, useState } from 'react';
 import { CardTitle, CardDescription } from '../../ui/Card';
 import { Button } from '../../ui/Button';
-import { PlusIcon, TrendingUpIcon, CheckCircleIcon, PencilIcon, TrashIcon, HistoryIcon, TagIcon, AlertTriangleIcon, StarIcon } from 'lucide-react';
+import {
+    PlusIcon,
+    TrendingUpIcon,
+    CheckCircleIcon,
+    PencilIcon,
+    TrashIcon,
+    HistoryIcon,
+    TagIcon,
+    AlertTriangleIcon,
+    StarIcon,
+    HelpCircle,
+    Presentation,
+    FileCheck,
+    Lightbulb,
+    MessageSquare,
+    Star
+} from 'lucide-react';
 import { QuizPointRow } from './types';
 
 // Point Categories with labels and colors
 export const POINT_CATEGORIES = {
-    bertanya: { label: 'Bertanya', color: 'blue', icon: '❓' },
-    presentasi: { label: 'Presentasi', color: 'purple', icon: '🎤' },
-    tugas_tambahan: { label: 'Tugas Tambahan', color: 'green', icon: '📝' },
-    menjawab: { label: 'Menjawab', color: 'orange', icon: '💡' },
-    diskusi: { label: 'Diskusi', color: 'cyan', icon: '💬' },
-    lainnya: { label: 'Lainnya', color: 'gray', icon: '⭐' },
+    bertanya: { label: 'Bertanya', color: 'blue' },
+    presentasi: { label: 'Presentasi', color: 'purple' },
+    tugas_tambahan: { label: 'Tugas Tambahan', color: 'green' },
+    menjawab: { label: 'Menjawab', color: 'orange' },
+    diskusi: { label: 'Diskusi', color: 'cyan' },
+    lainnya: { label: 'Lainnya', color: 'gray' },
 } as const;
 
 export type PointCategory = keyof typeof POINT_CATEGORIES;
+
+export const renderPointCategoryIcon = (category: string, className = "w-3.5 h-3.5 shrink-0") => {
+    switch (category) {
+        case 'bertanya': return <HelpCircle className={className} />;
+        case 'presentasi': return <Presentation className={className} />;
+        case 'tugas_tambahan': return <FileCheck className={className} />;
+        case 'menjawab': return <Lightbulb className={className} />;
+        case 'diskusi': return <MessageSquare className={className} />;
+        default: return <Star className={className} />;
+    }
+};
 
 const POINT_CATEGORY_BADGE_CLASSES: Record<PointCategory, string> = {
     bertanya: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
@@ -57,7 +84,7 @@ const CategoryFilter: React.FC<{
             >
                 Semua
             </button>
-            {Object.entries(POINT_CATEGORIES).map(([key, { label, icon }]) => (
+            {Object.entries(POINT_CATEGORIES).map(([key, { label }]) => (
                 <button type="button"
                     key={key}
                     onClick={() => onSelect(key as PointCategory)}
@@ -66,8 +93,8 @@ const CategoryFilter: React.FC<{
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                 >
-                    <span className="text-sm">{icon}</span>
-                    {label}
+                    {renderPointCategoryIcon(key)}
+                    <span>{label}</span>
                 </button>
             ))}
         </div>
@@ -100,24 +127,33 @@ const PointsStats: React.FC<{ records: QuizPointRow[] }> = ({ records }) => {
         };
     }, [records]);
 
+    const statItems = [
+        { label: 'Poin Tersedia', value: stats.available, badgeBg: 'bg-emerald-600', icon: StarIcon },
+        { label: 'Sudah Digunakan', value: stats.used, badgeBg: 'bg-blue-600', icon: CheckCircleIcon },
+        { label: 'Total Poin', value: stats.total, badgeBg: 'bg-violet-600', icon: TrendingUpIcon },
+        { label: 'Mata Pelajaran', value: Object.keys(stats.bySubject).length, badgeBg: 'bg-amber-500', icon: TagIcon },
+    ];
+
     return (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            <div className="p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800/30">
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.available}</p>
-                <p className="text-xs text-green-500">Poin Tersedia</p>
-            </div>
-            <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30">
-                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.used}</p>
-                <p className="text-xs text-blue-500">Sudah Digunakan</p>
-            </div>
-            <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/30">
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.total}</p>
-                <p className="text-xs text-purple-500">Total Poin</p>
-            </div>
-            <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-800/30">
-                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{Object.keys(stats.bySubject).length}</p>
-                <p className="text-xs text-orange-500">Mata Pelajaran</p>
-            </div>
+            {statItems.map((item) => (
+                <div
+                    key={item.label}
+                    className="bg-slate-50/80 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 p-3 sm:p-3.5 flex items-center gap-3 transition-all hover:border-slate-300 dark:hover:border-slate-600 shadow-xs"
+                >
+                    <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${item.badgeBg}`}>
+                        <item.icon className="w-5 h-5 text-white" strokeWidth={2.2} />
+                    </div>
+                    <div className="flex flex-col justify-center min-w-0">
+                        <p className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight truncate">
+                            {item.value}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate mt-0.5">
+                            {item.label}
+                        </p>
+                    </div>
+                </div>
+            ))}
         </div>
     );
 };
@@ -158,7 +194,7 @@ const UsedPointsHistory: React.FC<{ records: QuizPointRow[] }> = ({ records }) =
                                 {record.recorded_by_name && (
                                     <>
                                         <span>•</span>
-                                        <span className="text-slate-600 dark:text-slate-400 font-semibold bg-gray-200 dark:bg-slate-700/50 px-1 py-0.5 rounded text-[10px]">
+                                        <span className="text-slate-600 dark:text-slate-400 font-semibold bg-gray-200 dark:bg-slate-700/50 px-1 py-0.5 rounded text-xs">
                                             Oleh: {record.recorded_by_name}
                                         </span>
                                     </>
@@ -297,9 +333,9 @@ const ActivityPointsHistory: React.FC<{
                                 <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
                                     <p className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white leading-tight break-words">{record.quiz_name}</p>
                                     {categoryInfo && (
-                                        <span className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full ${POINT_CATEGORY_BADGE_CLASSES[record.category!]} flex items-center gap-1 w-fit mt-1 sm:mt-0`}>
-                                            <span>{categoryInfo.icon}</span>
-                                            {categoryInfo.label}
+                                        <span className={`text-xs px-2 py-0.5 rounded-full ${POINT_CATEGORY_BADGE_CLASSES[record.category!]} flex items-center gap-1 w-fit mt-1 sm:mt-0`}>
+                                            {renderPointCategoryIcon(record.category!)}
+                                            <span>{categoryInfo.label}</span>
                                         </span>
                                     )}
                                 </div>
@@ -310,7 +346,7 @@ const ActivityPointsHistory: React.FC<{
                                     {record.recorded_by_name && (
                                         <>
                                             <span>&middot;</span>
-                                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50/80 dark:bg-emerald-950/30 px-1.5 py-0.5 rounded-md text-[10px]">
+                                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50/80 dark:bg-emerald-950/30 px-1.5 py-0.5 rounded-md text-xs">
                                                 Oleh: {record.recorded_by_name}
                                             </span>
                                         </>
@@ -318,9 +354,9 @@ const ActivityPointsHistory: React.FC<{
                                 </p>
                             </div>
                         </div>
-                        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(record)} aria-label="Edit Poin" disabled={!isOnline || (!canManageAllRecords && record.user_id !== currentUserId)}><PencilIcon className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 dark:text-red-400" onClick={() => onDelete(record.id)} aria-label="Hapus Poin" disabled={!isOnline || (!canManageAllRecords && record.user_id !== currentUserId)}><TrashIcon className="h-4 w-4" /></Button>
+                        <div className="reveal-on-hover flex items-center gap-1">
+                            <Button variant="ghost" size="icon" className="h-11 w-11 lg:h-9 lg:w-9" onClick={() => onEdit(record)} aria-label="Edit Poin" disabled={!isOnline || (!canManageAllRecords && record.user_id !== currentUserId)}><PencilIcon className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-11 w-11 lg:h-9 lg:w-9 text-red-600 dark:text-red-400" onClick={() => onDelete(record.id)} aria-label="Hapus Poin" disabled={!isOnline || (!canManageAllRecords && record.user_id !== currentUserId)}><TrashIcon className="h-4 w-4" /></Button>
                         </div>
                     </div>
                 );

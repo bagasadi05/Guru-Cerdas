@@ -1,7 +1,7 @@
 import { Dispatch, FormEvent, SetStateAction } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { triggerSuccessConfetti } from '../../utils/confetti';
-import { exportToExcel } from '../../utils/exportUtils';
+import { exportToCSV, exportToExcel } from '../../utils/exportUtils';
 import { supabase } from '../../services/supabase';
 import { Database } from '../../services/database.types';
 import { ParsedRow } from '../../services/ImportService';
@@ -12,6 +12,8 @@ import { getStudentAvatar } from '../../utils/avatarUtils';
 import { generateSimpleAccessCode } from '../../utils/accessCode';
 import { softDelete, softDeleteBulk } from '../../services/SoftDeleteService';
 import { normalizeStudentName } from '../../utils/textSanitizer';
+import { fetchAllPages } from '../../utils/fetchAllPages';
+import { buildStudentExportRows, studentExportColumns } from './studentExportData';
 
 const pickLiveColumns = <T extends Record<string, unknown>>(data: T, columns: readonly string[]) => (
   Object.fromEntries(Object.entries(data).filter(([key]) => columns.includes(key)))
@@ -45,7 +47,6 @@ const LIVE_CLASS_COLUMNS = [
 interface StudentsPageActionsParams {
   userId?: string;
   classes: ClassRow[];
-  students: StudentRow[];
   studentsForActiveClass: StudentRow[];
   activeClassId: string;
   selectedItems: Set<string>;
@@ -66,14 +67,12 @@ interface StudentsPageActionsParams {
   setIsClassModalOpen: Dispatch<SetStateAction<boolean>>;
   setIsBulkMoveModalOpen: Dispatch<SetStateAction<boolean>>;
   setIsExportModalOpen: Dispatch<SetStateAction<boolean>>;
-  setIsImportModalOpen: Dispatch<SetStateAction<boolean>>;
   setConfirmModalState: Dispatch<SetStateAction<ConfirmModalState>>;
 }
 
 export const useStudentsPageActions = ({
   userId,
   classes,
-  students,
   studentsForActiveClass,
   activeClassId,
   selectedItems,
@@ -89,7 +88,6 @@ export const useStudentsPageActions = ({
   setIsClassModalOpen,
   setIsBulkMoveModalOpen,
   setIsExportModalOpen,
-  setIsImportModalOpen,
   setConfirmModalState,
 }: StudentsPageActionsParams) => {
   const queryClient = useQueryClient();
@@ -105,6 +103,19 @@ export const useStudentsPageActions = ({
   const mutationOptions = {
     onSuccess: invalidateStudentQueries,
     onError: (error: Error) => toast.error(`Error: ${error.message}`),
+  };
+
+  const assertClassIsEmpty = async (classId: string) => {
+    const { count, error } = await supabase.from('students')
+      .select('id', { count: 'exact', head: true })
+      .eq('class_id', classId)
+      .is('deleted_at', null);
+    if (error) throw new Error(error.message);
+    if (count === null) throw new Error('Jumlah siswa belum dapat dipastikan. Coba lagi.');
+    if (count > 0) {
+      const className = classes.find((item) => item.id === classId)?.name || '';
+      throw new Error(`Tidak dapat menghapus kelas "${className}" karena masih ada ${count} siswa di dalamnya.`);
+    }
   };
 
   const { mutate: addStudent, isPending: isAddingStudent } = useMutation({
@@ -175,6 +186,7 @@ export const useStudentsPageActions = ({
 
   const { mutate: deleteClass, isPending: isDeletingClass } = useMutation({
     mutationFn: async (classId: string) => {
+      await assertClassIsEmpty(classId);
       const { error } = await supabase
         .from('classes')
         .update({ deleted_at: new Date().toISOString() } as never)
@@ -190,24 +202,35 @@ export const useStudentsPageActions = ({
   });
 
   const { mutate: generateBulkCodes, isPending: isGeneratingBulkCodes } = useMutation({
-    mutationFn: async (classId: string) => {
-      const studentsInClass = students.filter((student) => student.class_id === classId);
+    mutationFn: async ({ classId, studentIds }: { classId: string; studentIds?: string[] }) => {
+      const studentsInClass = await fetchAllPages<Pick<StudentRow, 'id' | 'access_code'>>(async (from, to) => {
+        let query = supabase.from('students').select('id, access_code')
+          .eq('class_id', classId).is('deleted_at', null).order('id');
+        if (studentIds) query = query.in('id', studentIds);
+        return query.range(from, to);
+      });
+      if (studentsInClass.length === 0) return { message: 'Tidak ada siswa untuk dibuatkan kode akses.' };
       const studentsToUpdate = studentsInClass.filter((student) => !student.access_code);
       if (studentsToUpdate.length === 0) {
         return { message: 'Semua siswa di kelas ini sudah memiliki kode akses.' };
       }
 
-      await Promise.all(
+      const counts = await Promise.all(
         studentsToUpdate.map(async (student) => {
-          const { error } = await supabase
+          let query = supabase
             .from('students')
             .update({ access_code: generateSimpleAccessCode() })
-            .eq('id', student.id);
+            .eq('id', student.id).eq('class_id', classId).is('deleted_at', null);
+          query = student.access_code === null
+            ? query.is('access_code', null)
+            : query.eq('access_code', student.access_code);
+          const { data, error } = await query.select('id');
           if (error) throw error;
+          return data?.length || 0;
         }),
       );
 
-      return { count: studentsToUpdate.length };
+      return { count: counts.reduce((total, count) => total + count, 0) };
     },
     ...mutationOptions,
     onSuccess: (result) => {
@@ -219,11 +242,15 @@ export const useStudentsPageActions = ({
       }
       setConfirmModalState((prev) => ({ ...prev, isOpen: false }));
     },
+    onSettled: invalidateStudentQueries,
   });
 
   const { mutate: bulkMoveStudents, isPending: isMovingStudents } = useMutation({
     mutationFn: async ({ studentIds, targetClassId }: { studentIds: string[]; targetClassId: string }) => {
-      const { error } = await supabase.from('students').update({ class_id: targetClassId }).in('id', studentIds);
+      const visibleIds = studentsForActiveClass.filter((student) => studentIds.includes(student.id)).map((student) => student.id);
+      if (!visibleIds.length || visibleIds.length !== studentIds.length) throw new Error('Pilihan siswa sudah berubah. Pilih kembali siswa yang akan dipindahkan.');
+      const { error } = await supabase.from('students').update({ class_id: targetClassId })
+        .in('id', visibleIds).eq('class_id', activeClassId).is('deleted_at', null);
       if (error) throw error;
     },
     ...mutationOptions,
@@ -314,17 +341,18 @@ export const useStudentsPageActions = ({
     setConfirmModalState({
       isOpen: true,
       title: 'Hapus Siswa',
-      message: `Apakah Anda yakin ingin menghapus data siswa "${student.name}" secara permanen?`,
+      message: `Pindahkan data siswa "${student.name}" ke Sampah? Data dapat dipulihkan dari menu Sampah.`,
       onConfirm: () => deleteStudent(student.id),
       confirmVariant: 'destructive',
       confirmText: 'Ya, Hapus Siswa',
     });
   };
 
-  const handleDeleteClassClick = (classData: ClassRow) => {
-    const studentCount = students.filter((student) => student.class_id === classData.id).length;
-    if (studentCount > 0) {
-      toast.error(`Tidak dapat menghapus kelas "${classData.name}" karena masih ada ${studentCount} siswa di dalamnya.`);
+  const handleDeleteClassClick = async (classData: ClassRow) => {
+    try {
+      await assertClassIsEmpty(classData.id);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Gagal memeriksa jumlah siswa. Coba lagi.');
       return;
     }
 
@@ -343,17 +371,21 @@ export const useStudentsPageActions = ({
       isOpen: true,
       title: 'Buat Kode Akses Massal',
       message: `Ini akan membuat kode akses untuk semua siswa di kelas "${classData.name}" yang belum memilikinya. Lanjutkan?`,
-      onConfirm: () => generateBulkCodes(classData.id),
+      onConfirm: () => generateBulkCodes({ classId: classData.id }),
       confirmVariant: 'default',
       confirmText: 'Ya, Buat Kode',
     });
   };
 
   const handleBulkDelete = (ids: string[]) => {
+    if (!ids.length || ids.some((id) => !studentsForActiveClass.some((student) => student.id === id))) {
+      toast.warning('Pilihan siswa sudah berubah. Pilih kembali siswa yang akan dihapus.');
+      return;
+    }
     setConfirmModalState({
       isOpen: true,
       title: 'Hapus Siswa Terpilih',
-      message: `Apakah Anda yakin ingin menghapus ${ids.length} siswa terpilih secara permanen?`,
+      message: `Pindahkan ${ids.length} siswa terpilih ke Sampah? Data dapat dipulihkan dari menu Sampah.`,
       onConfirm: async () => {
         try {
           const res = await softDeleteBulk('students', ids);
@@ -403,28 +435,20 @@ export const useStudentsPageActions = ({
       isOpen: true,
       title: 'Buat Kode Akses Massal',
       message: `Ini akan membuat kode akses untuk ${studentsNeedCode.length} siswa yang belum memiliki kode. Lanjutkan?`,
-      onConfirm: async () => {
-        try {
-          await Promise.all(
-            studentsNeedCode.map(async (student) => {
-              const { error } = await supabase
-                .from('students')
-                .update({ access_code: generateSimpleAccessCode() })
-                .eq('id', student.id);
-              if (error) throw error;
-            }),
-          );
-
-          queryClient.invalidateQueries({ queryKey: ['students'] });
-          toast.success(`${studentsNeedCode.length} kode akses baru berhasil dibuat!`);
-          clearSelection();
-          setConfirmModalState((prev) => ({ ...prev, isOpen: false }));
-        } catch (error: unknown) {
-          toast.error(`Gagal membuat kode: ${error instanceof Error ? error.message : String(error)}`);
-        }
-      },
+      onConfirm: () => generateBulkCodes({ classId: activeClassId, studentIds: studentsNeedCode.map((student) => student.id) }),
       confirmVariant: 'default',
       confirmText: `Buat ${studentsNeedCode.length} Kode`,
+    });
+  };
+
+  const handleGenerateStudentCode = (student: StudentRow) => {
+    setConfirmModalState({
+      isOpen: true,
+      title: 'Buat Kode Akses',
+      message: `Buat kode akses untuk "${student.name}"?`,
+      onConfirm: () => generateBulkCodes({ classId: student.class_id, studentIds: [student.id] }),
+      confirmVariant: 'default',
+      confirmText: 'Buat Kode',
     });
   };
 
@@ -437,79 +461,51 @@ export const useStudentsPageActions = ({
   };
 
   const handleExportConfirm = async (format: ExportFormat, selectedColumns: string[]) => {
+    if (format !== 'xlsx' && format !== 'csv') {
+      throw new Error('Format ekspor tidak tersedia. Pilih Excel atau CSV.');
+    }
     const currentClassName = classes.find((item) => item.id === activeClassId)?.name || 'Semua Kelas';
-    const dataToExport = studentsForActiveClass.map((student, index) => {
+    const columns = studentExportColumns.filter(column => selectedColumns.includes(column.key));
+    const dataToExport = buildStudentExportRows(studentsForActiveClass, classes).map((student, index) => {
       const row: Record<string, string | number | boolean | null | undefined> = {
         No: index + 1,
       };
-
-      const columnMap: Record<string, string | number | boolean | null | undefined> = {
-        name: student.name,
-        gender: student.gender,
-        nis: student.nis || '-',
-        nisn: student.nisn || '-',
-        birth_date: student.birth_date || '-',
-        class_id: classes.find((item) => item.id === student.class_id)?.name || '-',
-        parent_name: student.parent_name || '-',
-        parent_phone: student.parent_phone || '-',
-        access_code: student.access_code || 'Belum Ada',
-      };
-
-      selectedColumns.forEach((column) => {
-        const label =
-          column === 'class_id'
-            ? 'Kelas'
-            : column === 'access_code'
-              ? 'Kode Akses'
-              : column === 'name'
-                ? 'Nama Lengkap'
-                : column === 'gender'
-                  ? 'Jenis Kelamin'
-                  : column === 'nis'
-                    ? 'NIS'
-                    : column === 'nisn'
-                      ? 'NISN'
-                      : column === 'birth_date'
-                        ? 'Tanggal Lahir'
-                        : column === 'parent_name'
-                          ? 'Nama Orang Tua'
-                          : column === 'parent_phone'
-                            ? 'No. WhatsApp Orang Tua'
-                            : column;
-
-        if (columnMap[column] !== undefined) {
-          row[label] = columnMap[column];
-        }
+      columns.forEach(column => {
+        row[column.label] = student[column.key];
       });
-
       return row;
     });
-
-    if (format === 'xlsx' || format === 'csv') {
-      await exportToExcel(dataToExport, `Data_Siswa_${currentClassName.replace(/\s+/g, '_')}`, `Data Siswa - ${currentClassName}`);
-      toast.success(`Data siswa berhasil diekspor ke ${format.toUpperCase()}!`);
-      return;
-    }
-
-    toast.info(`Format ${format.toUpperCase()} belum didukung sepenuhnya, menggunakan Excel.`);
-    await exportToExcel(dataToExport, `Data_Siswa_${currentClassName.replace(/\s+/g, '_')}`, `Data Siswa - ${currentClassName}`);
+    const exportData = format === 'csv' ? exportToCSV : exportToExcel;
+    await exportData(dataToExport, `Data_Siswa_${currentClassName.replace(/\s+/g, '_')}`, `Data Siswa - ${currentClassName}`);
+    toast.success(`Data siswa berhasil diekspor ke ${format.toUpperCase()}!`);
   };
 
   const handleImportStudents = async (validRows: ParsedRow[]) => {
-    if (!userId) throw new Error('User not authenticated');
+    if (!userId) throw new Error('Silakan masuk kembali sebelum mengimpor siswa.');
+    if (!validRows.length) throw new Error('Tidak ada siswa valid untuk diimpor.');
 
     const studentsToInsert = validRows.map((row) => {
+      if (!row.isValid || !row.data.name || !['Laki-laki', 'Perempuan'].includes(String(row.data.gender))) {
+        throw new Error(`Baris ${row.rowNumber}: nama dan jenis kelamin siswa harus valid.`);
+      }
       const gender = row.data.gender as 'Laki-laki' | 'Perempuan';
       const avatarUrl = getStudentAvatar(null, gender, undefined, String(row.data.name || Date.now()));
 
       let classId = activeClassId;
-      if (row.data.class_name && typeof row.data.class_name === 'string') {
-        const matchedClass = classes.find((item) => item.name.toLowerCase() === String(row.data.class_name).toLowerCase());
-        if (matchedClass) classId = matchedClass.id;
+      const className = String(row.data.class_name || '').trim();
+      if (className) {
+        const matches = classes.filter((item) => item.name.trim().toLowerCase() === className.toLowerCase());
+        if (matches.length !== 1) {
+          throw new Error(`Baris ${row.rowNumber}: kelas "${className}" ${matches.length ? 'memiliki lebih dari satu kecocokan' : 'tidak ditemukan'}. Periksa nama kelas sebelum mengimpor.`);
+        }
+        classId = matches[0].id;
+      }
+      if (!classes.some((item) => item.id === classId)) {
+        throw new Error(`Baris ${row.rowNumber}: pilih kelas tujuan sebelum mengimpor siswa.`);
       }
 
       return {
-        name: String(row.data.name || ''),
+        name: normalizeStudentName(String(row.data.name || '')),
         gender,
         class_id: classId,
         user_id: userId,
@@ -536,8 +532,7 @@ export const useStudentsPageActions = ({
     if (error) throw error;
 
     queryClient.invalidateQueries({ queryKey: ['students'] });
-    toast.success(`${studentsToInsert.length} siswa berhasil diimport!`);
-    setIsImportModalOpen(false);
+    toast.success(`${studentsToInsert.length} siswa berhasil diimpor.`);
   };
 
   return {
@@ -550,6 +545,7 @@ export const useStudentsPageActions = ({
     handleBulkDelete,
     handleBulkExport,
     handleBulkGenerateCodes,
+    handleGenerateStudentCode,
     handleExportStudents,
     handleExportConfirm,
     handleImportStudents,

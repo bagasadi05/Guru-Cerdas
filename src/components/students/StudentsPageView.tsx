@@ -54,7 +54,7 @@ interface StudentsPageActionSheetProps {
   onEditStudent: (student: StudentRow) => void;
   onDeleteStudent: (student: StudentRow) => void;
   onCopyCode: (code: string) => void;
-  onGenerateCodeInfo: () => void;
+  onGenerateCode: (student: StudentRow) => void;
 }
 
 interface StudentsPageStudentModalProps {
@@ -146,9 +146,9 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
 }) => {
   return (
     <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-24 lg:pb-8">
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <header className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight font-serif mb-2 text-slate-900 dark:text-white bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-800 dark:from-white dark:to-slate-300">
+          <h1 className="text-2xl font-bold font-serif mb-2 text-slate-900 dark:text-white">
             Manajemen Siswa
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm">
@@ -234,7 +234,7 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
         onEdit={actionSheet.onEditStudent}
         onDelete={actionSheet.onDeleteStudent}
         onCopyCode={actionSheet.onCopyCode}
-        onGenerateCodeInfo={actionSheet.onGenerateCodeInfo}
+        onGenerateCode={actionSheet.onGenerateCode}
       />
 
       <StudentsStudentFormModal
@@ -272,6 +272,8 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
       />
 
       <BulkActionBar
+        position="bottom"
+        itemLabel="siswa"
         selectedCount={bulkBar.selectedCount}
         actions={bulkBar.bulkActions}
         onClear={bulkBar.onClearSelection}

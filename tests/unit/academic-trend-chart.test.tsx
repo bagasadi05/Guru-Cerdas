@@ -164,15 +164,13 @@ describe('AcademicTrendChart Component', () => {
         );
 
         const bIndoBtn = screen.getByRole('button', { name: /Bahasa Indonesia/i });
-        expect(bIndoBtn).toHaveClass('shadow-xs');
+        expect(bIndoBtn).toHaveAttribute('aria-pressed', 'true');
 
-        // Click to toggle off
         fireEvent.click(bIndoBtn);
-        expect(bIndoBtn).toHaveClass('opacity-40');
+        expect(bIndoBtn).toHaveAttribute('aria-pressed', 'false');
 
-        // Click to toggle back on
         fireEvent.click(bIndoBtn);
-        expect(bIndoBtn).toHaveClass('shadow-xs');
+        expect(bIndoBtn).toHaveAttribute('aria-pressed', 'true');
     });
 
     it('switches between Mingguan, Bulanan, and Per Asesmen view modes when academicRecords are supplied', () => {

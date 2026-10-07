@@ -1,14 +1,13 @@
-
-
-
 import React, { useState, lazy, Suspense } from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import { useSearchParams } from 'react-router-dom';
 import { MotionDiv } from '../ui/MotionComponents';
 import { useTour } from '../OnboardingHelp';
 import AnalyticsPageSkeleton from '../skeletons/AnalyticsPageSkeleton';
 import AnalyticsExportModal, { ExportOptions } from './analytics/AnalyticsExportModal';
 import { generateAnalyticsPdf } from '../../utils/analyticsPdfGenerator';
-import { useAnalyticsData } from './analytics/useAnalyticsData';
+import { useAnalyticsData, getCurrentMonthWib } from './analytics/useAnalyticsData';
+import { calculateSubjectStats, findStudentsBelowKKTP } from '../../services/academicAnalyticsService';
+import { ErrorState } from '../ui/ErrorState';
 
 // Tabs (Lazy Loaded)
 const OverviewTab = lazy(() => import('./analytics/OverviewTab').then(m => ({ default: m.OverviewTab })));
@@ -23,42 +22,78 @@ import { Button } from '../ui/Button';
 import { CustomDropdown } from '../ui/CustomDropdown';
 import { Download, RefreshCwIcon, UsersIcon, CalendarIcon, LayoutDashboard, GraduationCap, Clock, ShieldAlert, BarChart3, Sparkles } from 'lucide-react';
 
-function getAnalyticsMonthOptions(): { value: string; label: string }[] {
-    const nowWib = new Date(Date.now() + 7 * 60 * 60 * 1000);
-    const currentYear = nowWib.getUTCFullYear();
-    const currentMonth = nowWib.getUTCMonth();
+const TABS = [
+    { id: 'overview', label: 'Ringkasan', icon: LayoutDashboard },
+    { id: 'academic', label: 'Akademik', icon: GraduationCap },
+    { id: 'attendance', label: 'Kehadiran', icon: Clock },
+    { id: 'character', label: 'Karakter', icon: ShieldAlert },
+    { id: 'predictive', label: 'Prediksi & AI', icon: Sparkles },
+    { id: 'comparison', label: 'Perbandingan Kelas', icon: BarChart3 },
+] as const;
+type TabId = typeof TABS[number]['id'];
+
+const ALL_PERIOD_LABEL = 'Semua (Semester Ini)';
+
+const formatMonth = (value: string) => {
+    const [y, m] = value.split('-').map(Number);
+    return new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+};
+
+function getAnalyticsMonthOptions(selected: string): { value: string; label: string }[] {
+    const [currentYear, currentMonth] = getCurrentMonthWib().split('-').map(Number);
 
     const opts: { value: string; label: string }[] = [];
     for (let i = 0; i < 6; i++) {
-        const d = new Date(currentYear, currentMonth - i, 1);
+        const d = new Date(currentYear, currentMonth - 1 - i, 1);
         const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        const monthName = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-        opts.push({
-            value: val,
-            label: i === 0 ? `${monthName} (Bulan Ini)` : monthName,
-        });
+        opts.push({ value: val, label: i === 0 ? `${formatMonth(val)} (Bulan Ini)` : formatMonth(val) });
     }
-    opts.push({ value: 'all', label: 'Semua (Semester Ini)' });
+    // A month shared through the URL may be older than the last six.
+    if (selected !== 'all' && !opts.some((o) => o.value === selected)) {
+        opts.push({ value: selected, label: formatMonth(selected) });
+    }
+    opts.push({ value: 'all', label: ALL_PERIOD_LABEL });
     return opts;
 }
 
+const isTabId = (value: string | null): value is TabId => TABS.some((t) => t.id === value);
+const isPeriod = (value: string | null): value is string => value === 'all' || /^\d{4}-(0[1-9]|1[0-2])$/.test(value ?? '');
+
 const AnalyticsPage: React.FC = () => {
     const { start } = useTour();
-    const { userRole } = useAuth();
-    const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum' || userRole === 'admin';
+    const [searchParams, setSearchParams] = useSearchParams();
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'overview' | 'academic' | 'attendance' | 'character' | 'comparison' | 'predictive'>('overview');
-    const [monthOptions] = useState(() => getAnalyticsMonthOptions());
+
+    const periodParam = searchParams.get('periode');
+    const dateRange = isPeriod(periodParam) ? periodParam : getCurrentMonthWib();
+    const selectedClassId = searchParams.get('kelas') || 'all';
+
+    const updateParam = (key: string, value: string, defaultValue: string) => {
+        setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            if (value === defaultValue) next.delete(key);
+            else next.set(key, value);
+            return next;
+        }, { replace: true });
+    };
+    const setDateRange = (value: string) => updateParam('periode', value, getCurrentMonthWib());
+    const setSelectedClassId = (value: string) => updateParam('kelas', value, 'all');
+    const setActiveTab = (value: TabId) => updateParam('tab', value, 'overview');
+
+    const monthOptions = React.useMemo(() => getAnalyticsMonthOptions(dateRange), [dateRange]);
 
     const {
-        dateRange, setDateRange,
-        selectedClassId, setSelectedClassId,
-        classes, isLoading, refetch,
-        students, attendance, academicRecords, violations, quizPoints, tasks: _tasks,
+        classes, isLeadership, kktp, activeSemester,
+        isLoading, isFetching, isError, hasData, refetch,
+        students, attendance, academicRecords, violations, quizPoints, tasks,
         gradeStats, attendanceStats, classStats, atRiskStudents, topPerformingStudents,
         dailyAttendance, taskStats, genderStats, violationsStats, quizPointsStats,
         studentAttendanceSummaries, autoFillStats, missingWeekdays
-    } = useAnalyticsData();
+    } = useAnalyticsData({ dateRange, selectedClassId });
+
+    const tabParam = searchParams.get('tab');
+    const requestedTab: TabId = isTabId(tabParam) ? tabParam : 'overview';
+    const activeTab: TabId = requestedTab === 'comparison' && !isLeadership ? 'overview' : requestedTab;
 
     React.useEffect(() => {
         const steps = [
@@ -81,19 +116,7 @@ const AnalyticsPage: React.FC = () => {
         return () => clearTimeout(timer);
     }, [start]);
 
-
-    const dateRangeLabel = React.useMemo(() => {
-        if (dateRange === 'all') return 'Semua (Semester Ini)';
-        if (dateRange === '7d') return '7 Hari Terakhir';
-        if (dateRange === '30d') return '30 Hari Terakhir';
-        if (dateRange === '90d') return '90 Hari Terakhir';
-        if (dateRange.match(/^\d{4}-\d{2}$/)) {
-            const [yStr, mStr] = dateRange.split('-');
-            const d = new Date(parseInt(yStr, 10), parseInt(mStr, 10) - 1, 1);
-            return d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-        }
-        return dateRange;
-    }, [dateRange]);
+    const dateRangeLabel = dateRange === 'all' ? ALL_PERIOD_LABEL : formatMonth(dateRange);
 
     const selectedClassLabel = selectedClassId === 'all'
         ? 'Semua Kelas'
@@ -105,6 +128,12 @@ const AnalyticsPage: React.FC = () => {
             classStats,
             attendanceStats,
             gradeStats,
+            academic: {
+                kktp,
+                semesterName: activeSemester?.name ?? null,
+                subjectStats: calculateSubjectStats(academicRecords, kktp),
+                studentsBelowKKTP: findStudentsBelowKKTP(academicRecords, students, classes, kktp),
+            },
             taskStats,
             violationsStats,
             quizPointsStats,
@@ -120,14 +149,86 @@ const AnalyticsPage: React.FC = () => {
         return <AnalyticsPageSkeleton />;
     }
 
-    const tabs = [
-        { id: 'overview', label: 'Ringkasan', icon: LayoutDashboard },
-        { id: 'academic', label: 'Akademik', icon: GraduationCap },
-        { id: 'attendance', label: 'Kehadiran', icon: Clock },
-        { id: 'character', label: 'Karakter', icon: ShieldAlert },
-        { id: 'predictive', label: 'Prediksi & AI', icon: Sparkles },
-        { id: 'comparison', label: 'Perbandingan Kelas', icon: BarChart3 },
-    ] as const;
+    const renderTab = () => {
+        if (isError && !hasData) {
+            return (
+                <ErrorState
+                    fullWidth
+                    title="Data analitik gagal dimuat"
+                    message="Periksa koneksi internet, lalu coba lagi. Angka tidak ditampilkan supaya tidak terbaca sebagai data kosong."
+                    onRetry={() => refetch()}
+                />
+            );
+        }
+        if (classes.length === 0) {
+            return (
+                <div className="py-16 text-center">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">Belum ada kelas untuk dianalisis</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Analitik muncul setelah Anda membuat kelas atau ditugaskan ke kelas.
+                    </p>
+                </div>
+            );
+        }
+
+        switch (activeTab) {
+            case 'overview':
+                return (
+                    <OverviewTab
+                        students={students} classes={classes} attendanceStats={attendanceStats}
+                        taskStats={taskStats} genderStats={genderStats}
+                        atRiskStudents={atRiskStudents} topPerformingStudents={topPerformingStudents}
+                    />
+                );
+            case 'academic':
+                return (
+                    <AcademicTab
+                        gradeStats={gradeStats} classes={classes} students={students}
+                        academicRecords={academicRecords} selectedClassId={selectedClassId}
+                        kktp={kktp} semesterName={activeSemester?.name ?? null}
+                    />
+                );
+            case 'attendance':
+                return (
+                    <AttendanceTab
+                        dailyAttendance={dailyAttendance}
+                        attendanceStats={attendanceStats}
+                        titleContext={selectedClassLabel}
+                        studentSummaries={studentAttendanceSummaries}
+                        autoFillStats={autoFillStats}
+                        missingWeekdays={missingWeekdays}
+                        selectedClassId={selectedClassId}
+                    />
+                );
+            case 'character':
+                return (
+                    <CharacterTab
+                        violationsStats={violationsStats}
+                        quizPointsStats={quizPointsStats}
+                        students={students}
+                        classes={classes}
+                        attendance={attendance}
+                        violations={violations}
+                        quizPoints={quizPoints}
+                        selectedClassId={selectedClassId}
+                    />
+                );
+            case 'predictive':
+                return (
+                    <PredictiveAnalyticsTab
+                        students={students}
+                        classes={classes}
+                        attendance={attendance}
+                        academicRecords={academicRecords}
+                        violations={violations}
+                        tasks={tasks}
+                        selectedClassId={selectedClassId}
+                    />
+                );
+            case 'comparison':
+                return <ClassComparisonTab />;
+        }
+    };
 
     return (
         <div className="min-h-screen p-4 md:p-8 space-y-6 pb-24 lg:pb-8">
@@ -143,18 +244,25 @@ const AnalyticsPage: React.FC = () => {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setIsExportModalOpen(true)} className="px-4 gap-2 min-h-[44px] sm:min-h-0 rounded-xl cursor-pointer active:scale-95 duration-150">
+                        <Button variant="outline" size="sm" onClick={() => setIsExportModalOpen(true)} disabled={!hasData} className="px-4 gap-2 min-h-[44px] sm:min-h-0 rounded-xl cursor-pointer active:scale-95 duration-150">
                             <Download className="w-4 h-4" />
                             <span className="hidden sm:inline">Export PDF</span>
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => refetch()} className="px-4 gap-2 min-h-[44px] sm:min-h-0 rounded-xl cursor-pointer active:scale-95 duration-150">
-                            <RefreshCwIcon className="w-4 h-4" />
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => refetch()}
+                            disabled={isFetching}
+                            aria-label={isFetching ? 'Sedang memuat ulang data' : 'Muat ulang data'}
+                            className="px-4 gap-2 min-h-[44px] sm:min-h-0 rounded-xl cursor-pointer active:scale-95 duration-150"
+                        >
+                            <RefreshCwIcon className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
                         </Button>
                     </div>
                 </div>
 
                 {/* Filter Bar */}
-                <div className="flex flex-col sm:flex-row gap-3 p-3 bg-white dark:bg-slate-900 rounded-xl transition-all border border-slate-200/70 dark:border-slate-700/60 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-white dark:bg-slate-900 rounded-xl transition-all border border-slate-200/70 dark:border-slate-700/60 shadow-sm">
                     <div className="flex items-center gap-3 px-2 sm:px-4 py-1 sm:border-r border-slate-100 dark:border-slate-800 w-full sm:w-auto min-w-[180px]">
                         <UsersIcon className="w-4 h-4 text-slate-400 hidden sm:block flex-shrink-0" />
                         <CustomDropdown
@@ -170,22 +278,37 @@ const AnalyticsPage: React.FC = () => {
                         <CalendarIcon className="w-4 h-4 text-slate-400 hidden sm:block flex-shrink-0" />
                         <CustomDropdown
                             value={dateRange}
-                            onChange={(val) => setDateRange(val)}
+                            onChange={setDateRange}
                             options={monthOptions}
                         />
                     </div>
+                    {isFetching && hasData && (
+                        <span className="px-2 sm:ml-auto text-xs text-slate-500 dark:text-slate-400" role="status">
+                            Memperbarui data…
+                        </span>
+                    )}
                 </div>
             </header>
 
+            {isError && hasData && (
+                <ErrorState
+                    fullWidth
+                    title="Gagal memperbarui data"
+                    message="Angka di bawah berasal dari pemuatan sebelumnya dan mungkin belum sesuai filter terbaru."
+                    onRetry={() => refetch()}
+                />
+            )}
+
             {/* Smart Navigation Tabs */}
             <div id="tour-tabs" className="flex overflow-x-auto scrollbar-hide gap-2 p-1 sm:p-1.5 bg-slate-100 dark:bg-slate-800/50 rounded-2xl snap-x">
-                {tabs.filter(tab => tab.id !== 'comparison' || isLeadership).map(tab => (
+                {TABS.filter(tab => tab.id !== 'comparison' || isLeadership).map(tab => (
                     <button type="button"
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`snap-start relative flex-shrink-0 sm:flex-1 min-w-[110px] min-h-[44px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-150 cursor-pointer active:scale-95 focus:outline-none
-                            ${activeTab === tab.id 
-                                ? 'text-brand-600 dark:text-brand-400 scale-100' 
+                        aria-pressed={activeTab === tab.id}
+                        className={`snap-start relative flex-shrink-0 sm:flex-1 min-w-[110px] min-h-[44px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-150 cursor-pointer active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500
+                            ${activeTab === tab.id
+                                ? 'text-brand-600 dark:text-brand-400 scale-100'
                                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 scale-95 hover:scale-100'}`}
                     >
                         {activeTab === tab.id && (
@@ -204,56 +327,7 @@ const AnalyticsPage: React.FC = () => {
             {/* Tab Content Rendering */}
             <div className="mt-6 min-h-[400px]">
                 <Suspense fallback={<div className="flex justify-center items-center h-64"><div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div></div>}>
-                    {activeTab === 'overview' && (
-                        <OverviewTab 
-                            students={students} classes={classes} attendanceStats={attendanceStats} 
-                            taskStats={taskStats} genderStats={genderStats} 
-                            atRiskStudents={atRiskStudents} topPerformingStudents={topPerformingStudents} 
-                        />
-                    )}
-                    {activeTab === 'academic' && (
-                        <AcademicTab 
-                            gradeStats={gradeStats} classes={classes} students={students} 
-                            academicRecords={academicRecords} selectedClassId={selectedClassId} 
-                        />
-                    )}
-                    {activeTab === 'attendance' && (
-                        <AttendanceTab 
-                            dailyAttendance={dailyAttendance}
-                            attendanceStats={attendanceStats} 
-                            titleContext={selectedClassLabel}
-                            studentSummaries={studentAttendanceSummaries}
-                            autoFillStats={autoFillStats}
-                            missingWeekdays={missingWeekdays}
-                            selectedClassId={selectedClassId}
-                        />
-                    )}
-                    {activeTab === 'character' && (
-                        <CharacterTab 
-                            violationsStats={violationsStats}
-                            quizPointsStats={quizPointsStats}
-                            students={students}
-                            classes={classes}
-                            attendance={attendance}
-                            violations={violations}
-                            quizPoints={quizPoints}
-                            selectedClassId={selectedClassId}
-                        />
-                    )}
-                    {activeTab === 'predictive' && (
-                        <PredictiveAnalyticsTab
-                            students={students}
-                            classes={classes}
-                            attendance={attendance}
-                            academicRecords={academicRecords}
-                            violations={violations}
-                            tasks={_tasks}
-                            selectedClassId={selectedClassId}
-                        />
-                    )}
-                    {activeTab === 'comparison' && isLeadership && (
-                        <ClassComparisonTab />
-                    )}
+                    {renderTab()}
                 </Suspense>
             </div>
 

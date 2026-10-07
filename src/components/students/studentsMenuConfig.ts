@@ -25,21 +25,21 @@ export interface StudentsHeaderAction {
 const actionMap: Record<StudentsHeaderActionId, StudentsHeaderAction> = {
   import_teacher: {
     id: 'import_teacher',
-    label: 'Import Guru',
-    title: 'Import data kelas & siswa dari guru lain',
+    label: 'Impor dari Guru',
+    title: 'Impor data kelas dan siswa dari guru lain',
     icon: UsersIcon,
     variant: 'outline',
   },
   import_excel: {
     id: 'import_excel',
-    label: 'Import Excel',
-    title: 'Import data siswa dari file Excel',
+    label: 'Impor Excel',
+    title: 'Impor data siswa dari berkas Excel',
     icon: UploadCloudIcon,
     variant: 'outline',
   },
   export: {
     id: 'export',
-    label: 'Export',
+    label: 'Ekspor',
     icon: DownloadCloudIcon,
     variant: 'outline',
   },

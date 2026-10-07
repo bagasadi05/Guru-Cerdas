@@ -107,7 +107,8 @@ export const StudentsClassTabsHeader: React.FC<StudentsClassTabsHeaderProps> = (
           <button type="button"
             onClick={() => scroll('left')}
             className="flex items-center justify-center w-11 h-11 rounded-full border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-md text-slate-600 dark:text-slate-300 pointer-events-auto transition-transform hover:scale-105 active:scale-95"
-            aria-label="Scroll left"
+            aria-label="Kelas sebelumnya"
+            title="Kelas sebelumnya"
           >
             <ChevronLeftIcon className="w-5 h-5" />
           </button>
@@ -120,7 +121,8 @@ export const StudentsClassTabsHeader: React.FC<StudentsClassTabsHeaderProps> = (
           <button type="button"
             onClick={() => scroll('right')}
             className="flex items-center justify-center w-11 h-11 rounded-full border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-md text-slate-600 dark:text-slate-300 pointer-events-auto transition-transform hover:scale-105 active:scale-95"
-            aria-label="Scroll right"
+            aria-label="Kelas berikutnya"
+            title="Kelas berikutnya"
           >
             <ChevronRightIcon className="w-5 h-5" />
           </button>
@@ -144,7 +146,7 @@ export const StudentsClassTabsHeader: React.FC<StudentsClassTabsHeaderProps> = (
             <TabsTrigger
               key={classItem.id}
               value={classItem.id}
-              className="data-[state=active]:bg-brand-600 data-[state=active]:text-white data-[state=active]:border-brand-500 data-[state=active]:shadow-md data-[state=active]:shadow-brand-600/30 dark:data-[state=active]:bg-brand-600 dark:data-[state=active]:text-white dark:data-[state=active]:border-brand-500 data-[state=inactive]:bg-white/80 dark:data-[state=inactive]:bg-slate-800/80 data-[state=inactive]:text-slate-600 dark:data-[state=inactive]:text-slate-300 data-[state=inactive]:border-slate-200 dark:data-[state=inactive]:border-slate-700/80 border rounded-xl px-5 py-2.5 min-h-[44px] text-sm font-bold transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 flex-shrink-0 cursor-pointer active:scale-95"
+              className="data-[state=active]:!bg-emerald-700 data-[state=active]:!text-white data-[state=active]:border-emerald-700 data-[state=active]:!shadow-none dark:data-[state=active]:!bg-emerald-700 dark:data-[state=active]:!text-white data-[state=inactive]:bg-white dark:data-[state=inactive]:bg-slate-800 data-[state=inactive]:text-slate-700 dark:data-[state=inactive]:text-slate-200 data-[state=inactive]:border-slate-400 dark:data-[state=inactive]:border-slate-500 border !rounded-lg px-5 py-2.5 min-h-[44px] text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-700 flex-shrink-0 cursor-pointer focus-visible:!ring-emerald-700 dark:focus-visible:!ring-emerald-400"
             >
               {classItem.name}
             </TabsTrigger>

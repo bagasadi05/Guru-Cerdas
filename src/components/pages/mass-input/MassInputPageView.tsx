@@ -18,7 +18,8 @@ import { ImportPreviewModal } from './components/ImportPreviewModal';
 import { violationList } from '../../../services/violations.data';
 import { getFrequentViolations, buildViolationStatusMap } from './violationInsights';
 import { findSemesterForDate } from '../../../utils/semesterUtils';
-import { CheckCircle2, Loader2, AlertCircle, XIcon } from 'lucide-react';
+import { actionCards } from './constants';
+import { CheckCircle2, Loader2, AlertCircle, XIcon, School, BookOpen, Star, AlertTriangle, Sparkles, SlidersHorizontal, RotateCcw } from 'lucide-react';
 
 export interface MassInputPageViewProps {
     step: Step;
@@ -239,64 +240,117 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
         ? Boolean((isScoresDirty as React.MutableRefObject<boolean>).current)
         : Boolean(isScoresDirty ?? true);
 
+    const activeModeConfig = useMemo(
+        () => actionCards.find(c => c.mode === mode),
+        [mode],
+    );
+
     if (step === 1) {
         return <Step1_ModeSelection handleModeSelect={handleModeSelect} />;
     }
 
+    const ActiveModeIcon = activeModeConfig?.icon;
+    const headerIconAccent = activeModeConfig?.accent === 'rose'
+        ? 'bg-rose-500 text-white shadow-rose-500/25'
+        : activeModeConfig?.accent === 'amber'
+        ? 'bg-amber-500 text-white shadow-amber-500/25'
+        : activeModeConfig?.accent === 'brand'
+        ? 'bg-brand-600 text-white shadow-brand-600/25'
+        : 'bg-emerald-500 text-white shadow-emerald-500/25';
+
     return (
-        <div className="w-full min-h-screen p-4 sm:p-6 md:p-8 pb-24 flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white overflow-y-auto">
+        <div className="w-full min-h-screen p-3 sm:p-5 md:p-6 pb-24 flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white overflow-y-auto">
             <div className="w-full max-w-7xl mx-auto flex flex-col flex-grow">
-                <header className="flex items-center gap-4 mb-6">
-                    <Button variant="outline" size="icon" onClick={handleBack} aria-label="Kembali ke langkah sebelumnya" className="bg-white dark:bg-white/10 border-slate-200 dark:border-white/20 hover:bg-slate-100 dark:hover:bg-white/20 flex-shrink-0">
-                        <ArrowLeftIcon className="w-4 h-4" />
-                    </Button>
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{currentCard?.title}</h1>
-                        <p className="mt-1 text-slate-600 dark:text-gray-300">{currentCard?.description}</p>
+                <header className="mb-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-3.5 sm:p-4 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={handleBack}
+                            aria-label="Kembali ke langkah sebelumnya"
+                            className="h-10 w-10 rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex-shrink-0"
+                        >
+                            <ArrowLeftIcon className="w-4 h-4" />
+                        </Button>
+                        {ActiveModeIcon && (
+                            <div className={`hidden sm:flex w-10 h-10 rounded-xl items-center justify-center flex-shrink-0 shadow-sm ${headerIconAccent}`}>
+                                <ActiveModeIcon className="w-5 h-5" />
+                            </div>
+                        )}
+                        <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+                                    {currentCard?.title}
+                                </h1>
+                                {activeModeConfig?.badge && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-500/20">
+                                        {activeModeConfig.badge}
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-2xl">
+                                {currentCard?.description}
+                            </p>
+                        </div>
                     </div>
+
+                    {mode !== 'violation_export' && (
+                        <div className="flex items-center gap-2 sm:flex-shrink-0">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200/80 dark:border-slate-700">
+                                <School className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+                                <span>{classes?.find(c => c.id === selectedClass)?.name || 'Pilih Kelas'}</span>
+                            </span>
+                        </div>
+                    )}
                 </header>
 
                 {/* Horizontal Breadcrumbs Status Bar when Configuration is Collapsed */}
                 {!isConfigOpen && mode !== 'violation_export' && (
-                    <div className="mb-6 flex flex-wrap items-center justify-between gap-4 p-4 rounded-3xl border border-brand-100 bg-white/80 dark:border-slate-800 dark:bg-slate-900/60 backdrop-blur-md animate-fade-in-down shadow-sm">
-                        <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
-                            <span className="inline-flex items-center gap-1.5 rounded-2xl bg-brand-600/10 px-3.5 py-1.5 font-extrabold text-brand-700 dark:text-brand-300 border border-brand-200/20 shadow-sm">
-                                🏫 Kelas: {classes?.find(c => c.id === selectedClass)?.name || '-'}
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 animate-fade-in-down shadow-sm">
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 dark:bg-brand-500/10 px-2.5 py-1 font-bold text-brand-700 dark:text-brand-300 border border-brand-200/70 dark:border-brand-500/20">
+                                <School className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400 shrink-0" />
+                                <span>Kelas: {classes?.find(c => c.id === selectedClass)?.name || '-'}</span>
                             </span>
                             {mode === 'subject_grade' && subjectGradeInfo.subject && (
-                                <span className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-550/10 px-3.5 py-1.5 font-extrabold text-emerald-700 dark:text-emerald-300 border border-emerald-200/20 shadow-sm animate-scale-in">
-                                    📚 Mapel: {subjectGradeInfo.subject} ({subjectGradeInfo.assessment_name || 'Penilaian'})
+                                <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-500/20 animate-scale-in">
+                                    <BookOpen className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                    <span>Mapel: {subjectGradeInfo.subject} ({subjectGradeInfo.assessment_name || 'Penilaian'})</span>
                                 </span>
                             )}
                             {mode === 'quiz' && quizInfo.name && (
-                                <span className="inline-flex items-center gap-1.5 rounded-2xl bg-amber-500/10 px-3.5 py-1.5 font-extrabold text-amber-700 dark:text-amber-300 border border-amber-200/20 shadow-sm animate-scale-in">
-                                    ⭐ Keaktifan: +1 Poin • {quizInfo.name} ({quizInfo.subject || 'Umum'})
+                                <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 dark:bg-amber-500/10 px-2.5 py-1 font-bold text-amber-700 dark:text-amber-300 border border-amber-200/70 dark:border-amber-500/20 animate-scale-in">
+                                    <Star className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                                    <span>Keaktifan: +1 Poin • {quizInfo.name} ({quizInfo.subject || 'Umum'})</span>
                                 </span>
                             )}
                             {mode === 'violation' && selectedViolationCode && (
-                                <span className="inline-flex items-center gap-1.5 rounded-2xl bg-rose-550/10 px-3.5 py-1.5 font-extrabold text-rose-700 dark:text-rose-300 border border-rose-200/20 shadow-sm animate-scale-in">
-                                    ⚠️ Pelanggaran: {violationList.find(v => v.code === selectedViolationCode)?.description || selectedViolationCode}
+                                <span className="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 px-2.5 py-1 font-bold text-rose-700 dark:text-rose-300 border border-rose-200/70 dark:border-rose-500/20 animate-scale-in">
+                                    <AlertTriangle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                                    <span>Pelanggaran: {violationList.find(v => v.code === selectedViolationCode)?.description || selectedViolationCode}</span>
                                 </span>
                             )}
                             {mode === 'attitude' && attitudeCategory && (
-                                <span className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-550/10 px-3.5 py-1.5 font-extrabold text-emerald-700 dark:text-emerald-300 border border-emerald-200/20 shadow-sm animate-scale-in">
-                                    🌟 Sikap: {attitudeCategory} (+1 Poin)
+                                <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-500/20 animate-scale-in">
+                                    <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                    <span>Sikap: {attitudeCategory} (+1 Poin)</span>
                                 </span>
                             )}
                         </div>
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => setIsConfigOpen(true)}
-                            className="rounded-xl border-brand-200 dark:border-slate-700 text-brand-600 dark:text-brand-300 bg-white hover:bg-brand-50/50 dark:bg-slate-800 hover:dark:bg-slate-700 active:scale-95 transition-all text-xs font-bold"
+                            className="rounded-xl border-brand-200 dark:border-slate-700 text-brand-600 dark:text-brand-300 bg-white hover:bg-brand-50/50 dark:bg-slate-800 hover:dark:bg-slate-700 active:scale-95 transition-all text-xs font-bold inline-flex items-center gap-1.5 h-8 px-3"
                         >
-                            ⚙️ Ubah Konfigurasi
+                            <SlidersHorizontal className="w-3.5 h-3.5" />
+                            <span>Ubah Konfigurasi</span>
                         </Button>
                     </div>
                 )}
 
                 {mode === 'subject_grade' && (offlineSaveState || (restoredDraft && isDirty)) && (
-                    <div role="status" className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
+                    <div role="status" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
                         <p>
                             {offlineSaveState === 'review' ? (
                                 <>
@@ -334,7 +388,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-grow">
                     {mode === 'violation_export' ? (
                         <ViolationExportPanel
                             classes={classes}
@@ -685,7 +739,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                     </div>
                 </Modal>
 
-                {/* Undo bar — restores the batch that was just cleared */}
+                {/* Undo bar: restores the batch that was just cleared */}
                 {undoSnapshot && typeof document !== 'undefined' && createPortal(
                     <div
                         role="status" aria-live="polite"
@@ -702,16 +756,17 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
                                 variant="outline"
                                 size="sm"
                                 onClick={handleUndoClear}
-                                className="rounded-xl border-amber-400 dark:border-amber-700 bg-white dark:bg-amber-900/40 text-amber-800 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-xs font-bold h-8"
+                                className="rounded-xl border-amber-400 dark:border-amber-700 bg-white dark:bg-amber-900/40 text-amber-800 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-xs font-bold h-8 inline-flex items-center gap-1.5"
                             >
-                                ↩ Urungkan
+                                <RotateCcw className="w-3.5 h-3.5" />
+                                <span>Urungkan</span>
                             </Button>
                         </div>
                     </div>,
                     document.body
                 )}
 
-                {/* Floating Save Bar for Step 2 — rendered via portal to escape parent transform/overflow stacking contexts */}
+                {/* Floating Save Bar for Step 2: rendered via portal to escape parent transform/overflow stacking contexts */}
                 {step === 2 && mode !== 'violation_export' && (mode === 'subject_grade' ? gradedCount > 0 : selectedStudentIds.size > 0) && typeof document !== 'undefined' && createPortal(
                     <div
                         role="status" aria-live="polite"

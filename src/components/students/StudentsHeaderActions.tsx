@@ -20,11 +20,11 @@ interface StudentsHeaderActionsProps {
 }
 
 const outlineActionClasses =
-  'h-10 px-3 sm:px-4 rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white shadow-sm font-semibold text-xs sm:text-sm flex items-center justify-center cursor-pointer active:scale-95 transition-all duration-200';
+  '!min-h-[44px] px-3 sm:px-4 rounded-lg border-slate-400 dark:border-slate-500 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 font-semibold text-xs sm:text-sm whitespace-nowrap';
 const primaryActionClasses =
-  'h-10 px-3.5 sm:px-4 rounded-xl shadow-sm text-xs sm:text-sm flex items-center justify-center cursor-pointer active:scale-95 transition-all duration-200';
+  '!min-h-[44px] px-3.5 sm:px-4 rounded-lg text-xs sm:text-sm whitespace-nowrap';
 const overflowTriggerClasses =
-  'h-10 w-10 p-0 rounded-xl flex items-center justify-center bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 shadow-sm cursor-pointer active:scale-95 transition-all duration-200';
+  '!h-11 !w-11 !min-w-[44px] !p-0 rounded-lg flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-400 dark:border-slate-500 text-slate-600 hover:text-slate-800 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700';
 
 const renderActionButton = (
   action: StudentsHeaderAction,
@@ -43,7 +43,7 @@ const renderActionButton = (
       title={action.title}
       aria-label={action.title || action.label}
     >
-      <Icon className="w-4 h-4 mr-2" />
+      <Icon className="w-4 h-4 shrink-0" />
       {action.label}
     </Button>
   );

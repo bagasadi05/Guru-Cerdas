@@ -41,17 +41,19 @@ export const AspectSectionEditor: React.FC<AspectSectionEditorProps> = ({
     const aspectViolations = studentViolations.filter(v => v.bintangAspect === aspectKey);
 
     return (
-        <div className="p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-800/30">
-            <div className="flex items-center gap-2 mb-3">
-                <Icon size={18} className={meta.color} />
+        <div className="p-4 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl bg-slate-50/60 dark:bg-slate-800/40">
+            <div className="flex items-center gap-2.5 mb-3 flex-wrap">
+                <div className={`w-8 h-8 rounded-xl ${meta.badgeBg} flex items-center justify-center shrink-0 text-white shadow-sm`}>
+                    <Icon size={16} />
+                </div>
                 <span className="font-bold text-sm text-slate-800 dark:text-slate-200">{meta.label}</span>
                 {data && data.count > 0 && (
-                    <span className="ml-auto text-xs text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-full">
-                        {data.points} poin / {data.count} pelanggaran → Rekomendasi: <strong className={`${gradeTextColors[data.grade]}`}>{data.grade}</strong>
+                    <span className="ml-auto text-xs text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 px-2.5 py-0.5 rounded-lg font-medium">
+                        {data.points} poin / {data.count} pelanggaran &rarr; Rekomendasi: <strong className={`${gradeTextColors[data.grade]}`}>{data.grade}</strong>
                     </span>
                 )}
                 {data && data.count === 0 && (
-                    <span className="ml-auto text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full">
+                    <span className="ml-auto text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-900/30 px-2.5 py-0.5 rounded-lg">
                         ✓ Tidak ada pelanggaran
                     </span>
                 )}

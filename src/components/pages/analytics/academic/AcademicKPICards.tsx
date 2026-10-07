@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from '../../../ui/Card';
-import { TrendingUp, TrendingDown, Minus, GraduationCap, Users, AlertTriangle, CheckCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, GraduationCap, Users, AlertTriangle, CheckCircle, ClipboardCheck } from 'lucide-react';
 import type { AcademicKPI } from '../../../../services/academicAnalyticsService';
 
 interface AcademicKPICardsProps {
@@ -15,10 +15,11 @@ const TrendIndicator: React.FC<{ value: number }> = ({ value }) => {
 };
 
 export const AcademicKPICards: React.FC<AcademicKPICardsProps> = ({ kpi, kktpThreshold }) => {
+    const completenessOk = kpi.expectedGradeCount === 0 || kpi.gradeCompleteness >= 80;
     return (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Overall Average */}
-            <Card className="bg-white dark:bg-slate-900 border-0 shadow-md">
+            <Card>
                 <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -33,20 +34,21 @@ export const AcademicKPICards: React.FC<AcademicKPICardsProps> = ({ kpi, kktpThr
                             {kpi.overallAverage || '-'}
                         </p>
                         {kpi.averageTrend !== 0 && (
-                            <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${kpi.averageTrend > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${kpi.averageTrend > 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
                                 <TrendIndicator value={kpi.averageTrend} />
                                 {kpi.averageTrend > 0 ? '+' : ''}{kpi.averageTrend}
                             </span>
                         )}
                     </div>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         Target KKTP: {kktpThreshold}
+                        {kpi.averageTrend !== 0 && ' · dibanding penilaian sebelumnya'}
                     </p>
                 </CardContent>
             </Card>
 
             {/* Assessed Students */}
-            <Card className="bg-white dark:bg-slate-900 border-0 shadow-md">
+            <Card>
                 <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -57,22 +59,22 @@ export const AcademicKPICards: React.FC<AcademicKPICardsProps> = ({ kpi, kktpThr
                         </div>
                     </div>
                     <p className="text-2xl font-extrabold text-slate-900 dark:text-white">
-                        {kpi.assessedStudents}<span className="text-sm font-normal text-slate-400">/{kpi.totalStudents}</span>
+                        {kpi.assessedStudents}<span className="text-sm font-normal text-slate-500">/{kpi.totalStudents}</span>
                     </p>
                     <div className="mt-1.5">
-                        <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                        <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
                             <div
-                                className={`h-full rounded-full transition-all duration-700 ${kpi.completionRate >= 80 ? 'bg-emerald-500' : kpi.completionRate >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`}
-                                style={{ width: `${kpi.completionRate}%` }}
+                                className={`h-full rounded-full transition-all duration-700 ${kpi.studentCoverageRate >= 80 ? 'bg-emerald-500' : kpi.studentCoverageRate >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                                style={{ width: `${kpi.studentCoverageRate}%` }}
                             />
                         </div>
-                        <p className="text-[11px] text-slate-400 mt-0.5">{kpi.completionRate}% siswa tercatat</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{kpi.studentCoverageRate}% siswa punya minimal satu nilai</p>
                     </div>
                 </CardContent>
             </Card>
 
             {/* Subjects Below KKTP */}
-            <Card className={`bg-white dark:bg-slate-900 border-0 shadow-md ${kpi.subjectsBelowKKTP > 0 ? 'border-l-4 border-l-amber-500' : ''}`}>
+            <Card className={kpi.subjectsBelowKKTP > 0 ? 'border-l-4 border-l-amber-500' : undefined}>
                 <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -87,32 +89,36 @@ export const AcademicKPICards: React.FC<AcademicKPICardsProps> = ({ kpi, kktpThr
                     </div>
                     <p className="text-2xl font-extrabold text-slate-900 dark:text-white">
                         {kpi.subjectsBelowKKTP}
-                        <span className="text-sm font-normal text-slate-400">/{kpi.totalSubjects} mapel</span>
+                        <span className="text-sm font-normal text-slate-500">/{kpi.totalSubjects} mapel</span>
                     </p>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-                        {kpi.subjectsBelowKKTP === 0 ? 'Semua mapel aman' : 'Perlu perhatian'}
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {kpi.subjectsBelowKKTP === 0
+                            ? 'Semua mapel mencapai KKTP'
+                            : `${kpi.studentsBelowKKTP} siswa punya nilai mapel di bawah KKTP`}
                     </p>
                 </CardContent>
             </Card>
 
-            {/* Completion Rate */}
-            <Card className="bg-white dark:bg-slate-900 border-0 shadow-md">
+            {/* Grade completeness */}
+            <Card>
                 <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                            Cakupan Siswa
+                            Kelengkapan Nilai
                         </span>
-                        <div className={`p-1.5 rounded-lg ${kpi.completionRate >= 80 ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-rose-100 dark:bg-rose-900/30'}`}>
-                            <CheckCircle className={`w-4 h-4 ${kpi.completionRate >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`} />
+                        <div className={`p-1.5 rounded-lg ${completenessOk ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-rose-100 dark:bg-rose-900/30'}`}>
+                            <ClipboardCheck className={`w-4 h-4 ${completenessOk ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`} />
                         </div>
                     </div>
                     <p className="text-2xl font-extrabold text-slate-900 dark:text-white">
-                        {kpi.completionRate}<span className="text-lg">%</span>
+                        {kpi.expectedGradeCount > 0 ? <>{kpi.gradeCompleteness}<span className="text-lg">%</span></> : '-'}
                     </p>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-                        {kpi.totalStudents - kpi.assessedStudents > 0
-                            ? `${kpi.totalStudents - kpi.assessedStudents} siswa belum dinilai`
-                            : 'Semua siswa sudah dinilai'}
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        {kpi.expectedGradeCount === 0
+                            ? 'Belum ada penilaian'
+                            : kpi.missingGradeCount > 0
+                                ? `${kpi.missingGradeCount} nilai belum terisi`
+                                : 'Semua nilai sudah terisi'}
                     </p>
                 </CardContent>
             </Card>

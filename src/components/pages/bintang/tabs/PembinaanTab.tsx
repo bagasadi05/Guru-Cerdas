@@ -41,42 +41,55 @@ export const PembinaanTab: React.FC<PembinaanTabProps> = ({
 
     return (
         <div className="space-y-4">
-            {/* Header + Add Button */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <p className="font-semibold text-sm text-slate-800 dark:text-white">Riwayat Pembinaan</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{mentoringLogs.length} catatan tersimpan</p>
+            {/* Header + Search + Add Button Card */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-3.5 sm:p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center shrink-0 shadow-sm shadow-brand-600/20">
+                        <ClipboardCheck size={20} className="text-white" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="font-bold text-sm text-slate-800 dark:text-white leading-tight">Riwayat Pembinaan Karakter</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{mentoringLogs.length} catatan pembinaan tersimpan</p>
+                    </div>
                 </div>
-                {isWalas && (
-                    <Button
-                        onClick={onOpenMentoringModal}
-                        className="bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white flex items-center gap-1.5 text-sm h-10 px-4 font-medium rounded-xl shadow-sm shadow-brand-600/20 cursor-pointer active:scale-95 duration-150"
-                    >
-                        <Plus size={16} /> Catat Pembinaan
-                    </Button>
-                )}
-            </div>
 
-            {/* Search */}
-            <div className="relative max-w-sm">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
-                <Input
-                    placeholder="Cari siswa atau catatan..."
-                    className="pl-9 w-full text-sm"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                    <div className="relative w-full sm:w-64">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={15} />
+                        <Input
+                            placeholder="Cari siswa atau catatan..."
+                            className="pl-9 w-full text-xs sm:text-sm h-10 rounded-xl"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                    {isWalas && (
+                        <Button
+                            onClick={onOpenMentoringModal}
+                            className="bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white flex items-center justify-center gap-1.5 text-sm h-10 px-4 font-medium rounded-xl shadow-sm shadow-brand-600/20 cursor-pointer active:scale-95 duration-150 shrink-0"
+                        >
+                            <Plus size={16} /> Catat Pembinaan
+                        </Button>
+                    )}
+                </div>
             </div>
 
             {/* Table */}
-            <Card className="p-0 overflow-hidden">
+            <Card className="p-0 overflow-hidden border border-slate-200/80 dark:border-slate-700/80 rounded-2xl shadow-xs">
                 {filteredLogs.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-14 text-center">
-                        <ClipboardCheck size={40} className="text-slate-300 dark:text-slate-600 mb-3" />
-                        <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                    <div className="flex flex-col items-center justify-center py-14 text-center px-4">
+                        <div className="w-12 h-12 rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center mb-3 border border-brand-500/20">
+                            <ClipboardCheck size={24} />
+                        </div>
+                        <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
                             {searchQuery.trim() ? 'Tidak ada catatan yang cocok.' : 'Belum ada catatan pembinaan.'}
                         </p>
-                        {isWalas && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
+                            {searchQuery.trim()
+                                ? 'Coba gunakan kata kunci pencarian yang berbeda.'
+                                : 'Catat sesi pembinaan wali kelas, guru BK, atau kepala madrasah untuk siswa di kelas ini.'}
+                        </p>
+                        {isWalas && !searchQuery.trim() && (
                             <Button
                                 onClick={onOpenMentoringModal}
                                 variant="outline"
