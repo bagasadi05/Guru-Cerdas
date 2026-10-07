@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.wa-worker]
 verify_jwt = false
+
+[functions.wa-fonnte-sender]
+verify_jwt = false
