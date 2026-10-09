@@ -2982,6 +2982,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      list_ph_schedule_classes: {
+        Args: Record<PropertyKey, never>
+        Returns: { id: string; name: string; wali_kelas_id: string | null }[]
+      }
+      can_add_ph_schedule: {
+        Args: { p_class_id: string; p_semester_id: string }
+        Returns: boolean
+      }
       can_manage_ph_schedule: {
         Args: { p_class_id: string; p_semester_id: string }
         Returns: boolean

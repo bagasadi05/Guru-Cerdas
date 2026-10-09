@@ -427,6 +427,12 @@ const SchedulePage: React.FC = () => {
 
     const [searchParams, setSearchParams] = useSearchParams();
     const rawTab = searchParams.get('tab');
+
+    // PH notifications link to /jadwal?tab=ph&kelas=<id>.
+    const classParam = searchParams.get('kelas');
+    useEffect(() => {
+        if (classParam) setSelectedClassId(classParam);
+    }, [classParam]);
     const activeMainTab =
         rawTab === 'jurnal'
             ? 'jurnal'
@@ -501,7 +507,7 @@ const SchedulePage: React.FC = () => {
                                     onClick={() => setSearchParams({ tab: 'ph' })}
                                     className={`flex-1 sm:flex-none min-h-[42px] sm:min-h-[36px] px-3.5 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer active:scale-95 ${
                                         activeMainTab === 'ph'
-                                            ? 'bg-white dark:bg-[#111c2e] text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                            ? 'bg-white dark:bg-[#111c2e] text-teal-700 dark:text-teal-300 shadow-sm'
                                             : 'text-slate-600 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white'
                                     }`}
                                 >

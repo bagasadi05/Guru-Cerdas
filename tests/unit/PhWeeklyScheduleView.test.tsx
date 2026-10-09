@@ -43,7 +43,8 @@ describe('PhWeeklyScheduleView Component', () => {
         render(
             <PhWeeklyScheduleView
                 schedules={mockSchedules}
-                canManage={true}
+                canAdd={true}
+                canModify={() => true}
                 onAdd={vi.fn()}
                 onEdit={vi.fn()}
                 onDuplicate={vi.fn()}
@@ -71,7 +72,8 @@ describe('PhWeeklyScheduleView Component', () => {
         render(
             <PhWeeklyScheduleView
                 schedules={mockSchedules}
-                canManage={true}
+                canAdd={true}
+                canModify={() => true}
                 onAdd={vi.fn()}
                 onEdit={vi.fn()}
                 onDuplicate={vi.fn()}
@@ -86,12 +88,25 @@ describe('PhWeeklyScheduleView Component', () => {
         expect(screen.getByText('Jam 3-4')).toBeInTheDocument();
     });
 
+    it('shows one empty state and one add action for a completely empty week', () => {
+        const onAdd = vi.fn();
+        render(<PhWeeklyScheduleView schedules={[]} canAdd canModify={() => true}
+            onAdd={onAdd} onEdit={vi.fn()} onDuplicate={vi.fn()} onDelete={vi.fn()} onInputNilai={vi.fn()}
+            referenceDate="2026-10-09" />);
+        expect(screen.getByText('Belum ada jadwal PH minggu ini')).toBeInTheDocument();
+        expect(screen.queryByText('Tidak ada PH')).not.toBeInTheDocument();
+        expect(screen.getAllByRole('button', { name: 'Tambah PH minggu ini' })).toHaveLength(1);
+        fireEvent.click(screen.getByRole('button', { name: 'Tambah PH minggu ini' }));
+        expect(onAdd).toHaveBeenCalledWith('2026-10-09');
+    });
+
     it('calls onInputNilai when clicking "Input Nilai" button', () => {
         const handleInputNilai = vi.fn();
         render(
             <PhWeeklyScheduleView
                 schedules={mockSchedules}
-                canManage={true}
+                canAdd={true}
+                canModify={() => true}
                 onAdd={vi.fn()}
                 onEdit={vi.fn()}
                 onDuplicate={vi.fn()}
@@ -111,7 +126,8 @@ describe('PhWeeklyScheduleView Component', () => {
         render(
             <PhWeeklyScheduleView
                 schedules={mockSchedules}
-                canManage={true}
+                canAdd={true}
+                canModify={() => true}
                 onAdd={handleAdd}
                 onEdit={vi.fn()}
                 onDuplicate={vi.fn()}
@@ -132,7 +148,8 @@ describe('PhWeeklyScheduleView Component', () => {
         render(
             <PhWeeklyScheduleView
                 schedules={mockSchedules}
-                canManage={true}
+                canAdd={true}
+                canModify={() => true}
                 onAdd={vi.fn()}
                 onEdit={vi.fn()}
                 onDuplicate={vi.fn()}
@@ -149,10 +166,11 @@ describe('PhWeeklyScheduleView Component', () => {
 
         // Calculate next week monday date formatted
         const nextWeekDays = PhScheduleEngine.getSchoolWeekDays(new Date(), 1, true);
-        expect(screen.getByText(nextWeekDays[0].dateFormatted)).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
+            PhScheduleEngine.formatWeekRangeLabel(nextWeekDays[0].rawDate, nextWeekDays[6].rawDate));
 
         // "Minggu Ini" button should now be visible and clickable
-        const thisWeekBtn = screen.getByRole('button', { name: /Minggu Ini/i });
+        const thisWeekBtn = screen.getByRole('button', { name: 'Minggu Ini' });
         expect(thisWeekBtn).toBeInTheDocument();
 
         // Click "Minggu Ini" to reset
@@ -162,14 +180,16 @@ describe('PhWeeklyScheduleView Component', () => {
         // Click previous week
         fireEvent.click(prevBtn);
         const prevWeekDays = PhScheduleEngine.getSchoolWeekDays(new Date(), -1, true);
-        expect(screen.getByText(prevWeekDays[0].dateFormatted)).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
+            PhScheduleEngine.formatWeekRangeLabel(prevWeekDays[0].rawDate, prevWeekDays[6].rawDate));
     });
 
     it('on a Sunday shows the week that ends today, including its schedules', () => {
         render(
             <PhWeeklyScheduleView
                 schedules={[{ ...mockSchedules[0], date: '2026-09-28' }]}
-                canManage={true}
+                canAdd={true}
+                canModify={() => true}
                 onAdd={vi.fn()}
                 onEdit={vi.fn()}
                 onDuplicate={vi.fn()}
@@ -184,11 +204,12 @@ describe('PhWeeklyScheduleView Component', () => {
         expect(screen.getByText('Matematika Wajib')).toBeInTheDocument();
     });
 
-    it('hides "+ Tambah PH" and action triggers when canManage is false', () => {
+    it('hides "+ Tambah PH" and action triggers when the teacher cannot add PH', () => {
         render(
             <PhWeeklyScheduleView
                 schedules={mockSchedules}
-                canManage={false}
+                canAdd={false}
+                canModify={() => false}
                 onAdd={vi.fn()}
                 onEdit={vi.fn()}
                 onDuplicate={vi.fn()}
@@ -199,5 +220,32 @@ describe('PhWeeklyScheduleView Component', () => {
 
         expect(screen.queryByRole('button', { name: /Tambah PH/i })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: /Menu Aksi Jadwal/i })).not.toBeInTheDocument();
+    });
+
+    it("lets a teacher duplicate another teacher's PH but only edit or delete their own", () => {
+        const schedules = [mockSchedules[0], { ...mockSchedules[1], created_by: 'other-teacher' }];
+        render(
+            <PhWeeklyScheduleView
+                schedules={schedules}
+                canAdd={true}
+                canModify={(s) => s.created_by === 'user-1'}
+                onAdd={vi.fn()}
+                onEdit={vi.fn()}
+                onDuplicate={vi.fn()}
+                onDelete={vi.fn()}
+                onInputNilai={vi.fn()}
+            />
+        );
+
+        const [ownMenu, otherMenu] = screen.getAllByRole('button', { name: /Menu Aksi Jadwal/i });
+        fireEvent.click(ownMenu);
+        expect(screen.getByText('Edit Jadwal')).toBeInTheDocument();
+        expect(screen.getByText('Hapus')).toBeInTheDocument();
+        fireEvent.click(ownMenu);
+
+        fireEvent.click(otherMenu);
+        expect(screen.getByText('Duplikasi')).toBeInTheDocument();
+        expect(screen.queryByText('Edit Jadwal')).not.toBeInTheDocument();
+        expect(screen.queryByText('Hapus')).not.toBeInTheDocument();
     });
 });

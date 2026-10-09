@@ -9,6 +9,7 @@ import { exportPhScheduleIcs } from '../../../services/scheduleExportService';
 import { PhScheduleEngine, ExamStatus } from './PhScheduleEngine';
 import { validatePhDraft, type PhDraft } from './phScheduleValidation';
 import type { PhScheduleRow, ClassRow } from '../../../types';
+import { choosePhClass } from './phSchedulePresentation';
 
 export const COMMON_SUBJECT_SUGGESTIONS = [
     'Matematika',
@@ -76,23 +77,34 @@ export function usePhScheduleDomain({
     const { activeSemester, semesters } = useSemester();
     const toast = useToast();
     const queryClient = useQueryClient();
+    const classStorageKey = user ? `portal-guru:ph-class:${user.id}` : '';
+    const rememberedClassId = useMemo(() => {
+        try { return classStorageKey ? localStorage.getItem(classStorageKey) || '' : ''; }
+        catch { return ''; }
+    }, [classStorageKey]);
 
-    const [internalSelectedClassId, setInternalSelectedClassId] = useState<string>('');
+    const [internalSelection, setInternalSelection] = useState({ userId: user?.id, classId: '' });
 
     const handleSelectClass = useCallback(
         (id: string) => {
-            setInternalSelectedClassId(id);
+            setInternalSelection({ userId: user?.id, classId: id });
+            try { if (classStorageKey) localStorage.setItem(classStorageKey, id); }
+            catch { /* The current selection still works when browser storage is unavailable. */ }
             onSelectClassId?.(id);
         },
-        [onSelectClassId]
+        [onSelectClassId, classStorageKey, user?.id]
     );
 
     const [customSemesterId, setSelectedSemesterId] = useState<string>('');
     const [searchQuery, setSearchQuery] = useState<string>('');
-    const [statusFilter, setStatusFilter] = useState<ExamStatus | 'all'>('all');
+    const [statusFilter, setStatusFilterValue] = useState<ExamStatus | 'all'>('all');
     const [selectedMonth, setSelectedMonth] = useState<string>('all');
     const [viewMode, setViewMode] = useState<PhViewMode>('weekly');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const setStatusFilter = useCallback((status: ExamStatus | 'all') => {
+        setStatusFilterValue(status);
+        setSortOrder(status === 'past' ? 'desc' : 'asc');
+    }, []);
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState<PhScheduleRow | null>(null);
@@ -125,17 +137,12 @@ export function usePhScheduleDomain({
     }, [customSemesterId, activeSemester, semesters]);
 
     // Classes query
-    const { data: classes = [], isLoading: isLoadingClasses, error: classesError, refetch: refetchClasses } = useQuery<ClassRow[]>({
-        queryKey: ['classes', 'ph-schedule-tab', user?.id],
+    const { data: classes = [], isLoading: isLoadingClasses, error: classesError, refetch: refetchClasses } = useQuery<Pick<ClassRow, 'id' | 'name' | 'wali_kelas_id'>[]>({
+        queryKey: ['classes', 'ph-schedule-picker', user?.id],
         queryFn: async () => {
-            const { data, error } = await supabase
-                .from('classes')
-                .select('*')
-                .is('deleted_at', null)
-                .eq('is_archived', false)
-                .order('name');
+            const { data, error } = await supabase.rpc('list_ph_schedule_classes');
             if (error) throw error;
-            return (data || []) as unknown as ClassRow[];
+            return data || [];
         },
         enabled: !!user,
     });
@@ -156,16 +163,28 @@ export function usePhScheduleDomain({
         },
         enabled: !!user && !!selectedSemesterId,
     });
-    const preferredClass = classes.find((c) => c.wali_kelas_id === user?.id)
-        || classes.find((c) => assignments.some((a) => a.class_id === c.id && a.assignment_role === 'homeroom'))
-        || classes[0];
-    const effectiveClassId = externalSelectedClassId || internalSelectedClassId || preferredClass?.id || '';
+    const effectiveClassId = choosePhClass(classes,
+        [externalSelectedClassId, internalSelection.userId === user?.id ? internalSelection.classId : '', rememberedClassId],
+        [...assignments.filter(item => item.assignment_role === 'homeroom').map(item => item.class_id),
+            ...classes.filter(item => item.wali_kelas_id === user?.id && selectedSemesterId === activeSemester?.id).map(item => item.id)]);
     const selectedSemester = semesters.find((s) => s.id === selectedSemesterId);
 
+    // Homeroom teachers and admins manage every PH in the class.
     const permissions = useQuery({
         queryKey: ['ph-permissions', user?.id, effectiveClassId, selectedSemesterId],
         queryFn: async () => {
             const { data, error } = await supabase.rpc('can_manage_ph_schedule', { p_class_id: effectiveClassId, p_semester_id: selectedSemesterId });
+            if (error) throw error;
+            return data === true;
+        },
+        enabled: !!user && !!effectiveClassId && !!selectedSemesterId,
+    });
+
+    // Any approved teacher may add PH; they then manage only their own.
+    const addPermission = useQuery({
+        queryKey: ['ph-add-permission', user?.id, effectiveClassId, selectedSemesterId],
+        queryFn: async () => {
+            const { data, error } = await supabase.rpc('can_add_ph_schedule', { p_class_id: effectiveClassId, p_semester_id: selectedSemesterId });
             if (error) throw error;
             return data === true;
         },
@@ -200,12 +219,16 @@ export function usePhScheduleDomain({
         return Array.from(set);
     }, [classSchedules]);
 
-    // Permissions check
-    const canManage = permissions.data === true && !permissions.isError;
+    const canManageAll = permissions.data === true && !permissions.isError;
+    const canAdd = canManageAll || (addPermission.data === true && !addPermission.isError);
+    const canModify = useCallback(
+        (schedule: Pick<PhScheduleRow, 'created_by'>) => canManageAll || (canAdd && schedule.created_by === user?.id),
+        [canManageAll, canAdd, user?.id],
+    );
 
     useEffect(() => {
-        onCanManageChange?.(canManage);
-    }, [canManage, onCanManageChange]);
+        onCanManageChange?.(canAdd);
+    }, [canAdd, onCanManageChange]);
 
     // Raw PH schedules query
     const { data: rawSchedules = [], isLoading: isLoadingSchedules, error: schedulesError, refetch: refetchSchedules } = useQuery<PhScheduleRow[]>({
@@ -272,7 +295,7 @@ export function usePhScheduleDomain({
     // Mutations
     const createMutation = useMutation({
         mutationFn: async (data: { class_id: string; semester_id: string; subject: string; date: string; period_label: string }) => {
-            if (!user || !canManage) throw new Error('Anda tidak memiliki izin mengelola PH kelas ini.');
+            if (!user || !canAdd) throw new Error('Anda tidak memiliki izin menambah PH di kelas ini.');
             const issue = validatePhDraft(data, selectedSemester, rawSchedules);
             if (issue) throw new Error(issue);
             const { error } = await supabase.from('ph_schedules').insert({ ...data, created_by: user.id });
@@ -290,7 +313,8 @@ export function usePhScheduleDomain({
 
     const updateMutation = useMutation({
         mutationFn: async ({ id, ...data }: { id: string; subject: string; date: string; period_label: string }) => {
-            if (!canManage) throw new Error('Anda tidak memiliki izin mengelola PH kelas ini.');
+            const target = rawSchedules.find((s) => s.id === id);
+            if (!target || !canModify(target)) throw new Error('Hanya pembuat jadwal, wali kelas, atau admin yang dapat mengubah PH ini.');
             const issue = validatePhDraft({ ...data, id }, selectedSemester, rawSchedules);
             if (issue) throw new Error(issue);
             const { data: updated, error } = await supabase.from('ph_schedules').update(data).eq('id', id).eq('class_id', effectiveClassId).eq('semester_id', selectedSemesterId).select('id');
@@ -309,7 +333,8 @@ export function usePhScheduleDomain({
 
     const deleteMutation = useMutation({
         mutationFn: async (id: string) => {
-            if (!canManage) throw new Error('Anda tidak memiliki izin mengelola PH kelas ini.');
+            const target = rawSchedules.find((s) => s.id === id);
+            if (!target || !canModify(target)) throw new Error('Hanya pembuat jadwal, wali kelas, atau admin yang dapat mengubah PH ini.');
             const result = await softDelete('ph_schedules', id);
             if (!result.success) throw new Error(result.error || 'Gagal menghapus');
         },
@@ -324,7 +349,7 @@ export function usePhScheduleDomain({
 
     const batchMutation = useMutation({
         mutationFn: async (drafts: PhDraft[]) => {
-            if (!user || !canManage) throw new Error('Anda tidak memiliki izin mengelola PH kelas ini.');
+            if (!user || !canAdd) throw new Error('Anda tidak memiliki izin menambah PH di kelas ini.');
             if (!drafts.length || drafts.length > 20) throw new Error('Isi 1–20 jadwal dalam satu penyimpanan.');
             for (const [index, draft] of drafts.entries()) {
                 const issue = validatePhDraft(draft, selectedSemester, [...rawSchedules, ...drafts.slice(0, index)]);
@@ -379,7 +404,10 @@ export function usePhScheduleDomain({
         (e: React.FormEvent) => {
             e.preventDefault();
             if (createMutation.isPending || updateMutation.isPending) return;
-            if (!canManage) { toast.warning('Anda tidak memiliki izin mengelola PH kelas ini.'); return; }
+            if (editingSchedule ? !canModify(editingSchedule) : !canAdd) {
+                toast.warning(editingSchedule ? 'Hanya pembuat jadwal, wali kelas, atau admin yang dapat mengubah PH ini.' : 'Anda tidak memiliki izin menambah PH di kelas ini.');
+                return;
+            }
             const issue = validatePhDraft({ ...formData, id: editingSchedule?.id }, selectedSemester, rawSchedules);
             if (issue) { toast.warning(issue); return; }
             if (!formData.subject.trim() || !formData.date || !formData.period_label.trim()) {
@@ -401,7 +429,7 @@ export function usePhScheduleDomain({
                 });
             }
         },
-        [canManage, selectedSemester, rawSchedules, formData, effectiveClassId, selectedSemesterId, editingSchedule, updateMutation, createMutation, toast]
+        [canAdd, canModify, selectedSemester, rawSchedules, formData, effectiveClassId, selectedSemesterId, editingSchedule, updateMutation, createMutation, toast]
     );
 
     const handleCopyWhatsApp = useCallback(
@@ -464,10 +492,12 @@ export function usePhScheduleDomain({
         subjectSuggestions,
         todayStr,
         availableMonths,
-        canManage,
+        canAdd,
+        canManageAll,
+        canModify,
         selectedSemester,
-        loadError: classesError || assignmentsError || permissions.error || schedulesError,
-        retryLoad: () => { void refetchClasses(); void refetchAssignments(); void permissions.refetch(); void refetchSchedules(); },
+        loadError: classesError || assignmentsError || permissions.error || addPermission.error || schedulesError,
+        retryLoad: () => { void refetchClasses(); void refetchAssignments(); void permissions.refetch(); void addPermission.refetch(); void refetchSchedules(); },
         isBatchOpen, setIsBatchOpen, batchMutation,
         isReportPreviewOpen, setIsReportPreviewOpen, reportPreview,
 

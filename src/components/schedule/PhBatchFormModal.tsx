@@ -21,7 +21,7 @@ export function PhBatchFormModal({ className, semester, existing, initialDate, p
     const change = (index: number, key: keyof PhDraft, value: string) => setDrafts((items) => items.map((item, i) => i === index ? { ...item, [key]: value } : item));
     const issues = drafts.map((draft, i) => validatePhDraft(draft, semester, [...existing, ...drafts.slice(0, i)]));
     return (
-        <Modal isOpen maxWidth="max-w-4xl" onClose={() => { if (!pending) onClose(); }} title={`Tambah beberapa PH — ${className}`}>
+        <Modal isOpen maxWidth="max-w-4xl" onClose={() => { if (!pending) onClose(); }} title={`Tambah Massal PH - ${className}`}>
             <form onSubmit={(event) => { event.preventDefault(); if (!pending && canManage && issues.every((issue) => !issue)) onSave(drafts); }} className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm text-slate-600 dark:text-slate-300">Isi tanggal, mata pelajaran, dan jam untuk setiap PH.</p><span className="rounded-lg bg-brand-50 px-2.5 py-1 text-sm font-medium text-brand-800 dark:bg-brand-900/40 dark:text-brand-200">{drafts.length} / 20 jadwal</span></div>
                 <fieldset disabled={pending || !canManage} className="space-y-4">

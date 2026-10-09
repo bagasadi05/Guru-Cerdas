@@ -17,6 +17,7 @@ import { Input } from '../ui/Input';
 import { PERIOD_PRESETS, normalizeSubjectDisplay } from './engine/usePhScheduleDomain';
 import { phPeriodsOverlap, validatePhDraft } from './engine/phScheduleValidation';
 import type { PhScheduleRow } from '../../types';
+import { parseSubjectString } from './engine/phSchedulePresentation';
 
 export interface PhScheduleFormModalProps {
     isOpen: boolean;
@@ -49,30 +50,7 @@ export interface PhScheduleFormModalProps {
  * e.g. "IPA - Ekosistem" -> { baseSubject: "IPA", topic: "Ekosistem" }
  * e.g. "Fikih" -> { baseSubject: "Fikih", topic: "" }
  */
-export function parseSubjectString(fullStr: string): { baseSubject: string; topic: string } {
-    if (!fullStr || !fullStr.trim()) return { baseSubject: '', topic: '' };
-
-    const trimmed = fullStr.trim();
-    // Pattern: Subject (Topic)
-    const parenMatch = trimmed.match(/^(.+?)\s*\((.+?)\)$/);
-    if (parenMatch) {
-        return {
-            baseSubject: parenMatch[1].trim(),
-            topic: parenMatch[2].trim(),
-        };
-    }
-
-    // Pattern: Subject - Topic
-    const dashMatch = trimmed.match(/^(.+?)\s*[-–]\s*(.+)$/);
-    if (dashMatch) {
-        return {
-            baseSubject: dashMatch[1].trim(),
-            topic: dashMatch[2].trim(),
-        };
-    }
-
-    return { baseSubject: trimmed, topic: '' };
-}
+export { parseSubjectString } from './engine/phSchedulePresentation';
 
 /**
  * Calculates day of the week and friendly Indonesian format for a date string.
