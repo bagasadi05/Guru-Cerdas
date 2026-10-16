@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "cross-env NODE_ENV=test vitest run",
+    "test:wa-worker": "node --test scripts/wa-worker/poller.node-test.mjs scripts/wa-worker/reconciliation.node-test.mjs",
     "test:watch": "cross-env NODE_ENV=test vitest",
     "test:coverage": "cross-env NODE_ENV=test vitest run --coverage",
     "test:e2e": "playwright test --config=playwright.functional.config.ts",

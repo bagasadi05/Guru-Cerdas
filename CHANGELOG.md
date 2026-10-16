@@ -9,7 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - 2026-09-28
 
+### Changed (Perubahan)
+- **Menu Jadwal lebih mudah dijangkau di HP:**
+  - **Jadwal** kini ada di bilah bawah untuk guru, menggantikan **Siswa**. Data Siswa tetap bisa dibuka lewat **Lainnya**.
+  - Membuka Jadwal langsung menampilkan jadwal mengajar hari ini. Halaman pilihan tiga kartu dihapus; berpindah ke Jadwal PH atau Jurnal lewat tab di atas.
+  - Tombol **Isi Jurnal** di kartu jadwal kini selebar kartu dan menjadi tombol utama setelah pelajaran dimulai. **Tambah Jadwal** jadi tombol biasa.
+  - Analisis AI, unduh PDF, dan simpan ke kalender dipindah ke menu **⋯** berlabel jelas, menggantikan tiga ikon tanpa tulisan.
+  - Banner "Jadwal aman" hanya muncul kalau ada jam yang bentrok. Ajakan menyalakan pengingat bisa ditutup dengan **Nanti saja** (muncul lagi setelah 7 hari).
+  - Di tampilan mingguan, mengetuk kartu tidak lagi langsung membuka form Edit. Ada tombol **Ubah** dan **Isi Jurnal** terpisah, dan hari tanpa jadwal ditulis "Tidak ada jam mengajar", bukan "Libur".
+  - Di HP, toolbar Jadwal PH hanya menampilkan kelas, semester, tombol tambah, dan filter status. Cari, bulan, urutan, dan mode tampilan dilipat ke **Cari & tampilan**; **Tambah massal** pindah ke menu ⋯.
+
 ### Fixed (Perbaikan)
+- **Absensi:**
+  - Pindah kelas, tanggal, dan semester kini meminta guru menyelesaikan draf terlebih dahulu. Simpan yang gagal tidak lagi menghapus tanda perubahan belum disimpan.
+  - Semua Hadir, Semua Libur, Tandai Sisa Hadir, dan catatan mengikuti tombol Simpan. Pengisian hari terlewat memakai konfirmasi kelas serta rentang tanggal terpisah.
+  - Nama siswa panjang, tanggal, label status, dan tombol Simpan lebih mudah dibaca di HP; pengingat hari terlewat dilipat saat halaman dibuka.
+- **Jadwal Mengajar:**
+  - Nama mapel dan hari di dialog **Hapus Jadwal** kini terbaca di mode terang (sebelumnya putih di atas putih).
+  - Hasil analisis AI jadwal terbaca di mode terang.
+  - Tombol di kartu jadwal, menu ⋯, dan pilihan tampilan kini minimal 44px.
+  - Durasi ditulis "90 menit", bukan "90m". Menduplikat jadwal tidak lagi menambahkan "(Copy)" ke nama mapel.
+  - Badge "PH Hari Ini" tidak lagi berkedip terus.
 - **Prota & Promes:**
   - **Bagi Jam Otomatis** di Semester 2 kini memakai kalender Januari–Juni. Sebelumnya tombol ini membaca pola Juli–Desember, sehingga jam masuk ke minggu STS, cuti Idul Fitri, dan pekan kelima Februari.
   - Mengedit materi Prota tidak lagi menghapus isi Promes yang tersimpan di cloud. Materi kini diperbarui per baris, dan yang dihapus hanya materi yang memang dibuang guru.
@@ -23,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Blok tanda tangan di Word Prota dan Promes tidak lagi bergaris kotak.
   - Menyimpan Promes ke cloud tidak lagi menghapus semua alokasi sebelum menulis ulang. Kalau koneksi putus di tengah, Promes yang tersimpan tetap utuh.
   - Teks yang berlebihan dirapikan: "AI" pada Seimbangkan Jam (prosesnya bukan AI), label "Paket Silabus Resmi", klaim "seimbang 100%", dan emoji pada tombol.
+- **Tata letak Modul Ajar:** ekspor ulang dokumen lama memisahkan opsi pilihan ganda, membuat kotak gambar dan tabel jawaban LKPD, menjaga tabel pendek serta label asesmen tetap bersama isinya, dan memisahkan kunci jawaban guru. Spasi badan dokumen dirapikan tanpa memperkecil font; bingkai lembar kerja dipertahankan dalam DOCX.
+- **Ekspor Modul Ajar:** Word kini berupa DOCX native dengan ruang jawaban yang tetap tersedia. PDF lokal menggunakan dialog Simpan sebagai PDF dengan pagination browser; PDF server tetap unduhan langsung. Ukuran A4/F4 dan margin disamakan. Lembar siswa menyertakan daftar pustaka dan menolak ekstraksi ambigu agar kunci jawaban guru tidak ikut.
 
 ### Added (Apa yang baru)
 - **Laporan WhatsApp lewat Baileys di VPS sendiri:** poller `scripts/wa-worker` mengambil laporan dari `wa_outbox` dan mengirimnya lewat layanan Baileys lokal (`http-transport.mjs`, `http://127.0.0.1:3001`). Jedanya acak 4–7 menit (dipilih sekali per pesan dan tetap berlaku setelah restart), pengiriman hanya antara 06.00–21.00 WIB, dan laporan dari hari yang sudah lewat ditandai kedaluwarsa. Panduan: `docs/whatsapp-vps-baileys.md`. Pengirim Fonnte dinonaktifkan karena pesan dari nomornya ditahan WhatsApp (state 0).
@@ -54,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Hapus materi, Seimbangkan Jam, Bagi Jam Otomatis, Kosongkan Matriks, dan Ganti isi dokumen bisa dibatalkan lewat tombol **Batalkan** selama 10 detik.
   - Mapel, kelas, fase, kurikulum, JP per pekan, dan jam cadangan tersimpan otomatis tanpa menekan **Simpan Semua**. Fase terisi sendiri dari kelas.
   - Tab Promes memberi tahu jumlah materi yang jamnya belum sesuai Prota, lengkap dengan tautan **Bagi ulang**.
+- **AI Modul Ajar hemat kuota:** cache pribadi per guru selama 7 hari, penyusunan komponen kosong, satu putaran patch terarah, tombol versi AI baru, pembatalan request, batas output, serta ringkasan token/provider aktual. Gemini tetap utama; fallback khusus Modul Ajar memakai Groq GPT-OSS 20B bila dikonfigurasi. Asal isian dan artefak LKPD/asesmen dipertahankan saat draft dipulihkan.
 - **Simpan nilai mapel tanpa koneksi:** saat offline, tombol menjadi **Simpan di Perangkat** dan nilai masuk antrean di perangkat (`draft.queued`). Antrean dikirim otomatis dari halaman mana pun begitu online (`useQueuedGradeSync` di `Layout`), lewat pemeriksaan konflik yang sama dengan simpan biasa. Simpan yang gagal karena koneksi putus juga masuk antrean. Nilai yang sudah diubah di perangkat lain atau ditolak tidak dikirim ulang diam-diam; draf ditandai untuk ditinjau. Keaktifan, sikap, dan pelanggaran masih memerlukan koneksi.
 - **Jendela "Apa yang baru" saat ada versi baru:** guru melihat daftar perubahan lalu memilih **Perbarui sekarang** atau **Nanti**. Hitung mundur muat ulang otomatis 3 detik dihapus. Kalau aplikasi diperbarui di latar belakang, daftar perubahan muncul sekali saat aplikasi dibuka lagi. Isinya diambil dari `public/release-notes.json` (panduan: `docs/release-notes.md`). Portal Orang Tua dan halaman login tetap diperbarui otomatis tanpa jendela ini.
 - **Pengingat catatan rilis sebelum push:** hook `.githooks/pre-push` memperingatkan saat push ke `main` mengubah aplikasi tanpa memperbarui `public/release-notes.json`. Aktifkan sekali per clone dengan `git config core.hooksPath .githooks`.
@@ -205,3 +228,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Presensi Siswa:** Absensi harian dan bulanan dengan matriks ekspor 31 hari A4 Landscape.
   - **Rapor Siswa:** Generator lembar hasil belajar siswa dengan perhitungan predikat otomatis (A-E) dan cetak raport PDF.
   - **Jadwal Mengajar:** Penyusunan jadwal tatap muka mingguan terstruktur per hari dan jam pelajaran.
+
+### Perbaikan AI Modul Ajar — 2026-10-04
+
+- Sintaks dan durasi per pertemuan mengikuti pilihan guru; materi dan glosarium menjadi komponen wajib.
+- Tambahkan validasi tujuan, LKPD, asesmen, kunci, serta pemeriksaan isi dengan satu kesempatan perbaikan.
+- CP memakai input guru atau bank terverifikasi bersumber; referensi tidak dikarang AI.
+- Pertahankan pasangan soal dan kunci saat pengisian per kolom dan penyimpanan.

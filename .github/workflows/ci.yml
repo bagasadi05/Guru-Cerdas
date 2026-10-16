@@ -23,5 +23,6 @@ jobs:
       # Errors block the build; the remaining `any` warnings are tracked
       # separately and do not fail CI yet.
       - run: npx eslint . --max-warnings=-1
+      - run: npm run test:wa-worker
       - run: npx vitest run --coverage
       - run: npx vite build

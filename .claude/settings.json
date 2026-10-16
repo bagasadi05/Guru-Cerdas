@@ -1,3 +1,9 @@
 {
+  "permissions": {
+    "allow": [
+      "mcp__supabase__execute_sql",
+      "mcp__supabase__apply_migration"
+    ]
+  },
   "startupHook": "echo '🚀 Guru-Cerdas session started — preparing skills...'"
 }
