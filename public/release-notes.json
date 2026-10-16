@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026.10.16",
+    "date": "2026-10-16",
+    "title": "Perlindungan draf absensi, AI hemat kuota, dan navigasi jadwal lebih ringkas",
+    "changes": [
+      { "type": "peningkatan", "text": "Menu Jadwal di HP kini lebih mudah dibuka langsung ke hari ini tanpa kartu perantara. Tombol Isi Jurnal tampil lebih jelas dan mudah diketuk." },
+      { "type": "baru", "text": "Semua guru yang sudah disetujui kini dapat menjadwalkan Penilaian Harian (PH) di kelas mana pun." },
+      { "type": "perbaikan", "text": "Draf absensi kini dilindungi saat berpindah kelas, tanggal, atau semester agar isian tidak hilang tanpa sengaja." },
+      { "type": "peningkatan", "text": "AI Modul Ajar kini dilengkapi cache privat 7 hari, fallback Groq otomatis, dan penyusunan dokumen terarah yang hemat kuota." },
+      { "type": "peningkatan", "text": "Ekspor DOCX dan PDF Modul Ajar kini lebih rapi dengan tata letak lembar kerja siswa dan kunci jawaban terpisah." }
+    ]
+  },
+  {
     "id": "2026.10.05",
     "date": "2026-10-05",
     "title": "Prota & Promes jauh lebih cepat dibuat",
