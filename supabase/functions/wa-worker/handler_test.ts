@@ -49,11 +49,11 @@ Deno.test("invalid bodies and batch sizes never reach RPC", async () => {
   assert(calls === 0);
 });
 
-Deno.test("claim caps batches and pins lease and attempts", async () => {
+Deno.test("claim reserves one message even when a legacy worker requests a batch", async () => {
   const handler = createWorkerHandler(token, (name, args) => {
     assert(name === "worker_claim");
     assert(
-      args.p_batch === 20 && args.p_lease_minutes === 5 &&
+      args.p_batch === 1 && args.p_lease_minutes === 5 &&
         args.p_max_attempts === 3,
     );
     return Promise.resolve({ data: [{ id: "report" }], error: null });
@@ -74,9 +74,37 @@ Deno.test("stale completion returns conflict and forwards only allowed arguments
       id: "report",
       claim_token: "stale",
       status: "sent",
+      wa_id: "wa-message-id",
       phone: "unexpected",
     }))).status === 409,
   );
+});
+
+Deno.test("sent completion requires a delivery receipt before reaching RPC", async () => {
+  let calls = 0;
+  const handler = createWorkerHandler(token, () => {
+    calls++;
+    return Promise.resolve({ data: true, error: null });
+  });
+  for (const wa_id of [undefined, null, "", "   "]) {
+    assert((await handler(request("complete", {
+      id: "report", claim_token: "claim", status: "sent", wa_id,
+    }))).status === 400);
+  }
+  assert(calls === 0);
+});
+
+Deno.test("health uses an authenticated aggregate RPC", async () => {
+  let calls = 0;
+  const handler = createWorkerHandler(token, (name, args) => {
+    calls++;
+    assert(name === "worker_delivery_health" && Object.keys(args).length === 0);
+    return Promise.resolve({ data: { expected: 20, sent: 2, needs_attention: true }, error: null });
+  });
+  assert((await handler(request("health", {}, "wrong"))).status === 401);
+  const response = await handler(request("health", {}));
+  assert(response.status === 200 && (await response.json()).needs_attention);
+  assert(calls === 1);
 });
 
 Deno.test("database errors stay private and rejected RPC promises return 500", async () => {

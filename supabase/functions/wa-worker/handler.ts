@@ -46,7 +46,7 @@ export function createWorkerHandler(token: string, rpc: Rpc) {
     }
     const path = new URL(req.url).pathname;
     const match = path.match(
-      /^\/(?:functions\/v1\/)?wa-worker\/(claim|complete|requeue|recover)\/?$/,
+      /^\/(?:functions\/v1\/)?wa-worker\/(claim|complete|requeue|recover|health)\/?$/,
     );
     if (!match) return json({ error: "unknown operation" }, 404);
     const op = match[1];
@@ -54,7 +54,7 @@ export function createWorkerHandler(token: string, rpc: Rpc) {
     try {
       const text = await req.text();
       if (text.length > 16384) return json({ error: "request too large" }, 413);
-      const value: unknown = text === "" && op === "recover"
+      const value: unknown = text === "" && (op === "recover" || op === "health")
         ? {}
         : JSON.parse(text);
       if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -68,7 +68,7 @@ export function createWorkerHandler(token: string, rpc: Rpc) {
     let name: string;
     let args: Record<string, unknown>;
     if (op === "claim") {
-      const batch = body.batch_size ?? 10;
+      const batch = body.batch_size ?? 1;
       if (
         typeof batch !== "number" || !Number.isSafeInteger(batch) || batch < 1
       ) {
@@ -76,13 +76,16 @@ export function createWorkerHandler(token: string, rpc: Rpc) {
       }
       name = "worker_claim";
       args = {
-        p_batch: Math.min(batch, 20),
+        p_batch: 1,
         p_lease_minutes: 5,
         p_max_attempts: 3,
       };
     } else if (op === "recover") {
       name = "worker_recover";
       args = { p_lease_minutes: 5, p_max_attempts: 3 };
+    } else if (op === "health") {
+      name = "worker_delivery_health";
+      args = {};
     } else {
       if (
         !requiredString(body.id, 256) ||
@@ -100,6 +103,9 @@ export function createWorkerHandler(token: string, rpc: Rpc) {
         if (body.status !== "sent" && body.status !== "failed") {
           return json({ error: "status must be sent or failed" }, 400);
         }
+        if (body.status === "sent" && !requiredString(body.wa_id, 256)) {
+          return json({ error: "wa_id is required for sent messages" }, 400);
+        }
         name = "worker_complete";
         args.p_status = body.status;
         args.p_wa_id = body.wa_id ?? null;
@@ -115,6 +121,7 @@ export function createWorkerHandler(token: string, rpc: Rpc) {
       }
       if (op === "claim") return json({ messages: data ?? [] });
       if (op === "recover") return json({ requeued: data ?? 0 });
+      if (op === "health") return json(data);
       if (data !== true) {
         return json(
           { error: "claim token mismatch or incompatible status" },

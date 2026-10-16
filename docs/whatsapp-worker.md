@@ -19,6 +19,26 @@ tidak ada pesan WhatsApp yang ditambahkan untuk pengujian.
 Konfigurasi rahasia yang sama masih perlu dipasang di VPS. Status deployment
 Supabase belum membuktikan poller VPS aktif atau WhatsApp tersambung.
 
+## Status hardening 5 Oktober 2026
+
+Migration `20261005105554_harden_wa_delivery` diterapkan ke proyek yang sama;
+Edge Function `wa-worker` versi 4 aktif. Pemeriksaan endpoint membuktikan
+health terautentikasi berhasil, token salah menghasilkan 401, dan completion
+dengan klaim yang tidak cocok menghasilkan 409. Database membatasi klaim satu
+pesan dan menolak akses anon/authenticated ke health serta tabel audit.
+
+Pada pemeriksaan insiden terdapat 20 laporan: 2 `sent` dan 18 `failed` dengan
+hasil belum pasti. Hardening tidak mengubah hasil tersebut. Pemasangan poller
+baru, pemeriksaan log VPS, dan pemulihan berdasarkan bukti masih memerlukan Muse.
+
+Pengelola mengonfirmasi akun WhatsApp pengirim terkena blokir pada kejadian ini
+dan mengatur jeda lima menit di Muse. Poller yang disiapkan memakai jeda lima
+menit sebelum klaim berikutnya serta menyimpan waktunya saat restart.
+Migration `20261005111849_pace_wa_reports_five_minutes` sudah diterapkan untuk
+pemantauan bertahap: 20 laporan memiliki target selesai 18.35 WIB dan batas
+dengan toleransi 18.45 WIB bila mulai 17.00 WIB. Pengiriman dilanjutkan setelah
+akun pengirim dan koneksi siap; laporan gagal tetap menunggu bukti pemulihan.
+
 ## Berkas proyek
 
 - `supabase/migrations/20261003042918_create_wa_outbox.sql`: tabel dan RPC internal.
@@ -56,12 +76,15 @@ dan `Content-Type: application/json`.
 
 | Operasi | Isi request | Respons berhasil |
 | --- | --- | --- |
-| `claim` | `{"batch_size":10}` | `{"messages":[...]}` |
+| `claim` | `{"batch_size":1}` | `{"messages":[...]}` |
 | `complete` | `id`, `claim_token`, `status`, serta `wa_id`/`error` opsional | `{"ok":true}` |
 | `requeue` | `id`, `claim_token`, `error` opsional | `{"ok":true}` |
 | `recover` | `{}` | `{"requeued":N}` |
+| `health` | `{}` | jumlah laporan dan `needs_attention` |
 
-Batch dibatasi 20; lease lima menit; maksimal tiga klaim. `requeued` mengikuti
+Migration `20261005105554_harden_wa_delivery` membatasi klaim menjadi satu pesan;
+permintaan batch dari worker lama tetap dibatasi satu. Lease lima menit dan
+maksimal tiga klaim. `sent` wajib menyertakan ID WhatsApp. `requeued` mengikuti
 kontrak Muse: jumlah baris yang dipulihkan **atau ditandai gagal**, bukan hanya
 pesan yang kembali pending. Token salah menghasilkan 401, body tidak valid 400,
 klaim yang tidak cocok 409, dan kegagalan database 500 tanpa rincian internal.
@@ -77,6 +100,8 @@ Jika lease percobaan terakhir kedaluwarsa, recovery menandai pesan `failed`
 dengan `delivery_unknown: lease expired at max attempts` dan mempertahankan
 token klaim. Worker dapat memperbaikinya menjadi `sent` melalui `complete`
 dengan token yang sama dan `wa_id` dari bukti lokal, tanpa mengirim ulang.
+Hardening juga menerima rekonsiliasi hasil `delivery_unknown:` akibat timeout
+worker serta pengulangan completion gagal yang identik.
 Status ini berarti hasil pengiriman belum pasti, bukan bukti pesan tidak terkirim.
 Klaim lama yang sudah diganti tetap ditolak. Pengulangan completion yang sama
 untuk pesan sent diterima agar retry HTTP aman.
@@ -89,6 +114,8 @@ mati setelah WhatsApp menerima pesan tetapi sebelum bukti lokal tersimpan.
 Fungsi `wa-worker` menangani antrean. Pembuat laporan dan jadwal Senin–Jumat
 ditangani oleh fungsi PostgreSQL terpisah; lihat
 [Laporan WhatsApp harian wali kelas](./whatsapp-laporan-wali-kelas.md).
+[Pemasangan poller Muse dan pemulihan laporan](./whatsapp-muse-pemulihan.md)
+menjelaskan adapter sesi VPS, journal, manifest bukti, dan pemantauan.
 Tanggal laporan menggunakan WIB dan nomor penerima diambil dari database.
 
 Uji kontrak HTTP tanpa database:
