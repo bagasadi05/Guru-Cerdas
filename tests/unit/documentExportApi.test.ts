@@ -107,6 +107,15 @@ describe('createDocumentExportHandler', () => {
     expect(render.mock.calls[0][0]).toMatchObject({ paperSize: 'A4', variant: 'guru' });
   });
 
+  it('rejects an unrecognizable student document without rendering teacher content', async () => {
+    vi.stubGlobal('fetch', mockSupabase([storedRow]));
+    const { res, captured } = makeRes();
+    await handler(makeReq({ body: { lessonPlanId: LESSON_PLAN_ID, variant: 'siswa' } }), res);
+    expect(captured.statusCode).toBe(422);
+    expect(captured.jsonBody?.code).toBe('INVALID_STUDENT_DOCUMENT');
+    expect(render).not.toHaveBeenCalled();
+  });
+
   it('queries lesson_plans with the caller token so RLS applies', async () => {
     const fetchMock = mockSupabase([storedRow]);
     vi.stubGlobal('fetch', fetchMock);

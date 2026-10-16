@@ -1,3 +1,6 @@
+import { buildStudentBody } from '../../../../lib/modulAjarExport/lessonPlanMapper';
+import { findElements, parseDocumentHtml } from '../../../../lib/modulAjarExport/documentTree';
+import { serializeNodes } from '../../../../lib/modulAjarExport/printTemplate';
 import { FormState } from '../types';
 import { normalizeSoalEvaluasi } from '../../../../services/modulAjarAiGenerator';
 
@@ -142,7 +145,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
         }
       }
       
-      const displayTitle = `Langkah ${idx + 1}: ${sanitize(title)}`;
+      const displayTitle = `${s.pertemuan ? `Pertemuan ${s.pertemuan} - ` : ''}Langkah ${idx + 1}: ${sanitize(title)}${s.alokasiWaktu ? ` (${sanitize(s.alokasiWaktu)})` : ''}`;
       const guruContent = s.kegiatanGuru || s.guru || s.teacherActivity || s.kegiatan_guru || '';
       const siswaContent = s.kegiatanSiswa || s.siswa || s.studentActivity || s.kegiatan_siswa || '';
 
@@ -1123,144 +1126,26 @@ export const buildStudentHtmlTemplate = (formState: FormState, data: any, logoBa
 
 export const extractStudentHtml = (fullHtml: string, formState: FormState, logoBase64: string): string => {
   if (!fullHtml) return '';
-  if (typeof window !== 'undefined') {
-    try {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(fullHtml, 'text/html');
-      
-      // The two sheets carry data-sheet markers. Documents saved before the
-      // markers existed are recognised by the sheet frame (2px dashed); the
-      // headings and answer boxes inside the LKPD use thinner dashed borders.
-      const markedLkpd = doc.querySelector('[data-sheet="lkpd"]');
-      const markedEvaluasi = doc.querySelector('[data-sheet="evaluasi"]');
-      const dashedBoxes = markedLkpd && markedEvaluasi
-        ? [markedLkpd, markedEvaluasi]
-        : Array.from(doc.querySelectorAll('div')).filter(el => {
-            const style = (el.getAttribute('style') || '').replace(/\s+/g, ' ');
-            return /border:\s*2px dashed/.test(style);
-          });
-
-      const listItems = Array.from(doc.querySelectorAll('td, div')).filter(el => {
-        const text = el.textContent || '';
-        return text.includes('DAFTAR PUSTAKA');
-      });
-      const bibliographyHtml = listItems.length > 0 && listItems[0].nextElementSibling 
-        ? listItems[0].nextElementSibling.innerHTML 
-        : '';
-
-      if (dashedBoxes.length >= 2) {
-        const lkpdHtml = dashedBoxes[0].outerHTML;
-        const evaluasiHtml = dashedBoxes[1].outerHTML;
-        
-        return `
-          <div style="font-family: 'Times New Roman', Times, serif; line-height: 1.5; color: #000000; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #ffffff;">
-            <!-- COVER PAGE SISWA -->
-            <div style="text-align: center; margin-bottom: 20px; page-break-after: always; clear: both;">
-              <div style="padding-top: 10px;">
-                <h1 style="font-size: 16pt; margin: 0; font-weight: bold; font-family: 'Times New Roman';">LEMBAR AKTIVITAS & EVALUASI SISWA</h1>
-                <h1 style="font-size: 16pt; margin: 5px 0 0 0; font-weight: bold; font-family: 'Times New Roman';">KURIKULUM MERDEKA</h1>
-                <h2 style="font-size: 14pt; margin: 15px 0; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman';">${formState.mataPelajaran}</h2>
-                <h2 style="font-size: 12pt; margin: 0; font-weight: bold; text-transform: uppercase; font-family: 'Times New Roman';">KELAS ${formState.kelas} (FASE ${formState.fase})</h2>
-              </div>
-              
-              <div style="margin: 25px auto; text-align: center;">
-                ${logoBase64 ? `
-                  <img src="${logoBase64}" alt="Logo Sekolah" style="width: 110px; height: 110px; object-fit: contain;" />
-                ` : `
-                  <div style="width: 110px; height: 110px; border: 4px double #000000; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto; padding: 5px; box-sizing: border-box;">
-                    <div style="font-size: 11pt; font-weight: bold; color: #000000; text-align: center; font-family: 'Times New Roman'; line-height: 1.3;">
-                      LOGO<br/>
-                      SEKOLAH
-                    </div>
-                  </div>
-                `}
-              </div>
-
-              <div style="margin: 20px 0; font-size: 12pt; font-family: 'Times New Roman';">
-                <table style="margin: 0 auto; text-align: left; font-size: 11pt; font-family: 'Times New Roman'; border: none;">
-                  <tr style="border: none;"><td style="padding: 5px 15px; border: none; font-weight: bold;">Materi Pokok</td><td style="padding: 5px; border: none;">: ${formState.topik}</td></tr>
-                  <tr style="border: none;"><td style="padding: 5px 15px; border: none; font-weight: bold;">Satuan Pendidikan</td><td style="padding: 5px; border: none;">: ${formState.satuanPendidikan}</td></tr>
-                  <tr style="border: none;"><td style="padding: 5px 15px; border: none; font-weight: bold;">Tahun Ajaran</td><td style="padding: 5px; border: none;">: ${formState.tahunAjaran}</td></tr>
-                </table>
-              </div>
-
-              <div style="margin-top: 35px; padding-bottom: 10px; font-family: 'Times New Roman'; font-style: italic; color: #555555;">
-                "Semangat Belajar! Lakukan yang Terbaik."
-              </div>
-            </div>
-            
-            <div style="padding: 15px; border: 1px solid #000000;">
-              ${lkpdHtml}
-              <br style="page-break-before: always; clear: both;" />
-              ${evaluasiHtml}
-            </div>
-
-            ${bibliographyHtml ? `
-              <div style="margin-top: 30px; font-size: 10pt; line-height: 1.4; font-family: 'Times New Roman'; text-align: left;">
-                <strong>Daftar Pustaka & Referensi Belajar:</strong>
-                <ul style="margin: 5px 0 0 0; padding-left: 20px;">
-                  ${bibliographyHtml}
-                </ul>
-              </div>
-            ` : ''}
-          </div>
-        `;
-      }
-    } catch (err) {
-      console.error('Failed to parse student HTML:', err);
+  try {
+    const body = parseDocumentHtml(fullHtml);
+    if (logoBase64 && findElements(body, node => node.tag === 'img').length === 0) {
+      // The shared parser accepts only embedded image data.
+      const logo = parseDocumentHtml(`<img src="${logoBase64}" alt="Logo Sekolah" />`);
+      body.push(...logo);
     }
+    return serializeNodes(buildStudentBody(body, {
+      documentType: formState.documentType,
+      mataPelajaran: formState.mataPelajaran,
+      topik: formState.topik,
+      kelas: formState.kelas,
+      fase: formState.fase,
+      satuanPendidikan: formState.satuanPendidikan,
+      tahunAjaran: formState.tahunAjaran,
+      semester: formState.semester,
+      guru: formState.guru,
+    }));
+  } catch (error) {
+    console.error('Failed to extract student sheets:', error);
+    return '';
   }
-  return fullHtml;
-};
-
-/**
- * Sanitizes and optimizes HTML content specifically for Microsoft Word export (.doc).
- * 
- * Microsoft Word's legacy HTML import parser interprets CSS differently from modern web/PDF engines:
- * 1. `page-break-inside: avoid` on `<div>` causes Word to prematurely insert a hard page break
- *    for almost every card, step, and question, ballooning an 11-page PDF to 39+ pages in Word.
- * 2. `overflow: hidden` on bordered containers forces Word to treat them as disconnected floating frames.
- * 3. `border-radius` is unsupported in Word and creates bloated shape markup.
- * 4. Duplicate page breaks create completely empty pages in Word.
- * 5. Empty spacer divs with fixed heights expand into bloated paragraph blocks in Word.
- */
-export const cleanHtmlForWordExport = (html: string): string => {
-  if (!html) return '';
-
-  let cleaned = html;
-
-  // 1. Remove duplicate/consecutive page breaks:
-  // e.g. <div style="...page-break-after: always..."></div> followed by <br style="...page-break-before: always..."/>
-  cleaned = cleaned.replace(
-    /(page-break-after:\s*always;?[^"]*">[\s\S]*?<\/div>)\s*<br\s+style="[^"]*page-break-before:\s*always[^"]*"[^>]*\/>/gi,
-    '$1'
-  );
-  cleaned = cleaned.replace(
-    /<br\s+style="[^"]*page-break-before:\s*always[^"]*"[^>]*\/>\s*<br\s+style="[^"]*page-break-before:\s*always[^"]*"[^>]*\/>/gi,
-    '<br style="page-break-before: always; clear: both;" />'
-  );
-
-  // 2. Remove page-break-inside: avoid specifically from <div> containers.
-  // In Word, <div> with page-break-inside: avoid causes massive pagination bloat (e.g. 39+ pages).
-  // However, Word DOES respect page-break-inside: avoid on <tr> (translating to cantSplit),
-  // which keeps table rows and signature blocks intact.
-  cleaned = cleaned.replace(/<div\b[^>]*>/gi, (match) => {
-    return match
-      .replace(/page-break-inside:\s*avoid;?/gi, '')
-      .replace(/break-inside:\s*avoid;?/gi, '');
-  });
-
-  // 3. Remove overflow: hidden from inline styles
-  cleaned = cleaned.replace(/overflow:\s*hidden;?/gi, '');
-
-  // 4. Remove border-radius from inline styles
-  cleaned = cleaned.replace(/border-radius:\s*[^;"]+;?/gi, '');
-
-  // 5. Transform empty dotted-line height containers to standard Word-friendly dotted lines
-  cleaned = cleaned.replace(
-    /<div style="border-bottom:\s*1px dotted #888888;\s*height:\s*\d+px;\s*width:\s*[^"]+"><\/div>/gi,
-    '<p style="margin: 2pt 0; color: #888888; font-family: \'Times New Roman\'; font-size: 10pt;">........................................................................................................................</p>'
-  );
-
-  return cleaned;
 };

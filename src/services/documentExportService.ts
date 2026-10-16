@@ -78,6 +78,7 @@ function mapServerCode(status: number, code: unknown): DocumentExportErrorCode {
       return 'RENDERER';
     case 'INVALID_REQUEST':
     case 'EMPTY_DOCUMENT':
+    case 'INVALID_STUDENT_DOCUMENT':
     case 'DOCUMENT_TOO_LARGE':
       return 'INVALID';
     default:

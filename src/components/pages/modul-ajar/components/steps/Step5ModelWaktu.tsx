@@ -19,7 +19,8 @@ interface Step5ModelWaktuProps {
   METODE_OPTIONS: string[];
   t: any;
   aiProps: {
-    onAiFillField?: (field: string) => void;
+    onAiFillField?: (field: string, refresh?: boolean) => void;
+    fieldValues?: Record<string, string>;
     fieldLoading?: Record<string, boolean>;
   };
   autoDistributeTime?: () => void;

@@ -1,4 +1,5 @@
-import { isHeadingBar } from './documentTree';
+import { isHeadingBar, textContent } from './documentTree';
+import { prepareDocumentLayout } from './documentLayout';
 import {
   PAGE_MARGIN_MM,
   PAPER_DIMENSIONS_MM,
@@ -48,12 +49,13 @@ export function serializeNodes(nodes: ExportNode[]): string {
       const style = serializeStyle(
         node.tag === 'table' && countRows(node) <= KEEP_TOGETHER_MAX_ROWS
           ? { 'break-inside': 'avoid', ...node.style }
-          : isHeadingBar(node)
+          : isHeadingBar(node) || (node.tag === 'div' && node.style['font-weight'] === 'bold' && textContent(node).trim().length <= 120)
             ? { 'break-after': 'avoid', ...node.style }
             : node.style,
       );
       if (style) attrs.push(`style="${escapeHtml(style)}"`);
       if (node.classes.length > 0) attrs.push(`class="${escapeHtml(node.classes.join(' '))}"`);
+      if (node.sheet) attrs.push(`data-sheet="${node.sheet}"`);
       if (node.colSpan) attrs.push(`colspan="${node.colSpan}"`);
       if (node.rowSpan) attrs.push(`rowspan="${node.rowSpan}"`);
       if (node.tag === 'img' && node.src) {
@@ -106,7 +108,7 @@ html, body { margin: 0; padding: 0; background: #ffffff; color: #000000; }
 body {
   font-family: 'Times New Roman', Tinos, serif;
   font-size: 11pt;
-  line-height: 1.45;
+  line-height: 1.25;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -120,9 +122,11 @@ td, th { overflow-wrap: anywhere; word-break: break-word; }
 td[style*="text-align: justify"], th[style*="text-align: justify"],
 td [style*="text-align: justify"], th [style*="text-align: justify"] { text-align: left !important; }
 .signature-block { break-inside: avoid; page-break-inside: avoid; }
+p, li { orphans: 3; widows: 3; }
+[data-sheet] { box-decoration-break: clone; }
 h1, h2, h3, h4, .keep-with-next, .section-header { break-after: avoid; page-break-after: avoid; }
 </style>
 </head>
-<body><div class="print-root">${serializeNodes(data.body)}</div></body>
+<body><div class="print-root">${serializeNodes(prepareDocumentLayout(data.body))}</div></body>
 </html>`;
 }

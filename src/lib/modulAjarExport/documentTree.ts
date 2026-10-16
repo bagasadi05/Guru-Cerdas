@@ -144,6 +144,8 @@ function convertNode(node: Parse5Node): ExportNode[] {
       .filter((name) => ALLOWED_CLASSES.has(name)),
     children,
   };
+  const sheet = readAttr(element, 'data-sheet');
+  if (sheet === 'lkpd' || sheet === 'evaluasi') exportElement.sheet = sheet;
 
   if (tag === 'td' || tag === 'th') {
     exportElement.colSpan = readSpan(element, 'colspan');

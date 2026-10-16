@@ -7,7 +7,8 @@ interface Step3TargetProfilProps {
   onChange: (field: keyof FormState, value: any) => void;
   t: any;
   aiProps: {
-    onAiFillField?: (field: string) => void;
+    onAiFillField?: (field: string, refresh?: boolean) => void;
+    fieldValues?: Record<string, string>;
     fieldLoading?: Record<string, boolean>;
   };
 }
@@ -41,7 +42,7 @@ export const Step3TargetProfil: React.FC<Step3TargetProfilProps> = ({
         </div>
 
         <div>
-          <div className="flex justify-between items-end mb-1">
+          <div className="flex flex-wrap justify-between items-end gap-2 mb-1">
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
               {t.lessonPlan.kompetensiAwal}
             </label>

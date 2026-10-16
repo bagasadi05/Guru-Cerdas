@@ -200,7 +200,53 @@ describe('renderPrintHtml', () => {
   });
 });
 
+describe('student export safety', () => {
+  it('uses sheet markers after a teacher changes borders and retains references', () => {
+    const row = makeRow();
+    row.generated_content = String(row.generated_content).replaceAll('2px dashed', '1px solid');
+    const student = textContent(mapLessonPlanToExportData(row, { variant: 'siswa' }).body);
+    expect(student).toContain('Apa itu evaporasi?');
+    expect(student).toContain('Buku IPAS Kelas 4');
+    expect(student).not.toContain('Kegiatan Guru');
+  });
+  it('rejects missing and duplicate sheets instead of returning the teacher document', () => {
+    expect(() => mapLessonPlanToExportData(makeRow({ generated_content: '<p>KUNCI JAWABAN: rahasia</p>' }),
+      { variant: 'siswa' })).toThrow('LKPD dan lembar evaluasi');
+    const row = makeRow();
+    row.generated_content = String(row.generated_content) + '<div data-sheet="lkpd">Duplikat</div>';
+    expect(() => mapLessonPlanToExportData(row, { variant: 'siswa' })).toThrow('LKPD dan lembar evaluasi');
+  });
+});
+
 describe('buildModulAjarDocx', () => {
+  it('keeps minimum answer space when preview edits introduce nested paragraphs', async () => {
+    const data = mapLessonPlanToExportData(makeRow({ generated_content:
+      '<div style="min-height: 60px; border: 1px dashed #666"><p>Paragraf pertama</p><p>Paragraf kedua</p></div>',
+    }));
+    const xml = await readDocumentXml(await Packer.toBuffer(buildModulAjarDocx(data)));
+    expect(xml).toContain('w:val="900" w:hRule="atLeast"');
+    expect(xml).toContain('Paragraf pertama');
+    expect(xml).toContain('Paragraf kedua');
+  });
+  it('retains explicit page breaks in legacy br elements', async () => {
+    const data = mapLessonPlanToExportData(makeRow({ generated_content:
+      '<p>Première page</p><br style="page-break-before: always"/><p>Seconde page</p>',
+    }));
+    const xml = await readDocumentXml(await Packer.toBuffer(buildModulAjarDocx(data)));
+    expect(xml).toContain('<w:pageBreakBefore/>');
+    expect(xml).toContain('Seconde page');
+  });
+  it('preserves answer box and writing line heights as separate native table rows', async () => {
+    const data = mapLessonPlanToExportData(makeRow({ generated_content:
+      '<div style="border: 1px dashed #666; min-height: 60px; padding: 16px">Hasil pengamatan</div>' +
+      '<div style="border-bottom: 1px dotted #888; height: 24px"></div>'.repeat(4),
+    }));
+    const xml = await readDocumentXml(await Packer.toBuffer(buildModulAjarDocx(data)));
+    expect(xml).toContain('w:val="1380" w:hRule="atLeast"');
+    expect(xml.match(/w:val="360" w:hRule="atLeast"/g)).toHaveLength(4);
+    expect(xml).toContain('w:val="dashed"');
+    expect(xml).toContain('w:val="dotted"');
+  });
   it('produces a native .docx with F4 geometry, tables, and repeated headers', async () => {
     const buffer = await Packer.toBuffer(buildModulAjarDocx(mapLessonPlanToExportData(makeRow())));
     expect(buffer.subarray(0, 2).toString()).toBe('PK');

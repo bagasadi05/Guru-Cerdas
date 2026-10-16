@@ -4,6 +4,7 @@ import {
   Document,
   Footer,
   Header,
+  HeightRule,
   ImageRun,
   LevelFormat,
   PageNumber,
@@ -20,8 +21,9 @@ import {
   type IBordersOptions,
   type ParagraphChild,
 } from 'docx';
-import { hasPageBreakAfter, hasPageBreakBefore, isElement, isHeadingBar } from './documentTree';
+import { hasPageBreakAfter, hasPageBreakBefore, isElement, isHeadingBar, textContent } from './documentTree';
 import { buildDocumentTitle } from './printTemplate';
+import { prepareDocumentLayout } from './documentLayout';
 import {
   PAGE_MARGIN_MM,
   PAPER_DIMENSIONS_MM,
@@ -36,7 +38,7 @@ const TWIPS_PER_PX = 15;
 const NUMBERED_LIST = 'modul-ajar-numbered';
 const BULLET_LIST = 'modul-ajar-bullet';
 
-const BLOCK_TAGS = new Set(['div', 'p', 'h1', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'table', 'thead', 'tbody', 'tr']);
+const BLOCK_TAGS = new Set(['div', 'p', 'h1', 'h2', 'h3', 'h4', 'ul', 'ol', 'li', 'table', 'thead', 'tbody', 'tr', 'br']);
 const HEADING_SIZES: Record<string, number> = { h1: 32, h2: 28, h3: 24, h4: 22 };
 
 const NAMED_COLORS: Record<string, string> = {
@@ -71,6 +73,7 @@ interface BlockContext {
   availableWidth: number;
   /** Inside a table cell, justified text is rendered left-aligned (narrow columns). */
   inCell?: boolean;
+  keepNext?: boolean;
 }
 
 interface BuildState {
@@ -222,10 +225,21 @@ function imageRun(element: ExportElement): ImageRun | null {
   const match = element.src?.match(/^data:image\/(png|jpe?g|gif);base64,(.+)$/i);
   if (!match) return null;
   const type = match[1].toLowerCase() === 'png' ? 'png' : match[1].toLowerCase() === 'gif' ? 'gif' : 'jpg';
-  const width = Math.min(Math.round(toTwips(element.style.width) / TWIPS_PER_PX) || 110, 600);
-  const height = Math.min(Math.round(toTwips(element.style.height) / TWIPS_PER_PX) || width, 800);
+  let width = Math.min(Math.round(toTwips(element.style.width) / TWIPS_PER_PX) || 110, 600);
+  let height = Math.min(Math.round(toTwips(element.style.height) / TWIPS_PER_PX) || width, 800);
   try {
-    return new ImageRun({ type, data: decodeBase64(match[2]), transformation: { width, height } });
+    const data = decodeBase64(match[2]);
+    if (type === 'png' && element.style['object-fit'] === 'contain' && data.length >= 24) {
+      const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+      const sourceWidth = view.getUint32(16);
+      const sourceHeight = view.getUint32(20);
+      if (sourceWidth > 0 && sourceHeight > 0) {
+        const scale = Math.min(width / sourceWidth, height / sourceHeight);
+        width = Math.max(1, Math.round(sourceWidth * scale));
+        height = Math.max(1, Math.round(sourceHeight * scale));
+      }
+    }
+    return new ImageRun({ type, data, transformation: { width, height } });
   } catch {
     return null;
   }
@@ -237,7 +251,8 @@ function textRun(text: string, format: RunFormat): TextRun {
 }
 
 function isInline(node: ExportNode): boolean {
-  return node.type === 'text' || !BLOCK_TAGS.has(node.tag) || (node.tag === 'br' && !hasPageBreakBefore(node));
+  return node.type === 'text' || !BLOCK_TAGS.has(node.tag) ||
+    (node.tag === 'br' && !hasPageBreakBefore(node) && !hasPageBreakAfter(node));
 }
 
 /** Converts inline nodes to runs, inheriting formatting from ancestors. */
@@ -314,7 +329,8 @@ function makeParagraph(
     children: runs,
     alignment: ctx.alignment,
     pageBreakBefore,
-    keepNext: extras.heading || extras.keepNext,
+    keepNext: extras.heading || extras.keepNext || ctx.keepNext,
+    widowControl: true,
     shading: ctx.shading ? { type: ShadingType.CLEAR, fill: ctx.shading, color: 'auto' } : undefined,
     border: blockBorders(extras.borderSource ?? null),
     indent: ctx.indentLeft > 0 && !extras.bullet && extras.numberingInstance === undefined
@@ -325,7 +341,7 @@ function makeParagraph(
       : extras.numberingInstance !== undefined
         ? { reference: NUMBERED_LIST, level, instance: extras.numberingInstance }
         : undefined,
-    spacing: { after: extras.spacingAfter ?? (extras.heading ? 120 : 80), line: 276 },
+    spacing: { after: extras.spacingAfter ?? (extras.heading ? 100 : 40), line: 276 },
   });
 }
 
@@ -362,6 +378,27 @@ function convertBlocks(nodes: ExportNode[], ctx: BlockContext, state: BuildState
 function convertBlock(element: ExportElement, parentCtx: BlockContext, state: BuildState): DocxBlock[] {
   const ctx = deriveContext(parentCtx, element);
 
+  if (element.sheet) {
+    const blocks: DocxBlock[] = [];
+    if (state.pendingPageBreak) blocks.push(makeParagraph([], ctx, state, { spacingAfter: 0 }));
+    const padding = toTwips(element.style.padding) || 180;
+    const width = ctx.availableWidth - ctx.indentLeft;
+    const children = convertBlocks(element.children, { ...ctx, availableWidth: width - padding * 2, inCell: true }, state);
+    if (children.length === 0 || children[children.length - 1] instanceof Table) children.push(new Paragraph({ children: [] }));
+    blocks.push(new Table({
+      width: { size: width, type: WidthType.DXA }, columnWidths: [width], layout: TableLayoutType.FIXED,
+      rows: [new TableRow({ cantSplit: textContent(element).length < 3000, children: [new TableCell({
+        children, borders: blockBorders(element), margins: { top: padding, bottom: padding, left: padding, right: padding },
+      })] })],
+      borders: {
+        top: { style: BorderStyle.NONE, size: 0 }, bottom: { style: BorderStyle.NONE, size: 0 },
+        left: { style: BorderStyle.NONE, size: 0 }, right: { style: BorderStyle.NONE, size: 0 },
+        insideHorizontal: { style: BorderStyle.NONE, size: 0 }, insideVertical: { style: BorderStyle.NONE, size: 0 },
+      },
+    }), new Paragraph({ children: [], spacing: { after: 0, line: 20 } }));
+    return blocks;
+  }
+
   switch (element.tag) {
     case 'table':
       return convertTable(element, ctx, state);
@@ -382,17 +419,52 @@ function convertBlock(element: ExportElement, parentCtx: BlockContext, state: Bu
   const isHeading = Boolean(HEADING_SIZES[element.tag]);
   const borders = blockBorders(element);
 
-  if (onlyInline) {
+  if (onlyInline || toTwips(element.style.height) > 0 || toTwips(element.style['min-height']) > 0) {
     const content = trimInline(element.children);
-    const hasHeight = toTwips(element.style.height) > 0 || toTwips(element.style['min-height']) > 0;
+    const minimumHeight = Math.max(toTwips(element.style.height), toTwips(element.style['min-height']));
+    const hasHeight = minimumHeight > 0;
     if (content.length === 0 && !borders && !hasHeight) return [];
+    if (hasHeight) {
+      const padding = toTwips(element.style.padding?.split(/\s+/)[0]);
+      const top = toTwips(element.style['padding-top']) || padding;
+      const bottom = toTwips(element.style['padding-bottom']) || padding;
+      const width = Math.round((ctx.availableWidth - ctx.indentLeft) * (toPercent(element.style.width) ?? 100) / 100);
+      const children = onlyInline
+        ? [makeParagraph(inlineRuns(content, ctx.format), ctx, state, { spacingAfter: 0 })]
+        : convertBlocks(element.children, { ...ctx, inCell: true }, state);
+      if (children.length === 0 || children[children.length - 1] instanceof Table) {
+        children.push(new Paragraph({ children: [] }));
+      }
+      return [new Table({
+        width: { size: width, type: WidthType.DXA },
+        columnWidths: [width],
+        layout: TableLayoutType.FIXED,
+        borders: {
+          top: { style: BorderStyle.NONE, size: 0 }, bottom: { style: BorderStyle.NONE, size: 0 },
+          left: { style: BorderStyle.NONE, size: 0 }, right: { style: BorderStyle.NONE, size: 0 },
+          insideHorizontal: { style: BorderStyle.NONE, size: 0 }, insideVertical: { style: BorderStyle.NONE, size: 0 },
+        },
+        rows: [new TableRow({
+          height: { value: minimumHeight + top + bottom, rule: HeightRule.ATLEAST },
+          cantSplit: minimumHeight < 10000,
+          children: [new TableCell({
+            children,
+            borders: borders ?? {},
+            margins: { top, bottom, left: padding, right: padding },
+            verticalAlign: VerticalAlign.TOP,
+          })],
+        })],
+      }), new Paragraph({ children: [], spacing: { before: 0, after: 0, line: 20 } })];
+    }
     return [
       makeParagraph(inlineRuns(content, ctx.format), ctx, state, {
         heading: isHeading,
         keepNext:
           element.classes.includes('keep-with-next') ||
           element.classes.includes('section-header') ||
-          isHeadingBar(element),
+          isHeadingBar(element) ||
+          element.style['page-break-after'] === 'avoid' || element.style['break-after'] === 'avoid' ||
+          (ctx.format.bold && textContent(element).trim().length <= 120),
         borderSource: borders ? element : null,
       }),
     ];
@@ -441,7 +513,7 @@ function convertListItem(
   const inlineChildren = trimInline(item.children.filter(isInline));
   const nested = item.children.filter((child) => !isInline(child)) as ExportElement[];
   const blocks: DocxBlock[] = [
-    makeParagraph(inlineRuns(inlineChildren, ctx.format), ctx, state, { ...marker, spacingAfter: 40 }),
+    makeParagraph(inlineRuns(inlineChildren, ctx.format), ctx, state, { ...marker, spacingAfter: 40, keepNext: item.classes.includes('keep-with-next') }),
   ];
   const nestedCtx: BlockContext = { ...ctx, listLevel: ctx.listLevel + 1 };
   for (const child of nested) {
@@ -500,7 +572,7 @@ function convertTable(table: ExportElement, ctx: BlockContext, state: BuildState
   const rows = collectRows(table);
   if (rows.length === 0) return [];
 
-  const widthPercent = toPercent(table.style.width) ?? 100;
+  const widthPercent = toPercent(table.style.width) ?? (table.style.margin?.includes('auto') ? 65 : 100);
   const tableWidth = Math.max(1440, Math.round(((ctx.availableWidth - ctx.indentLeft) * widthPercent) / 100));
   const columnWidths = computeColumnWidths(
     rows.map((entry) => entry.row),
@@ -513,7 +585,8 @@ function convertTable(table: ExportElement, ctx: BlockContext, state: BuildState
   }
 
   const isSignature = table.classes.includes('signature-block');
-  const tableRows = rows.map(({ row, header }) => {
+  const keepTable = rows.length <= 8 && textContent(table).length < 2400;
+  const tableRows = rows.map(({ row, header }, rowIndex) => {
     let columnIndex = 0;
     const rowCtx = deriveContext({ ...ctx, shading: undefined, indentLeft: 0 }, row);
     const cells = rowCells(row).map((cell) => {
@@ -528,8 +601,9 @@ function convertTable(table: ExportElement, ctx: BlockContext, state: BuildState
         shading: undefined,
         indentLeft: 0,
         listLevel: 0,
-        availableWidth: width - 160,
+        availableWidth: Math.max(240, width - 160),
         inCell: true,
+        keepNext: (keepTable && rowIndex < rows.length - 1) || table.classes.includes('keep-with-next'),
       };
       const cellState: BuildState = { pendingPageBreak: false, numberingInstance: state.numberingInstance };
       const children = convertBlocks(cell.children, cellCtx, cellState);
@@ -555,7 +629,11 @@ function convertTable(table: ExportElement, ctx: BlockContext, state: BuildState
         margins: { top: 60, bottom: 60, left: 80, right: 80 },
       });
     });
-    return new TableRow({ children: cells, tableHeader: header, cantSplit: true });
+    const minimumHeight = Math.max(toTwips(row.style.height), toTwips(row.style['min-height']));
+    return new TableRow({
+      children: cells, tableHeader: header, cantSplit: true,
+      height: minimumHeight > 0 ? { value: minimumHeight, rule: HeightRule.ATLEAST } : undefined,
+    });
   });
 
   blocks.push(
@@ -564,6 +642,14 @@ function convertTable(table: ExportElement, ctx: BlockContext, state: BuildState
       width: { size: tableWidth, type: WidthType.DXA },
       columnWidths,
       layout: TableLayoutType.FIXED,
+      borders: {
+        top: parseBorder(table.style.border) ?? { style: BorderStyle.NONE, size: 0 },
+        bottom: parseBorder(table.style.border) ?? { style: BorderStyle.NONE, size: 0 },
+        left: parseBorder(table.style.border) ?? { style: BorderStyle.NONE, size: 0 },
+        right: parseBorder(table.style.border) ?? { style: BorderStyle.NONE, size: 0 },
+        insideHorizontal: { style: BorderStyle.NONE, size: 0 },
+        insideVertical: { style: BorderStyle.NONE, size: 0 },
+      },
       indent: ctx.indentLeft > 0 ? { size: ctx.indentLeft, type: WidthType.DXA } : undefined,
       alignment: table.style.margin?.includes('auto') ? AlignmentType.CENTER : undefined,
     }),
@@ -590,7 +676,7 @@ export function buildModulAjarDocx(data: LessonPlanExportData): Document {
     listLevel: 0,
     availableWidth: page.contentWidth,
   };
-  const children = convertBlocks(data.body, rootCtx, state);
+  const children = convertBlocks(prepareDocumentLayout(data.body), rootCtx, state);
   const title = buildDocumentTitle(data);
 
   const smallText = { font: 'Times New Roman', size: 16, color: '555555' };

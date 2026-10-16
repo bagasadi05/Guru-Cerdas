@@ -61,6 +61,7 @@ export interface ExportElement {
   style: ExportStyle;
   /** Only allowlisted class names (layout hints such as `signature-block`). */
   classes: string[];
+  sheet?: 'lkpd' | 'evaluasi';
   colSpan?: number;
   rowSpan?: number;
   /** `data:image/...;base64` URI. External URLs are never kept. */

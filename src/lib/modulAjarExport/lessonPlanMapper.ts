@@ -17,7 +17,7 @@ import {
   type PaperSize,
 } from './types';
 
-export type ExportDataErrorCode = 'EMPTY_DOCUMENT' | 'DOCUMENT_TOO_LARGE';
+export type ExportDataErrorCode = 'EMPTY_DOCUMENT' | 'DOCUMENT_TOO_LARGE' | 'INVALID_STUDENT_DOCUMENT';
 
 export class ExportDataError extends Error {
   constructor(
@@ -120,9 +120,19 @@ function isNestedIn(candidate: ExportElement, ancestors: ExportElement[]): boole
 export function buildStudentBody(body: ExportNode[], identity: LessonPlanIdentity): ExportNode[] {
   const dashedBoxes = findElements(body, (el) => el.tag === 'div' && /2px\s+dashed/i.test(el.style.border ?? ''));
   const topLevelBoxes = dashedBoxes.filter((box) => !isNestedIn(box, dashedBoxes));
-  if (topLevelBoxes.length < 2) return body;
-
-  const [lkpdBox, evaluasiBox] = topLevelBoxes;
+  const selectSheet = (kind: 'lkpd' | 'evaluasi', heading: string): ExportElement | undefined => {
+    const marked = findElements(body, (el) => el.sheet === kind);
+    if (marked.length > 0) return marked.length === 1 ? marked[0] : undefined;
+    const candidates = topLevelBoxes.filter((box) => textContent(box).includes(heading));
+    return candidates.length === 1 ? candidates[0] : undefined;
+  };
+  const lkpdBox = selectSheet('lkpd', 'LEMBAR KERJA PESERTA DIDIK');
+  const evaluasiBox = selectSheet('evaluasi', 'LEMBAR EVALUASI PENGETAHUAN');
+  if (!lkpdBox || !evaluasiBox || lkpdBox === evaluasiBox ||
+      isNestedIn(lkpdBox, [evaluasiBox]) || isNestedIn(evaluasiBox, [lkpdBox])) {
+    throw new ExportDataError('INVALID_STUDENT_DOCUMENT',
+      'LKPD dan lembar evaluasi tidak dapat dikenali. Susun ulang dokumen sebelum mengunduh lembar siswa.');
+  }
 
   const referenceHeadings = findElements(
     body,
@@ -132,7 +142,7 @@ export function buildStudentBody(body: ExportNode[], identity: LessonPlanIdentit
   const referenceItems = referenceList
     ? referenceList.tag === 'ul' || referenceList.tag === 'ol'
       ? referenceList.children
-      : referenceList.children.filter((child) => isElement(child) && child.tag === 'li')
+      : findElements(referenceList.children, (el) => el.tag === 'ul' || el.tag === 'ol')[0]?.children ?? []
     : [];
 
   const logo = findElements(body, (el) => el.tag === 'img')[0];

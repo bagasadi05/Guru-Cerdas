@@ -23,6 +23,7 @@ import {
  */
 
 export type ExportErrorCode =
+  | 'INVALID_STUDENT_DOCUMENT'
   | 'METHOD_NOT_ALLOWED'
   | 'UNAUTHORIZED'
   | 'FORBIDDEN'

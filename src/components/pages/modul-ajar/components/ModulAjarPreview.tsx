@@ -109,11 +109,7 @@ export const ModulAjarPreview: React.FC<ModulAjarPreviewProps> = ({
               {t.lessonPlan.previewEmpty}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Lengkapi formulir di samping kiri lalu klik tombol{' '}
-              <strong className="text-brand-600 dark:text-brand-400">
-                "{t.lessonPlan.create.replace('{type}', documentType)}"
-              </strong>{' '}
-              untuk menyusun modul ajar standar Kurikulum Merdeka secara otomatis.
+              {t.lessonPlan.previewEmptyDesc.replace('{action}', import.meta.env.VITE_ENABLE_AI_MODUL_AJAR === 'true' ? 'Susun dokumen' : t.lessonPlan.create.replace('{type}', documentType))}
             </p>
           </div>
         </div>

@@ -1,6 +1,16 @@
 # Ekspor Dokumen Modul Ajar (PDF Server & Word .docx)
 
-Implementasi fase pertama dari [PRD Ekspor Dokumen Modul Ajar](./prd-modul-ajar-ekspor-dokumen.md). Fitur berjalan di balik feature flag `VITE_ENABLE_SERVER_DOCUMENT_EXPORT`. Selama flag mati, tombol PDF dan Word tetap memakai ekspor lama di browser.
+Implementasi fase pertama dari [PRD Ekspor Dokumen Modul Ajar](./prd-modul-ajar-ekspor-dokumen.md). Fitur berjalan di balik feature flag `VITE_ENABLE_SERVER_DOCUMENT_EXPORT`. Selama flag mati, Word dibuat sebagai DOCX native di browser; PDF membuka dialog cetak native dengan petunjuk memilih **Simpan sebagai PDF**. Kedua jalur memakai model dan geometri dokumen bersama.
+
+## Tata letak dokumen tersimpan
+
+`documentLayout.ts` menyiapkan salinan pohon dokumen sebelum render PDF atau DOCX. HTML yang tersimpan tidak diubah. Perbaikan juga berlaku untuk modul lama yang belum memiliki penanda `data-sheet`, melalui pengenalan judul dan bingkai LKPD/evaluasi.
+
+- Opsi A–D yang menyatu dalam paragraf soal dipisahkan menjadi baris tersendiri. Ruang jawaban uraian tetap tersedia; soal pilihan ganda memakai bidang jawaban pendek.
+- Label, langkah kerja, dan penanda ruang jawaban LKPD dipisahkan. Permintaan gambar mendapat ruang minimum 120 px; permintaan tabel menjadi lima baris kosong dengan tinggi minimum 32 px per baris.
+- Font sumber dipertahankan. Spasi badan dokumen dirapikan, tabel pendek dan label asesmen dijaga bersama isi, serta bingkai panjang bagian utama yang terfragmentasi dihilangkan.
+- Lembar kerja mempertahankan bingkai serta padding dalam DOCX native. Kunci jawaban guru dimulai pada halaman referensi tersendiri.
+- Ukuran ruang jawaban eksplisit dan page break pengguna di luar pembungkus lampiran bawaan tetap dipertahankan. Dokumen sangat panjang masih dapat melintasi halaman.
 
 ## Alur
 
@@ -86,15 +96,25 @@ Diterapkan pada PDF, `.docx`, dan sebagian pada pratinjau layar:
 
 ## Belum Tercakup
 
-- Pembukaan `.docx` di Microsoft Word dan LibreOffice belum diuji manual. Berkas lolos validasi struktur dengan `python-docx`.
+- Sampel A4/F4 guru dan siswa sudah dibuka serta dirender melalui Microsoft Word 16. LibreOffice dan cold start produksi belum diuji.
 - p95 waktu render di Vercel (cold start Chromium) perlu diukur di preview deployment.
 - Rate limit dan batas render bersamaan berlaku per instance. Untuk batas global, pakai Upstash seperti `api/groq.ts`.
 - Isi dokumen hanya tersimpan sebagai HTML, sehingga model ekspor dibentuk dari HTML tersimpan. Menyimpan data terstruktur di `components` akan menjadi langkah berikutnya bila diperlukan.
-- Jalur `html2canvas` (`utils/pdfExport.ts`) dan `.doc` (`utils/wordExport.ts`) masih dipertahankan sebagai cadangan sampai rollout langkah 5 di PRD.
+- Ekspor Modul Ajar tidak lagi memakai potongan kanvas atau HTML berakhiran `.doc`. Cadangan lokal menggunakan dialog PDF browser dan DOCX native. Dependensi `html2canvas`/jsPDF masih digunakan fitur lain.
 
 ## Rollout
 
 1. Deploy ke preview Vercel dengan `VITE_ENABLE_SERVER_DOCUMENT_EXPORT=true`.
 2. Uji sampel A4/F4: Modul Ajar, RPP, KBC, tabel panjang, LKPD siswa. Buka `.docx` di Word dan LibreOffice.
 3. Aktifkan untuk pengguna internal, pantau log `document_export` selama 7 hari.
-4. Aktifkan untuk semua guru, lalu hapus `utils/pdfExport.ts`, `utils/wordExport.ts`, dan dependensi `html2canvas` bila tidak dipakai modul lain.
+4. Aktifkan PDF server untuk semua guru setelah pengujian preview dan pemantauan selesai. Jalur lokal tetap tersedia selama flag dimatikan.
+
+## Perbaikan hasil ekspor (4 Oktober 2026)
+
+- Word lokal dan server menghasilkan `.docx` asli melalui builder yang sama. Tinggi kotak jawaban dan garis tulis dipertahankan sebagai baris dengan tinggi minimum; tabel tanpa bingkai dinyatakan tanpa border.
+- PDF lokal menggunakan pagination native browser, bukan potongan gambar. Pengguna memilih Simpan sebagai PDF pada dialog cetak. PDF server tetap menghasilkan unduhan langsung.
+- Semua jalur memakai A4 210 × 297 mm / F4 215 × 330 mm dengan margin 20 mm.
+- `data-sheet` dipertahankan dalam model ekspor. Varian siswa memakai ekstraksi yang sama dengan pratinjau, menyertakan daftar pustaka, serta menolak lembar hilang/ambigu dengan `INVALID_STUDENT_DOCUMENT` (HTTP 422). Dokumen guru tidak digunakan sebagai fallback siswa.
+- Tombol Word menampilkan status proses dan mencegah unduhan bersamaan. PDF yang membuka dialog tidak lagi menampilkan klaim unduhan sukses.
+
+Bukti dan keterbatasan: [audit ekspor](./audit-ekspor-modul-ajar-2026-10-04.md).

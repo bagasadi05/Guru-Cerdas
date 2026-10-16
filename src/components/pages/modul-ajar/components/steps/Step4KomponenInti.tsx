@@ -13,7 +13,8 @@ interface Step4KomponenIntiProps {
   PROFIL_OPTIONS: string[];
   t: any;
   aiProps: {
-    onAiFillField?: (field: string) => void;
+    onAiFillField?: (field: string, refresh?: boolean) => void;
+    fieldValues?: Record<string, string>;
     fieldLoading?: Record<string, boolean>;
   };
   appendToField: (field: 'manualLkpdTugas' | 'manualSoalEvaluasi', snippet: string) => void;

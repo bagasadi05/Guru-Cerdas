@@ -1,67 +1,32 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { exportModulAjarToPdf } from '../../src/components/pages/modul-ajar/utils/pdfExport';
-import * as dynamicImports from '../../src/utils/dynamicImports';
 
-describe('exportModulAjarToPdf', () => {
-  let mockSave: ReturnType<typeof vi.fn>;
-  let mockAddImage: ReturnType<typeof vi.fn>;
-  let mockAddPage: ReturnType<typeof vi.fn>;
-  let mockHtml2Canvas: ReturnType<typeof vi.fn>;
+afterEach(() => vi.restoreAllMocks());
 
-  beforeEach(() => {
-    mockSave = vi.fn();
-    mockAddImage = vi.fn();
-    mockAddPage = vi.fn();
-    mockHtml2Canvas = vi.fn().mockResolvedValue({ width: 1588, height: 2246 });
-
-    class MockJsPDF {
-      save = mockSave;
-      addImage = mockAddImage;
-      addPage = mockAddPage;
-    }
-
-    vi.spyOn(dynamicImports, 'getJsPDF').mockResolvedValue({ default: MockJsPDF } as never);
-    vi.spyOn(dynamicImports, 'getHtml2Canvas').mockResolvedValue({
-      default: mockHtml2Canvas,
-    } as never);
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
-      drawImage: vi.fn(),
-    } as never);
-    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue(
-      'data:image/png;base64,pdf-page',
-    );
+describe('native PDF fallback', () => {
+  it('rejects an empty document', async () => {
+    await expect(exportModulAjarToPdf({ htmlContent: '', fileName: 'empty' })).rejects.toThrow('Konten dokumen kosong');
   });
-
-  it('throws an error if htmlContent is empty', async () => {
-    await expect(exportModulAjarToPdf({ htmlContent: '', fileName: 'test.pdf' })).rejects.toThrow(
-      'Konten dokumen kosong',
-    );
+  it('reports a blocked print window', async () => {
+    vi.spyOn(window, 'open').mockReturnValue(null);
+    await expect(exportModulAjarToPdf({ htmlContent: '<p>Isi</p>', fileName: 'test' })).rejects.toThrow('diblokir');
   });
-
-  it('scales content into printable pages and saves with the requested filename', async () => {
+  it('hands safe HTML, explicit breaks, F4 geometry and margins to native printing', async () => {
+    const popupDocument = document.implementation.createHTMLDocument();
+    const print = vi.fn();
+    vi.spyOn(window, 'open').mockReturnValue({
+      document: popupDocument, focus: vi.fn(), print, closed: false,
+    } as unknown as Window);
     await exportModulAjarToPdf({
-      htmlContent: '<div>Modul Ajar Content</div>',
-      fileName: 'Modul_Ajar_Kelas_3',
-      paperSize: 'A4',
+      htmlContent: '<div style="page-break-after: always">Sampul</div><p>Isi</p><script>unsafe</script>',
+      fileName: 'Modul.pdf', paperSize: 'F4',
     });
-    expect(mockHtml2Canvas).toHaveBeenCalledOnce();
-    expect(mockAddImage).toHaveBeenCalled();
-    expect(mockSave).toHaveBeenCalledWith('Modul_Ajar_Kelas_3.pdf');
-  });
-
-  it('uses a second PDF page when rendered content exceeds one printable page', async () => {
-    mockHtml2Canvas.mockResolvedValueOnce({ width: 1588, height: 5000 });
-    await exportModulAjarToPdf({
-      htmlContent: '<section>Konten panjang</section>',
-      fileName: 'panjang.pdf',
-    });
-    expect(mockAddPage).toHaveBeenCalled();
-    expect(mockAddImage).toHaveBeenCalledTimes(mockAddPage.mock.calls.length + 1);
-  });
-
-  it('cleans up the staging container after export', async () => {
-    const initialBodyChildren = document.body.children.length;
-    await exportModulAjarToPdf({ htmlContent: '<div>Cleanup Test</div>', fileName: 'cleanup.pdf' });
-    expect(document.body.children.length).toBe(initialBodyChildren);
+    const source = popupDocument.documentElement.outerHTML;
+    expect(source).toContain('215mm 330mm');
+    expect(source).toContain('margin: 20mm');
+    expect(source).toContain('page-break-after: always');
+    expect(source).not.toContain('<script');
+    expect(popupDocument.title).toBe('Modul');
+    await vi.waitFor(() => expect(print).toHaveBeenCalledOnce());
   });
 });

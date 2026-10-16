@@ -1,102 +1,39 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  cleanHtmlForWordExport,
-  buildHtmlTemplate,
-} from '../../src/components/pages/modul-ajar/utils/template';
+import JSZip from 'jszip';
+import { buildHtmlTemplate } from '../../src/components/pages/modul-ajar/utils/template';
 import type { FormState } from '../../src/components/pages/modul-ajar/types';
 import { exportModulAjarToWord } from '../../src/components/pages/modul-ajar/utils/wordExport';
 
 describe('exportModulAjarToWord', () => {
-  const originalCreateObjectUrl = URL.createObjectURL;
-  const originalRevokeObjectUrl = URL.revokeObjectURL;
+  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
-  afterEach(() => {
-    URL.createObjectURL = originalCreateObjectUrl;
-    URL.revokeObjectURL = originalRevokeObjectUrl;
-    vi.restoreAllMocks();
-  });
-
-  it('sanitizes the filename and produces a Word download', () => {
-    URL.createObjectURL = vi.fn(() => 'blob:modul-ajar');
-    URL.revokeObjectURL = vi.fn();
-    const click = vi.fn();
-    const anchor = document.createElement('a');
-    vi.spyOn(document, 'createElement').mockReturnValue(anchor);
-    vi.spyOn(anchor, 'click').mockImplementation(click);
-
-    exportModulAjarToWord({
-      htmlContent: '<p>Dokumen aman</p><script>alert(1)</script>',
-      fileName: 'Modul/Ajar: Kelas 3',
-      paperSize: 'F4',
-      title: 'Modul <Ajar>',
+  it('downloads a native sanitized DOCX with the requested F4 page size', async () => {
+    let downloaded: Blob | undefined;
+    vi.stubGlobal('URL', class extends URL {
+      static createObjectURL = vi.fn((blob: Blob) => { downloaded = blob; return 'blob:docx'; });
+      static revokeObjectURL = vi.fn();
     });
-
-    expect(URL.createObjectURL).toHaveBeenCalledOnce();
-    expect(anchor.download).toBe('Modul_Ajar__Kelas_3.doc');
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    const append = vi.spyOn(document.body, 'appendChild');
+    await exportModulAjarToWord({
+      htmlContent: '<p>Dokumen aman</p><script>unsafe-content</script>',
+      fileName: 'Modul/Ajar: Kelas 3.doc', paperSize: 'F4', title: 'Modul Ajar',
+    });
     expect(click).toHaveBeenCalledOnce();
-  });
-});
-
-describe('cleanHtmlForWordExport', () => {
-  it('removes page-break-inside: avoid on divs to prevent Word page-per-card explosions', () => {
-    const rawHtml = `
-      <div style="margin-bottom: 14px; border: 1px solid #cfd8dc; page-break-inside: avoid;">
-        <p>Langkah 1</p>
-      </div>
-      <div style="margin-bottom: 16px; page-break-inside: avoid;">
-        <p>Soal 1</p>
-      </div>
-    `;
-    const cleaned = cleanHtmlForWordExport(rawHtml);
-    expect(cleaned).not.toContain('page-break-inside: avoid');
-    expect(cleaned).toContain('Langkah 1');
-    expect(cleaned).toContain('Soal 1');
-  });
-
-  it('removes overflow: hidden and border-radius that distort layout into floating frames in Word', () => {
-    const rawHtml = `<div style="border: 1.5px solid #000000; overflow: hidden; border-radius: 4px;">Content</div>`;
-    const cleaned = cleanHtmlForWordExport(rawHtml);
-    expect(cleaned).not.toContain('overflow: hidden');
-    expect(cleaned).not.toContain('border-radius: 4px');
-    expect(cleaned).toContain('border: 1.5px solid #000000');
-  });
-
-  it('eliminates duplicate consecutive page breaks after cover', () => {
-    const rawHtml = `
-      <div style="text-align: center; page-break-after: always; clear: both;">Cover Page</div>
-      <br style="page-break-before: always; clear: both;" />
-      <div>Content Page</div>
-    `;
-    const cleaned = cleanHtmlForWordExport(rawHtml);
-    // Should keep page-break-after on the cover, but remove the duplicate <br style="...page-break-before...">
-    expect(cleaned).toContain('page-break-after: always');
-    expect(cleaned).not.toContain('<br style="page-break-before: always; clear: both;" />');
-  });
-
-  it('converts empty dotted spacer divs into Word-friendly dotted paragraphs', () => {
-    const rawHtml = `<div style="border-bottom: 1px dotted #888888; height: 24px; width: 100%;"></div>`;
-    const cleaned = cleanHtmlForWordExport(rawHtml);
-    expect(cleaned).not.toContain('height: 24px');
-    expect(cleaned).toContain(
-      '........................................................................................................................',
-    );
-  });
-
-  it('preserves page-break-inside: avoid on tr and signature table elements so Word table rows do not split', () => {
-    const rawHtml = `
-      <div style="page-break-inside: avoid;">
-        <table class="signature-block" style="page-break-inside: avoid;">
-          <tr style="page-break-inside: avoid; break-inside: avoid;">
-            <td>Kriteria</td>
-          </tr>
-        </table>
-      </div>
-    `;
-    const cleaned = cleanHtmlForWordExport(rawHtml);
-    // div should lose avoid, but table and tr must retain it
-    expect(cleaned).not.toMatch(/<div[^>]*page-break-inside/);
-    expect(cleaned).toContain('<table class="signature-block" style="page-break-inside: avoid;">');
-    expect(cleaned).toContain('<tr style="page-break-inside: avoid; break-inside: avoid;">');
+    expect((append.mock.calls[0][0] as HTMLAnchorElement).download).toBe('Modul_Ajar__Kelas_3.docx');
+    expect(downloaded?.type).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    const bytes = await new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(downloaded!);
+    });
+    const zip = await JSZip.loadAsync(bytes);
+    const xml = await zip.file('word/document.xml')!.async('string');
+    expect(xml).toContain('Dokumen aman');
+    expect(xml).not.toContain('unsafe-content');
+    expect(xml).toContain('w:w="12189" w:h="18709"');
+    vi.unstubAllGlobals();
   });
 });
 
