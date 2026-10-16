@@ -1,3 +1,4 @@
+import { AiRequestError, abortableDelay, canRetry, geminiGenerationConfig, linkAbort, providerError, throwIfAborted, tokenCount, unknownUsage, type AiTransportOptions, type AiTokenUsage } from '../lib/aiRequestPolicy';
 import { logger } from './logger';
 import { supabase } from './supabase';
 import {
@@ -94,17 +95,22 @@ const MAX_CONCURRENT = 2;
 let activeCount = 0;
 const waiters: (() => void)[] = [];
 
-async function runWithConcurrency<T>(fn: () => Promise<T>): Promise<T> {
+async function runWithConcurrency<T>(fn: () => Promise<T>, signal?: AbortSignal): Promise<T> {
+  throwIfAborted(signal);
   if (activeCount >= MAX_CONCURRENT) {
-    await new Promise<void>((resolve) => waiters.push(resolve));
-  }
-  activeCount++;
+    await new Promise<void>((resolve, reject) => {
+      const ready = () => { signal?.removeEventListener('abort', abort); activeCount++; resolve(); };
+      const abort = () => { const index = waiters.indexOf(ready); if (index >= 0) waiters.splice(index, 1); signal?.removeEventListener('abort', abort); reject(new DOMException('Permintaan dibatalkan.', 'AbortError')); };
+      waiters.push(ready);
+      signal?.addEventListener('abort', abort, { once: true });
+    });
+  } else activeCount++;
   try {
+    throwIfAborted(signal);
     return await fn();
   } finally {
     activeCount--;
-    const next = waiters.shift();
-    if (next) next();
+    waiters.shift()?.();
   }
 }
 
@@ -128,7 +134,7 @@ function parseRetryAfter(header: string | null | undefined): number {
  * @param messages - Chat messages array with role/content
  * @param taskType - Task classification for smart routing (default: 'general')
  */
-export interface AiRequestOptions {
+export interface AiRequestOptions extends AiTransportOptions {
   /**
    * Skip the cached response. For requests the user makes on purpose to get a
    * new answer (regenerate), where the same prompt must not return old text.
@@ -141,6 +147,8 @@ export async function generateGeminiContent(
   taskType: AiTaskType = 'general',
   options: AiRequestOptions = {}
 ): Promise<GeminiResponse> {
+  throwIfAborted(options.signal);
+  initGroqProvider();
   // Provider init happens eagerly; cache layer doesn't depend on Groq
   const cacheKey = buildCacheKeyForMessages(messages);
   const cached = options.bypassCache ? null : getCachedResponse<GeminiResponse>(cacheKey, `content:${taskType}`);
@@ -155,9 +163,10 @@ export async function generateGeminiContent(
 
   try {
     const result = await runWithConcurrency(() =>
-      aiRouter.generateContent(taskType, messages)
-    );
+      aiRouter.generateContent(taskType, messages, options)
+    , options.signal);
     logger.info('[AI] Generation success', 'AI');
+    throwIfAborted(options.signal);
     setCachedResponse(cacheKey, result, 'default', `content:${taskType}`);
     return result;
   } catch (err: any) {
@@ -185,10 +194,11 @@ export class GeminiProvider implements AiProvider {
       throw new Error('Layanan Gemini sedang dalam masa pemulihan.');
     }
 
-    return this.callWithRetry(messages, model, options.timeoutMs);
+    return this.callWithRetry(messages, model, options);
   }
 
-  private async callWithRetry(messages: GeminiMessage[], model: string, timeoutMs = BASE_TIMEOUT): Promise<GeminiResponse> {
+  private async callWithRetry(messages: GeminiMessage[], model: string, options: AiRequestTimeout = {}): Promise<GeminiResponse> {
+    const maxAttempts = options.maxAttempts ?? (options.budgetProfile ? 2 : MAX_RETRIES);
     let lastError: Error | null = null;
     const defaultEnvModel = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_MODEL) || 'gemini-2.5-flash';
     const candidateModels = [
@@ -199,27 +209,33 @@ export class GeminiProvider implements AiProvider {
       'gemini-flash-latest'
     ].filter((v, idx, arr) => arr.indexOf(v) === idx);
 
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      const currentModel = candidateModels[(attempt - 1) % candidateModels.length];
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const currentModel = options.budgetProfile ? model : candidateModels[(attempt - 1) % candidateModels.length];
+      throwIfAborted(options.signal);
+      const started = Date.now();
       try {
-        return await this.callOnce(messages, currentModel, timeoutMs);
+        const result = await this.callOnce(messages, currentModel, options);
+        options.onAttempt?.({ provider: 'gemini', model: result.metadata?.model ?? currentModel, latencyMs: Date.now() - started, status: 'completed', usage: result.metadata?.usage ?? unknownUsage() });
+        return result;
       } catch (err: any) {
         lastError = err;
-        const isTransient = isTransientError(err);
+        options.onAttempt?.({ provider: 'gemini', model: currentModel, latencyMs: Date.now() - started, status: options.signal?.aborted ? 'cancelled' : 'failed', usage: err.usage ?? unknownUsage(), errorCategory: err instanceof AiRequestError ? err.category : undefined });
+        throwIfAborted(options.signal);
+        const isTransient = options.budgetProfile ? canRetry(err) && (err instanceof AiRequestError || isTransientError(err)) : isTransientError(err);
 
         if (!isTransient) {
           throw err;
         }
 
-        if (attempt < MAX_RETRIES) {
-          const retryAfterMs = err instanceof GeminiRateLimitError ? err.retryAfterMs : 0;
+        if (attempt < maxAttempts) {
+          const retryAfterMs = err instanceof GeminiRateLimitError || err instanceof AiRequestError ? err.retryAfterMs : 0;
           const backoffMs = getBackoffDelay(attempt, isRateLimitError(err) ? 3000 : 1000);
-          const delay = Math.min(Math.max(retryAfterMs, backoffMs), 10_000);
+          const delay = options.budgetProfile ? Math.max(retryAfterMs, backoffMs) : Math.min(Math.max(retryAfterMs, backoffMs), 10_000);
           logger.warn(
-            `[Gemini] Attempt ${attempt}/${MAX_RETRIES} with ${currentModel} failed, retrying in ${Math.round(delay)}ms: ${err.message}`,
+            `[Gemini] Attempt ${attempt}/${maxAttempts} with ${currentModel} failed, retrying in ${Math.round(delay)}ms: ${err.message}`,
             'AI'
           );
-          await sleep(delay);
+          await abortableDelay(delay, options.signal);
         }
       }
     }
@@ -227,7 +243,8 @@ export class GeminiProvider implements AiProvider {
     throw lastError || new Error('Gemini gagal setelah beberapa percobaan.');
   }
 
-  private async callOnce(messages: GeminiMessage[], model: string, timeoutMs = BASE_TIMEOUT): Promise<GeminiResponse> {
+  private async callOnce(messages: GeminiMessage[], model: string, options: AiRequestTimeout = {}): Promise<GeminiResponse> {
+    const timeoutMs = options.timeoutMs ?? BASE_TIMEOUT;
     const endpoint = getEndpoint();
 
     const contents = messages
@@ -241,13 +258,14 @@ export class GeminiProvider implements AiProvider {
 
     const body: Record<string, any> = {
       contents,
-      generationConfig: { temperature: 0.7 },
+      generationConfig: options.budgetProfile ? geminiGenerationConfig(model, options.budgetProfile, options.meetings) : { temperature: 0.7 },
     };
     if (systemInstruction) {
       body.systemInstruction = { parts: [{ text: systemInstruction }] };
     }
 
     const controller = new AbortController();
+    const unlink = linkAbort(options.signal, controller);
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
@@ -281,7 +299,7 @@ export class GeminiProvider implements AiProvider {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          body: JSON.stringify({ model, ...body }),
+          body: JSON.stringify({ model, ...body, ...(options.budgetProfile ? { budgetProfile: options.budgetProfile, meetings: options.meetings } : {}) }),
           signal: controller.signal,
         };
       }
@@ -292,6 +310,11 @@ export class GeminiProvider implements AiProvider {
         const text = await response.text();
         const status = response.status;
 
+        if (options.budgetProfile) {
+          const error = providerError(status, text, response.headers.get('retry-after'));
+          if (!usesDirectEndpoint()) error.fallbackAvailable = response.headers.get('X-AI-Fallback-Available') !== 'false';
+          throw error;
+        }
         if (status === 429) {
           const retryAfterMs = parseRetryAfter(response.headers.get('retry-after'));
           throw new GeminiRateLimitError(`Rate limit exceeded: Gemini API 429`, retryAfterMs);
@@ -314,12 +337,25 @@ export class GeminiProvider implements AiProvider {
       }
 
       const data = await response.json();
-      const geminiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const candidate = data?.candidates?.[0];
+      const geminiText = (candidate?.content?.parts ?? []).filter((part: { thought?: boolean }) => !part.thought).map((part: { text?: string }) => part.text ?? '').join('');
+      const usage: AiTokenUsage = { input: tokenCount(data?.usageMetadata?.promptTokenCount), output: tokenCount(data?.usageMetadata?.candidatesTokenCount), reasoning: tokenCount(data?.usageMetadata?.thoughtsTokenCount), total: tokenCount(data?.usageMetadata?.totalTokenCount) };
+      if (options.budgetProfile && candidate?.finishReason === 'MAX_TOKENS') {
+        const error = new AiRequestError('Jawaban AI terpotong oleh batas output. Kurangi cakupan permintaan.', 'truncated');
+        Object.assign(error, { usage });
+        throw error;
+      }
 
       return {
         choices: [{ message: { role: 'assistant', content: geminiText } }],
+        ...(options.budgetProfile ? { metadata: { provider: 'gemini' as const, model: data.modelVersion || model, usage, finishReason: candidate?.finishReason } } : {}),
       } as GeminiResponse;
+    } catch (error) {
+      throwIfAborted(options.signal);
+      if (options.budgetProfile && controller.signal.aborted) throw new AiRequestError('Waktu tunggu layanan AI habis.', 'network');
+      throw error;
     } finally {
+      unlink();
       clearTimeout(timeoutId);
     }
   }
@@ -383,7 +419,7 @@ export async function generateGeminiJson<T>(
     return parsed;
   } catch (e: unknown) {
     logger.error('[AI] JSON Parse Error. Content was:', e instanceof Error ? e : 'GeminiJSON', {
-      contentPreview: content.substring(0, 500),
+      ...(taskType === 'modul-ajar' ? { contentLength: content.length } : { contentPreview: content.substring(0, 500) }),
     });
     throw new Error('Respon AI tidak valid (JSON corrupt). Silakan coba lagi.');
   }
@@ -400,9 +436,6 @@ export function getAssistantContent(response: GeminiResponse): string {
 
 // ─── Helpers ──────────────────────────────────────────────────────
 
-function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 /**
  * Build a simple cache key from messages array.

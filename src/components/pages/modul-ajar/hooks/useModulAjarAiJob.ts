@@ -1,8 +1,6 @@
-import { useRef, useState } from 'react';
-import { modulAjarAiService } from '../../../../services/modulAjarAiService';
+import type { ModulAiUsage } from '../../../../services/modulAjarAiCache';
+import { useEffect, useRef, useState } from 'react';
 import { generateModulAjarAiContent, type ModulAjarPromptContext } from '../../../../services/modulAjarAiGenerator';
-import { resolveModelId } from '../../../../services/modelIdResolver';
-import { generateAiFingerprint } from '../utils/aiFingerprint';
 import { FormState } from '../types';
 
 export type QueueStatus = 'idle' | 'pending' | 'processing' | 'retry_wait' | 'completed' | 'failed';
@@ -10,10 +8,12 @@ export type QueueStatus = 'idle' | 'pending' | 'processing' | 'retry_wait' | 'co
 export function useModulAjarAiJob(
   formState: FormState,
   /** May be async; a rejection is reported through onError like a generation failure. */
-  onSuccess: (resultJson: any, message: string) => void | Promise<void>,
+  onSuccess: (resultJson: any, message: string, signal?: AbortSignal) => void | Promise<void>,
   onError: (errorMsg: string) => void,
   /** Teacher choices sent along with the prompt (class, CP, objectives, KBC). */
-  getPromptContext?: () => ModulAjarPromptContext
+  getPromptContext?: () => ModulAjarPromptContext,
+  onUsage?: (usage: ModulAiUsage) => void,
+  onWarning?: (message: string) => void
 ) {
   const [jobStatus, setJobStatus] = useState<QueueStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -23,18 +23,10 @@ export function useModulAjarAiJob(
   // Each start gets a number; cancelling bumps it so a late answer is ignored.
   const runIdRef = useRef(0);
 
-  const getFingerprint = async () => {
-    if (!formState.mataPelajaran || !formState.topik) return '';
-    const resolvedModelId = await resolveModelId(formState.selectedModelId);
-    return generateAiFingerprint({
-      mapel: formState.mataPelajaran,
-      fase: formState.fase,
-      topik: formState.topik,
-      modelUuid: resolvedModelId || 'unknown'
-    });
-  };
-
-  const startJob = async () => {
+  const controllerRef = useRef<AbortController | null>(null);
+  useEffect(() => () => { controllerRef.current?.abort(); runIdRef.current++; }, []);
+  const startJob = async (cachePolicy: 'reuse' | 'refresh' = 'reuse') => {
+    if (controllerRef.current) return;
     if (isSubmitting || jobStatus === 'processing' || jobStatus === 'pending') return;
 
     if (!formState.mataPelajaran?.trim() || !formState.topik?.trim()) {
@@ -42,6 +34,8 @@ export function useModulAjarAiJob(
       return;
     }
 
+    const controller = new AbortController();
+    controllerRef.current = controller;
     const runId = ++runIdRef.current;
     const isCancelled = () => runId !== runIdRef.current;
     setIsSubmitting(true);
@@ -50,25 +44,7 @@ export function useModulAjarAiJob(
     setStartedAt(Date.now());
 
     try {
-      // 1. Check verified cache in bank data first
-      const fingerprint = await getFingerprint();
-      let hasCache = false;
-      if (fingerprint) {
-        try {
-          hasCache = await modulAjarAiService.checkCacheHit(fingerprint);
-        } catch {
-          // Cache check is non-blocking, proceed to direct generation
-        }
-      }
-      if (isCancelled()) return;
-      if (hasCache) {
-        // Outside the cache-check try: a failed save must reach onError.
-        await onSuccess(null, 'Data modul ajar terverifikasi tersedia di database!');
-        setJobStatus('completed');
-        return;
-      }
-
-      // 2. Direct real-time AI Generation
+      // Fresh requests use the full teacher context and current validation contract.
       const aiResult = await generateModulAjarAiContent(
         formState.mataPelajaran.trim(),
         formState.topik.trim(),
@@ -76,15 +52,16 @@ export function useModulAjarAiJob(
         formState.modelPembelajaran,
         formState.metodePembelajaran,
         (cacheWarning) => {
-          console.warn('[AI Cache Notice]:', cacheWarning);
+          if (!isCancelled()) onError(cacheWarning);
         },
-        getPromptContext?.()
+        { ...getPromptContext?.(), ...(cachePolicy === 'refresh' ? { reusableContent: undefined } : {}) },
+        { cachePolicy, signal: controller.signal, onUsage, onWarning: warning => { if (!isCancelled()) (onWarning ?? onError)(warning); } }
       );
-      // The request itself cannot be aborted; a cancelled job just drops its answer.
       if (isCancelled()) return;
 
       // Saving the document happens in onSuccess; only a saved document is "completed".
-      await onSuccess(aiResult, 'Modul Ajar berhasil disusun oleh AI!');
+      await onSuccess(aiResult, 'Modul Ajar berhasil disusun oleh AI!', controller.signal);
+      if (isCancelled()) return;
       setJobStatus('completed');
     } catch (e: any) {
       if (isCancelled()) return;
@@ -94,6 +71,7 @@ export function useModulAjarAiJob(
       setErrorMessage(msg);
       onError(msg);
     } finally {
+      if (controllerRef.current === controller) controllerRef.current = null;
       if (!isCancelled()) {
         setIsSubmitting(false);
         setStartedAt(null);
@@ -101,9 +79,11 @@ export function useModulAjarAiJob(
     }
   };
 
-  /** Stops waiting for the running job. Its answer, if it still arrives, is not saved. */
+  /** Aborts pending requests and prevents later pipeline stages. */
   const cancelJob = () => {
     runIdRef.current++;
+    controllerRef.current?.abort();
+    controllerRef.current = null;
     setJobStatus('idle');
     setIsSubmitting(false);
     setStartedAt(null);
@@ -117,7 +97,7 @@ export function useModulAjarAiJob(
     errorMessage,
     isSubmitting,
     resetJob: () => {
-      setJobStatus('idle');
+      cancelJob();
       setErrorMessage(null);
       setIsSubmitting(false);
     }

@@ -1,3 +1,4 @@
+import { canFallback, throwIfAborted, type AiTransportOptions, type AiTokenUsage } from '../lib/aiRequestPolicy';
 import { logger } from './logger';
 import {
   isCircuitAllowed as baseIsCircuitAllowed,
@@ -13,6 +14,7 @@ export interface GeminiMessage {
 }
 
 export interface GeminiResponse {
+  metadata?: { provider: AiProviderName; model: string; usage: AiTokenUsage; finishReason?: string };
   choices: {
     message: GeminiMessage;
   }[];
@@ -33,13 +35,14 @@ export type AiProviderName = 'gemini' | 'groq';
 
 // PROVIDER INTERFACE
 
-export interface AiRequestTimeout {
+export interface AiRequestTimeout extends AiTransportOptions {
   /** Per-request timeout; the provider default (30 s) applies when omitted. */
   timeoutMs?: number;
 }
 
 export interface AiProvider {
   readonly name: AiProviderName;
+  available?: () => boolean;
   generateContent(messages: GeminiMessage[], model: string, options?: AiRequestTimeout): Promise<GeminiResponse>;
 }
 
@@ -74,7 +77,7 @@ const ROUTING: Record<AiTaskType, RouteConfig> = {
 const FALLBACK_MODELS: Record<AiTaskType, string> = {
   'teacher-report':   'llama-3.3-70b-versatile',
   'child-analysis':   'llama-3.3-70b-versatile',
-  'modul-ajar':       'llama-3.3-70b-versatile',
+  'modul-ajar':       'openai/gpt-oss-20b',
   'grade-adjustment': DEFAULT_GEMINI_MODEL,
   insight:            DEFAULT_GEMINI_MODEL,
   'parse-values':     DEFAULT_GEMINI_MODEL,
@@ -93,16 +96,19 @@ export class ProviderRouter {
   async generateContent(
     taskType: AiTaskType,
     messages: GeminiMessage[],
+    options: AiTransportOptions = {},
   ): Promise<GeminiResponse> {
     const route = ROUTING[taskType] || ROUTING.general;
     const dynamicGeminiModel = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_MODEL) || 'gemini-2.5-flash';
     const primaryModel = route.primary === 'gemini' ? dynamicGeminiModel : route.model;
     const primary = this.providers.get(route.primary);
     const fallbackName: AiProviderName = route.primary === 'gemini' ? 'groq' : 'gemini';
-    const fallback = this.providers.get(fallbackName);
+    const registeredFallback = this.providers.get(fallbackName);
+    const fallback = registeredFallback?.available?.() === false ? undefined : registeredFallback;
     const fallbackDefaultModel = FALLBACK_MODELS[taskType] || 'llama-3.3-70b-versatile';
     const fallbackModel = fallbackName === 'gemini' ? dynamicGeminiModel : fallbackDefaultModel;
-    const requestOptions: AiRequestTimeout = { timeoutMs: TASK_TIMEOUT_MS[taskType] };
+    const requestOptions: AiRequestTimeout = { timeoutMs: TASK_TIMEOUT_MS[taskType], ...options };
+    throwIfAborted(options.signal);
 
     // Try primary
     if (primary && baseIsCircuitAllowed(route.primary)) {
@@ -113,7 +119,7 @@ export class ProviderRouter {
       } catch (err: any) {
         logger.warn(`[AI Router] ${route.primary} failed: ${err.message}`, 'AI');
         baseRecordCircuitFailure(route.primary);
-        if (!fallback || !baseIsCircuitAllowed(fallbackName)) {
+        if (!canFallback(err) || !fallback || !baseIsCircuitAllowed(fallbackName)) {
           throw err;
         }
       }
@@ -123,13 +129,14 @@ export class ProviderRouter {
     if (fallback && baseIsCircuitAllowed(fallbackName)) {
       try {
         logger.info(`[AI Router] Falling back to ${fallbackName}`, 'AI');
-        const result = await fallback.generateContent(messages, fallbackModel, requestOptions);
+        const result = await fallback.generateContent(messages, fallbackModel, options.budgetProfile ? { ...requestOptions, maxAttempts: 1 } : requestOptions);
         baseRecordCircuitSuccess(fallbackName);
         return result;
       } catch (err: any) {
         logger.warn(`[AI Router] ${fallbackName} fallback also failed: ${err.message}`, 'AI');
         baseRecordCircuitFailure(fallbackName);
-        throw new Error(`Semua provider AI gagal. Silakan coba lagi nanti.`);
+        if (options.budgetProfile) throw err;
+        throw new Error('Semua provider AI gagal. Silakan coba lagi nanti.');
       }
     }
 

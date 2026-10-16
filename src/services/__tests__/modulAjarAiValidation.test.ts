@@ -20,53 +20,51 @@ vi.mock('../supabase', () => {
 
 import { findMissingModulAjarParts, generateModulAjarAiContent } from '../modulAjarAiGenerator';
 
-const complete = {
-  tujuanPembelajaran: ['Siswa menjelaskan siklus air.'],
-  skenarioPembelajaran: [
-    { name: 'Orientasi', guru: 'Guru menampilkan gambar.', siswa: 'Siswa mengamati.' },
-    { name: 'Diskusi', guru: 'Guru membagi kelompok.', siswa: 'Siswa berdiskusi.' },
-  ],
-  lkpdTugas: 'Amati gambar lalu jawab.',
-  soalEvaluasi: '1. Apa itu evaporasi?',
-};
-
-beforeEach(() => {
-  answers.queue = [];
-  answers.calls = [];
-});
-
-describe('findMissingModulAjarParts', () => {
-  it('names every required part that is empty', () => {
-    expect(findMissingModulAjarParts({ ...complete, skenarioPembelajaran: [] } as never)).toEqual(['langkah kegiatan inti']);
-    expect(findMissingModulAjarParts({ tujuanPembelajaran: [], skenarioPembelajaran: [], lkpdTugas: '', soalEvaluasi: '' } as never))
-      .toEqual(['tujuan pembelajaran', 'langkah kegiatan inti', 'LKPD', 'soal evaluasi']);
+import { validLesson, validReview, lessonContext } from '../../../tests/fixtures/modulAjarAiContent';
+const run = (context = lessonContext) => generateModulAjarAiContent('IPAS', 'Siklus Air', 'B', 'Discovery Learning', [], undefined, context);
+beforeEach(() => { answers.queue = []; answers.calls = []; });
+describe('AI lesson generation gates', () => {
+  it('retains the legacy missing-parts diagnostic', () => {
+    expect(findMissingModulAjarParts({ tujuanPembelajaran: [], skenarioPembelajaran: [], lkpdTugas: '', soalEvaluasi: '' } as never)).toHaveLength(4);
   });
-});
-
-describe('generateModulAjarAiContent', () => {
-  it('retries once when the first answer is incomplete', async () => {
-    answers.queue = [{ ...complete, lkpdTugas: '' }, complete];
-    const result = await generateModulAjarAiContent('IPAS', 'Siklus Air', 'B');
-    expect(result.lkpdTugas).toBe('Amati gambar lalu jawab.');
+  it('retries incomplete content and reviews before returning', async () => {
+    answers.queue = [{ ...validLesson, materiAjar: '' }, { components: { materiAjar: validLesson.materiAjar } }, validReview];
+    const result = await run();
+    expect(result.materiAjar).toBe(validLesson.materiAjar);
+    expect(result.glosarium).toEqual(validLesson.glosarium);
+    expect(result.kunciJawaban).toHaveLength(5);
+    expect(result.quality?.reviewedByAi).toBe(true);
+    expect(answers.calls).toHaveLength(3);
+    expect(String(answers.calls[1][0])).toContain('materiAjar');
+    expect(answers.calls.every(call => (call[3] as { bypassCache: boolean }).bypassCache)).toBe(true);
+    expect(answers.calls[0][3]).toMatchObject({ budgetProfile: 'lesson' });
+    expect(answers.calls[2][3]).toMatchObject({ budgetProfile: 'review' });
+  });
+  it('rejects an empty answer without requesting a full replacement', async () => {
+    answers.queue = [{}, {}];
+    await expect(run()).rejects.toThrow('perlu diperbaiki');
+    expect(answers.calls).toHaveLength(1);
+  });
+  it('uses selected syntax and preserves supplied CP and references', async () => {
+    answers.queue = [{ ...validLesson, capaianPembelajaran: 'Invented CP', daftarPustaka: ['Invented source'] }, validReview];
+    const result = await run();
+    expect(String(answers.calls[0][0])).toContain('Discovery Learning');
+    expect(String(answers.calls[0][0])).not.toContain('Orientasi peserta didik');
+    expect(result.capaianPembelajaran).toBe('CP sekolah');
+    expect(result.daftarPustaka).toEqual(['Sumber guru']);
+  });
+  it('repairs reviewer findings once', async () => {
+    answers.queue = [validLesson, { ...validReview, masalah: ['Stimulus belum lengkap'], temuan: [{ komponen: 'lkpd', alasan: 'Stimulus belum lengkap' }] }, { components: { lkpd: validLesson.lkpd } }, validReview];
+    await run();
+    expect(String(answers.calls[2][0])).toContain('Stimulus belum lengkap');
+  });
+  it('rejects incomplete or adverse reviewer verdicts', async () => {
+    answers.queue = [validLesson, {}];
+    await expect(run()).rejects.toThrow('pemeriksaan isi AI tidak lengkap');
     expect(answers.calls).toHaveLength(2);
-    expect(answers.calls[0][3]).toEqual({ bypassCache: true });
   });
-
-  it('names the missing parts when the retry is incomplete too', async () => {
-    answers.queue = [{ ...complete, soalEvaluasi: '' }, { ...complete, soalEvaluasi: '' }];
-    await expect(generateModulAjarAiContent('IPAS', 'Siklus Air', 'B')).rejects.toThrow('kurang: soal evaluasi');
-  });
-
-  it('puts the teacher\'s lesson context into the prompt', async () => {
-    answers.queue = [complete];
-    await generateModulAjarAiContent('IPAS', 'Siklus Air', 'B', 'PBL', [], undefined, {
-      kelas: '3',
-      tujuanPembelajaran: 'TP tulisan guru',
-      kbc: { tema: ['Cinta Ilmu'], materiInsersi: 'syukur' },
-    });
-    const prompt = String(answers.calls[0][0]);
-    expect(prompt).toContain('Kelas: 3');
-    expect(prompt).toContain('TP tulisan guru');
-    expect(prompt).toContain('Kurikulum Berbasis Cinta');
+  it('does not call AI when lesson timing is invalid', async () => {
+    await expect(run({ ...lessonContext, menitPerPertemuan: 40 })).rejects.toThrow('Alokasi');
+    expect(answers.calls).toHaveLength(0);
   });
 });

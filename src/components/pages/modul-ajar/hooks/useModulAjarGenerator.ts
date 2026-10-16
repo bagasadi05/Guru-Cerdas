@@ -1,3 +1,6 @@
+import { aiArtifactScope } from '../utils/aiArtifactScope';
+import { throwIfAborted } from '../../../../lib/aiRequestPolicy';
+import type { FieldOrigin } from './useModulAjarForm';
 import { useState } from 'react';
 import { supabase } from '../../../../services/supabase';
 import { modulAjarContentService } from '../../../../services/modulAjarContentService';
@@ -21,6 +24,8 @@ interface ScenarioRow {
   fase: string;
   kegiatanGuru: string;
   kegiatanSiswa: string;
+  alokasiWaktu?: string;
+  pertemuan?: number;
 }
 
 /** AI output as it reaches the page; models use several names for the same parts. */
@@ -48,6 +53,8 @@ const toScenarioRow = (step: object, idx: number): ScenarioRow => {
     fase: name,
     kegiatanGuru: text(s.guru) || text(s.kegiatanGuru) || text(s.kegiatan_guru),
     kegiatanSiswa: text(s.siswa) || text(s.kegiatanSiswa) || text(s.kegiatan_siswa),
+    alokasiWaktu: text(s.alokasiWaktu),
+    pertemuan: typeof s.pertemuan === 'number' ? s.pertemuan : undefined,
   };
 };
 
@@ -160,6 +167,7 @@ interface GeneratorProps {
   isFieldOwnedByTeacher?: (field: ContentField) => boolean;
   /** Writes generated content back to fields the teacher does not own. */
   applyGeneratedContent?: (values: ContentValues) => void;
+  getFieldOrigins?: () => Partial<Record<ContentField, FieldOrigin>>;
   notify?: { success: (message: string) => void; error: (message: string) => void };
 }
 
@@ -177,6 +185,7 @@ export const useModulAjarGenerator = ({
   setAiCacheWarning,
   isFieldOwnedByTeacher,
   applyGeneratedContent,
+  getFieldOrigins,
   notify,
 }: GeneratorProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -231,6 +240,8 @@ export const useModulAjarGenerator = ({
             buildAiPromptContext(
               formState,
               isOwned('manualTujuanPembelajaran') ? formState.manualTujuanPembelajaran : '',
+              models.find(model => model.id === formState.selectedModelId || model.nama_model === formState.modelPembelajaran)?.sintaks_inti,
+              isOwned,
             ),
           );
           aiGeneratedData = aiContent;
@@ -490,7 +501,9 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
           '',
         lkpdTugas: lkpdText,
         soalEvaluasi: evaluasiText,
-        kunciJawaban: aiGeneratedData?.kunciJawaban || bp?.konten_json?.kunciJawaban || [],
+        kunciJawaban: formState.generatedAssessment?.soal === evaluasiText ? formState.generatedAssessment.kunci
+          : aiGeneratedData?.soalEvaluasi === evaluasiText ? aiGeneratedData.kunciJawaban
+          : !formState.manualSoalEvaluasi || formState.manualSoalEvaluasi === bp?.soal_evaluasi ? bp?.konten_json?.kunciJawaban || [] : [],
         kegiatanPendahuluan: pendahuluanData,
         kegiatanInti: kegiatanIntiData,
         kegiatanPenutup: penutupData,
@@ -523,9 +536,7 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
           ? formState.manualDaftarPustaka.split('\n').filter((line) => line.trim() !== '')
           : bp?.daftar_pustaka && Array.isArray(bp.daftar_pustaka) && bp.daftar_pustaka.length > 0
             ? bp.daftar_pustaka
-            : [
-                `Buku Panduan Guru & Siswa ${formState.mataPelajaran} Kelas ${formState.kelas}, Kemendikbudristek & Kemenag.`,
-              ],
+            : [],
       };
 
       const totalJP = formState.jumlahPertemuan * formState.jpPerPertemuan;
@@ -581,6 +592,7 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
             materiAjar: manualData.materiAjar,
             lkpdTugas: lkpdText,
             soalEvaluasi: evaluasiText,
+            kunciJawaban: manualData.kunciJawaban,
             pengayaan: manualData.pengayaan,
             remedial: manualData.remedial,
             glosarium: manualData.glosarium,
@@ -620,9 +632,11 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
     }
   };
 
-  const renderPrivateDraftAiModulAjar = async (aiOutput: AiDraftOutput) => {
+  const renderPrivateDraftAiModulAjar = async (aiOutput: AiDraftOutput, signal?: AbortSignal) => {
+    throwIfAborted(signal);
     if (!user) return;
     const totalJP = formState.jumlahPertemuan * formState.jpPerPertemuan;
+    setAiCacheWarning(aiOutput.quality?.warnings.join(' ') || null);
 
     let kegiatanIntiData: ScenarioRow[];
     const sourceSteps: object[] | undefined =
@@ -708,9 +722,21 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
       ...formState,
       rubrikAsesmen: formState.rubrikAsesmen?.length ? formState.rubrikAsesmen : buildDefaultRubric(formState),
     };
+    const formValues: ContentValues = {
+      manualTujuanPembelajaran: baseTujuan.join('\n'), manualPemahamanBermakna: draftData.pemahamanBermakna.join('\n'),
+      manualPertanyaanPemantik: draftData.pertanyaanPemantik.join('\n'), manualMateriAjar: draftData.materiAjar,
+      manualLkpdTugas: draftData.lkpdTugas, manualSoalEvaluasi: draftData.soalEvaluasi,
+      manualPengayaan: draftData.pengayaan.join('\n\n'), manualRemedial: draftData.remedial.join('\n\n'),
+      manualGlosarium: draftData.glosarium.join('\n'), manualDaftarPustaka: draftData.daftarPustaka.join('\n'), kompetensiAwal: draftData.kompetensiAwal,
+    };
+    const restoredForm = { ...formState, ...formValues, capaianPembelajaran: draftData.capaianPembelajaran };
+    const aiArtifacts = aiOutput.artifact ? { scope: aiArtifactScope(restoredForm), content: aiOutput.artifact, values: Object.fromEntries(Object.entries(formValues).map(([key, value]) => [key, value ?? ''])) } : undefined;
+    const origins = getFieldOrigins?.() ?? {};
+    const aiFormContent = Object.fromEntries(Object.entries(formValues).map(([field, value]) => [field, { value: isOwned(field as ContentField) ? String(formState[field as ContentField] ?? '') : value, kind: isOwned(field as ContentField) ? origins[field as ContentField]?.kind === 'ai-field' ? 'ai-field' : 'teacher' : 'generated' }]));
     const htmlTemplate = buildHtmlTemplate(docFormState, draftData, totalJP, logoBase64);
 
-    const { data: insertedPlan, error: insertError } = await supabase
+    throwIfAborted(signal);
+    const insert = supabase
       .from('lesson_plans')
       .insert({
         user_id: user?.id,
@@ -730,8 +756,8 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
         },
         components: {
           target: formState.targetPeserta,
-          cp: formState.capaianPembelajaran,
-          kompetensiAwal: formState.kompetensiAwal,
+          cp: draftData.capaianPembelajaran,
+          kompetensiAwal: draftData.kompetensiAwal,
           saranaPrasarana: formState.saranaPrasarana,
           profil: formState.profilPelajar,
           waktu: {
@@ -770,11 +796,18 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
           daftarPustaka: draftData.daftarPustaka || [],
           asesmenSikap: draftData.asesmenSikap || '',
           paperSize: formState.paperSize,
+          aiFormContent: aiFormContent as unknown as Json,
+          aiArtifacts: aiArtifacts as unknown as Json ?? null,
+          aiCpSource: aiOutput.quality?.cpSource ?? 'guru',
+          aiQuality: aiOutput.quality as unknown as Json ?? null,
+          evaluasiTerstruktur: aiOutput.evaluasiTerstruktur as unknown as Json ?? null,
+          aktivitasLkpd: aiOutput.aktivitasLkpd as unknown as Json ?? null,
+          kunciJawaban: draftData.kunciJawaban,
         },
         generated_content: htmlTemplate,
-      })
-      .select('id')
-      .single();
+      });
+    const { data: insertedPlan, error: insertError } = await (signal ? insert.abortSignal(signal) : insert).select('id').single();
+    throwIfAborted(signal);
 
     if (insertError) {
       console.error('Gagal menyimpan modul ajar AI ke database:', insertError);
@@ -783,20 +816,8 @@ D. Menyerahkan seluruh pekerjaan kepada teman sekelompok.
 
     setGeneratedDocument(htmlTemplate);
     if (insertedPlan?.id) onDocumentSaved?.(insertedPlan.id, docFormState);
-    writeBack({
-      manualTujuanPembelajaran: baseTujuan.join('\n'),
-      manualPemahamanBermakna: draftData.pemahamanBermakna.join('\n'),
-      manualPertanyaanPemantik: draftData.pertanyaanPemantik.join('\n'),
-      manualMateriAjar: draftData.materiAjar,
-      manualLkpdTugas: draftData.lkpdTugas,
-      manualSoalEvaluasi: draftData.soalEvaluasi,
-      manualPengayaan: draftData.pengayaan.join('\n\n'),
-      manualRemedial: draftData.remedial.join('\n\n'),
-      manualGlosarium: draftData.glosarium.join('\n'),
-      manualDaftarPustaka: draftData.daftarPustaka.join('\n'),
-      kompetensiAwal: draftData.kompetensiAwal,
-    });
-    setFormState((prev) => ({ ...prev, asesmenSikap: draftData.asesmenSikap }));
+    writeBack(formValues);
+    setFormState(prev => ({ ...prev, capaianPembelajaran: draftData.capaianPembelajaran, aiCpSource: aiOutput.quality?.cpSource ?? 'guru', aiArtifacts, asesmenSikap: draftData.asesmenSikap, generatedAssessment: { soal: draftData.soalEvaluasi, kunci: draftData.kunciJawaban } }));
     fetchHistory();
   };
 

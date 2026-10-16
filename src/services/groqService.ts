@@ -1,3 +1,4 @@
+import { AiRequestError, abortableDelay, aiBudget, canRetry, linkAbort, providerError, throwIfAborted, tokenCount, unknownUsage } from '../lib/aiRequestPolicy';
 import type { GeminiMessage, GeminiResponse, AiTaskType } from './aiProvider';
 import type { AiProvider, AiRequestTimeout } from './aiProvider';
 import { aiRouter } from './aiProvider';
@@ -58,6 +59,7 @@ function usesDirectEndpoint(): boolean {
 
 export class GroqProvider implements AiProvider {
   readonly name = 'groq' as const;
+  available(): boolean { return !isDev() || !!import.meta.env.VITE_GROQ_PROXY_URL || !!devApiKey(); }
 
   async generateContent(messages: GeminiMessage[], model: string, options: AiRequestTimeout = {}): Promise<GeminiResponse> {
     if (isDev() && !import.meta.env.VITE_GROQ_PROXY_URL && !devApiKey()) {
@@ -73,35 +75,42 @@ export class GroqProvider implements AiProvider {
     }
 
     try {
-      return await this.callWithRetry(messages, model, options.timeoutMs);
+      return await this.callWithRetry(messages, model, options);
     } catch (err: any) {
       logger.warn(`[Groq] Failed: ${err.message}`, 'AI');
       throw err;
     }
   }
 
-  private async callWithRetry(messages: GeminiMessage[], model: string, timeoutMs = BASE_TIMEOUT): Promise<GeminiResponse> {
+  private async callWithRetry(messages: GeminiMessage[], model: string, options: AiRequestTimeout = {}): Promise<GeminiResponse> {
+    const maxAttempts = options.maxAttempts ?? (options.budgetProfile ? 1 : MAX_RETRIES);
     let lastError: Error | null = null;
 
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      throwIfAborted(options.signal);
+      const started = Date.now();
       try {
-        return await this.callOnce(messages, model, timeoutMs);
+        const result = await this.callOnce(messages, model, options);
+        options.onAttempt?.({ provider: 'groq', model: result.metadata?.model ?? model, latencyMs: Date.now() - started, status: 'completed', usage: result.metadata?.usage ?? unknownUsage() });
+        return result;
       } catch (err: any) {
         lastError = err;
-        const isTransient = isTransientError(err);
+        options.onAttempt?.({ provider: 'groq', model, latencyMs: Date.now() - started, status: options.signal?.aborted ? 'cancelled' : 'failed', usage: err.usage ?? unknownUsage(), errorCategory: err instanceof AiRequestError ? err.category : undefined });
+        throwIfAborted(options.signal);
+        const isTransient = options.budgetProfile ? canRetry(err) && (err instanceof AiRequestError || isTransientError(err)) : isTransientError(err);
 
         if (!isTransient) {
           throw err;
         }
 
-        if (attempt < MAX_RETRIES) {
+        if (attempt < maxAttempts) {
           const backoffMs = getBackoffDelay(attempt, isRateLimitError(err) ? 5000 : 1500);
-          const delay = Math.min(backoffMs, 60_000);
+          const delay = options.budgetProfile ? Math.max(backoffMs, err.retryAfterMs ?? 0) : Math.min(backoffMs, 60_000);
           logger.warn(
-            `[Groq] Attempt ${attempt}/${MAX_RETRIES} failed, retrying in ${Math.round(delay)}ms`,
+            `[Groq] Attempt ${attempt}/${maxAttempts} failed, retrying in ${Math.round(delay)}ms`,
             'AI'
           );
-          await sleep(delay);
+          await abortableDelay(delay, options.signal);
         }
       }
     }
@@ -109,7 +118,8 @@ export class GroqProvider implements AiProvider {
     throw lastError || new Error('Groq gagal setelah beberapa percobaan.');
   }
 
-  private async callOnce(messages: GeminiMessage[], model: string, timeoutMs = BASE_TIMEOUT): Promise<GeminiResponse> {
+  private async callOnce(messages: GeminiMessage[], model: string, options: AiRequestTimeout = {}): Promise<GeminiResponse> {
+    const timeoutMs = options.timeoutMs ?? BASE_TIMEOUT;
     const systemMessage = messages.find(m => m.role === 'system');
     const chatMessages = messages
       .filter(m => m.role !== 'system')
@@ -122,7 +132,11 @@ export class GroqProvider implements AiProvider {
       model,
       messages: chatMessages,
       temperature: 0.7,
-      max_tokens: 4096,
+      ...(options.budgetProfile ? {
+        max_completion_tokens: aiBudget(options.budgetProfile, options.meetings).groqOutput,
+        response_format: { type: 'json_object' },
+        ...(model.startsWith('openai/gpt-oss') ? { reasoning_effort: 'low', include_reasoning: false } : {}),
+      } : { max_tokens: 4096 }),
     };
 
     if (systemMessage?.content) {
@@ -130,6 +144,7 @@ export class GroqProvider implements AiProvider {
     }
 
     const controller = new AbortController();
+    const unlink = linkAbort(options.signal, controller);
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
@@ -166,7 +181,7 @@ export class GroqProvider implements AiProvider {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          body: JSON.stringify(body),
+          body: JSON.stringify({ ...body, ...(options.budgetProfile ? { budgetProfile: options.budgetProfile, meetings: options.meetings } : {}) }),
           signal: controller.signal,
         };
       }
@@ -177,6 +192,7 @@ export class GroqProvider implements AiProvider {
         const text = await response.text();
         const status = response.status;
 
+        if (options.budgetProfile) throw providerError(status, text, response.headers.get('retry-after'));
         if (status === 429) {
           const retryAfterMs = parseRetryAfter(response.headers.get('retry-after'));
           throw new GroqRateLimitError(`Groq rate limit: 429`, retryAfterMs);
@@ -199,8 +215,19 @@ export class GroqProvider implements AiProvider {
       }
 
       const data = await response.json();
-      return this.normalizeResponse(data);
+      const result = this.normalizeResponse(data);
+      const usage = { input: tokenCount(data?.usage?.prompt_tokens), output: tokenCount(data?.usage?.completion_tokens), reasoning: tokenCount(data?.usage?.completion_tokens_details?.reasoning_tokens), total: tokenCount(data?.usage?.total_tokens) };
+      if (options.budgetProfile && data?.choices?.[0]?.finish_reason === 'length') {
+        const error = new AiRequestError('Jawaban AI terpotong oleh batas output. Kurangi cakupan permintaan.', 'truncated'); Object.assign(error, { usage }); throw error;
+      }
+      if (options.budgetProfile) result.metadata = { provider: 'groq', model: data.model || model, usage, finishReason: data?.choices?.[0]?.finish_reason };
+      return result;
+    } catch (error) {
+      throwIfAborted(options.signal);
+      if (options.budgetProfile && controller.signal.aborted) throw new AiRequestError('Waktu tunggu layanan AI habis.', 'network');
+      throw error;
     } finally {
+      unlink();
       clearTimeout(timeoutId);
     }
   }
@@ -326,9 +353,6 @@ export function initGroqProvider(): void {
 // HELPERS
 // =============================================================================
 
-function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 function parseRetryAfter(header: string | null | undefined): number {
   if (!header) return 0;

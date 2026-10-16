@@ -1,5 +1,7 @@
 # Laporan Validasi Akhir Pipeline AI Modul Ajar Teacher-First (FASE R8)
 
+> Arsip Juli 2026. Alur worker/OpenRouter dan klaim pada laporan ini tidak mewakili menu aktif saat ini. Lihat [AI Modul Ajar: penghematan kuota](./modul-ajar-ai-hemat-kuota.md) untuk alur Gemini/Groq dan pemeriksaan terbaru.
+
 **Informasi Eksekusi**:
 - Repository: `bagasadi05/Guru-Cerdas`
 - Branch: `main`

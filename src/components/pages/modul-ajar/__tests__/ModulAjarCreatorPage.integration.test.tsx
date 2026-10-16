@@ -52,7 +52,12 @@ vi.mock('../../../../services/supabase', () => ({
 vi.mock('../hooks/useModulAjarAiJob', () => ({
   useModulAjarAiJob: vi.fn(() => ({
     jobStatus: 'idle',
-    startJob: vi.fn()
+    startJob: vi.fn(),
+    cancelJob: vi.fn(),
+    isSubmitting: false,
+    startedAt: null,
+    errorMessage: null,
+    resetJob: vi.fn(),
   }))
 }));
 

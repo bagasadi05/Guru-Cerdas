@@ -1,3 +1,4 @@
+import type { ModulAiOptions, ModulAiUsage } from '../../../services/modulAjarAiCache';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { MotionDiv, AnimatePresence } from '../../ui/MotionComponents';
 import {
@@ -88,6 +89,8 @@ const ModulAjarCreatorPage: React.FC = () => {
     isFieldOwnedByTeacher,
     applyGeneratedContent,
     setFieldFromAi,
+    saveFieldArtifact,
+    getFieldOrigins,
   } = useModulAjarForm();
 
   const [generatedDocument, setGeneratedDocument] = useState<string>('');
@@ -114,6 +117,10 @@ const ModulAjarCreatorPage: React.FC = () => {
 
   const [aiCacheWarning, setAiCacheWarning] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string>('');
+  const [aiUsage, setAiUsage] = useState<ModulAiUsage | null>(null);
+  const fieldControllers = useRef(new Map<string, AbortController>());
+  const requestedPolicy = useRef<'reuse' | 'refresh'>('reuse');
+  useEffect(() => () => { fieldControllers.current.forEach(controller => controller.abort()); }, []);
   const [fieldLoading, setFieldLoading] = useState<Record<string, boolean>>({});
   const [resetConfirmOpen, setResetConfirmOpen] = useState<boolean>(false);
   const [isExportingPdf, setIsExportingPdf] = useState<boolean>(false);
@@ -190,14 +197,15 @@ const ModulAjarCreatorPage: React.FC = () => {
       setAiCacheWarning,
       isFieldOwnedByTeacher,
       applyGeneratedContent,
+      getFieldOrigins,
       notify: { success: toast.success, error: toast.error },
     });
 
   const queueHookResult = useModulAjarAiJob(
     formState,
-    async (resultJson) => {
+    async (resultJson, _message, signal) => {
       if (resultJson) {
-        await renderPrivateDraftAiModulAjar(resultJson);
+        await renderPrivateDraftAiModulAjar(resultJson, signal);
       } else {
         await generateManualModulAjar();
       }
@@ -211,8 +219,19 @@ const ModulAjarCreatorPage: React.FC = () => {
       buildAiPromptContext(
         formState,
         isFieldOwnedByTeacher('manualTujuanPembelajaran') ? formState.manualTujuanPembelajaran : '',
+        models.find(model => model.id === formState.selectedModelId || model.nama_model === formState.modelPembelajaran)?.sintaks_inti,
+        isFieldOwnedByTeacher,
       ),
+    setAiUsage,
+    setAiCacheWarning,
   );
+
+  useEffect(() => {
+    return () => {
+      fieldControllers.current.forEach(controller => controller.abort());
+      queueHookResult.cancelJob();
+    };
+  }, [user?.id, formState.mataPelajaran, formState.topik, formState.fase, formState.kelas]);
 
   const queueStatus = isAiEnabled ? queueHookResult.jobStatus : 'idle';
 
@@ -220,13 +239,16 @@ const ModulAjarCreatorPage: React.FC = () => {
     setRegenerateConfirmOpen(false);
     setMobileActiveView('preview');
     if (isAiEnabled) {
-      queueHookResult.startJob();
+      fieldControllers.current.forEach(controller => controller.abort());
+      setAiCacheWarning(null);
+      queueHookResult.startJob(requestedPolicy.current);
     } else {
       generateManualModulAjar();
     }
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = (cachePolicy: 'reuse' | 'refresh' = 'reuse') => {
+    requestedPolicy.current = cachePolicy;
     if (!formState.mataPelajaran || !formState.topik) {
       toast.error(t.lessonPlan.validateSubject);
       return;
@@ -263,13 +285,18 @@ const ModulAjarCreatorPage: React.FC = () => {
     capaianPembelajaran: 'Capaian Pembelajaran',
   };
 
-  const handleAiFillField = async (field: string) => {
+  const handleAiFillField = async (field: string, refresh = false) => {
+    if (fieldControllers.current.has(field) || queueHookResult.isSubmitting) return;
     if (!formState.mataPelajaran?.trim() || !formState.topik?.trim()) {
       toast.error('Silakan isi Mata Pelajaran dan Topik terlebih dahulu sebelum menggunakan AI.');
       return;
     }
 
     const label = FIELD_LABELS[field] || 'konten';
+    const controller = new AbortController();
+    fieldControllers.current.set(field, controller);
+    let artifact: Record<string, unknown> | undefined;
+    const options: ModulAiOptions = { cachePolicy: refresh ? 'refresh' : 'reuse', signal: controller.signal, onUsage: setAiUsage, onWarning: setAiCacheWarning, onArtifact: value => { artifact = value; } };
     setFieldLoading((prev) => ({ ...prev, [field]: true }));
     try {
       const ctx = {
@@ -277,8 +304,19 @@ const ModulAjarCreatorPage: React.FC = () => {
         topik: formState.topik.trim(),
         fase: formState.fase || 'A',
         kelas: formState.kelas,
+        capaianPembelajaran: formState.capaianPembelajaran,
+        daftarPustaka: (formState.manualDaftarPustaka || '').split('\n').filter(Boolean),
+        tujuanPembelajaran: formState.manualTujuanPembelajaran,
+        materiAjar: formState.manualMateriAjar,
+        lkpdTugas: formState.manualLkpdTugas,
         modelPembelajaran: formState.modelPembelajaran,
-        alokasiWaktu: `${formState.jpPerPertemuan} JP × ${formState.durasiPerJp} menit`,
+        cpSource: formState.aiCpSource,
+        sintaks: models.find(model => model.id === formState.selectedModelId || model.nama_model === formState.modelPembelajaran)?.sintaks_inti,
+        metodePembelajaran: formState.metodePembelajaran,
+        jumlahPertemuan: formState.jumlahPertemuan,
+        alokasi: { pendahuluan: formState.alokasiPendahuluan, inti: formState.alokasiInti, penutup: formState.alokasiPenutup },
+        teacherContent: Object.fromEntries(CONTENT_FIELDS.map(key => [key, String(formState[key] ?? '')])),
+        alokasiWaktu: `${formState.jumlahPertemuan} pertemuan × ${formState.jpPerPertemuan} JP × ${formState.durasiPerJp} menit`,
         profilPelajarPancasila: formState.profilPelajar,
         temaKbc: formState.temaKbc,
         materiInsersi: formState.materiInsersi,
@@ -289,37 +327,37 @@ const ModulAjarCreatorPage: React.FC = () => {
 
       switch (field) {
         case 'manualTujuanPembelajaran':
-          content = await generateTujuanPembelajaran(ctx);
+          content = await generateTujuanPembelajaran(ctx, options);
           break;
         case 'manualPemahamanBermakna':
-          content = await generatePemahamanBermakna(ctx);
+          content = await generatePemahamanBermakna(ctx, options);
           break;
         case 'manualPertanyaanPemantik':
-          content = await generatePertanyaanPemantik(ctx);
+          content = await generatePertanyaanPemantik(ctx, options);
           break;
         case 'manualMateriAjar':
-          content = await generateMateriAjar(ctx);
+          content = await generateMateriAjar(ctx, options);
           break;
         case 'manualLkpdTugas':
-          content = await generateLkpdTugas(ctx);
+          content = await generateLkpdTugas(ctx, options);
           break;
         case 'manualSoalEvaluasi':
-          content = await generateSoalEvaluasi(ctx);
+          content = await generateSoalEvaluasi(ctx, assessment => handleInputChange('generatedAssessment', assessment), options);
           break;
         case 'manualPengayaan':
-          content = await generatePengayaan(ctx);
+          content = await generatePengayaan(ctx, options);
           break;
         case 'manualRemedial':
-          content = await generateRemedial(ctx);
+          content = await generateRemedial(ctx, options);
           break;
         case 'manualGlosarium':
-          content = await generateGlosarium(ctx);
+          content = await generateGlosarium(ctx, options);
           break;
         case 'manualDaftarPustaka':
           content = await generateDaftarPustaka(ctx);
           break;
         case 'kompetensiAwal':
-          content = await generateKompetensiAwal(ctx);
+          content = await generateKompetensiAwal(ctx, options);
           break;
         case 'capaianPembelajaran':
           content = await generateCapaianPembelajaran(ctx);
@@ -328,17 +366,26 @@ const ModulAjarCreatorPage: React.FC = () => {
           return;
       }
 
+      if (controller.signal.aborted) return;
       if (content) {
-        if (isContentField(field)) setFieldFromAi(field, content);
-        else handleInputChange(field as keyof FormState, content);
-        toast.success(`✨ ${label} berhasil disusun oleh AI!`);
+        if (isContentField(field)) {
+          setFieldFromAi(field, content);
+          if (artifact) saveFieldArtifact(field, content, artifact);
+        }
+        else {
+          handleInputChange(field as keyof FormState, content);
+          if (field === 'capaianPembelajaran') setFormState(prev => ({ ...prev, aiCpSource: 'bank_verified' }));
+        }
+        toast.success(field === 'capaianPembelajaran' ? 'CP berhasil dimuat dari bank terverifikasi.' : field === 'manualDaftarPustaka' ? 'Sumber referensi berhasil dimuat.' : `✨ ${label} berhasil disusun oleh AI!`);
       } else {
         toast.error(`Gagal menghasilkan ${label}. Silakan coba lagi.`);
       }
     } catch (err: any) {
+      if (controller.signal.aborted) return;
       console.error(`[AI Field] ${field} generation failed:`, err);
       toast.error(err.message || `Gagal menyusun ${label} dengan AI. Silakan coba lagi.`);
     } finally {
+      if (fieldControllers.current.get(field) === controller) fieldControllers.current.delete(field);
       setFieldLoading((prev) => ({ ...prev, [field]: false }));
     }
   };
@@ -521,7 +568,7 @@ const ModulAjarCreatorPage: React.FC = () => {
         fileName,
         paperSize: formState.paperSize,
       });
-      toast.success('PDF berhasil diunduh!');
+      toast.info('Pilih Simpan sebagai PDF pada dialog cetak untuk menyimpan dokumen.');
     } catch (err: any) {
       console.error('Failed to export PDF:', err);
       toast.error(`Gagal mengunduh PDF: ${err.message || 'Terjadi kesalahan'}`);
@@ -541,7 +588,7 @@ const ModulAjarCreatorPage: React.FC = () => {
     }
   };
 
-  const handleExportWord = () => {
+  const handleExportWord = async () => {
     if (useServerExport) {
       exportPreviewFromServer('docx');
       return;
@@ -550,20 +597,26 @@ const ModulAjarCreatorPage: React.FC = () => {
     const htmlContent = getDocumentForOutput(targetRef);
     if (!htmlContent) return;
 
+    if (exportInFlightRef.current) return;
+    exportInFlightRef.current = true;
+    setExportingKey('preview:docx');
     try {
       const typeSuffix = previewMode === 'siswa' ? 'LKPD_Siswa' : formState.documentType;
-      exportModulAjarToWord({
+      await exportModulAjarToWord({
         htmlContent,
         fileName: `${typeSuffix}_${formState.mataPelajaran}_Kelas${formState.kelas}`,
         paperSize: formState.paperSize,
         title: `${typeSuffix} ${formState.mataPelajaran}`,
       });
-      toast.success('File Word (.doc) berhasil diunduh');
+      toast.success('File Word (.docx) berhasil diunduh');
     } catch (err: unknown) {
       console.error('Failed to export Word:', err);
       toast.error(
         `Gagal mengunduh Word: ${err instanceof Error ? err.message : 'Terjadi kesalahan'}`,
       );
+    } finally {
+      exportInFlightRef.current = false;
+      setExportingKey(null);
     }
   };
 
@@ -669,7 +722,7 @@ const ModulAjarCreatorPage: React.FC = () => {
         fileName,
         paperSize: item.components?.paperSize === 'F4' ? 'F4' : 'A4',
       });
-      toast.success('PDF berhasil diunduh!');
+      toast.info('Pilih Simpan sebagai PDF pada dialog cetak untuk menyimpan dokumen.');
     } catch (err: any) {
       console.error('Failed to export history PDF:', err);
       toast.error(`Gagal mengunduh PDF: ${err.message || 'Terjadi kesalahan'}`);
@@ -684,19 +737,25 @@ const ModulAjarCreatorPage: React.FC = () => {
     }
     const htmlContent = await loadPlanContent(item);
     if (!htmlContent) return;
+    if (exportInFlightRef.current) return;
+    exportInFlightRef.current = true;
+    setExportingKey(`${item.id}:docx`);
     try {
-      exportModulAjarToWord({
+      await exportModulAjarToWord({
         htmlContent,
         fileName: `${item.document_type || 'ModulAjar'}_${item.identity?.mapel || 'Mapel'}_Kelas${item.identity?.kelas || ''}`,
         paperSize: item.components?.paperSize === 'F4' ? 'F4' : 'A4',
         title: item.document_type || 'Modul Ajar',
       });
-      toast.success('File Word (.doc) berhasil diunduh');
+      toast.success('File Word (.docx) berhasil diunduh');
     } catch (err: unknown) {
       console.error('Failed to export history Word:', err);
       toast.error(
         `Gagal mengunduh Word: ${err instanceof Error ? err.message : 'Terjadi kesalahan'}`,
       );
+    } finally {
+      exportInFlightRef.current = false;
+      setExportingKey(null);
     }
   };
 
@@ -714,7 +773,7 @@ const ModulAjarCreatorPage: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col lg:flex-row gap-5 pb-20 lg:pb-0">
+    <div className="h-full min-w-0 flex flex-col gap-3 pb-20 lg:pb-0">
       {deletedPlan && (
         <UndoBar
           key={deletedPlan.id}
@@ -765,7 +824,7 @@ const ModulAjarCreatorPage: React.FC = () => {
             <span className="text-amber-500 dark:text-amber-400 font-bold">⚠️</span>
             <div className="flex-1">
               <p className="font-bold text-amber-800 dark:text-amber-200">
-                Draf AI tidak tersimpan ke Bank
+                Cache pribadi AI
               </p>
               <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{aiCacheWarning}</p>
             </div>
@@ -780,6 +839,14 @@ const ModulAjarCreatorPage: React.FC = () => {
         </div>
       )}
 
+      {aiUsage && (
+        <div role="status" aria-live="polite" className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+          {aiUsage.cacheHit ? 'Hasil tersimpan digunakan · 0 panggilan AI · 0 token baru' : aiUsage.shared ? 'Permintaan yang sama digunakan · 0 panggilan tambahan' : `${aiUsage.attempts.length} panggilan AI · ${aiUsage.tokens.total === null ? 'Jumlah token tidak dilaporkan provider' : `${aiUsage.tokens.total.toLocaleString('id-ID')} token`}`}
+          {aiUsage.attempts.length > 0 && <p className="mt-1 break-words text-xs text-slate-500 dark:text-slate-400">{[...new Set(aiUsage.attempts.map(attempt => `${attempt.provider} / ${attempt.model}`))].join(', ')}</p>}
+        </div>
+      )}
+
+      <div className="flex min-w-0 flex-1 flex-col gap-5 lg:flex-row">
       {/* Mobile Segmented View Switcher (< lg) */}
       <div className="lg:hidden flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700 shrink-0">
         <button
@@ -820,11 +887,15 @@ const ModulAjarCreatorPage: React.FC = () => {
         activeStep={activeStep}
         setActiveStep={setActiveStep}
         isGeneratingCP={isGeneratingCP}
-        onGenerateCP={generateCP}
+        onGenerateCP={async () => {
+          const error = await generateCP();
+          if (error) toast.error(error);
+        }}
         models={models}
         isLoadingModels={isLoadingModels}
         queueStatus={queueStatus}
-        onGenerate={handleGenerate}
+        onGenerate={() => handleGenerate('reuse')}
+        onGenerateNew={isAiEnabled ? () => handleGenerate('refresh') : undefined}
         boilerplateMissingBanner={boilerplateMissingBanner}
         onAiFillField={handleAiFillField}
         fieldLoading={fieldLoading}
@@ -852,7 +923,7 @@ const ModulAjarCreatorPage: React.FC = () => {
           onPrint={handlePrint}
           onCopy={handleCopy}
           onFullscreen={() => setIsFullscreen(true)}
-          wordExtension={useServerExport ? 'docx' : 'doc'}
+          wordExtension="docx"
           labels={{
             preview: t.lessonPlan.preview,
             history: t.lessonPlan.history,
@@ -886,7 +957,13 @@ const ModulAjarCreatorPage: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setPreviewMode('siswa')}
+                  onClick={() => {
+                    if (!extractStudentHtml(generatedDocument, documentForm ?? formState, logoBase64)) {
+                      toast.error('LKPD dan lembar evaluasi tidak dapat dikenali. Susun ulang dokumen terlebih dahulu.');
+                      return;
+                    }
+                    setPreviewMode('siswa');
+                  }}
                   className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer active:scale-95 duration-150 whitespace-nowrap flex items-center gap-1.5 ${
                     previewMode === 'siswa'
                       ? 'bg-brand-600 text-white shadow-xs'
@@ -1062,7 +1139,13 @@ const ModulAjarCreatorPage: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setPreviewMode('siswa')}
+                  onClick={() => {
+                    if (!extractStudentHtml(generatedDocument, documentForm ?? formState, logoBase64)) {
+                      toast.error('LKPD dan lembar evaluasi tidak dapat dikenali. Susun ulang dokumen terlebih dahulu.');
+                      return;
+                    }
+                    setPreviewMode('siswa');
+                  }}
                   className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-95 duration-150 whitespace-nowrap ${
                     previewMode === 'siswa'
                       ? 'bg-brand-600 text-white shadow-sm'
@@ -1152,6 +1235,7 @@ const ModulAjarCreatorPage: React.FC = () => {
           </MotionDiv>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 };

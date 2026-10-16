@@ -34,6 +34,9 @@ export interface FormState {
   manualMateriAjar?: string;
   manualLkpdTugas: string;
   manualSoalEvaluasi: string;
+  generatedAssessment?: { soal: string; kunci: string[] };
+  aiArtifacts?: { scope: string; content: Partial<import('../../../services/modulAjarAiContract').ModulAjarGeneration>; values: Record<string, string> };
+  aiCpSource?: 'guru' | 'bank_verified';
   manualPengayaan?: string;
   manualRemedial?: string;
   manualGlosarium?: string;

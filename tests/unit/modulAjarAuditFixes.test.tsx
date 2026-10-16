@@ -9,10 +9,12 @@ const fx = vi.hoisted(() => ({
   inserts: [] as any[],
   boilerplate: null as any,
   aiCalls: [] as any[],
+  cpError: '',
 }));
 
 vi.mock('../../src/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'u1', name: 'Guru A' } }) }));
 vi.mock('../../src/contexts/SemesterContext', () => ({ useOptionalSemester: () => null }));
+vi.mock('../../src/services/modulAjarReferenceService', () => ({ getVerifiedLessonCp: async () => { if (fx.cpError) throw new Error(fx.cpError); return { cp: 'CP terverifikasi', sources: ['Sumber'] }; } }));
 vi.mock('../../src/services/modelIdResolver', () => ({ resolveModelId: async () => null }));
 vi.mock('../../src/services/modulAjarContentService', () => ({
   modulAjarContentService: {
@@ -43,6 +45,8 @@ vi.mock('../../src/services/supabase', () => ({
 import { buildHtmlTemplate, extractStudentHtml } from '../../src/components/pages/modul-ajar/utils/template';
 import { useModulAjarGenerator } from '../../src/components/pages/modul-ajar/hooks/useModulAjarGenerator';
 import { createDefaultFormState, useModulAjarForm } from '../../src/components/pages/modul-ajar/hooks/useModulAjarForm';
+import { buildAiPromptContext } from '../../src/components/pages/modul-ajar/utils/aiPromptContext';
+import { validLesson } from '../fixtures/modulAjarAiContent';
 import { useModulAjarAiJob } from '../../src/components/pages/modul-ajar/hooks/useModulAjarAiJob';
 
 const notify = { success: vi.fn(), error: vi.fn() };
@@ -63,6 +67,7 @@ const renderWorkspace = () =>
       setAiCacheWarning: vi.fn(),
       isFieldOwnedByTeacher: form.isFieldOwnedByTeacher,
       applyGeneratedContent: form.applyGeneratedContent,
+      getFieldOrigins: form.getFieldOrigins,
       notify,
     });
     return { form, gen };
@@ -86,6 +91,7 @@ beforeEach(() => {
   fx.inserts = [];
   fx.boilerplate = null;
   fx.aiCalls = [];
+  fx.cpError = '';
   notify.success.mockReset();
   notify.error.mockReset();
 });
@@ -193,6 +199,33 @@ describe('restore and reset', () => {
   });
 });
 
+describe('AI provenance after restoring a document', () => {
+  it('keeps generated fields out of teacher context and keeps typed artifacts reusable', async () => {
+    const ws = renderWorkspace();
+    setFields(ws, { ...lesson, modelPembelajaran: 'Discovery Learning', isKbcIntegrated: true, materiInsersi: 'cinta ilmu', manualMateriAjar: 'Materi tulisan guru' });
+    const context = () => buildAiPromptContext(ws.result.current.form.formState, ws.result.current.form.isFieldOwnedByTeacher('manualTujuanPembelajaran') ? ws.result.current.form.formState.manualTujuanPembelajaran : '', ['Amati', 'Simpulkan'], ws.result.current.form.isFieldOwnedByTeacher);
+    const original = context();
+    await act(async () => {
+      await ws.result.current.gen.renderPrivateDraftAiModulAjar({ ...validLesson, artifact: validLesson, capaianPembelajaran: 'CP', daftarPustaka: [], lkpdTugas: 'LKPD', soalEvaluasi: 'Soal', kunciJawaban: ['Kunci'], quality: { version: 2, reviewedByAi: true, cpSource: 'guru', referencesSource: 'input', warnings: [] } });
+    });
+    const saved = fx.inserts[0];
+    act(() => { ws.result.current.form.resetFormToDraft(saved); });
+    const restored = context();
+    const { reusableContent: _before, ...before } = original;
+    const { reusableContent: reusable, ...after } = restored;
+    expect(after).toEqual(before);
+    expect(reusable?.evaluasi).toEqual(validLesson.evaluasi);
+    expect(ws.result.current.form.formState.manualTujuanPembelajaran).not.toContain('cinta ilmu');
+    expect(ws.result.current.form.isFieldOwnedByTeacher('manualMateriAjar')).toBe(true);
+    expect(ws.result.current.form.isFieldOwnedByTeacher('manualTujuanPembelajaran')).toBe(false);
+    setFields(ws, { manualLkpdTugas: 'LKPD diedit guru' });
+    expect(context().reusableContent).not.toHaveProperty('lkpd');
+    expect(context().teacherContent?.lkpdTugas).toBe('LKPD diedit guru');
+    setFields(ws, { alokasiInti: 40 });
+    expect(context().reusableContent).toEqual({});
+  });
+});
+
 describe('Lembar Siswa', () => {
   const form = createDefaultFormState({ guru: 'Guru A', tahunAjaran: '2026/2027', semester: 'Ganjil' });
   Object.assign(form, { mataPelajaran: 'IPAS', kelas: '3', fase: 'B', topik: 'Siklus Air' });
@@ -234,5 +267,45 @@ describe('AI job', () => {
     const { result } = renderHook(() => useModulAjarAiJob(form, vi.fn(), vi.fn(), () => context));
     await act(async () => { await result.current.startJob(); });
     expect(fx.aiCalls[0][6]).toEqual(context);
+  });
+});
+
+
+describe('assessment keys stay with their questions', () => {
+  it('saves per-field AI keys and discards them after a question edit', async () => {
+    const ws = renderWorkspace();
+    setFields(ws, lesson);
+    act(() => {
+      ws.result.current.form.setFieldFromAi('manualSoalEvaluasi', '1. Soal dari AI');
+      ws.result.current.form.handleInputChange('generatedAssessment', { soal: '1. Soal dari AI', kunci: ['1. Jawaban AI'] });
+    });
+    await generate(ws);
+    expect(fx.inserts[0].components.kunciJawaban).toEqual(['1. Jawaban AI']);
+    setFields(ws, { manualSoalEvaluasi: '1. Soal baru' });
+    expect(ws.result.current.form.formState.generatedAssessment).toBeUndefined();
+    await generate(ws);
+    expect(fx.inserts[1].components.kunciJawaban).toEqual([]);
+  });
+  it('saves the CP used by the actual generated document', async () => {
+    const ws = renderWorkspace();
+    setFields(ws, { ...lesson, capaianPembelajaran: '' });
+    await act(async () => { await ws.result.current.gen.renderPrivateDraftAiModulAjar({ capaianPembelajaran: 'CP bank', tujuanPembelajaran: ['TP'], lkpdTugas: 'LKPD', soalEvaluasi: 'Soal', kunciJawaban: ['Jawaban'] }); });
+    expect(fx.inserts[0].components.cp).toBe('CP bank');
+  });
+});
+
+
+describe('CP source feedback', () => {
+  it('loads verified CP into the form', async () => {
+    const ws = renderWorkspace(); setFields(ws, lesson);
+    await act(async () => { await ws.result.current.form.generateCP(); });
+    expect(ws.result.current.form.formState.capaianPembelajaran).toBe('CP terverifikasi');
+  });
+  it('returns missing-source feedback without replacing teacher CP', async () => {
+    const ws = renderWorkspace(); setFields(ws, lesson); fx.cpError = 'Isi CP dari dokumen sumber sekolah.';
+    let error: string | undefined;
+    await act(async () => { error = await ws.result.current.form.generateCP(); });
+    expect(error).toContain('dokumen sumber sekolah');
+    expect(ws.result.current.form.formState.capaianPembelajaran).toBe('CP');
   });
 });

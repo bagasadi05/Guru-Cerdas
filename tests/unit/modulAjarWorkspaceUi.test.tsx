@@ -250,7 +250,7 @@ describe('ModulAjarForm wizard', () => {
   it('explains why generating is blocked and links back to the missing step', () => {
     const setActiveStep = vi.fn();
     renderForm(5, { mataPelajaran: 'IPAS', topik: '' }, setActiveStep);
-    const generate = screen.getByRole('button', { name: /Buat Modul Ajar/ });
+    const generate = screen.getByRole('button', { name: /Susun dokumen|Buat Modul Ajar/ });
     expect(generate).toBeDisabled();
     expect(generate).toHaveAttribute('aria-describedby', 'generate-blocked-reason');
     expect(screen.getByRole('status')).toHaveTextContent('Isi Topik di Langkah 2');
@@ -261,7 +261,7 @@ describe('ModulAjarForm wizard', () => {
 
   it('enables generating without a warning once subject and topic are filled', () => {
     renderForm(5, { mataPelajaran: 'IPAS', topik: 'Siklus Air' });
-    expect(screen.getByRole('button', { name: /Buat Modul Ajar/ })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /Susun dokumen|Buat Modul Ajar/ })).toBeEnabled();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 

@@ -1,3 +1,5 @@
+import { validBudget, geminiConfig, upstreamAbort } from './_aiBudget';
+import { retryHint, type AiBudgetProfile } from '../src/lib/aiRequestPolicy';
 import type { IncomingMessage, ServerResponse } from 'http';
 import { authenticateRequest } from './_auth';
 
@@ -60,11 +62,11 @@ function pickNextKey(): string | null {
     if (cooldownUntil <= now) return key;
   }
   // All keys in cooldown — use the next one anyway (client will honor Retry-After).
-  return keys[keyIndex % keys.length];
+  return null;
 }
 
 function markKeyCooldown(key: string, ms: number): void {
-  keyCooldowns.set(key, Date.now() + Math.min(ms || RATE_LIMIT_WINDOW_MS, RATE_LIMIT_WINDOW_MS));
+  keyCooldowns.set(key, Date.now() + Math.max(ms || RATE_LIMIT_WINDOW_MS, 0));
 }
 
 function parseRetryAfterSeconds(header: string | null | undefined): number {
@@ -260,12 +262,14 @@ function isModelAllowed(model: unknown): model is string {
 
 function isBodyValid(body: any): body is {
   model: string;
+  budgetProfile?: AiBudgetProfile;
+  meetings?: number;
   contents: { parts: unknown[] }[];
   systemInstruction?: unknown;
   generationConfig?: unknown;
   safetySettings?: unknown;
 } {
-  if (!body || typeof body !== 'object') return false;
+  if (!body || typeof body !== 'object' || !validBudget(body)) return false;
   if (!isModelAllowed(body.model)) return false;
   if (!Array.isArray(body.contents) || body.contents.length === 0 || body.contents.length > 50) return false;
   for (const item of body.contents) {
@@ -283,6 +287,7 @@ function isBodyValid(body: any): body is {
 export default async function handler(req: ExtendedRequest, res: ExtendedResponse): Promise<void> {
   const requestId = getRequestId(req);
   res.setHeader('X-Request-Id', requestId);
+  res.setHeader('X-AI-Fallback-Available', (process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY) ? 'true' : 'false');
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -340,9 +345,11 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
   // the client injected beyond the whitelisted Gemini body keys.
   const payload: Record<string, unknown> = { contents: body.contents };
   if (body.systemInstruction) payload.systemInstruction = body.systemInstruction;
-  if (body.generationConfig) payload.generationConfig = body.generationConfig;
+  const config = geminiConfig(body);
+  if (config) payload.generationConfig = config;
   if (body.safetySettings) payload.safetySettings = body.safetySettings;
 
+  const abort = upstreamAbort(req, res);
   try {
     const upstream = await fetch(
       `${GEMINI_BASE_URL}/${body.model}:generateContent?key=${encodeURIComponent(apiKey)}`,
@@ -350,6 +357,7 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
+        signal: abort.signal,
       }
     );
 
@@ -357,7 +365,7 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
     const retryAfter = upstream.headers.get('retry-after');
     if (retryAfter) res.setHeader('Retry-After', retryAfter);
     if (upstream.status === 429) {
-      markKeyCooldown(apiKey, parseRetryAfterSeconds(retryAfter) * 1000);
+      markKeyCooldown(apiKey, Math.max(retryHint(retryAfter, text), parseRetryAfterSeconds(retryAfter) * 1000));
     }
 
     res.status(upstream.status);
@@ -366,5 +374,7 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
     res.send(text);
   } catch {
     res.status(502).json({ error: 'Failed to reach Gemini', requestId });
+  } finally {
+    abort.dispose();
   }
 }

@@ -1,3 +1,5 @@
+import { validBudget, groqConfig, upstreamAbort } from './_aiBudget';
+import { retryHint, type AiBudgetProfile } from '../src/lib/aiRequestPolicy';
 import type { IncomingMessage, ServerResponse } from 'http';
 import { authenticateRequest } from './_auth';
 
@@ -56,11 +58,11 @@ function pickNextKey(): string | null {
     const cooldownUntil = keyCooldowns.get(key) || 0;
     if (cooldownUntil <= now) return key;
   }
-  return keys[keyIndex % keys.length];
+  return null;
 }
 
 function markKeyCooldown(key: string, ms: number): void {
-  keyCooldowns.set(key, Date.now() + Math.min(ms || RATE_LIMIT_WINDOW_MS, RATE_LIMIT_WINDOW_MS));
+  keyCooldowns.set(key, Date.now() + Math.max(ms || RATE_LIMIT_WINDOW_MS, 0));
 }
 
 function parseRetryAfterSeconds(header: string | null | undefined): number {
@@ -201,17 +203,19 @@ async function allowRequestRedis(
 
 function isModelAllowed(model: unknown): model is string {
   if (typeof model !== 'string') return false;
-  return /^(llama|mixtral|gemma)-[a-z0-9._-]+$/i.test(model);
+  return model === 'openai/gpt-oss-20b' || /^(llama|mixtral|gemma)-[a-z0-9._-]+$/i.test(model);
 }
 
 function isBodyValid(body: any): body is {
   model: string;
+  budgetProfile?: AiBudgetProfile;
+  meetings?: number;
   messages: { role: string; content: string }[];
   temperature?: number;
   max_tokens?: number;
   response_format?: unknown;
 } {
-  if (!body || typeof body !== 'object') return false;
+  if (!body || typeof body !== 'object' || !validBudget(body)) return false;
   if (!isModelAllowed(body.model)) return false;
   if (!Array.isArray(body.messages) || body.messages.length === 0) return false;
   try {
@@ -270,10 +274,13 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
 
   const apiKey = pickNextKey();
   if (!apiKey) {
-    res.status(500).json({ error: 'GROQ_API_KEY is not configured' });
+    const waitMs = Math.max(1000, Math.min(...getKeys().map(key => keyCooldowns.get(key) ?? Date.now())) - Date.now());
+    res.setHeader('Retry-After', String(Math.ceil(waitMs / 1000)));
+    res.status(429).json({ error: 'Provider keys are cooling down' });
     return;
   }
 
+  const abort = upstreamAbort(req, res);
   try {
     const upstream = await fetch(GROQ_BASE_URL, {
       method: 'POST',
@@ -281,12 +288,12 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
+      signal: abort.signal,
       body: JSON.stringify({
         model: body.model,
         messages: body.messages,
         temperature: body.temperature ?? 0.7,
-        max_tokens: body.max_tokens ?? 4096,
-        ...(body.response_format ? { response_format: body.response_format } : {}),
+        ...groqConfig(body),
       }),
     });
 
@@ -294,7 +301,7 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
     const retryAfter = upstream.headers.get('retry-after');
     if (retryAfter) res.setHeader('Retry-After', retryAfter);
     if (upstream.status === 429) {
-      markKeyCooldown(apiKey, parseRetryAfterSeconds(retryAfter) * 1000);
+      markKeyCooldown(apiKey, Math.max(retryHint(retryAfter, text), parseRetryAfterSeconds(retryAfter) * 1000));
     }
 
     res.status(upstream.status);
@@ -302,5 +309,7 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
     res.send(text);
   } catch {
     res.status(502).json({ error: 'Failed to reach Groq' });
+  } finally {
+    abort.dispose();
   }
 }

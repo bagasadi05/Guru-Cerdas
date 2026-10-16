@@ -43,8 +43,9 @@ interface ModulAjarFormProps {
   isLoadingModels: boolean;
   queueStatus: string;
   onGenerate: () => void;
+  onGenerateNew?: () => void;
   boilerplateMissingBanner?: string | null;
-  onAiFillField?: (field: string) => void;
+  onAiFillField?: (field: string, refresh?: boolean) => void;
   fieldLoading?: Record<string, boolean>;
   isAiGenerating?: boolean;
   onResetForm?: () => void;
@@ -64,6 +65,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
   onGenerateCP,
   queueStatus,
   onGenerate,
+  onGenerateNew,
   onAiFillField,
   fieldLoading,
   isAiGenerating,
@@ -84,7 +86,7 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
     ? (activeSemester.name.toLowerCase().includes('genap') || activeSemester.semester_number === 2 ? 'Genap' : 'Ganjil')
     : (defaultTerm.semester === '1' ? 'Ganjil' : 'Genap');
 
-  const aiProps = { onAiFillField, fieldLoading };
+  const aiProps = { onAiFillField, fieldLoading, fieldValues: Object.fromEntries(Object.entries(formState).map(([field, value]) => [field, typeof value === 'string' ? value : ''])) };
 
   const [hasMovedPastFirstStep, setHasMovedPastFirstStep] = useState(activeStep > 1);
   if (activeStep > 1 && !hasMovedPastFirstStep) setHasMovedPastFirstStep(true);
@@ -374,12 +376,12 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
             </button>
           </p>
         )}
-        <div className="p-3.5 lg:p-4 flex justify-between items-center gap-3">
+        <div className={`p-3.5 lg:p-4 flex justify-between items-center gap-3 ${activeStep === 5 ? 'flex-col sm:flex-row' : ''}`}>
           {activeStep > 1 ? (
             <button
               type="button"
               onClick={() => setActiveStep(prev => prev - 1)}
-              className="px-3.5 py-2 sm:px-4 sm:py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 duration-150"
+              className="min-h-11 shrink-0 whitespace-nowrap self-start sm:self-auto px-3.5 py-2 sm:px-4 sm:py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-colors cursor-pointer active:scale-95 duration-150"
             >
               <ChevronLeft className="w-4 h-4" aria-hidden="true" />
               <span>{t.lessonPlan.previous}</span>
@@ -398,16 +400,22 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
               <ChevronRight className="w-4 h-4" aria-hidden="true" />
             </button>
           ) : (
+            <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:items-end">
             <button
               type="button"
               onClick={onGenerate}
               disabled={queueStatus === 'pending' || queueStatus === 'processing' || isAiGenerating || !!generateBlockedReason}
               aria-describedby={generateBlockedReason ? 'generate-blocked-reason' : undefined}
-              className="px-4 py-2 sm:px-5 sm:py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-md transition-all text-xs sm:text-sm cursor-pointer active:scale-95 duration-150"
+              className="min-h-11 justify-center px-4 py-2 sm:px-5 sm:py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-md transition-all text-xs sm:text-sm cursor-pointer active:scale-95 duration-150"
             >
               <Sparkles className="w-4 h-4" aria-hidden="true" />
-              <span>{t.lessonPlan.create.replace('{type}', formState.documentType)}</span>
+              <span>{isAiEnabled ? 'Susun dokumen' : t.lessonPlan.create.replace('{type}', formState.documentType)}</span>
             </button>
+              {onGenerateNew && <button type="button" onClick={onGenerateNew} disabled={queueStatus === 'pending' || queueStatus === 'processing' || isAiGenerating || !!generateBlockedReason}
+                className="min-h-11 rounded-lg px-3 py-2 text-xs font-semibold text-brand-700 hover:bg-brand-50 focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50 dark:text-brand-300 dark:hover:bg-brand-900/30">
+                Buat versi AI baru
+              </button>}
+            </div>
           )}
         </div>
       </div>

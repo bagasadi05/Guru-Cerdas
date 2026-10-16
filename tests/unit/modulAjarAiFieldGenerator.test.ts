@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as fieldGen from '../../src/services/modulAjarAiFieldGenerator';
+import { validLesson, validReview } from '../fixtures/modulAjarAiContent';
+vi.mock('../../src/services/modulAjarReferenceService', () => ({ getVerifiedLessonCp: vi.fn(async () => ({ cp: 'CP terverifikasi fotosintesis', sources: ['Sumber CP terverifikasi'] })) }));
 import * as geminiService from '../../src/services/geminiService';
 
 vi.mock('../../src/services/supabase', () => ({
@@ -24,6 +26,7 @@ vi.mock('../../src/services/supabase', () => ({
 
 describe('Modul Ajar AI Field Generator Suite', () => {
   const baseCtx: fieldGen.FieldContext = {
+    tujuanPembelajaran: 'Siswa menjelaskan siklus air.',
     mapel: 'IPAS',
     topik: 'Fotosintesis Tumbuhan',
     fase: 'B',
@@ -37,7 +40,7 @@ describe('Modul Ajar AI Field Generator Suite', () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('1. generateTujuanPembelajaran returns multi-line TP string', async () => {
@@ -91,23 +94,25 @@ describe('Modul Ajar AI Field Generator Suite', () => {
 
   it('5. generateLkpdTugas returns complete structured LKPD', async () => {
     vi.spyOn(geminiService, 'generateGeminiJson').mockResolvedValueOnce({
-      lkpd: '### LKPD: Menyelidiki Fotosintesis\n**Alat dan Bahan:** Daun, Air, Wadah kaca\n[Kotak untuk Menuliskan Jawaban]'
+      lkpd: { ...validLesson.lkpd, judul: 'Menyelidiki Fotosintesis' }
     });
 
     const result = await fieldGen.generateLkpdTugas(baseCtx);
-    expect(result).toContain('### LKPD: Menyelidiki Fotosintesis');
+    expect(result).toContain('Judul LKPD: Menyelidiki Fotosintesis');
     expect(result).toContain('[Kotak untuk Menuliskan Jawaban]');
   });
 
-  it('6. generateSoalEvaluasi returns clean questions and extracts scoring guide', async () => {
-    vi.spyOn(geminiService, 'generateGeminiJson').mockResolvedValueOnce({
-      soal: '1. Gas yang dihasilkan dari proses fotosintesis adalah...\nA. Oksigen\nB. Karbon dioksida\nC. Nitrogen\nD. Helium\n\n4. Jelaskan peran klorofil pada fotosintesis!',
-      kunci: ['1. A. Oksigen', '4. Klorofil menyerap cahaya matahari (Skor 50)']
-    });
-
-    const result = await fieldGen.generateSoalEvaluasi(baseCtx);
-    expect(result).toContain('1. Gas yang dihasilkan');
-    expect(result).toContain('4. Jelaskan peran klorofil');
+  it('6. generates structured questions after reviewing their keys', async () => {
+    vi.spyOn(geminiService, 'generateGeminiJson').mockResolvedValueOnce({ evaluasi: validLesson.evaluasi }).mockResolvedValueOnce(validReview);
+    const received = vi.fn();
+    const result = await fieldGen.generateSoalEvaluasi(baseCtx, received);
+    expect(received).toHaveBeenCalledWith({ soal: result, kunci: expect.arrayContaining([expect.stringContaining('Pedoman penskoran')]) });
+    expect(result).toContain('A. Penguapan');
+    expect(result).toContain('5. Jelaskan penguapan.');
+    expect(result).not.toContain('Pedoman penskoran');
+  });
+  it('requires objectives before generating questions', async () => {
+    await expect(fieldGen.generateSoalEvaluasi({ ...baseCtx, tujuanPembelajaran: '' })).rejects.toThrow('tujuan pembelajaran');
   });
 
   it('7. generatePengayaan returns enrichment activities', async () => {
@@ -151,17 +156,14 @@ describe('Modul Ajar AI Field Generator Suite', () => {
     expect(result).toContain('Stomata:');
   });
 
-  it('10. generateDaftarPustaka returns official reference bibliography', async () => {
-    vi.spyOn(geminiService, 'generateGeminiJson').mockResolvedValueOnce({
-      daftarPustaka: [
-        'Kemendikbudristek. (2022). Buku Panduan Guru IPAS Kelas IV. Jakarta: Puskurbuk.',
-        'Kemenag RI. (2025). Panduan Kurikulum Berbasis Cinta pada Madrasah Ibtidaiyah.'
-      ]
-    });
-
-    const result = await fieldGen.generateDaftarPustaka(baseCtx);
-    expect(result).toContain('Buku Panduan Guru IPAS Kelas IV');
-    expect(result).toContain('Panduan Kurikulum Berbasis Cinta');
+  it('10. preserves reference input without asking AI to invent sources', async () => {
+    const spy = vi.spyOn(geminiService, 'generateGeminiJson');
+    const result = await fieldGen.generateDaftarPustaka({ ...baseCtx, daftarPustaka: ['Buku yang digunakan guru'] });
+    expect(result).toBe('Buku yang digunakan guru');
+    expect(spy).not.toHaveBeenCalled();
+  });
+  it('loads source-attributed CP references when bibliography is empty', async () => {
+    expect(await fieldGen.generateDaftarPustaka(baseCtx)).toContain('Sumber CP terverifikasi');
   });
 
   it('11. generateKompetensiAwal returns prerequisite knowledge', async () => {
@@ -173,12 +175,9 @@ describe('Modul Ajar AI Field Generator Suite', () => {
     expect(result).toContain('bagian-bagian utama tumbuhan');
   });
 
-  it('12. generateCapaianPembelajaran returns topic-specific CP fallback', async () => {
-    vi.spyOn(geminiService, 'generateGeminiJson').mockResolvedValueOnce({
-      cp: 'Peserta didik menganalisis hubungan antara bentuk serta fungsi bagian tubuh tumbuhan dan proses fotosintesis.'
-    });
-
-    const result = await fieldGen.generateCapaianPembelajaran(baseCtx);
-    expect(result).toContain('proses fotosintesis');
+  it('12. loads CP from the verified bank without AI fallback', async () => {
+    const spy = vi.spyOn(geminiService, 'generateGeminiJson');
+    expect(await fieldGen.generateCapaianPembelajaran(baseCtx)).toBe('CP terverifikasi fotosintesis');
+    expect(spy).not.toHaveBeenCalled();
   });
 });

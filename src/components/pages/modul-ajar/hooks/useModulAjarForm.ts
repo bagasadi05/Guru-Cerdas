@@ -1,3 +1,5 @@
+import { aiArtifactScope } from '../utils/aiArtifactScope';
+import type { ModulAjarGeneration } from '../../../../services/modulAjarAiContract';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { FormState } from '../types';
 import { useAuth } from '../../../../hooks/useAuth';
@@ -6,6 +8,7 @@ import { getCurrentSemester } from '../../../../utils/semesterUtils';
 import { supabase } from '../../../../services/supabase';
 import { modulAjarContentService } from '../../../../services/modulAjarContentService';
 import { clearModulAjarPrefill, peekModulAjarPrefill } from '../utils/protaPrefill';
+import { getVerifiedLessonCp } from '../../../../services/modulAjarReferenceService';
 
 /** Text fields that can be filled automatically (content bank, a generated document, AI per field). */
 export const CONTENT_FIELDS = [
@@ -28,7 +31,7 @@ export type ContentValues = Partial<Record<ContentField, string>>;
  * Where a content field's current value came from. A field without an origin,
  * or whose value no longer matches its origin, was written by the teacher.
  */
-type FieldOrigin = { value: string; key: string; kind: 'bank' | 'generated' | 'ai-field' };
+export type FieldOrigin = { value: string; key: string; kind: 'bank' | 'generated' | 'ai-field' };
 
 /** Content belongs to one subject, topic, phase and grade. */
 const contentKeyOf = (f: Pick<FormState, 'mataPelajaran' | 'topik' | 'fase' | 'kelas'>) =>
@@ -246,6 +249,16 @@ export const useModulAjarForm = () => {
     [applyAutoContent],
   );
 
+  const saveFieldArtifact = (field: ContentField, value: string, artifact: Record<string, unknown>) => {
+    setFormState(prev => {
+      const next = { ...prev, [field]: value };
+      const scope = aiArtifactScope(next);
+      const existing = prev.aiArtifacts?.scope === scope ? prev.aiArtifacts : undefined;
+      return { ...next, aiArtifacts: { scope, content: { ...existing?.content, ...artifact } as Partial<ModulAjarGeneration>, values: { ...existing?.values, [field]: value } } };
+    });
+  };
+  const getFieldOrigins = () => ({ ...fieldOriginsRef.current });
+
   const contentKey = contentKeyOf(formState);
 
   useEffect(() => {
@@ -344,6 +357,8 @@ export const useModulAjarForm = () => {
   const handleInputChange = (field: keyof FormState, value: any) => {
     setFormState((prev) => {
       const newState = { ...prev, [field]: value };
+      if (['mataPelajaran', 'topik', 'fase', 'kelas', 'manualSoalEvaluasi'].includes(field)) newState.generatedAssessment = undefined;
+      if (field === 'capaianPembelajaran') newState.aiCpSource = 'guru';
       if (field === 'kelas') {
         const k = parseInt(value);
         if (k <= 2) newState.fase = 'A';
@@ -378,24 +393,11 @@ export const useModulAjarForm = () => {
     if (!formState.mataPelajaran) return;
     setIsGeneratingCP(true);
     try {
-      const { data, error } = await supabase
-        .from('ref_capaian_pembelajaran')
-        .select('deskripsi_cp')
-        .eq('fase', formState.fase)
-        .ilike('mata_pelajaran', `%${formState.mataPelajaran}%`)
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Gagal mengambil CP:', error);
-        return;
-      }
-
-      if (data && data.deskripsi_cp) {
-        handleInputChange('capaianPembelajaran', data.deskripsi_cp);
-      }
+      const verified = await getVerifiedLessonCp(formState.mataPelajaran, formState.fase);
+      setFormState(prev => ({ ...prev, capaianPembelajaran: verified.cp, aiCpSource: 'bank_verified' }));
     } catch (err) {
       console.error('Gagal mengambil CP:', err);
+      return err instanceof Error ? err.message : 'CP tidak dapat dimuat. Isi CP dari dokumen sumber sekolah.';
     } finally {
       setIsGeneratingCP(false);
     }
@@ -433,6 +435,8 @@ export const useModulAjarForm = () => {
           kompetensiAwal: c.kompetensiAwal || '',
           saranaPrasarana: c.saranaPrasarana || '',
           capaianPembelajaran: c.cp || '',
+          aiCpSource: c.aiCpSource === 'bank_verified' ? 'bank_verified' : 'guru',
+          aiArtifacts: c.aiArtifacts || undefined,
           profilPelajar: c.profil || d.profilPelajar,
           jumlahPertemuan: c.waktu?.pertemuan || d.jumlahPertemuan,
           jpPerPertemuan: c.waktu?.jp || d.jpPerPertemuan,
@@ -448,6 +452,7 @@ export const useModulAjarForm = () => {
           manualMateriAjar: c.materiAjar || '',
           manualLkpdTugas: c.lkpdTugas || '',
           manualSoalEvaluasi: c.soalEvaluasi || '',
+          generatedAssessment: Array.isArray(c.kunciJawaban) && c.kunciJawaban.length ? { soal: c.soalEvaluasi || '', kunci: c.kunciJawaban } : undefined,
           manualPengayaan: lines(c.pengayaan, '\n\n'),
           manualRemedial: lines(c.remedial, '\n\n'),
           manualGlosarium: lines(c.glosarium, '\n'),
@@ -463,8 +468,15 @@ export const useModulAjarForm = () => {
           asesmenSikap: c.asesmenSikap || '',
           paperSize: c.paperSize || d.paperSize,
         };
-    // Restored text is the teacher's document: never treat it as automatic.
     fieldOriginsRef.current = {};
+    if (plan && c.aiFormContent && typeof c.aiFormContent === 'object') {
+      for (const field of CONTENT_FIELDS) {
+        const saved = c.aiFormContent[field];
+        if (!saved || typeof saved.value !== 'string') continue;
+        next[field] = saved.value;
+        if (['bank', 'generated', 'ai-field'].includes(saved.kind)) fieldOriginsRef.current[field] = { value: saved.value, kind: saved.kind, key: contentKeyOf(next) };
+      }
+    }
     formStateRef.current = next;
     setFormState(next);
     return next;
@@ -488,5 +500,7 @@ export const useModulAjarForm = () => {
     isFieldOwnedByTeacher,
     applyGeneratedContent,
     setFieldFromAi,
+    saveFieldArtifact,
+    getFieldOrigins,
   };
 };
