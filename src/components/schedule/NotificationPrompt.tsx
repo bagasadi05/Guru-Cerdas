@@ -5,9 +5,10 @@ import { Button } from '../ui/Button';
 interface NotificationPromptProps {
     onEnable: () => Promise<void>;
     isLoading: boolean;
+    onDismiss: () => void;
 }
 
-export const NotificationPrompt: React.FC<NotificationPromptProps> = ({ onEnable, isLoading }) => {
+export const NotificationPrompt: React.FC<NotificationPromptProps> = ({ onEnable, isLoading, onDismiss }) => {
     return (
         <div className="relative z-10 bg-emerald-50 dark:bg-emerald-500/10 backdrop-blur-lg rounded-2xl border border-emerald-200 dark:border-emerald-500/20 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 sm:mb-6 animate-fade-in">
             <div className="flex items-center gap-3 flex-1">
@@ -19,9 +20,14 @@ export const NotificationPrompt: React.FC<NotificationPromptProps> = ({ onEnable
                     <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">Dapatkan pemberitahuan 5–20 menit sebelum jam pelajaran dimulai agar Bapak/Ibu tidak terlewat.</p>
                 </div>
             </div>
-            <Button onClick={onEnable} disabled={isLoading} size="sm" className="w-full sm:w-auto flex-shrink-0">
-                {isLoading ? 'Menyalakan...' : 'Nyalakan Pengingat'}
-            </Button>
+            <div className="flex w-full sm:w-auto items-center gap-2 flex-shrink-0">
+                <Button onClick={onDismiss} disabled={isLoading} variant="ghost" size="sm" className="min-h-11 flex-1 sm:flex-none">
+                    Nanti saja
+                </Button>
+                <Button onClick={onEnable} disabled={isLoading} size="sm" className="min-h-11 flex-1 sm:flex-none">
+                    {isLoading ? 'Menyalakan...' : 'Nyalakan Pengingat'}
+                </Button>
+            </div>
         </div>
     );
 };

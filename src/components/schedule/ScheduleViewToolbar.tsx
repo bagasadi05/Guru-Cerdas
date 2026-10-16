@@ -58,10 +58,10 @@ export const ScheduleViewToolbar: React.FC<ScheduleViewToolbarProps> = ({
               type="button"
               key={option.mode}
               onClick={() => onViewModeChange(option.mode)}
-              className={`w-10 h-10 sm:w-9 sm:h-9 min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px] flex items-center justify-center rounded-lg transition-all cursor-pointer active:scale-95 ${
+              className={`w-11 h-11 flex items-center justify-center rounded-lg transition-all cursor-pointer active:scale-95 ${
                 isActive
                   ? 'bg-white dark:bg-slate-700 shadow-xs text-emerald-600 dark:text-emerald-400 font-bold'
-                  : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
               }`}
               title={option.title}
               aria-label={option.title}

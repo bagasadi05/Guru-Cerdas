@@ -85,7 +85,7 @@ export const MENU_ENTRIES: MenuEntry[] = [
     moreOrder: 1,
     inEasyMode: true,
     barLabel: 'Siswa',
-    bar: { teacher: 2, leadership: 1 },
+    bar: { leadership: 1 },
   },
   {
     href: '/absensi',
@@ -103,7 +103,17 @@ export const MENU_ENTRIES: MenuEntry[] = [
     moreOrder: 2,
     inEasyMode: true,
   },
-  { href: '/jadwal', label: 'Jadwal & Jurnal', icon: CalendarIcon, section: 'academic', moreOrder: 3 },
+  {
+    href: '/jadwal',
+    label: 'Jadwal & Jurnal',
+    icon: CalendarIcon,
+    section: 'academic',
+    moreOrder: 3,
+    barLabel: 'Jadwal',
+    // Teachers open their timetable and fill the journal every teaching day,
+    // so it earns a bar slot over Data Siswa, which stays in the "more" sheet.
+    bar: { teacher: 2 },
+  },
   { href: '/perangkat-ajar', label: 'Perangkat Ajar', icon: CalendarRange, section: 'academic', moreOrder: 4 },
   { href: '/tugas', label: 'Penugasan', icon: CheckSquareIcon, section: 'academic', moreOrder: 5 },
   { href: '/brankas', label: 'Arsip Kelas', icon: Archive, section: 'academic', moreOrder: 7 },

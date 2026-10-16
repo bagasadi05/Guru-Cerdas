@@ -56,7 +56,7 @@ vi.mock('../../src/services/supabase', () => ({
   },
 }));
 
-describe('SchedulePage Navigation & Hub Flow', () => {
+describe('SchedulePage navigation', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -82,52 +82,39 @@ describe('SchedulePage Navigation & Hub Flow', () => {
     );
   };
 
-  it('renders ScheduleHubMenu when entering /jadwal without tab parameter', async () => {
+  it('opens the teaching timetable when entering /jadwal without a tab', async () => {
     renderSchedulePage('/jadwal');
 
-    // Should display the Hub choice cards
-    expect(await screen.findByText('Jadwal & Jurnal Mengajar')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Buka Jadwal Mengajar/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Buka Jadwal PH/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Buka Jurnal Mengajar/i })).toBeInTheDocument();
-
-    // Sub-nav breadcrumb should not be visible when on hub
-    expect(screen.queryByTitle('Kembali ke pilihan menu Jadwal & Jurnal')).not.toBeInTheDocument();
-  });
-
-  it('navigates to Jadwal Mengajar and shows sub-nav and back button when clicking Buka Jadwal Mengajar', async () => {
-    renderSchedulePage('/jadwal');
-
-    const btn = await screen.findByRole('button', { name: /Buka Jadwal Mengajar/i });
-    fireEvent.click(btn);
-
-    // Sub-navigation bar should appear with back button "Pilihan Menu"
-    expect(await screen.findByTitle('Kembali ke pilihan menu Jadwal & Jurnal')).toBeInTheDocument();
-    expect(screen.getByText('Jadwal Mengajar Mingguan')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Jadwal Mengajar' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Mengajar/ })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByRole('button', { name: /Buka Jadwal Mengajar/i })).not.toBeInTheDocument();
   });
 
   it('renders Jadwal PH directly when entering /jadwal?tab=ph', async () => {
     renderSchedulePage('/jadwal?tab=ph');
 
     expect(await screen.findByTestId('ph-schedule-mock')).toBeInTheDocument();
-    expect(screen.getByTitle('Kembali ke pilihan menu Jadwal & Jurnal')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Jadwal PH/ })).toHaveAttribute('aria-selected', 'true');
   });
 
   it('renders Jurnal Mengajar directly when entering /jadwal?tab=jurnal', async () => {
     renderSchedulePage('/jadwal?tab=jurnal');
 
     expect(await screen.findByTestId('jurnal-page-mock')).toBeInTheDocument();
-    expect(screen.getByTitle('Kembali ke pilihan menu Jadwal & Jurnal')).toBeInTheDocument();
   });
 
-  it('returns to hub when clicking "Pilihan Menu" from a sub-tab', async () => {
+  it('switches tabs from the tab bar', async () => {
     renderSchedulePage('/jadwal?tab=ph');
 
-    const backBtn = await screen.findByTitle('Kembali ke pilihan menu Jadwal & Jurnal');
-    fireEvent.click(backBtn);
+    fireEvent.click(await screen.findByRole('tab', { name: /Jurnal/ }));
 
-    // Should be back at Hub
-    expect(await screen.findByText('Jadwal & Jurnal Mengajar')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Buka Jadwal Mengajar/i })).toBeInTheDocument();
+    expect(await screen.findByTestId('jurnal-page-mock')).toBeInTheDocument();
+  });
+
+  it('keeps the rare export and AI actions behind one labelled menu', async () => {
+    renderSchedulePage('/jadwal?tab=mengajar');
+
+    expect(await screen.findByRole('button', { name: 'Pilihan lain jadwal mengajar' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Ekspor Jadwal ke Kalender ICS/ })).not.toBeInTheDocument();
   });
 });

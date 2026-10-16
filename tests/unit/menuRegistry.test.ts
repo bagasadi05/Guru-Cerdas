@@ -100,12 +100,12 @@ describe('menu registry', () => {
         });
     });
 
-    describe('mobile bottom bar is unchanged', () => {
-        it('gives teachers grading in slot two', () => {
+    describe('mobile bottom bar', () => {
+        it('gives teachers grading in slot two and the timetable in slot three', () => {
             expect(getMobileNavItems(null)).toMatchObject([
                 { href: '/dashboard', label: 'Beranda' },
                 { href: '/input-massal', label: 'Penilaian' },
-                { href: '/siswa', label: 'Siswa' },
+                { href: '/jadwal', label: 'Jadwal' },
                 { href: '/absensi', label: 'Absensi' },
             ]);
         });

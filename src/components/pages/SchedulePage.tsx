@@ -5,9 +5,10 @@ import { staggerContainerVariants, staggerItemVariants } from '../../utils/anima
 import { triggerSubtleConfetti } from '../../utils/confetti';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { PlusIcon, ClockIcon, CalendarIcon, BookOpenIcon, GraduationCapIcon, BrainCircuitIcon, DownloadCloudIcon, AlertCircleIcon, CheckCircleIcon, ClipboardPenIcon } from '../Icons';
-import { ArrowLeft } from 'lucide-react';
+import { PlusIcon, ClockIcon, CalendarIcon, BookOpenIcon, GraduationCapIcon, BrainCircuitIcon, DownloadCloudIcon, AlertCircleIcon, ClipboardPenIcon } from '../Icons';
+import { MoreHorizontal } from 'lucide-react';
 import { Modal } from '../ui/Modal';
+import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../ui/DropdownMenu';
 import { MarkdownText } from '../ui/MarkdownText';
 import { generateGeminiJson } from '../../services/geminiService';
 import { supabase } from '../../services/supabase';
@@ -16,7 +17,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import JurnalMengajarPage from './JurnalMengajarPage';
 import PhScheduleTab from '../schedule/PhScheduleTab';
-import { ScheduleHubMenu } from '../schedule/ScheduleHubMenu';
 import { useToast } from '../../hooks/useToast';
 import { Database } from '../../services/database.types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -65,6 +65,15 @@ const toLiveSchedulePayload = (
 
 const inputStyles = `${componentStyles.input} pl-10 min-h-[44px]`;
 
+const REMINDER_PROMPT_SNOOZE_KEY = 'scheduleReminderPromptSnoozedUntil';
+const REMINDER_PROMPT_SNOOZE_MS = 7 * 24 * 60 * 60 * 1000;
+
+const MAIN_TABS = [
+    { key: 'jadwal', param: 'mengajar', label: 'Mengajar', fullLabel: 'Jadwal Mengajar', icon: CalendarIcon },
+    { key: 'ph', param: 'ph', label: 'Jadwal PH', fullLabel: 'Jadwal PH', icon: ClipboardPenIcon },
+    { key: 'jurnal', param: 'jurnal', label: 'Jurnal', fullLabel: 'Jurnal', icon: BookOpenIcon },
+] as const;
+
 const SchedulePage: React.FC = () => {
     const { user, loading: authLoading, isNotificationsEnabled } = useAuth();
     const navigate = useNavigate();
@@ -100,6 +109,9 @@ const SchedulePage: React.FC = () => {
     const [isAnalysisLoading, setAnalysisLoading] = useState(false);
     const [isEnablingNotifications, setIsEnablingNotifications] = useState(false);
     const [notificationsEnabled, setNotificationsEnabled] = useState(isNotificationsEnabled);
+    const [isReminderPromptSnoozed, setIsReminderPromptSnoozed] = useState(
+        () => Number(localStorage.getItem(REMINDER_PROMPT_SNOOZE_KEY) || 0) > Date.now()
+    );
     const [currentTime, setCurrentTime] = useState(new Date());
     const [confirmModalState, setConfirmModalState] = useState<{ isOpen: boolean; data: ScheduleRow | null }>({ isOpen: false, data: null });
     const lastScheduleErrorRef = useRef<string | null>(null);
@@ -407,6 +419,11 @@ const SchedulePage: React.FC = () => {
         }
     };
 
+    const handleSnoozeReminderPrompt = () => {
+        localStorage.setItem(REMINDER_PROMPT_SNOOZE_KEY, String(Date.now() + REMINDER_PROMPT_SNOOZE_MS));
+        setIsReminderPromptSnoozed(true);
+    };
+
     const getScheduleStatus = (item: ScheduleRow, now: Date) => {
         const currentDayName = now.toLocaleDateString('id-ID', { weekday: 'long' });
         if (item.day !== currentDayName) return 'upcoming';
@@ -433,14 +450,8 @@ const SchedulePage: React.FC = () => {
     useEffect(() => {
         if (classParam) setSelectedClassId(classParam);
     }, [classParam]);
-    const activeMainTab =
-        rawTab === 'jurnal'
-            ? 'jurnal'
-            : rawTab === 'ph'
-            ? 'ph'
-            : rawTab === 'mengajar' || rawTab === 'jadwal'
-            ? 'jadwal'
-            : null;
+    // A bare /jadwal opens today's teaching timetable, the screen teachers come for.
+    const activeMainTab = rawTab === 'jurnal' ? 'jurnal' : rawTab === 'ph' ? 'ph' : 'jadwal';
 
     if (authLoading || pageLoading) return <SchedulePageSkeleton />;
 
@@ -448,140 +459,72 @@ const SchedulePage: React.FC = () => {
 
     return (
         <div className="w-full min-h-full text-slate-800 dark:text-white pb-24">
-            <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6 lg:p-8 space-y-4 sm:space-y-6 lg:space-y-8">
-                {activeMainTab === null ? (
-                    <ScheduleHubMenu
-                        onSelectMenu={(key) => setSearchParams({ tab: key })}
-                        scheduleCount={rawSchedule.length}
-                        todayPhCount={todayPhSchedules.length}
-                        classesCount={classes.length}
-                    />
-                ) : (
-                    <>
-                        {/* Sub-Navigation Bar with Back to Menu & Quick Switcher */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 sm:px-5 rounded-2xl shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setSearchParams({})}
-                                    className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer min-h-[42px] active:scale-95"
-                                    title="Kembali ke pilihan menu Jadwal & Jurnal"
-                                    aria-label="Kembali ke Pilihan Menu"
-                                >
-                                    <ArrowLeft className="w-4 h-4 shrink-0" />
-                                    <span>Pilihan Menu</span>
-                                </button>
-                                <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
-                                <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                                    Jadwal & Jurnal <span className="mx-1">/</span>{' '}
-                                    <strong className="text-slate-800 dark:text-slate-200">
+            <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6 lg:p-8 space-y-4 sm:space-y-6">
+                        <header className="space-y-3">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight font-serif text-slate-900 dark:text-white">
                                         {activeMainTab === 'ph'
-                                            ? 'Jadwal PH'
+                                            ? 'Jadwal Penilaian Harian'
                                             : activeMainTab === 'jurnal'
                                             ? 'Jurnal Mengajar'
                                             : 'Jadwal Mengajar'}
-                                    </strong>
+                                    </h1>
+                                    <p className="hidden sm:block mt-1 text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-2xl font-sans">
+                                        {activeMainTab === 'ph'
+                                            ? 'Susun agenda ulangan harian, catat materi penilaian, dan bagikan jadwal ke siswa atau orang tua.'
+                                            : activeMainTab === 'jurnal'
+                                            ? 'Catat pelaksanaan belajar mengajar, kehadiran kelas, dan catatan penting setiap pertemuan.'
+                                            : 'Lihat jam mengajar hari ini dan isi jurnal setelah pelajaran selesai.'}
+                                    </p>
                                 </div>
+
+                                {activeMainTab === 'jadwal' && (
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <Button onClick={() => handleOpenAddModal()} variant="outline" size="sm"
+                                            className="min-h-11 px-3 sm:px-4 rounded-xl text-sm font-semibold cursor-pointer active:scale-95 transition-all"
+                                            title="Tambah jadwal mengajar baru">
+                                            <PlusIcon className="w-4 h-4 mr-1.5 shrink-0" />
+                                            <span>Tambah Jadwal</span>
+                                        </Button>
+                                        <DropdownMenu>
+                                            <DropdownTrigger aria-label="Pilihan lain jadwal mengajar" className="!min-h-11 !min-w-11 !h-11 !w-11 !p-0 !rounded-xl">
+                                                <MoreHorizontal className="h-5 w-5" />
+                                            </DropdownTrigger>
+                                            <DropdownContent align="right">
+                                                <DropdownItem className="min-h-11" icon={<BrainCircuitIcon className="w-4 h-4" />} onClick={handleAnalyzeSchedule} disabled={!isOnline || schedule.length === 0}>Cek jadwal dengan AI</DropdownItem>
+                                                <DropdownItem className="min-h-11" icon={<DownloadCloudIcon className="w-4 h-4" />} onClick={handleExportPdf} disabled={schedule.length === 0}>Unduh PDF</DropdownItem>
+                                                <DropdownItem className="min-h-11" icon={<CalendarIcon className="w-4 h-4" />} onClick={handleExportToIcs} disabled={rawSchedule.length === 0}>Simpan ke kalender HP</DropdownItem>
+                                            </DropdownContent>
+                                        </DropdownMenu>
+                                    </div>
+                                )}
                             </div>
 
-                            {/* Quick Switcher */}
-                            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0d1524] p-1.5 rounded-2xl w-full sm:w-auto border border-slate-200/80 dark:border-[#1c2b44] overflow-x-auto scrollbar-none" role="tablist" aria-label="Pilihan Tab Jadwal">
-                                <button
-                                    type="button"
-                                    role="tab"
-                                    aria-selected={activeMainTab === 'jadwal'}
-                                    onClick={() => setSearchParams({ tab: 'mengajar' })}
-                                    className={`flex-1 sm:flex-none min-h-[42px] sm:min-h-[36px] px-3.5 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer active:scale-95 ${
-                                        activeMainTab === 'jadwal'
-                                            ? 'bg-white dark:bg-[#111c2e] text-emerald-600 dark:text-[#00d284] shadow-sm'
-                                            : 'text-slate-600 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white'
-                                    }`}
-                                >
-                                    <CalendarIcon className="w-4 h-4 shrink-0" />
-                                    <span>Jadwal Mengajar</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    role="tab"
-                                    aria-selected={activeMainTab === 'ph'}
-                                    onClick={() => setSearchParams({ tab: 'ph' })}
-                                    className={`flex-1 sm:flex-none min-h-[42px] sm:min-h-[36px] px-3.5 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer active:scale-95 ${
-                                        activeMainTab === 'ph'
-                                            ? 'bg-white dark:bg-[#111c2e] text-teal-700 dark:text-teal-300 shadow-sm'
-                                            : 'text-slate-600 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white'
-                                    }`}
-                                >
-                                    <ClipboardPenIcon className="w-4 h-4 shrink-0" />
-                                    <span>Jadwal PH</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    role="tab"
-                                    aria-selected={activeMainTab === 'jurnal'}
-                                    onClick={() => setSearchParams({ tab: 'jurnal' })}
-                                    className={`flex-1 sm:flex-none min-h-[42px] sm:min-h-[36px] px-3.5 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer active:scale-95 ${
-                                        activeMainTab === 'jurnal'
-                                            ? 'bg-white dark:bg-[#111c2e] text-sky-600 dark:text-sky-400 shadow-sm'
-                                            : 'text-slate-600 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white'
-                                    }`}
-                                >
-                                    <BookOpenIcon className="w-4 h-4 shrink-0" />
-                                    <span>Jurnal</span>
-                                </button>
+                            <div className="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-[#0d1524] p-1 rounded-2xl border border-slate-200/80 dark:border-[#1c2b44] sm:inline-grid" role="tablist" aria-label="Pilihan Tab Jadwal">
+                                {MAIN_TABS.map((tab) => {
+                                    const isActive = activeMainTab === tab.key;
+                                    const TabIcon = tab.icon;
+                                    return (
+                                        <button
+                                            key={tab.key}
+                                            type="button"
+                                            role="tab"
+                                            aria-selected={isActive}
+                                            onClick={() => setSearchParams({ tab: tab.param })}
+                                            className={`min-h-11 px-2 sm:px-4 text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer active:scale-95 ${
+                                                isActive
+                                                    ? 'bg-white dark:bg-[#111c2e] text-emerald-700 dark:text-[#00d284] shadow-sm'
+                                                    : 'text-slate-600 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white'
+                                            }`}
+                                        >
+                                            <TabIcon className="w-4 h-4 shrink-0" />
+                                            <span className="sm:hidden">{tab.label}</span>
+                                            <span className="hidden sm:inline">{tab.fullLabel}</span>
+                                        </button>
+                                    );
+                                })}
                             </div>
-                        </div>
-
-                        {/* Main Section Header */}
-                        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                            <div>
-                                <h1 className="text-xl sm:text-2xl font-bold tracking-tight font-serif text-slate-900 dark:text-white">
-                                    {activeMainTab === 'ph'
-                                        ? 'Jadwal Penilaian Harian (PH)'
-                                        : activeMainTab === 'jurnal'
-                                        ? 'Jurnal Harian Mengajar'
-                                        : 'Jadwal Mengajar Mingguan'}
-                                </h1>
-                                <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-2xl font-sans">
-                                    {activeMainTab === 'ph'
-                                        ? 'Susun agenda ulangan harian, catat materi penilaian, dan bagikan jadwal ke siswa atau orang tua.'
-                                        : activeMainTab === 'jurnal'
-                                        ? 'Catat pelaksanaan belajar mengajar, kehadiran kelas, dan catatan penting setiap pertemuan.'
-                                        : 'Atur jam pelajaran mingguan, pantau jam tatap muka kelas, dan pastikan tidak ada jadwal bentrok.'}
-                                </p>
-                            </div>
-
-                            {activeMainTab === 'jadwal' && (
-                                <div className="flex items-center gap-2 self-stretch sm:self-auto flex-wrap sm:flex-nowrap">
-                                    <Button onClick={() => handleOpenAddModal()} variant="primary" size="sm"
-                                        className="min-h-[42px] sm:min-h-[38px] px-3.5 sm:px-4 rounded-xl shadow-sm text-xs sm:text-sm font-semibold cursor-pointer active:scale-95 transition-all flex-1 sm:flex-none justify-center"
-                                        title="Tambah Jadwal Mengajar Baru"
-                                        aria-label="Tambah Jadwal">
-                                        <PlusIcon className="w-4 h-4 mr-1.5 shrink-0" />
-                                        <span>Tambah Jadwal</span>
-                                    </Button>
-                                    <Button onClick={handleAnalyzeSchedule} variant="outline" size="sm" disabled={!isOnline || schedule.length === 0}
-                                        className="min-h-[42px] sm:min-h-[38px] px-3 sm:px-3.5 rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white text-xs sm:text-sm font-medium cursor-pointer active:scale-95 transition-all"
-                                        title="Periksa Beban Mengajar dengan AI"
-                                        aria-label="Analisis Beban Mengajar dengan AI">
-                                        <BrainCircuitIcon className="w-4 h-4 sm:mr-1.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
-                                        <span className="hidden md:inline">Analisis AI</span>
-                                    </Button>
-                                    <Button onClick={handleExportPdf} variant="outline" size="sm"
-                                        className="min-h-[42px] sm:min-h-[38px] px-3 sm:px-3.5 rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white text-xs font-medium cursor-pointer active:scale-95 transition-all"
-                                        title="Cetak atau Simpan PDF Jadwal"
-                                        aria-label="Ekspor Jadwal ke PDF">
-                                        <DownloadCloudIcon className="w-4 h-4 sm:mr-1.5 shrink-0" />
-                                        <span className="hidden md:inline">PDF</span>
-                                    </Button>
-                                    <Button onClick={handleExportToIcs} variant="outline" size="sm"
-                                        className="min-h-[42px] sm:min-h-[38px] px-3 sm:px-3.5 rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white text-xs font-medium cursor-pointer active:scale-95 transition-all"
-                                        title="Simpan ke Kalender HP (Google Calendar/ICS)"
-                                        aria-label="Ekspor Jadwal ke Kalender ICS">
-                                        <CalendarIcon className="w-4 h-4 sm:mr-1.5 shrink-0" />
-                                        <span className="hidden md:inline">ICS</span>
-                                    </Button>
-                                </div>
-                            )}
                         </header>
 
                 {activeMainTab === 'jurnal' ? (
@@ -594,9 +537,11 @@ const SchedulePage: React.FC = () => {
                 ) : (
                     <>
 
-                {!notificationsEnabled && <NotificationPrompt onEnable={handleEnableNotifications} isLoading={isEnablingNotifications} />}
+                {!notificationsEnabled && !isReminderPromptSnoozed && schedule.length > 0 && (
+                    <NotificationPrompt onEnable={handleEnableNotifications} isLoading={isEnablingNotifications} onDismiss={handleSnoozeReminderPrompt} />
+                )}
 
-                {conflictWarnings.length > 0 ? (
+                {conflictWarnings.length > 0 && (
                     <div className="bg-red-50 dark:bg-red-500/10 rounded-2xl border border-red-200 dark:border-red-500/20 p-4 animate-fade-in">
                         <div className="flex items-start gap-3">
                             <AlertCircleIcon className="w-6 h-6 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />
@@ -612,16 +557,9 @@ const SchedulePage: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                ) : schedule.length > 0 ? (
-                    <div className="bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 p-4 animate-fade-in">
-                        <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 text-sm font-medium">
-                            <CheckCircleIcon className="w-5 h-5" />
-                            Jadwal aman, tidak ada jam yang bentrok.
-                        </div>
-                    </div>
-                ) : null}
+                )}
 
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                     <ScheduleDaySelector days={daysOfWeek} selectedDay={selectedDay} onSelectDay={setSelectedDay} getDayNumber={getDayNumber} />
                     <ScheduleViewToolbar
                         viewMode={viewMode}
@@ -644,9 +582,9 @@ const SchedulePage: React.FC = () => {
                                     </div>
                                     <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-1">Belum Ada Jadwal Pelajaran</h3>
                                     <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[240px] mx-auto mb-4">
-                                        Belum ada jadwal mengajar pada hari {selectedDay}. Klik tombol di bawah untuk menambahkan jadwal kelas.
+                                        Belum ada jadwal mengajar pada hari {selectedDay}. Ketuk tombol di bawah untuk menambahkan jadwal kelas.
                                     </p>
-                                    <Button onClick={() => handleOpenAddModal()} variant="outline" size="sm" className="rounded-full border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+                                    <Button onClick={() => handleOpenAddModal()} variant="primary" size="sm" className="min-h-11 rounded-xl">
                                         <PlusIcon className="w-4 h-4 mr-1.5" /> Tambah Jadwal
                                     </Button>
                                 </div>
@@ -669,7 +607,7 @@ const SchedulePage: React.FC = () => {
                                                     hasPhToday={hasPhToday}
                                                     onEdit={handleOpenEditModal}
                                                     onDuplicate={(item) => {
-                                                        setFormData({ day: item.day, start_time: item.start_time, end_time: item.end_time, subject: `${item.subject} (Copy)`, class_id: item.class_id });
+                                                        setFormData({ day: item.day, start_time: item.start_time, end_time: item.end_time, subject: item.subject, class_id: item.class_id });
                                                         setModalState({ isOpen: true, mode: 'add', data: null });
                                                     }}
                                                     onDelete={handleDeleteClick}
@@ -685,8 +623,6 @@ const SchedulePage: React.FC = () => {
                     )}
                 </div>
                 </>
-                )}
-                    </>
                 )}
             </div>
 
@@ -741,13 +677,13 @@ const SchedulePage: React.FC = () => {
                     </div>
                 ) : analysisResult ? (
                     'error' in analysisResult ? (
-                        <p className="text-red-400">{(analysisResult as { error: string }).error}</p>
+                        <p className="text-red-700 dark:text-red-400">{(analysisResult as { error: string }).error}</p>
                     ) : (
                         <div className="space-y-4">
                             {(analysisResult as { sections: { title: string; points: string[] }[] }).sections?.map((section, index) => (
                                 <div key={index}>
-                                    <h4 className="font-bold text-lg text-brand-300"><MarkdownText text={section.title} /></h4>
-                                    <ul className="list-disc list-inside space-y-1 mt-2 text-gray-300">
+                                    <h4 className="font-bold text-lg text-brand-700 dark:text-brand-300"><MarkdownText text={section.title} /></h4>
+                                    <ul className="list-disc list-inside space-y-1 mt-2 text-slate-700 dark:text-gray-300">
                                         {section.points?.map((point, pIndex) => <li key={pIndex}><MarkdownText text={point} /></li>)}
                                     </ul>
                                 </div>
@@ -760,7 +696,7 @@ const SchedulePage: React.FC = () => {
             </Modal>
 
             <Modal isOpen={confirmModalState.isOpen} onClose={() => setConfirmModalState({ isOpen: false, data: null })} title="Hapus Jadwal Mengajar?">
-                <p>Apakah Bapak/Ibu yakin ingin menghapus jadwal <strong className="text-white">"{confirmModalState.data?.subject}"</strong> pada hari <strong className="text-white">{confirmModalState.data?.day}</strong>?</p>
+                <p>Apakah Bapak/Ibu yakin ingin menghapus jadwal <strong className="text-slate-900 dark:text-white">"{confirmModalState.data?.subject}"</strong> pada hari <strong className="text-slate-900 dark:text-white">{confirmModalState.data?.day}</strong>?</p>
                 <div className="flex justify-end gap-2 pt-4 mt-4">
                     <Button variant="ghost" onClick={() => setConfirmModalState({ isOpen: false, data: null })} disabled={deleteScheduleMutation.isPending}>Batal</Button>
                     <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleteScheduleMutation.isPending}>{deleteScheduleMutation.isPending ? 'Menghapus...' : 'Ya, Hapus'}</Button>

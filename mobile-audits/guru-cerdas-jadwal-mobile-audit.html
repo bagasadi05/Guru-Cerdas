@@ -1,0 +1,975 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Guru Cerdas — Review Mobile Menu Jadwal · thumb-first</title>
+
+<!--
+  ════════════════════════════════════════════════════════════════════
+  thumb-first AUDIT REPORT — reference template (worked example: "Skillet")
+  ════════════════════════════════════════════════════════════════════
+  This is the canonical HTML report for the thumb-first audit skill.
+  Self-contained: one file, no local asset dependencies. Fonts load from
+  a CDN with a robust fallback stack and degrade gracefully offline.
+
+  COLOR CHANNELS — keep them separate (this is the whole point):
+    • Fixed identity .... warm-graphite + chalk. Carries NO meaning.
+    • --accent .......... ONE color sampled from the audited product.
+                          Brand chrome only (eyebrow tick, section
+                          numerals, links, recommended-fork ring).
+                          NEVER used for severity, reach, or verdicts.
+    • Severity .......... fixed: --crit / --imp / --pol. Never adaptive.
+    • Reach ramp ........ fixed: --reach-low/med/high. Diagram only.
+    • Verdict chips ..... fixed: strong / concern / problem / mixed.
+
+  DUAL THEME — the report ships a pure-CSS Dark/Light toggle (top-right).
+  Every theme-dependent token has a light counterpart in the
+  :root:has(#theme-light:checked) block (same hue, mirrored L). Dark is the
+  default. The adaptive accent needs BOTH a :root value and a light value.
+  The mini-phone SVGs are self-contained dark device illustrations and read
+  on either page surface, so they are not re-themed.
+
+  MODULAR SECTIONS — render a section ONLY if the audit produced it.
+  A single-screen audit may have no fork section and no per-screen grid;
+  delete those <section> blocks. The visual system never changes.
+
+  FULL-REVIEW EXTRAS — two sections appear ONLY when this report is the
+  merged output of the /thumb-first umbrella (design pass + platform pass):
+    • "Fix order" (after the header) — interleaves design findings and
+      platform defects by user impact. Every row keeps a CLASS tag
+      (Design / Fork / Defect) so ordering never erases the channel.
+    • "Platform defects" (after the findings) — objective, file:line,
+      P0–P3, on the steel platform channel. For a NATIVE target this
+      section is replaced by a short handoff note (which native skill) or
+      an honest "native audits not covered". For a design-only audit
+      (/thumb-first-design) delete BOTH sections — the worked example
+      below keeps them as the full-review reference.
+
+  PLATFORM CHANNEL — --plat (steel, hue 220) is the technical instrument's
+  identity: it carries platform defects only (section marker, file:line, the
+  DEFECT class tag). The P0–P3 ramp shows severity within it via SQUARE mono
+  badges — deliberately not pills — so a defect can never be misread as a
+  design chip. Defect cards use a plain uniform border (NO colored left-rail
+  stripe — see banned patterns). Warm severity (crit/imp/pol) stays exclusive
+  to DESIGN findings. The two channels never share a shape.
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400..900&family=Hanken+Grotesk:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    /* ——— Fixed identity: warm graphite + chalk (achromatic) ——— */
+    --ink:        oklch(0.165 0.006 75);
+    --surface:    oklch(0.205 0.006 75);
+    --surface-2:  oklch(0.245 0.007 75);
+    --paper:      oklch(0.935 0.005 85);
+    --paper-dim:  oklch(0.795 0.006 85);
+    --muted:      oklch(0.675 0.008 85);
+    --faint:      oklch(0.605 0.008 85);
+    --line:       oklch(0.95 0.01 85 / 0.09);
+    --line-strong:oklch(0.95 0.01 85 / 0.16);
+
+    /* ——— Adaptive accent: SAMPLED FROM THE AUDITED PRODUCT ———
+       Worked example = Skillet's terracotta. Swap these three for each audit.
+       Brand chrome only — never a semantic color. */
+    --accent:      oklch(0.66 0.13 160);
+    --accent-soft: oklch(0.74 0.12 162);
+    --accent-tint: oklch(0.68 0.14 160 / 0.14);
+
+    /* ——— Severity (FIXED — never adaptive) ——— */
+    --crit:      oklch(0.655 0.185 25);
+    --crit-tint: oklch(0.655 0.185 25 / 0.15);
+    --imp:       oklch(0.805 0.125 78);
+    --imp-tint:  oklch(0.805 0.125 78 / 0.15);
+    --pol:       oklch(0.730 0.040 245);
+    --pol-tint:  oklch(0.730 0.040 245 / 0.16);
+
+    /* ——— Reach-cost ramp (FIXED — diagram + its legend only) ——— */
+    --reach-low:  oklch(0.745 0.135 152);  /* natural  */
+    --reach-med:  oklch(0.805 0.125 78);   /* stretch  */
+    --reach-high: oklch(0.655 0.185 25);   /* ow       */
+
+    /* ——— Verdict (FIXED — lens table) ——— */
+    --strong:  var(--reach-low);
+    --concern: var(--imp);
+    --problem: var(--crit);
+
+    /* ——— Platform-defect channel (FIXED — full-review only) ———
+       Steel = the technical instrument's identity. The P0–P3 ramp is
+       severity WITHIN it. Never used for design findings. */
+    --plat:      oklch(0.70 0.10 220);
+    --plat-tint: oklch(0.70 0.10 220 / 0.14);
+    --p0: oklch(0.64 0.20 25);   --p0-tint: oklch(0.64 0.20 25 / 0.16);
+    --p1: oklch(0.72 0.16 55);   --p1-tint: oklch(0.72 0.16 55 / 0.16);
+    --p2: oklch(0.82 0.13 90);   --p2-tint: oklch(0.82 0.13 90 / 0.16);
+    --p3: oklch(0.70 0.045 235); --p3-tint: oklch(0.70 0.045 235 / 0.16);
+
+    /* ——— Spacing (4pt scale, semantic) ——— */
+    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px;
+    --s6:32px; --s7:48px; --s8:64px; --s9:96px;
+    --find-rail: 46px;  /* finding number column; mirrored as an empty right rail so content insets equally L/R */
+
+    --display: "Schibsted Grotesk", "Hanken Grotesk", system-ui, sans-serif;
+    --sans: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --mono: "Spline Sans Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  /* ═══════════════ LIGHT-MODE OVERRIDES ═══════════════
+     Activated by the global Dark/Light toggle. Every theme-dependent token
+     gets a light counterpart — same hue, mirrored L — so the report reads
+     cleanly on light backgrounds while keeping the warm-graphite identity.
+     :has() is Baseline 2023 (all modern browsers). The verdict aliases
+     (--strong/--concern/--problem) follow automatically via var(). */
+  :root:has(#theme-light:checked) {
+    /* Identity — warm chalk page, graphite ink */
+    --ink:        oklch(0.985 0.003 75);
+    --surface:    oklch(0.967 0.004 75);
+    --surface-2:  oklch(0.945 0.005 75);
+    --paper:      oklch(0.190 0.006 85);
+    --paper-dim:  oklch(0.355 0.008 85);
+    --muted:      oklch(0.470 0.010 85);
+    --faint:      oklch(0.540 0.009 85);
+    --line:       oklch(0.20 0.010 85 / 0.12);
+    --line-strong:oklch(0.20 0.010 85 / 0.22);
+
+    /* Adaptive accent — light counterpart of the SAMPLED brand color.
+       When you re-sample --accent for an audit, set BOTH the :root (dark)
+       trio above AND this light trio. Worked example = Skillet terracotta. */
+    --accent:      oklch(0.52 0.12 160);
+    --accent-soft: oklch(0.47 0.11 162);
+    --accent-tint: oklch(0.60 0.14 160 / 0.16);
+
+    /* Severity — same hues, deeper L for contrast on light */
+    --crit:      oklch(0.555 0.195 25);  --crit-tint: oklch(0.555 0.195 25 / 0.12);
+    --imp:       oklch(0.580 0.150 78);  --imp-tint:  oklch(0.580 0.150 78 / 0.14);
+    --pol:       oklch(0.500 0.055 245); --pol-tint:  oklch(0.500 0.055 245 / 0.14);
+
+    /* Reach-cost ramp — deepened */
+    --reach-low:  oklch(0.555 0.140 152);
+    --reach-med:  oklch(0.580 0.150 78);
+    --reach-high: oklch(0.555 0.195 25);
+
+    /* Platform-defect channel — deepened */
+    --plat:      oklch(0.500 0.105 220); --plat-tint: oklch(0.500 0.105 220 / 0.14);
+    --p0: oklch(0.530 0.210 25);  --p0-tint: oklch(0.530 0.210 25 / 0.14);
+    --p1: oklch(0.560 0.160 55);  --p1-tint: oklch(0.560 0.160 55 / 0.14);
+    --p2: oklch(0.560 0.150 90);  --p2-tint: oklch(0.560 0.150 90 / 0.15);
+    --p3: oklch(0.500 0.050 235); --p3-tint: oklch(0.500 0.050 235 / 0.14);
+  }
+  /* Hover tints invert for light mode (the dark-mode rules use a white wash) */
+  :root:has(#theme-light:checked) .lens-table tbody tr:hover,
+  :root:has(#theme-light:checked) .fixorder li:hover { background: rgba(0,0,0,0.035); }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection { background: var(--accent-tint); }
+  a { color: var(--accent-soft); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+
+  /* visually-hidden (theme radios) */
+  .vh { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+  /* ───────────── Global Dark/Light theme switch (pure CSS, top-right) ───────────── */
+  .theme-switch { display: flex; justify-content: flex-end; margin-bottom: var(--s5); }
+  .theme-switch__pill { display: inline-flex; align-items: center; border: 1px solid var(--line-strong); border-radius: 100px; overflow: hidden; }
+  .theme-switch__pill label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); padding: 6px 14px; cursor: pointer; user-select: none; transition: background 0.15s ease, color 0.15s ease; }
+  #theme-dark:checked  ~ .theme-switch__pill label[for="theme-dark"],
+  #theme-light:checked ~ .theme-switch__pill label[for="theme-light"] { background: var(--accent-tint); color: var(--accent-soft); }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: clamp(40px, 6vw, 72px) clamp(20px, 5vw, 40px) 96px; }
+
+  /* shared micro-label */
+  .mono-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* ───────────── Header ───────────── */
+  header.doc { padding-bottom: var(--s7); margin-bottom: var(--s8); border-bottom: 1px solid var(--line); }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted); display: inline-flex; align-items: center; gap: var(--s3);
+  }
+  .eyebrow::before { content: ""; width: 22px; height: 2px; background: var(--accent); display: inline-block; }
+  h1.title {
+    font-family: var(--display);
+    font-size: clamp(38px, 6vw, 60px);
+    font-weight: 700; letter-spacing: -0.025em; line-height: 1.02;
+    margin: var(--s5) 0 var(--s4); color: var(--paper); max-width: 16ch;
+  }
+  .lede { font-size: clamp(17px, 2.2vw, 19px); color: var(--paper-dim); max-width: 66ch; line-height: 1.6; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: var(--s6); margin-top: var(--s6); }
+  .meta-row .k { display: block; margin-bottom: 4px; }
+  .meta-row .v { font-size: 15px; color: var(--paper); }
+
+  .stats { display: flex; gap: clamp(20px, 4vw, 44px); margin-top: var(--s7); flex-wrap: wrap; }
+  .stat .num { font-family: var(--display); font-size: 40px; font-weight: 600; letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .stat.crit .num { color: var(--crit); }
+  .stat.imp .num  { color: var(--imp); }
+  .stat.pol .num  { color: var(--pol); }
+  .stat.forks .num { color: var(--accent-soft); }
+  .stat .num.zero { color: var(--muted); }  /* a 0 count is good news — show it neutral, not in the alarm color */
+  .stat .lbl { margin-top: var(--s2); }
+
+  /* ───────────── Section scaffolding ───────────── */
+  section { margin-bottom: var(--s9); }
+  .sec-index { font-family: var(--mono); font-size: 12px; letter-spacing: 0.16em; color: var(--accent-soft); }
+  h2.section-title {
+    font-family: var(--display);
+    font-size: clamp(24px, 3.4vw, 32px);
+    font-weight: 600; letter-spacing: -0.02em; line-height: 1.1;
+    margin: var(--s2) 0 var(--s4); color: var(--paper);
+  }
+  .section-sub { color: var(--paper-dim); max-width: 74ch; margin: 0 0 var(--s6); }
+  .section-sub em { color: var(--paper); font-style: italic; }
+
+  /* ───────────── Lens table ───────────── */
+  .lens-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); }
+  .lens-table th, .lens-table td { padding: var(--s4) var(--s5); text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .lens-table tr:last-child td { border-bottom: none; }
+  .lens-table thead th { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--faint); font-weight: 500; }
+  .lens-table tbody tr:hover { background: rgba(255,255,255,0.018); }
+  .lens-name { font-weight: 600; color: var(--paper); width: 30%; }
+  .lens-name .who { display: block; margin-top: 2px; color: var(--muted); font-weight: 400; font-size: 13.5px; }
+  .lens-read { color: var(--paper-dim); }
+  .lens-read em { color: var(--paper); font-style: italic; }
+  .verdict { display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500; }
+  .verdict::before { content: ""; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .v-strong  { color: var(--strong); }  .v-strong::before  { background: var(--strong); }
+  .v-concern { color: var(--concern); } .v-concern::before { background: var(--concern); }
+  .v-problem { color: var(--problem); } .v-problem::before { background: var(--problem); }
+  .v-mixed   { color: var(--muted); }   .v-mixed::before   { background: var(--muted); }
+
+  /* ───────────── Thumb-zone diagram ───────────── */
+  .thumb-grid { display: grid; grid-template-columns: 320px 1fr; gap: clamp(28px, 5vw, 56px); align-items: start; }
+  @media (max-width: 820px) { .thumb-grid { grid-template-columns: 1fr; } }
+  .thumb-figure { width: 100%; max-width: 320px; }
+  .thumb-key h4 { margin: 0 0 var(--s4); }
+  .key-list { list-style: none; margin: 0 0 var(--s6); padding: 0; display: grid; gap: 2px; }
+  .key-list li { display: grid; grid-template-columns: 22px 1fr auto; align-items: baseline; gap: var(--s3); padding: var(--s2) 0; border-bottom: 1px solid var(--line); }
+  .key-list li:last-child { border-bottom: none; }
+  .key-list .kn { font-family: var(--mono); font-size: 12px; color: var(--paper); font-variant-numeric: tabular-nums; }
+  .key-list .ka { color: var(--paper-dim); }
+  .key-list .kz { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; }
+  .kz.low  { color: var(--reach-low); }
+  .kz.med  { color: var(--reach-med); }
+  .kz.high { color: var(--reach-high); }
+  .zone-defs { display: grid; gap: var(--s3); margin-top: var(--s5); }
+  .zone-def { display: grid; grid-template-columns: 12px 1fr; gap: var(--s3); align-items: start; }
+  .zone-def .dot { width: 11px; height: 11px; border-radius: 50%; margin-top: 6px; }
+  .zone-def .zt { font-weight: 600; color: var(--paper); }
+  .zone-def .zd { font-size: 13.5px; color: var(--muted); }
+  .whats-off { margin-top: var(--s5); padding-top: var(--s5); border-top: 1px solid var(--line); }
+  .whats-off .mono-label { color: var(--accent-soft); }
+  .whats-off p { margin: var(--s2) 0 0; color: var(--paper-dim); font-size: 14px; max-width: 60ch; }
+
+  /* ───────────── Per-screen mini phones ───────────── */
+  .screen-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--s4); }
+  .screen-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: var(--s5) var(--s4) var(--s4); display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
+  .screen-card svg { width: 96px; height: auto; align-self: center; }
+  .screen-card .name { font-weight: 600; margin-top: var(--s4); font-size: 15px; }
+  .screen-card .read { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; margin-top: var(--s1); min-height: 3.3em; }  /* reserve 2 lines so notes align across the row */
+  .screen-card.good .read { color: var(--strong); }
+  .screen-card.warn .read { color: var(--concern); }
+  .screen-card.bad  .read { color: var(--problem); }
+  .screen-card .note { font-size: 12.5px; color: var(--muted); margin-top: var(--s3); line-height: 1.5; }
+
+  /* ───────────── Findings ───────────── */
+  .tier-label { display: flex; align-items: center; gap: var(--s4); margin: var(--s7) 0 var(--s5); }
+  .tier-label:first-of-type { margin-top: 0; }
+  .tier-label .mono-label { white-space: nowrap; }
+  .tier-label .rule { height: 1px; background: var(--line); flex: 1; }
+  .tier-label .count { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+  .tier-label.crit .mono-label { color: var(--crit); }
+  .tier-label.imp  .mono-label { color: var(--imp); }
+  .tier-label.pol  .mono-label { color: var(--pol); }
+
+  .findings { display: flex; flex-direction: column; gap: var(--s5); }
+  .finding { display: grid; grid-template-columns: var(--find-rail) 1fr var(--find-rail); column-gap: var(--s5); row-gap: var(--s5); align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: clamp(22px, 3vw, 30px); }
+  .finding[data-sev="crit"] { border-color: var(--crit-tint); }
+  /* Number sits in its own left rail; chips, title and body all share the col-2 left edge (optimized for skimming). */
+  .finding-head { display: contents; }
+  .find-num { grid-column: 1; grid-row: 1; font-family: var(--display); font-size: 34px; font-weight: 600; line-height: 0.9; font-variant-numeric: tabular-nums; color: var(--faint); }
+  .finding[data-sev="crit"] .find-num { color: var(--crit); }
+  .finding[data-sev="imp"]  .find-num { color: var(--imp); }
+  .finding[data-sev="pol"]  .find-num { color: var(--pol); }
+  .find-headtext { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: var(--s3); }
+  .find-tags { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
+  .severity { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 500; padding: 4px 9px; border-radius: 100px; }
+  .severity.crit { background: var(--crit-tint); color: var(--crit); }
+  .severity.imp  { background: var(--imp-tint);  color: var(--imp); }
+  .severity.pol  { background: var(--pol-tint);  color: var(--pol); }
+  .lens-chip { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding: 4px 9px; border: 1px solid var(--line-strong); border-radius: 100px; }
+  .find-title { font-family: var(--display); font-size: clamp(19px, 2.6vw, 23px); font-weight: 600; letter-spacing: -0.015em; line-height: 1.22; margin: 2px 0 0; color: var(--paper); }
+  .finding[data-sev="pol"] .find-title { font-size: clamp(17px, 2.2vw, 20px); }
+  /* No max-width: body fills the content column so its right gutter mirrors the number's left gutter (symmetric within the card). */
+  .find-body { grid-column: 2; grid-row: 2; display: grid; gap: var(--s4); }
+  .find-body p { margin: 0; color: var(--paper-dim); }
+  .find-body p em { color: var(--paper); font-style: italic; }
+  .find-body .label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 3px; }
+  .fix { background: var(--surface-2); border-radius: 8px; padding: var(--s4) var(--s5); }
+  .fix .label { color: var(--accent-soft); }
+  .fix p { color: var(--paper); }
+
+  /* ───────────── Fork comparison ───────────── */
+  .fork-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--s4); }
+  .fork { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: var(--s5); display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
+  .fork.recommended { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-tint); }
+  .fork-tag { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  .fork.recommended .fork-tag { color: var(--accent-soft); }
+  .fork.current .fork-tag { color: var(--concern); }
+  .fork h4 { font-family: var(--display); font-size: 19px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.25; margin: var(--s3) 0 var(--s2); min-height: 2.5em; }  /* reserve 2 lines so option cards align */
+  .fork .summary { font-size: 13px; color: var(--muted); margin: 0 0 var(--s4); line-height: 1.5; }
+  .fork-phone { margin: var(--s2) 0 var(--s5); align-self: center; }
+  .fork ul { text-align: left; padding: 0; list-style: none; margin: 0; width: 100%; }
+  .fork li { font-size: 13px; color: var(--paper-dim); padding: var(--s3) 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: 30px 1fr; gap: var(--s2); align-items: start; }
+  .fork li:first-child { border-top: none; }
+  .fork li .pro, .fork li .con { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; font-weight: 500; padding-top: 2px; }
+  .fork li .pro { color: var(--strong); }
+  .fork li .con { color: var(--problem); }
+
+  /* ───────────── Callouts / limits / next ───────────── */
+  .callout-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--s4); }
+  .callout { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: var(--s5); }
+  .callout h4 { font-family: var(--display); font-size: 16px; font-weight: 600; margin: 0 0 var(--s3); color: var(--paper); }
+  .callout p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  .limits { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: var(--s6); }
+  .limits ul { margin: 0; padding-left: 1.2em; color: var(--paper-dim); display: grid; gap: var(--s3); max-width: 82ch; }
+  .limits em { color: var(--paper); font-style: italic; }
+
+  .steps { counter-reset: step; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--s4); }
+  .step { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: var(--s5); counter-increment: step; }
+  .step .sn { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; color: var(--accent-soft); }
+  .step .sn::before { content: counter(step, decimal-leading-zero) "  "; }
+  .step h4 { font-family: var(--display); font-size: 17px; font-weight: 600; line-height: 1.25; margin: var(--s3) 0 var(--s2); min-height: 2.5em; }  /* reserve 2 lines so step bodies align across the row */
+  .step p { margin: 0; color: var(--muted); font-size: 13.5px; }
+
+  footer.doc { margin-top: var(--s8); padding-top: var(--s5); border-top: 1px solid var(--line); font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--faint); display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--s3); }
+
+  /* ───────────── Fix order (FULL-REVIEW ONLY) ─────────────
+     Interleaves design findings + platform defects by user impact.
+     Each row carries its CLASS tag so the channel survives the sort. */
+  .fixorder { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .fixorder li { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s2) var(--s4); padding: var(--s4) var(--s5); border-bottom: 1px solid var(--line); }
+  .fixorder li:last-child { border-bottom: none; }
+  .fixorder li:hover { background: rgba(255,255,255,0.018); }
+  .fo-rank { width: 18px; flex-shrink: 0; font-family: var(--mono); font-size: 13px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .fo-class { flex-shrink: 0; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; padding: 3px 8px; border-radius: 5px; }
+  .fo-class.design { background: var(--accent-tint); color: var(--accent-soft); }
+  .fo-class.fork   { background: transparent; color: var(--muted); border: 1px solid var(--line-strong); }
+  .fo-class.defect { background: var(--plat-tint); color: var(--plat); }
+  .fo-text { flex: 1; min-width: 55%; color: var(--paper); }
+  .fo-text .src { display: block; margin-top: 2px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .fo-sev { flex-shrink: 0; margin-left: auto; font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); white-space: nowrap; }
+
+  /* ───────────── Platform defects (FULL-REVIEW ONLY) ─────────────
+     Steel channel + SQUARE mono P0–P3 badges + file:line. Never pills. */
+  .tier-label.plat .mono-label { color: var(--plat); }
+  .defects { display: flex; flex-direction: column; gap: var(--s4); }
+  /* article.defect (not bare .defect) so the card styling never leaks onto the
+     fix-order's <span class="fo-class defect"> chip. No left-stripe — severity
+     is carried by the square P-badge; the banned-patterns rule forbids stripes. */
+  article.defect { display: grid; grid-template-columns: var(--find-rail) 1fr; column-gap: var(--s5); row-gap: var(--s3); align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: clamp(20px, 2.6vw, 26px); }
+  .pbadge { grid-column: 1; grid-row: 1; width: var(--find-rail); height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 5px; font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; }
+  .pbadge.p0 { background: var(--p0-tint); color: var(--p0); }
+  .pbadge.p1 { background: var(--p1-tint); color: var(--p1); }
+  .pbadge.p2 { background: var(--p2-tint); color: var(--p2); }
+  .pbadge.p3 { background: var(--p3-tint); color: var(--p3); }
+  .defect-head { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; gap: var(--s1); }
+  .defect-loc { font-family: var(--mono); font-size: 11.5px; color: var(--plat); }
+  .defect-title { font-family: var(--display); font-size: clamp(17px, 2.2vw, 20px); font-weight: 600; letter-spacing: -0.015em; line-height: 1.25; color: var(--paper); margin: 2px 0 0; }
+  .defect-body { grid-column: 2; grid-row: 2; display: grid; gap: var(--s3); }
+  .defect-body p { margin: 0; color: var(--paper-dim); }
+  .defect-body .label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); display: block; margin-bottom: 3px; }
+  .defect-body code, .defect-loc code { font-family: var(--mono); font-size: 0.92em; }
+
+  /* ───────────── Narrow screens ───────────── */
+  @media (max-width: 600px) {
+    /* Findings collapse to a single column — number stacks above its content, same left edge. */
+    .finding { grid-template-columns: 1fr; row-gap: var(--s3); }
+    .find-num, .find-headtext, .find-body { grid-column: 1; grid-row: auto; }
+
+    /* Lens table → stacked blocks so the read column never clips off-screen. */
+    .lens-table { display: block; padding: var(--s2) var(--s4); }
+    .lens-table thead { display: none; }
+    .lens-table tbody, .lens-table tr, .lens-table td { display: block; }
+    .lens-table tr { padding: var(--s4) 0; border-bottom: 1px solid var(--line); }
+    .lens-table tr:last-child { border-bottom: none; }
+    .lens-table td { padding: 0; border: none; }
+    .lens-table .lens-name { width: auto; margin-bottom: var(--s2); }
+    .lens-table .verdict { margin-bottom: var(--s2); }
+
+    /* Platform defects collapse like findings — badge stacks above its content. */
+    article.defect { grid-template-columns: 1fr; row-gap: var(--s2); }
+    .pbadge, .defect-head, .defect-body { grid-column: 1; grid-row: auto; }
+    .pbadge { width: 44px; }
+    /* Fix order already wraps (flex); keep the severity from forcing a 3rd line. */
+    .fixorder .fo-sev { margin-left: 0; }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .lens-table tbody tr, .finding, .fork { transition: border-color 0.2s ease; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ═══════════ GLOBAL THEME TOGGLE ═══════════
+       Pure CSS. Dark is default-checked. The light-mode tokens live in the
+       :root:has(#theme-light:checked) block. Must be the FIRST child of .wrap
+       so the sibling-combinator selectors on the pill resolve. -->
+  <div class="theme-switch" role="radiogroup" aria-label="Tema laporan">
+    <input class="vh" type="radio" name="theme" id="theme-dark" checked>
+    <input class="vh" type="radio" name="theme" id="theme-light">
+    <div class="theme-switch__pill">
+      <label for="theme-dark">Gelap</label>
+      <label for="theme-light">Terang</label>
+    </div>
+  </div>
+
+  <!-- ═══════════ HEADER ═══════════ -->
+  <header class="doc">
+    <div class="eyebrow">Review mobile · thumb-first</div>
+    <h1 class="title">Menu Jadwal: apa yang sudah enak, apa yang perlu dibenahi</h1>
+    <p class="lede">
+      Review menu Jadwal (Jadwal Mengajar, Jadwal PH, Jurnal) di Guru Cerdas dengan delapan sudut pandang desainer
+      dan satu pemeriksaan teknis PWA. Temuan diurutkan dari yang paling terasa di tangan guru MI yang memakai HP.
+    </p>
+    <div class="meta-row">
+      <div><span class="mono-label k">Tugas utama</span><span class="v">Lihat jadwal hari ini, lalu isi jurnal setelah mengajar</span></div>
+      <div><span class="mono-label k">Platform</span><span class="v">PWA (React + Vite), mayoritas dibuka di HP Android</span></div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="num">10</div><div class="mono-label lbl">Temuan</div></div>
+      <div class="stat crit"><div class="num">2</div><div class="mono-label lbl">Kritis</div></div>
+      <div class="stat imp"><div class="num">5</div><div class="mono-label lbl">Penting</div></div>
+      <div class="stat pol"><div class="num">3</div><div class="mono-label lbl">Polish</div></div>
+      <div class="stat forks"><div class="num">4</div><div class="mono-label lbl">Keputusan diam-diam</div></div>
+      <div class="stat"><div class="num" style="color:var(--plat)">5</div><div class="mono-label lbl">Cacat platform</div></div>
+    </div>
+  </header>
+
+  <!-- ═══════════ FIX ORDER ═══════════ -->
+  <section style="margin-bottom: var(--s8);">
+    <div class="mono-label" style="color: var(--accent-soft);">Urutan perbaikan · kerjakan dulu yang ini</div>
+    <h2 class="section-title">Dua pemeriksaan, satu daftar prioritas</h2>
+    <p class="section-sub">Temuan desain dan cacat teknis digabung menurut apa yang paling dulu dialami guru. Label <em>kelas</em> menjaga keduanya tetap terpisah: opini tidak menyamar jadi bug, bug tidak menyamar jadi opini.</p>
+    <ul class="fixorder">
+      <li><span class="fo-rank">1</span><span class="fo-class design">Desain</span><span class="fo-text">Jadwal tersembunyi di "Lainnya", lalu dibuka ke halaman pilihan menu, bukan jadwal hari ini<span class="src">desain · Rausch · Wroblewski · temuan 01–02</span></span><span class="fo-sev">Kritis</span></li>
+      <li><span class="fo-rank">2</span><span class="fo-class defect">Cacat</span><span class="fo-text">Nama mapel di dialog "Hapus jadwal" berwarna putih, tidak terbaca di mode terang<span class="src">platform · SchedulePage.tsx:763</span></span><span class="fo-sev">P1</span></li>
+      <li><span class="fo-rank">3</span><span class="fo-class design">Desain</span><span class="fo-text">"Isi Jurnal" (dipakai tiap hari) kecil, sementara "Tambah Jadwal" (jarang) jadi tombol utama di atas<span class="src">desain · Hoober · Hurff · temuan 04</span></span><span class="fo-sev">Penting</span></li>
+      <li><span class="fo-rank">4</span><span class="fo-class defect">Cacat</span><span class="fo-text">Target sentuh di bawah 44px: "Isi Jurnal" 36px (28px di tablet), menu titik tiga dan toggle tampilan 40px<span class="src">platform · ScheduleCard.tsx:97 · :53 · WeeklyScheduleView.tsx:131 · ScheduleViewToolbar.tsx:61</span></span><span class="fo-sev">P2</span></li>
+      <li><span class="fo-rank">5</span><span class="fo-class fork">Fork</span><span class="fo-text">Pilih cara guru masuk ke Jadwal: lewat bilah bawah atau kartu Beranda<span class="src">desain · Rausch · §05</span></span><span class="fo-sev">Keputusan</span></li>
+      <li><span class="fo-rank">6</span><span class="fo-class design">Desain</span><span class="fo-text">Delapan lapis kontrol sebelum kartu jadwal pertama; tombol ikon AI/PDF/ICS tanpa label<span class="src">desain · Wroblewski · Clark · temuan 03 · 05</span></span><span class="fo-sev">Penting</span></li>
+      <li><span class="fo-rank">7</span><span class="fo-class defect">Cacat</span><span class="fo-text">Tombol di dalam kartu yang juga tombol, dan warna modal analisis AI yang hanya cocok untuk mode gelap<span class="src">platform · WeeklyScheduleView.tsx:95 · SchedulePage.tsx:744</span></span><span class="fo-sev">P2</span></li>
+      <li><span class="fo-rank">8</span><span class="fo-class design">Desain</span><span class="fo-text">Tampilan mingguan di HP dan toolbar PH yang padat<span class="src">desain · Clark · Nelson · temuan 06–07</span></span><span class="fo-sev">Penting</span></li>
+    </ul>
+  </section>
+
+  <!-- ═══════════ 01 · LENS SUMMARY ═══════════ -->
+  <section>
+    <div class="sec-index">01</div>
+    <h2 class="section-title">Pendapat tiap desainer</h2>
+    <p class="section-sub">
+      Setiap baris mewakili praktisi yang karyanya membentuk bidang ini. Kolom kanan berisi hal yang paling
+      akan mereka persoalkan kalau melihat menu Jadwal hari ini.
+    </p>
+    <table class="lens-table">
+      <thead><tr><th>Sudut pandang</th><th>Penilaian</th><th>Ringkasan</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="lens-name">Ergonomi genggaman <span class="who">Steven Hoober</span></td>
+          <td><span class="verdict v-concern">Perlu perhatian</span></td>
+          <td class="lens-read">Aksi harian ("Isi Jurnal") kecil dan tersebar di kartu. Aksi jarang ("Tambah Jadwal") paling menonjol, di zona atas yang sulit dijangkau jempol.</td>
+        </tr>
+        <tr>
+          <td class="lens-name">Peta zona jempol <span class="who">Scott Hurff</span></td>
+          <td><span class="verdict v-concern">Perlu perhatian</span></td>
+          <td class="lens-read">Semua kontrol halaman ada di bagian atas. Zona bawah hanya diisi bilah navigasi, dan Jadwal tidak ada di bilah itu.</td>
+        </tr>
+        <tr>
+          <td class="lens-name">Fokus pada tugas <span class="who">Luke Wroblewski</span></td>
+          <td><span class="verdict v-problem">Bermasalah</span></td>
+          <td class="lens-read">Guru membuka Jadwal untuk melihat hari ini, tetapi yang muncul halaman pilihan menu, lalu delapan lapis kontrol sebelum kartu pertama.</td>
+        </tr>
+        <tr>
+          <td class="lens-name">Manipulasi langsung <span class="who">Josh Clark</span></td>
+          <td><span class="verdict v-mixed">Campuran</span></td>
+          <td class="lens-read">Pemilih hari yang bisa digeser terasa alami. Mengetuk kartu di tampilan mingguan malah membuka Edit, dan tombol ikon tidak berlabel.</td>
+        </tr>
+        <tr>
+          <td class="lens-name">Struktur navigasi <span class="who">Frank Rausch</span></td>
+          <td><span class="verdict v-problem">Bermasalah</span></td>
+          <td class="lens-read">Tujuan harian disimpan di "Lainnya", lalu ditambah satu lapis hub yang isinya sama dengan tab di dalamnya.</td>
+        </tr>
+        <tr>
+          <td class="lens-name">Skeptis berbasis data <span class="who">Raluca Budiu</span></td>
+          <td><span class="verdict v-concern">Perlu perhatian</span></td>
+          <td class="lens-read">Istilah "ICS", "90m", dan "(Copy)" asing bagi guru MI. Kartu hub penuh poin penjelasan yang jarang dibaca.</td>
+        </tr>
+        <tr>
+          <td class="lens-name">Craft modern <span class="who">Allen · de With · Nelson</span></td>
+          <td><span class="verdict v-mixed">Campuran</span></td>
+          <td class="lens-read">Kartu jadwal rapi dan status sedang/selesai jelas. Banner yang selalu tampil dan badge berdenyut menambah noise.</td>
+        </tr>
+        <tr>
+          <td class="lens-name">Standar platform <span class="who">HIG · Material 3</span></td>
+          <td><span class="verdict v-mixed">Campuran</span></td>
+          <td class="lens-read">Tab PH sudah konsisten 44px. Tab Jadwal Mengajar masih 36–40px, dan ada warna mode gelap yang bocor ke mode terang.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══════════ 02 · THUMB-ZONE DIAGRAM ═══════════ -->
+  <section>
+    <div class="sec-index">02</div>
+    <h2 class="section-title">Di mana aksi-aksinya berada</h2>
+    <p class="section-sub">
+      Zona Hurff menggambarkan <em>biaya</em> sebuah posisi, bukan aturan wajib. Tombol "Hapus" di zona atas itu benar,
+      karena sulitnya memang disengaja. Yang keliru adalah aksi harian di sana. Setiap titik adalah aksi utama tab
+      Jadwal Mengajar, diletakkan di posisinya sekarang (HP, tampilan harian).
+    </p>
+    <div class="thumb-grid">
+      <svg class="thumb-figure" viewBox="0 0 320 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram HP yang menunjukkan posisi aksi menu Jadwal terhadap zona jangkauan jempol">
+        <defs>
+          <radialGradient id="reach" cx="50%" cy="96%" r="92%">
+            <stop offset="0%"  stop-color="oklch(0.745 0.135 152)" stop-opacity="0.42"/>
+            <stop offset="42%" stop-color="oklch(0.745 0.135 152)" stop-opacity="0.20"/>
+            <stop offset="64%" stop-color="oklch(0.805 0.125 78)"  stop-opacity="0.26"/>
+            <stop offset="100%" stop-color="oklch(0.655 0.185 25)" stop-opacity="0.40"/>
+          </radialGradient>
+          <clipPath id="screen"><rect x="26" y="64" width="268" height="512" rx="30"/></clipPath>
+        </defs>
+        <rect x="14" y="14" width="292" height="592" rx="44" fill="oklch(0.205 0.006 75)" stroke="oklch(0.32 0.006 75)" stroke-width="2"/>
+        <rect x="118" y="34" width="84" height="22" rx="11" fill="oklch(0.12 0.004 75)"/>
+        <g clip-path="url(#screen)">
+          <rect x="26" y="64" width="268" height="512" fill="url(#reach)"/>
+          <line x1="26" y1="252" x2="294" y2="252" stroke="oklch(0.95 0.01 85)" stroke-opacity="0.07" stroke-dasharray="2 5"/>
+          <line x1="26" y1="430" x2="294" y2="430" stroke="oklch(0.95 0.01 85)" stroke-opacity="0.07" stroke-dasharray="2 5"/>
+        </g>
+        <text x="42" y="240" font-family="Spline Sans Mono, monospace" font-size="9.5" letter-spacing="1.8" fill="oklch(0.655 0.185 25)" fill-opacity="0.9">SULIT</text>
+        <text x="42" y="420" font-family="Spline Sans Mono, monospace" font-size="9.5" letter-spacing="1.8" fill="oklch(0.805 0.125 78)" fill-opacity="0.9">MERENTANG</text>
+        <text x="42" y="490" font-family="Spline Sans Mono, monospace" font-size="9.5" letter-spacing="1.8" fill="oklch(0.745 0.135 152)" fill-opacity="0.9">ALAMI</text>
+        <g font-family="Spline Sans Mono, monospace" font-size="11" font-weight="600" text-anchor="middle" fill="oklch(0.165 0.006 75)">
+          <circle cx="74"  cy="96"  r="12" fill="oklch(0.655 0.185 25)"/><text x="74"  y="100">1</text>
+          <circle cx="160" cy="132" r="12" fill="oklch(0.655 0.185 25)"/><text x="160" y="136">2</text>
+          <circle cx="96"  cy="196" r="12" fill="oklch(0.655 0.185 25)"/><text x="96"  y="200">3</text>
+          <circle cx="236" cy="196" r="12" fill="oklch(0.655 0.185 25)"/><text x="236" y="200">4</text>
+          <circle cx="160" cy="300" r="12" fill="oklch(0.805 0.125 78)"/><text x="160" y="304">5</text>
+          <circle cx="250" cy="352" r="12" fill="oklch(0.805 0.125 78)"/><text x="250" y="356">6</text>
+          <circle cx="250" cy="400" r="12" fill="oklch(0.805 0.125 78)"/><text x="250" y="404">7</text>
+          <circle cx="230" cy="470" r="12" fill="oklch(0.745 0.135 152)"/><text x="230" y="474">8</text>
+          <circle cx="262" cy="548" r="12" fill="oklch(0.745 0.135 152)"/><text x="262" y="552">9</text>
+        </g>
+        <rect x="119" y="586" width="82" height="4" rx="2" fill="oklch(0.95 0.01 85)" fill-opacity="0.55"/>
+      </svg>
+
+      <div class="thumb-key">
+        <h4 class="mono-label">Peta aksi</h4>
+        <ol class="key-list">
+          <li><span class="kn">1</span><span class="ka">Kembali ke "Pilihan Menu"</span><span class="kz high">Sulit</span></li>
+          <li><span class="kn">2</span><span class="ka">Tab Mengajar · PH · Jurnal</span><span class="kz high">Sulit</span></li>
+          <li><span class="kn">3</span><span class="ka">Tambah Jadwal (tombol utama, jarang dipakai)</span><span class="kz high">Sulit</span></li>
+          <li><span class="kn">4</span><span class="ka">Ikon AI · PDF · ICS tanpa label</span><span class="kz high">Sulit</span></li>
+          <li><span class="kn">5</span><span class="ka">Pilih hari (geser)</span><span class="kz med">Merentang</span></li>
+          <li><span class="kn">6</span><span class="ka">Ganti tampilan harian/mingguan · 40px</span><span class="kz med">Merentang</span></li>
+          <li><span class="kn">7</span><span class="ka">Menu titik tiga kartu · 40px</span><span class="kz med">Merentang</span></li>
+          <li><span class="kn">8</span><span class="ka">Isi Jurnal (aksi harian) · 36px</span><span class="kz low">Alami</span></li>
+          <li><span class="kn">9</span><span class="ka">"Lainnya" → Jadwal &amp; Jurnal (dua ketukan)</span><span class="kz low">Alami</span></li>
+        </ol>
+
+        <div class="zone-defs">
+          <div class="zone-def"><span class="dot" style="background:var(--reach-low)"></span><div><span class="zt">Alami</span> · biaya rendah: <span class="zd">jangkauan jempol tanpa usaha. Untuk aksi utama, navigasi utama, kontrol yang sering dipakai.</span></div></div>
+          <div class="zone-def"><span class="dot" style="background:var(--reach-med)"></span><div><span class="zt">Merentang</span> · sedang: <span class="zd">terjangkau, tapi genggaman bergeser. Untuk aksi sekunder dan pengaturan.</span></div></div>
+          <div class="zone-def"><span class="dot" style="background:var(--reach-high)"></span><div><span class="zt">Sulit</span> · biaya tinggi: <span class="zd">harus ganti genggaman. Untuk aksi berbahaya atau jarang, atau dibiarkan kosong.</span></div></div>
+        </div>
+
+        <div class="whats-off">
+          <span class="mono-label">Yang keliru</span>
+          <p>Empat titik pertama, termasuk tombol utama, ada di zona sulit. Satu-satunya aksi harian (8) memang jatuh di zona alami, tetapi hanya untuk kartu yang kebetulan ada di bawah dan ukurannya 36px. Pintu masuknya sendiri (9) butuh dua ketukan lewat "Lainnya".</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 03 · PER-SCREEN READ ═══════════ -->
+  <section>
+    <div class="sec-index">03</div>
+    <h2 class="section-title">Setiap layar, sekilas</h2>
+    <p class="section-sub">Penilaian singkat per layar sebagai pijakan untuk temuan di bawah.</p>
+    <div class="screen-grid">
+      <div class="screen-card bad">
+        <svg viewBox="0 0 120 220"><rect x="3" y="3" width="114" height="214" rx="18" fill="oklch(0.245 0.007 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="20" width="62" height="8" rx="2" fill="oklch(0.8 0.006 85)"/><rect x="14" y="38" width="92" height="52" rx="5" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="96" width="92" height="52" rx="5" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="154" width="92" height="52" rx="5" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/></svg>
+        <div class="name">Hub /jadwal</div><div class="read">Lapisan ekstra</div>
+        <div class="note">Tiga kartu tinggi berisi penjelasan. Guru harus memilih dan menggulir dulu sebelum melihat jadwal.</div>
+      </div>
+      <div class="screen-card warn">
+        <svg viewBox="0 0 120 220"><rect x="3" y="3" width="114" height="214" rx="18" fill="oklch(0.245 0.007 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="16" width="40" height="6" rx="2" fill="oklch(0.5 0.008 85)"/><rect x="14" y="28" width="92" height="10" rx="3" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="44" width="56" height="8" rx="2" fill="oklch(0.8 0.006 85)"/><rect x="14" y="58" width="50" height="10" rx="3" fill="oklch(0.66 0.13 160)"/><rect x="14" y="74" width="92" height="10" rx="3" fill="oklch(0.805 0.125 78)" fill-opacity="0.4"/><rect x="14" y="90" width="92" height="14" rx="3" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="110" width="92" height="8" rx="2" fill="oklch(0.5 0.008 85)" fill-opacity="0.5"/><rect x="14" y="126" width="92" height="40" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="172" width="92" height="30" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/></svg>
+        <div class="name">Mengajar · harian</div><div class="read">Kontrol menumpuk</div>
+        <div class="note">Kartu jadwal rapi, status sedang/selesai jelas. Hanya saja kartu pertama baru muncul di sepertiga bawah layar.</div>
+      </div>
+      <div class="screen-card warn">
+        <svg viewBox="0 0 120 220"><rect x="3" y="3" width="114" height="214" rx="18" fill="oklch(0.245 0.007 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="20" width="30" height="6" rx="2" fill="oklch(0.8 0.006 85)"/><rect x="14" y="30" width="92" height="22" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="60" width="30" height="6" rx="2" fill="oklch(0.8 0.006 85)"/><rect x="14" y="70" width="92" height="22" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="100" width="30" height="6" rx="2" fill="oklch(0.8 0.006 85)"/><rect x="14" y="110" width="92" height="14" rx="4" fill="none" stroke="oklch(0.32 0.006 75)" stroke-dasharray="3 3"/><rect x="14" y="132" width="30" height="6" rx="2" fill="oklch(0.8 0.006 85)"/><rect x="14" y="142" width="92" height="22" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="172" width="30" height="6" rx="2" fill="oklch(0.8 0.006 85)"/><rect x="14" y="182" width="92" height="22" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/></svg>
+        <div class="name">Mengajar · mingguan</div><div class="read">Daftar panjang</div>
+        <div class="note">Di HP enam hari ditumpuk jadi satu kolom panjang. Hari kosong ditulis "Libur", dan mengetuk kartu langsung membuka Edit.</div>
+      </div>
+      <div class="screen-card warn">
+        <svg viewBox="0 0 120 220"><rect x="3" y="3" width="114" height="214" rx="18" fill="oklch(0.245 0.007 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="18" width="44" height="12" rx="3" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="62" y="18" width="44" height="12" rx="3" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="36" width="34" height="12" rx="3" fill="oklch(0.66 0.13 160)"/><rect x="52" y="36" width="34" height="12" rx="3" fill="none" stroke="oklch(0.32 0.006 75)"/><rect x="90" y="36" width="16" height="12" rx="3" fill="none" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="56" width="92" height="12" rx="3" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="74" width="60" height="12" rx="3" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="78" y="74" width="28" height="12" rx="3" fill="none" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="92" width="21" height="14" rx="3" fill="none" stroke="oklch(0.32 0.006 75)"/><rect x="38" y="92" width="21" height="14" rx="3" fill="none" stroke="oklch(0.32 0.006 75)"/><rect x="62" y="92" width="21" height="14" rx="3" fill="none" stroke="oklch(0.32 0.006 75)"/><rect x="86" y="92" width="20" height="14" rx="3" fill="none" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="112" width="70" height="12" rx="3" fill="none" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="132" width="92" height="40" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/></svg>
+        <div class="name">Jadwal PH</div><div class="read">Toolbar padat</div>
+        <div class="note">Target sentuh sudah 44px semua, tetapi ada sekitar 14 kontrol sebelum daftar PH muncul.</div>
+      </div>
+      <div class="screen-card bad">
+        <svg viewBox="0 0 120 220"><rect x="3" y="3" width="114" height="214" rx="18" fill="oklch(0.245 0.007 75)" stroke="oklch(0.32 0.006 75)"/><rect x="12" y="70" width="96" height="80" rx="8" fill="oklch(0.96 0.005 85)"/><rect x="20" y="80" width="50" height="6" rx="2" fill="oklch(0.3 0.006 75)"/><rect x="20" y="94" width="40" height="4" rx="1" fill="oklch(0.5 0.008 85)"/><rect x="62" y="94" width="30" height="4" rx="1" fill="oklch(0.985 0.002 85)" stroke="oklch(0.655 0.185 25)" stroke-dasharray="2 2"/><rect x="58" y="130" width="42" height="12" rx="3" fill="oklch(0.655 0.185 25)"/></svg>
+        <div class="name">Konfirmasi hapus</div><div class="read">Teks hilang</div>
+        <div class="note">Di mode terang, nama mapel dan hari tertulis putih di atas latar putih, jadi guru tidak tahu jadwal mana yang akan dihapus.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 04 · FINDINGS ═══════════ -->
+  <section>
+    <div class="sec-index">04</div>
+    <h2 class="section-title">Diurutkan sesuai urutan perbaikan</h2>
+    <p class="section-sub">
+      Urutan berdasarkan dampak ke guru: <em>kritis</em> (menghambat tugas utama) → <em>penting</em>
+      (gesekan nyata) → <em>polish</em> (penghalusan).
+    </p>
+
+    <div class="tier-label crit"><span class="mono-label">Kritis</span><span class="rule"></span><span class="count">2</span></div>
+    <div class="findings">
+      <article class="finding" data-sev="crit">
+        <div class="finding-head">
+          <span class="find-num">01</span>
+          <div class="find-headtext">
+            <div class="find-tags"><span class="severity crit">Kritis</span><span class="lens-chip">Rausch</span><span class="lens-chip">Budiu</span></div>
+            <h3 class="find-title">Jadwal, menu harian guru, disimpan di "Lainnya"</h3>
+          </div>
+        </div>
+        <div class="find-body">
+          <p><span class="label">Apa</span>Bilah bawah untuk guru berisi Beranda, Penilaian, Data Siswa, dan Absensi. Jadwal &amp; Jurnal hanya ada di daftar "Lainnya" (<code>menuRegistry.ts:106</code>, <code>moreOrder: 3</code>). Padahal jadwal dan jurnal adalah hal yang dibuka guru setiap hari mengajar, mungkin lebih sering daripada Data Siswa.</p>
+          <p><span class="label">Kenapa penting</span>Rausch menyebut menu "lainnya" sebagai tempat fitur yang jarang dipakai. Guru MI yang tidak terbiasa menjelajah aplikasi bisa saja tidak menemukannya, atau hanya masuk lewat kartu di Beranda.</p>
+          <div class="fix"><p><span class="label">Perbaikan · perlu keputusan</span>Masukkan "Jadwal" ke bilah bawah dan pindahkan item yang paling jarang dipakai (kemungkinan Data Siswa) ke "Lainnya". Alternatifnya, pertahankan bilah bawah tetapi jadikan kartu "Jadwal hari ini" di Beranda sebagai pintu utama. Lihat pilihan di §05.</p></div>
+        </div>
+      </article>
+      <article class="finding" data-sev="crit">
+        <div class="finding-head">
+          <span class="find-num">02</span>
+          <div class="find-headtext">
+            <div class="find-tags"><span class="severity crit">Kritis</span><span class="lens-chip">Wroblewski</span><span class="lens-chip">Rausch</span></div>
+            <h3 class="find-title">Membuka /jadwal tidak langsung menampilkan jadwal, tetapi halaman pilihan menu</h3>
+          </div>
+        </div>
+        <div class="find-body">
+          <p><span class="label">Apa</span>Tanpa <code>?tab=</code>, <code>SchedulePage</code> menampilkan <code>ScheduleHubMenu</code>: tiga kartu besar dengan badge, deskripsi, empat poin penjelasan, dan tombol "Buka ...". Setelah memilih, muncul tombol "Pilihan Menu" dan tab yang isinya sama persis dengan tiga kartu tadi. Tautan <code>StatsGrid.tsx:165</code> dan <code>DashboardPage.tsx:336</code> juga mengarah ke <code>/jadwal</code> polos, sehingga ikut berhenti di hub.</p>
+          <p><span class="label">Kenapa penting</span>Jalur sekarang: Lainnya → Jadwal &amp; Jurnal → gulir → Buka Jadwal Mengajar, yaitu 3–4 ketukan sebelum melihat jadwal hari ini. Hub ini juga menduplikasi tab yang sudah ada. Wroblewski: halaman pertama harus menjawab alasan orang datang.</p>
+          <div class="fix"><p><span class="label">Perbaikan</span>Jadikan <code>/jadwal</code> langsung membuka <code>tab=mengajar</code> dengan hari ini terpilih, dan simpan tab terakhir yang dipakai. Hapus hub atau tampilkan hanya sekali untuk pengguna baru. Arahkan dua tautan di atas ke <code>?tab=mengajar</code>.</p></div>
+        </div>
+      </article>
+    </div>
+
+    <div class="tier-label imp"><span class="mono-label">Penting</span><span class="rule"></span><span class="count">5</span></div>
+    <div class="findings">
+      <article class="finding" data-sev="imp">
+        <div class="finding-head">
+          <span class="find-num">03</span>
+          <div class="find-headtext">
+            <div class="find-tags"><span class="severity imp">Penting</span><span class="lens-chip">Wroblewski</span><span class="lens-chip">Nelson</span></div>
+            <h3 class="find-title">Delapan lapis kontrol sebelum kartu jadwal pertama</h3>
+          </div>
+        </div>
+        <div class="find-body">
+          <p><span class="label">Apa</span>Urutan di HP: tombol Pilihan Menu → tab switcher → judul + deskripsi → baris aksi (Tambah + 3 ikon) → ajakan notifikasi → banner bentrok/"Jadwal aman" → pemilih hari → toolbar (jumlah sesi, filter kelas, toggle tampilan) → baru kartu jadwal.</p>
+          <p><span class="label">Kenapa penting</span>Di HP 6 inci, kartu pertama baru muncul setelah digulir. Nelson: "distill, don't shrink". Sebagian besar lapis itu tidak dibutuhkan setiap hari.</p>
+          <div class="fix"><p><span class="label">Perbaikan</span>Gabungkan judul dengan tab, pindahkan aksi jarang ke satu menu "⋯", tampilkan banner hanya bila ada bentrok, dan jadikan ajakan notifikasi bisa ditutup. Targetnya kartu pertama terlihat tanpa menggulir.</p></div>
+        </div>
+      </article>
+      <article class="finding" data-sev="imp">
+        <div class="finding-head">
+          <span class="find-num">04</span>
+          <div class="find-headtext">
+            <div class="find-tags"><span class="severity imp">Penting</span><span class="lens-chip">Hoober</span><span class="lens-chip">Hurff</span></div>
+            <h3 class="find-title">Hierarki aksi terbalik: "Tambah Jadwal" utama, "Isi Jurnal" kecil</h3>
+          </div>
+        </div>
+        <div class="find-body">
+          <p><span class="label">Apa</span>Jadwal mengajar biasanya diisi sekali per semester, tetapi "Tambah Jadwal" adalah tombol hijau terbesar di atas. "Isi Jurnal", yang dipakai setiap selesai mengajar, berupa tombol outline <code>text-xs</code> setinggi 36px (28px di layar ≥640px) di pojok kartu.</p>
+          <p><span class="label">Kenapa penting</span>Penekanan visual mengarahkan jempol. Saat ini yang ditonjolkan justru aksi yang paling jarang dipakai.</p>
+          <div class="fix"><p><span class="label">Perbaikan</span>Pada kartu yang sedang/baru selesai berlangsung, jadikan "Isi Jurnal" tombol penuh 44px, atau tampilkan sebagai tombol melayang di bawah ("Isi jurnal jam ke-3"). Turunkan "Tambah Jadwal" ke outline atau masukkan ke menu "⋯", dan tonjolkan lagi hanya saat jadwal masih kosong.</p></div>
+        </div>
+      </article>
+      <article class="finding" data-sev="imp">
+        <div class="finding-head">
+          <span class="find-num">05</span>
+          <div class="find-headtext">
+            <div class="find-tags"><span class="severity imp">Penting</span><span class="lens-chip">Clark</span><span class="lens-chip">Budiu</span></div>
+            <h3 class="find-title">Tombol ikon AI · PDF · ICS tanpa label di HP</h3>
+          </div>
+        </div>
+        <div class="find-body">
+          <p><span class="label">Apa</span>Di bawah breakpoint md, teks ketiga tombol disembunyikan sehingga tinggal ikon. "ICS" adalah format file kalender yang tidak dikenal kebanyakan guru.</p>
+          <p><span class="label">Kenapa penting</span>Ikon tanpa label harus ditebak, dan guru cenderung tidak mengetuk sesuatu yang tidak jelas. Akibatnya fitur analisis AI dan ekspor jarang ditemukan.</p>
+          <div class="fix"><p><span class="label">Perbaikan</span>Satukan ketiganya dalam satu menu "⋯" berlabel jelas: "Cek jadwal dengan AI", "Unduh PDF", "Simpan ke kalender HP". Tab PH sudah memakai pola dan istilah ini.</p></div>
+        </div>
+      </article>
+      <article class="finding" data-sev="imp">
+        <div class="finding-head">
+          <span class="find-num">06</span>
+          <div class="find-headtext">
+            <div class="find-tags"><span class="severity imp">Penting</span><span class="lens-chip">Clark</span><span class="lens-chip">Hoober</span></div>
+            <h3 class="find-title">Tampilan mingguan di HP: panjang, dan ketukan membuka Edit</h3>
+          </div>
+        </div>
+        <div class="find-body">
+          <p><span class="label">Apa</span>Di HP, <code>WeeklyScheduleView</code> menumpuk enam hari dalam satu kolom. Hari tanpa jadwal ditulis "Libur" walau sekolah tetap masuk, dan seluruh kartu adalah <code>role="button"</code> yang membuka form Edit.</p>
+          <p><span class="label">Kenapa penting</span>Guru yang hanya ingin melihat bisa tak sengaja masuk ke mode edit. Label "Libur" juga memberi informasi yang salah.</p>
+          <div class="fix"><p><span class="label">Perbaikan</span>Ketuk kartu → lembar detail (lihat, Isi Jurnal, Edit). Ganti "Libur" dengan "Tidak ada jadwal mengajar". Di HP, pertimbangkan mingguan sebagai ringkasan ringkas per hari yang bisa dibuka satu per satu.</p></div>
+        </div>
+      </article>
+      <article class="finding" data-sev="imp">
+        <div class="finding-head">
+          <span class="find-num">07</span>
+          <div class="find-headtext">
+            <div class="find-tags"><span class="severity imp">Penting</span><span class="lens-chip">Nelson</span><span class="lens-chip">Wroblewski</span></div>
+            <h3 class="find-title">Toolbar Jadwal PH terlalu padat untuk HP</h3>
+          </div>
+        </div>
+        <div class="find-body">
+          <p><span class="label">Apa</span><code>PhScheduleToolbar</code> menampilkan sekaligus: dropdown kelas, dropdown semester, Tambah PH, Tambah Massal, menu ⋯, kolom cari, filter bulan, urutan, empat filter status, dan tiga mode tampilan. Semua target sudah 44px, dan ini patut dipuji.</p>
+          <p><span class="label">Kenapa penting</span>Sebagian besar kunjungan hanya untuk melihat PH terdekat atau menambah satu PH. Empat belas kontrol membuat daftar PH tenggelam.</p>
+          <div class="fix"><p><span class="label">Perbaikan</span>Di HP, tampilkan kelas + "Tambah PH" + filter status, lalu pindahkan cari/bulan/urutan/mode ke tombol "Filter" yang membuka lembar bawah. Tambah Massal bisa masuk ke menu ⋯.</p></div>
+        </div>
+      </article>
+    </div>
+
+    <div class="tier-label pol"><span class="mono-label">Polish</span><span class="rule"></span><span class="count">3</span></div>
+    <div class="findings">
+      <article class="finding" data-sev="pol">
+        <div class="finding-head">
+          <span class="find-num">08</span>
+          <div class="find-headtext">
+            <div class="find-tags"><span class="severity pol">Polish</span><span class="lens-chip">de With</span></div>
+            <h3 class="find-title">Ajakan notifikasi tanpa tombol tutup, banner "Jadwal aman" selalu tampil</h3>
+          </div>
+        </div>
+        <div class="find-body">
+          <p><span class="label">Apa</span><code>NotificationPrompt</code> muncul terus selama notifikasi belum aktif, tanpa opsi "Nanti saja". Banner hijau "Jadwal aman" tampil setiap saat.</p>
+          <p><span class="label">Kenapa penting</span>Pesan yang selalu ada lama-lama diabaikan, termasuk saat isinya benar-benar penting (bentrok jadwal).</p>
+          <div class="fix"><p><span class="label">Perbaikan</span>Tambahkan "Nanti saja" yang diingat 7 hari. Tampilkan banner hanya bila ada bentrok.</p></div>
+        </div>
+      </article>
+      <article class="finding" data-sev="pol">
+        <div class="finding-head">
+          <span class="find-num">09</span>
+          <div class="find-headtext">
+            <div class="find-tags"><span class="severity pol">Polish</span><span class="lens-chip">Budiu</span></div>
+            <h3 class="find-title">Teks bahasa Inggris tercampur: "90m", "(Copy)"</h3>
+          </div>
+        </div>
+        <div class="find-body">
+          <p><span class="label">Apa</span>Durasi ditulis <code>{n}m</code> (<code>ScheduleCard.tsx:87</code>). Duplikat jadwal memberi nama "Matematika (Copy)" (<code>SchedulePage.tsx:672</code>).</p>
+          <p><span class="label">Kenapa penting</span>"m" bisa dibaca "menit" atau "meter", dan "(Copy)" ikut tersimpan ke data serta ekspor PDF.</p>
+          <div class="fix"><p><span class="label">Perbaikan</span>"90 menit" atau "2 JP". Duplikat cukup memakai nama yang sama, karena hari/jam yang membedakan.</p></div>
+        </div>
+      </article>
+      <article class="finding" data-sev="pol">
+        <div class="finding-head">
+          <span class="find-num">10</span>
+          <div class="find-headtext">
+            <div class="find-tags"><span class="severity pol">Polish</span><span class="lens-chip">Allen</span><span class="lens-chip">Platform Canon</span></div>
+            <h3 class="find-title">Badge berdenyut dan teks status 11–12px</h3>
+          </div>
+        </div>
+        <div class="find-body">
+          <p><span class="label">Apa</span>Badge "PH Hari Ini" (<code>ScheduleCard.tsx:44</code>) berdenyut terus dengan teks 11px. Status kartu memakai <code>text-xxs</code> (12px).</p>
+          <p><span class="label">Kenapa penting</span>Animasi tanpa henti mengganggu dan menguras baterai. Teks 11–12px sulit dibaca guru yang lebih senior.</p>
+          <div class="fix"><p><span class="label">Perbaikan</span>Badge statis dengan warna kuat. Status minimal 13–14px.</p></div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ═══════════ PLATFORM DEFECTS ═══════════ -->
+  <section>
+    <div class="sec-index" style="color: var(--plat);">P</div>
+    <h2 class="section-title">Cacat platform</h2>
+    <p class="section-sub">Masalah implementasi yang objektif, masing-masing dengan lokasi dan perbaikan. Berbeda dari temuan desain di atas: <em>ini bug, bukan pilihan desain.</em> Diperiksa terhadap target web/PWA.</p>
+    <div class="tier-label plat"><span class="mono-label">Teknis · web / PWA</span><span class="rule"></span><span class="count">5</span></div>
+    <div class="defects">
+      <article class="defect" data-p="p1">
+        <span class="pbadge p1">P1</span>
+        <div class="defect-head">
+          <span class="defect-loc">src/components/pages/SchedulePage.tsx:763</span>
+          <h3 class="defect-title">Nama mapel dan hari di konfirmasi hapus tidak terlihat di mode terang</h3>
+        </div>
+        <div class="defect-body">
+          <p><span class="label">Apa</span><code>&lt;strong className="text-white"&gt;</code> dirender di atas latar <code>bg-white</code> milik Modal. Guru menekan "Hapus" tanpa tahu jadwal mana yang terhapus.</p>
+          <div class="fix"><p><span class="label">Perbaikan</span><code>text-slate-900 dark:text-white</code> pada kedua <code>&lt;strong&gt;</code>.</p></div>
+        </div>
+      </article>
+      <article class="defect" data-p="p2">
+        <span class="pbadge p2">P2</span>
+        <div class="defect-head">
+          <span class="defect-loc">ScheduleCard.tsx:97 · :53 · WeeklyScheduleView.tsx:131 · ScheduleViewToolbar.tsx:61</span>
+          <h3 class="defect-title">Target sentuh di bawah 44px pada aksi yang sering dipakai</h3>
+        </div>
+        <div class="defect-body">
+          <p><span class="label">Apa</span>"Isi Jurnal" <code>min-h-[36px] sm:min-h-[28px]</code>, menu titik tiga <code>w-10 h-10</code>, toggle tampilan 40px (36px di sm). Tab switcher juga 42px (<code>SchedulePage.tsx:494</code>).</p>
+          <div class="fix"><p><span class="label">Perbaikan</span>Seragamkan ke <code>min-h-11 min-w-11</code> seperti tab PH. Visual boleh tetap kecil asal area sentuhnya 44px.</p></div>
+        </div>
+      </article>
+      <article class="defect" data-p="p2">
+        <span class="pbadge p2">P2</span>
+        <div class="defect-head">
+          <span class="defect-loc">src/components/schedule/WeeklyScheduleView.tsx:95</span>
+          <h3 class="defect-title">Elemen interaktif bersarang: kartu role="button" berisi &lt;button&gt;</h3>
+        </div>
+        <div class="defect-body">
+          <p><span class="label">Apa</span>Pembaca layar mengumumkan kartu sebagai satu tombol, sehingga tombol "Isi Jurnal" di dalamnya sulit dijangkau. Ketukan yang meleset sedikit dari tombol jatuh ke kartu dan membuka Edit.</p>
+          <div class="fix"><p><span class="label">Perbaikan</span>Jadikan kartu <code>&lt;article&gt;</code> biasa, lalu buat aksi "Detail/Edit" dan "Isi Jurnal" sebagai tombol bersaudara.</p></div>
+        </div>
+      </article>
+      <article class="defect" data-p="p2">
+        <span class="pbadge p2">P2</span>
+        <div class="defect-head">
+          <span class="defect-loc">src/components/pages/SchedulePage.tsx:744–751</span>
+          <h3 class="defect-title">Warna modal analisis AI hanya untuk mode gelap</h3>
+        </div>
+        <div class="defect-body">
+          <p><span class="label">Apa</span><code>text-red-400</code>, <code>text-brand-300</code>, dan <code>text-gray-300</code> di atas latar putih kontrasnya jauh di bawah 4.5:1.</p>
+          <div class="fix"><p><span class="label">Perbaikan</span>Pasangkan dengan varian terang: <code>text-red-700 dark:text-red-400</code>, <code>text-brand-700 dark:text-brand-300</code>, <code>text-slate-700 dark:text-gray-300</code>.</p></div>
+        </div>
+      </article>
+      <article class="defect" data-p="p3">
+        <span class="pbadge p3">P3</span>
+        <div class="defect-head">
+          <span class="defect-loc">src/components/schedule/ScheduleHubMenu.tsx</span>
+          <h3 class="defect-title">Kartu hub berupa &lt;div onClick&gt;</h3>
+        </div>
+        <div class="defect-body">
+          <p><span class="label">Apa</span>Area kartu bisa diketuk, tetapi tidak dikenali sebagai tautan/tombol oleh keyboard dan pembaca layar. Hanya tombol "Buka ..." di dalamnya yang bisa difokuskan. Masalah ini hilang sendiri jika hub dihapus (temuan 02).</p>
+          <div class="fix"><p><span class="label">Perbaikan</span>Jika hub dipertahankan, bungkus kartu dengan <code>&lt;Link&gt;</code> dan hapus tombol di dalamnya.</p></div>
+        </div>
+      </article>
+    </div>
+    <p class="section-sub" style="margin-top: var(--s4);"><strong>Sudah benar:</strong> meta viewport memakai <code>viewport-fit=cover</code>; bilah bawah memakai <code>env(safe-area-inset-bottom)</code>; Modal punya focus trap, Escape, dan tombol tutup 44px; seluruh toolbar PH sudah 44px.</p>
+  </section>
+
+  <!-- ═══════════ 05 · THE BIG FORK ═══════════ -->
+  <section>
+    <div class="sec-index">05</div>
+    <h2 class="section-title">Pintu masuk Jadwal: pilih satu dengan sengaja</h2>
+    <p class="section-sub">
+      Temuan 01, 02, dan 03 saling terkait, jadi lebih baik dibereskan dalam satu rancangan daripada ditambal satu per satu. Ada tiga pilihan yang masuk akal.
+    </p>
+    <div class="fork-grid">
+      <div class="fork current">
+        <div class="fork-tag">Opsi A · sekarang</div>
+        <h4>Lainnya → hub → tab</h4>
+        <div class="summary">Jadwal ada di daftar "Lainnya". /jadwal membuka hub tiga kartu, lalu tab Mengajar/PH/Jurnal.</div>
+        <div class="fork-phone">
+          <svg viewBox="0 0 120 220" width="108"><rect x="3" y="3" width="114" height="214" rx="18" fill="oklch(0.245 0.007 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="24" width="92" height="44" rx="5" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="74" width="92" height="44" rx="5" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="124" width="92" height="44" rx="5" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="3" y="188" width="114" height="29" rx="4" fill="oklch(0.205 0.006 75)" stroke="oklch(0.32 0.006 75)"/><circle cx="20" cy="202" r="4" fill="oklch(0.5 0.008 85)"/><circle cx="45" cy="202" r="4" fill="oklch(0.5 0.008 85)"/><circle cx="70" cy="202" r="4" fill="oklch(0.5 0.008 85)"/><circle cx="100" cy="202" r="4" fill="oklch(0.66 0.13 160)"/></svg>
+        </div>
+        <ul>
+          <li><span class="con">MINUS</span><span>3–4 ketukan untuk melihat jadwal hari ini.</span></li>
+          <li><span class="con">MINUS</span><span>Hub menduplikasi tab yang sudah ada.</span></li>
+          <li><span class="con">MINUS</span><span>Menu harian disejajarkan dengan menu yang jarang dipakai.</span></li>
+          <li><span class="pro">PLUS</span><span>Bilah bawah tidak berubah, guru lama tidak perlu belajar ulang.</span></li>
+        </ul>
+      </div>
+      <div class="fork recommended">
+        <div class="fork-tag">Opsi B · disarankan</div>
+        <h4>Jadwal di bilah bawah, langsung "Hari ini"</h4>
+        <div class="summary">Beranda · Jadwal · Absensi · Penilaian · Lainnya. Mengetuk Jadwal langsung membuka jadwal hari ini, dengan "Isi Jurnal" sebagai aksi utama.</div>
+        <div class="fork-phone">
+          <svg viewBox="0 0 120 220" width="108"><rect x="3" y="3" width="114" height="214" rx="18" fill="oklch(0.245 0.007 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="20" width="92" height="10" rx="3" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="36" width="92" height="14" rx="3" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="58" width="92" height="40" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.66 0.13 160)"/><rect x="58" y="84" width="42" height="10" rx="3" fill="oklch(0.66 0.13 160)"/><rect x="14" y="104" width="92" height="36" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="146" width="92" height="36" rx="4" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="3" y="188" width="114" height="29" rx="4" fill="oklch(0.205 0.006 75)" stroke="oklch(0.32 0.006 75)"/><circle cx="20" cy="202" r="4" fill="oklch(0.5 0.008 85)"/><circle cx="40" cy="202" r="4" fill="oklch(0.66 0.13 160)"/><circle cx="60" cy="202" r="4" fill="oklch(0.5 0.008 85)"/><circle cx="80" cy="202" r="4" fill="oklch(0.5 0.008 85)"/><circle cx="100" cy="202" r="4" fill="oklch(0.5 0.008 85)"/></svg>
+        </div>
+        <ul>
+          <li><span class="pro">PLUS</span><span>Satu ketukan dari mana saja ke jadwal hari ini.</span></li>
+          <li><span class="pro">PLUS</span><span>Pola "lihat jadwal → isi jurnal" ada di zona jempol.</span></li>
+          <li><span class="pro">PLUS</span><span>Hub tidak dibutuhkan lagi, tab cukup.</span></li>
+          <li><span class="con">MINUS</span><span>Satu item (kemungkinan Data Siswa) pindah ke "Lainnya".</span></li>
+        </ul>
+      </div>
+      <div class="fork">
+        <div class="fork-tag">Opsi C · alternatif</div>
+        <h4>Bilah tetap, Beranda jadi pintu</h4>
+        <div class="summary">Bilah bawah tidak diubah. Kartu "Jadwal hari ini" di Beranda menjadi pintu utama dengan tombol "Isi Jurnal" per jam. /jadwal tetap langsung membuka tab Mengajar.</div>
+        <div class="fork-phone">
+          <svg viewBox="0 0 120 220" width="108"><rect x="3" y="3" width="114" height="214" rx="18" fill="oklch(0.245 0.007 75)" stroke="oklch(0.32 0.006 75)"/><rect x="14" y="20" width="60" height="8" rx="2" fill="oklch(0.8 0.006 85)"/><rect x="14" y="36" width="92" height="70" rx="5" fill="oklch(0.165 0.006 75)" stroke="oklch(0.66 0.13 160)"/><rect x="20" y="46" width="80" height="12" rx="3" fill="oklch(0.245 0.007 75)"/><rect x="20" y="64" width="80" height="12" rx="3" fill="oklch(0.245 0.007 75)"/><rect x="62" y="86" width="38" height="12" rx="3" fill="oklch(0.66 0.13 160)"/><rect x="14" y="114" width="92" height="60" rx="5" fill="oklch(0.165 0.006 75)" stroke="oklch(0.32 0.006 75)"/><rect x="3" y="188" width="114" height="29" rx="4" fill="oklch(0.205 0.006 75)" stroke="oklch(0.32 0.006 75)"/><circle cx="20" cy="202" r="4" fill="oklch(0.66 0.13 160)"/><circle cx="45" cy="202" r="4" fill="oklch(0.5 0.008 85)"/><circle cx="70" cy="202" r="4" fill="oklch(0.5 0.008 85)"/><circle cx="100" cy="202" r="4" fill="oklch(0.5 0.008 85)"/></svg>
+        </div>
+        <ul>
+          <li><span class="pro">PLUS</span><span>Tidak ada perubahan navigasi yang dirasakan guru.</span></li>
+          <li><span class="pro">PLUS</span><span>Beranda sudah punya TodayAgendaCard, tinggal diperkuat.</span></li>
+          <li><span class="con">MINUS</span><span>Menu Jadwal penuh tetap dua ketukan.</span></li>
+          <li><span class="con">MINUS</span><span>Beranda makin padat.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 06 · OTHER FORKS ═══════════ -->
+  <section>
+    <div class="sec-index">06</div>
+    <h2 class="section-title">Keputusan yang diambil diam-diam</h2>
+    <p class="section-sub">Belum tentu salah, tetapi layak dibahas sebagai <em>keputusan</em>, bukan bawaan.</p>
+    <div class="callout-grid">
+      <div class="callout"><h4>Slot bilah bawah</h4><p>Data Siswa vs Jadwal: mana yang lebih sering dibuka guru setiap hari? Data pemakaian (jika ada) sebaiknya yang menentukan, bukan urutan pembuatan fitur.</p></div>
+      <div class="callout"><h4>Hub sebagai halaman pertama</h4><p>Hub berguna untuk memperkenalkan tiga fitur ke pengguna baru, tetapi menghalangi pengguna lama setiap hari. Pilihannya: tampil sekali, atau dihapus.</p></div>
+      <div class="callout"><h4>Jurnal sebagai tab vs aksi dari kartu</h4><p>Sekarang jurnal bisa diakses dari dua tempat. Pilih yang utama ("Isi Jurnal" dari kartu jadwal), dan jadikan tab Jurnal sebagai riwayat.</p></div>
+      <div class="callout"><h4>Tampilan mingguan di HP</h4><p>Apakah perlu ada di HP? Di layar sempit, harian + pemilih hari sudah mencakup kebutuhan melihat minggu ini.</p></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 07 · LIMITS ═══════════ -->
+  <section>
+    <div class="sec-index">07</div>
+    <h2 class="section-title">Yang tidak bisa dilihat dari kode saja</h2>
+    <div class="limits">
+      <ul>
+        <li>Jangkauan jempol sebenarnya di HP fisik. Review ini membaca kode, tidak dijalankan di perangkat.</li>
+        <li>Tinggi nyata tumpukan kontrol di layar tertentu, karena bergantung pada isi banner dan status notifikasi.</li>
+        <li>Data pemakaian: seberapa sering guru membuka Jadwal dibanding Data Siswa. Ini penentu fork bilah bawah.</li>
+        <li>Lighthouse/aksesibilitas otomatis dan uji pembaca layar belum dijalankan.</li>
+        <li>Isi tab Jurnal (form dan riwayat) hanya dilihat sekilas, belum diaudit mendalam.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══════════ 08 · NEXT STEPS ═══════════ -->
+  <section style="margin-bottom: var(--s6);">
+    <div class="sec-index">08</div>
+    <h2 class="section-title">Langkah berikutnya</h2>
+    <div class="steps">
+      <div class="step"><div class="sn"></div><h4>Perbaikan cepat (tanpa keputusan)</h4><p>P1 teks hapus, warna modal AI, target 44px, kartu bersarang, "90 menit", "(Copy)", label "Libur". Aman langsung dikerjakan.</p></div>
+      <div class="step"><div class="sn"></div><h4>Rancang ulang pintu masuk</h4><p>Pilih opsi di §05, lalu kerjakan temuan 01 · 02 · 03 · 04 sekaligus: /jadwal langsung ke hari ini, "Isi Jurnal" jadi aksi utama.</p></div>
+      <div class="step"><div class="sn"></div><h4>Rapikan toolbar</h4><p>Temuan 05 + 07: aksi jarang ke menu "⋯", filter PH ke lembar bawah.</p></div>
+    </div>
+  </section>
+
+  <footer class="doc">
+    <span>Review mobile menu Jadwal Guru Cerdas · thumb-first</span>
+    <span>10 temuan desain · 4 fork · 5 cacat platform · urutan perbaikan gabungan</span>
+  </footer>
+
+</div>
+</body>
+</html>

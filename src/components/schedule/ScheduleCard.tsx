@@ -20,6 +20,8 @@ export interface ScheduleCardProps {
 
 export const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, classNameLabel, isOngoing, isPast, hasPhToday, onEdit, onDuplicate, onDelete, getDuration, onIsiJurnal }) => {
     const colorClass = useMemo(() => getColorForSubject(item.subject), [item.subject]);
+    // The journal is due once a lesson has started, so that is when the button leads.
+    const isJournalDue = isOngoing || isPast;
 
     return (
         <div
@@ -41,7 +43,7 @@ export const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, classNameLabel
                             </span>
                         </div>
                         {hasPhToday && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-extrabold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 animate-pulse">
+                            <span className="inline-flex items-center gap-1 text-xs font-extrabold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60">
                                 <ClipboardPenIcon className="w-3 h-3 text-amber-700 dark:text-amber-300 shrink-0" />
                                 <span>PH Hari Ini</span>
                             </span>
@@ -50,7 +52,7 @@ export const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, classNameLabel
 
                     <DropdownMenu>
                         <DropdownTrigger
-                            className="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
+                            className="!w-11 !h-11 !min-w-11 !p-0 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
                             aria-label="Menu opsi jadwal"
                         >
                             <MoreVerticalIcon className="w-4 h-4" />
@@ -58,7 +60,7 @@ export const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, classNameLabel
                         <DropdownContent>
                             <DropdownItem icon={<EditIcon className="w-4 h-4" />} onClick={() => onEdit(item)}>Edit</DropdownItem>
                             <DropdownItem icon={<CopyIcon className="w-4 h-4" />} onClick={() => onDuplicate(item)}>Duplikat</DropdownItem>
-                            <DropdownItem icon={<TrashIcon className="w-4 h-4 text-red-500" />} onClick={() => onDelete(item)} className="text-red-400">Hapus</DropdownItem>
+                            <DropdownItem icon={<TrashIcon className="w-4 h-4 text-red-500" />} onClick={() => onDelete(item)} className="text-red-600 dark:text-red-400">Hapus</DropdownItem>
                         </DropdownContent>
                     </DropdownMenu>
                 </div>
@@ -77,30 +79,35 @@ export const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, classNameLabel
                 {/* Status Bar */}
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800/50 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
-                        <div className={`w-1.5 h-1.5 rounded-full ${isOngoing ? 'bg-green-500 animate-pulse' : isPast ? 'bg-slate-400 dark:bg-slate-600' : 'bg-emerald-500'}`}></div>
-                        <span className={`text-xxs font-medium ${isOngoing ? 'text-green-600 dark:text-green-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                        <div className={`w-2 h-2 rounded-full ${isOngoing ? 'bg-green-500' : isPast ? 'bg-slate-400 dark:bg-slate-600' : 'bg-emerald-500'}`}></div>
+                        <span className={`text-sm font-medium ${isOngoing ? 'text-green-700 dark:text-green-400' : 'text-slate-500 dark:text-slate-400'}`}>
                             {isOngoing ? 'Berlangsung' : isPast ? 'Selesai' : 'Nanti'}
                         </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-xxs font-mono text-slate-400 dark:text-slate-600">
-                            {getDuration(item.start_time, item.end_time)}m
-                        </span>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onIsiJurnal?.(item);
-                            }}
-                            aria-label={`Isi Jurnal untuk ${item.subject}`}
-                            className="text-xs px-2.5 py-1 min-h-[36px] sm:min-h-[28px] border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-lg flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95 font-semibold"
-                        >
-                            <BookOpenIcon className="w-3 h-3 text-emerald-500 shrink-0" />
-                            <span>Isi Jurnal</span>
-                        </Button>
-                    </div>
+                    <span className="text-sm text-slate-500 dark:text-slate-400">
+                        {getDuration(item.start_time, item.end_time)} menit
+                    </span>
                 </div>
+
+                {onIsiJurnal && (
+                    <Button
+                        size="sm"
+                        variant={isJournalDue ? 'primary' : 'outline'}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onIsiJurnal(item);
+                        }}
+                        aria-label={`Isi Jurnal untuk ${item.subject}`}
+                        className={`w-full min-h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold cursor-pointer active:scale-95 ${
+                            isJournalDue
+                                ? ''
+                                : 'border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20'
+                        }`}
+                    >
+                        <BookOpenIcon className="w-4 h-4 shrink-0" />
+                        <span>Isi Jurnal</span>
+                    </Button>
+                )}
             </div>
         </div>
     );

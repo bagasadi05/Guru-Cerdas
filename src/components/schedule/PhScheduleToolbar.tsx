@@ -1,4 +1,5 @@
-import { CalendarDays, LayoutGrid, List, Plus, Search, ArrowUpDown, Share2, Printer, Calendar, MoreHorizontal, MessageSquare, Layers } from 'lucide-react';
+import { useState } from 'react';
+import { CalendarDays, LayoutGrid, List, Plus, Search, ArrowUpDown, Share2, Printer, Calendar, MoreHorizontal, MessageSquare, Layers, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { CustomDropdown } from '../ui/CustomDropdown';
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function PhScheduleToolbar({ domain, onPrint }: Props) {
+    const [isMoreFiltersOpen, setIsMoreFiltersOpen] = useState(false);
     const statuses = [
         { value: 'all', label: 'Semua', count: domain.statusCounts.all },
         { value: 'today', label: 'Hari ini', count: domain.statusCounts.today },
@@ -21,6 +23,8 @@ export function PhScheduleToolbar({ domain, onPrint }: Props) {
     // When the filters match nothing, the empty state carries the reset, so only one appears at a time.
     const showClearFilters = (domain.searchQuery !== '' || domain.statusFilter !== 'all' || domain.selectedMonth !== 'all')
         && domain.filteredSchedules.length > 0;
+    // On phones search, month, sort and view mode fold away; an active filter keeps them open so it never hides.
+    const showMoreFilters = isMoreFiltersOpen || domain.searchQuery !== '' || domain.selectedMonth !== 'all';
 
     return (
         <section aria-label="Pengaturan jadwal PH" className="space-y-4 border-y border-slate-200 py-4 dark:border-slate-700">
@@ -30,8 +34,9 @@ export function PhScheduleToolbar({ domain, onPrint }: Props) {
                     <div className="space-y-1.5"><p className="text-sm font-medium text-slate-700 dark:text-slate-200">Semester</p><CustomDropdown aria-label="Pilih semester PH" value={domain.selectedSemesterId} onChange={domain.setSelectedSemesterId} options={domain.semesterOptions} placeholder="Pilih semester" /></div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                    {domain.canAdd && <><Button type="button" variant="primary" onClick={() => domain.openAdd()} title="Tambah jadwal PH" className="min-h-11 gap-2 !px-3 !text-sm !bg-brand-700 hover:!bg-brand-800"><Plus className="h-4 w-4" aria-hidden />Tambah PH</Button><Button type="button" variant="outline" onClick={() => domain.setIsBatchOpen(true)} title="Tambahkan hingga 20 jadwal PH dalam satu pengisian" className="min-h-11 gap-2 !px-3 !text-sm"><Layers className="h-4 w-4" aria-hidden />Tambah Massal</Button></>}
+                    {domain.canAdd && <><Button type="button" variant="primary" onClick={() => domain.openAdd()} title="Tambah jadwal PH" className="min-h-11 gap-2 !px-3 !text-sm !bg-brand-700 hover:!bg-brand-800"><Plus className="h-4 w-4" aria-hidden />Tambah PH</Button><Button type="button" variant="outline" onClick={() => domain.setIsBatchOpen(true)} title="Tambahkan hingga 20 jadwal PH dalam satu pengisian" className="hidden sm:inline-flex min-h-11 gap-2 !px-3 !text-sm"><Layers className="h-4 w-4" aria-hidden />Tambah Massal</Button></>}
                     <DropdownMenu><DropdownTrigger aria-label="Pilihan berbagi jadwal PH" className="!min-h-11 !min-w-11 !h-11 !w-11 !p-0 !rounded-xl"><MoreHorizontal className="h-5 w-5" /></DropdownTrigger><DropdownContent align="right">
+                        {domain.canAdd && <DropdownItem className="min-h-11 sm:hidden" onClick={() => domain.setIsBatchOpen(true)}><Layers className="mr-2 h-4 w-4" />Tambah massal</DropdownItem>}
                         <DropdownItem className="min-h-11" onClick={() => domain.setIsReportPreviewOpen(true)} disabled={!domain.effectiveClassId}><MessageSquare className="mr-2 h-4 w-4" />Pratinjau laporan WhatsApp</DropdownItem>
                         <DropdownItem className="min-h-11" onClick={() => domain.setIsWaModalOpen(true)} disabled={!domain.rawSchedules.length}><Share2 className="mr-2 h-4 w-4" />Salin jadwal untuk WhatsApp</DropdownItem>
                         <DropdownItem className="min-h-11" onClick={onPrint} disabled={!domain.rawSchedules.length}><Printer className="mr-2 h-4 w-4" />Cetak jadwal</DropdownItem>
@@ -41,7 +46,18 @@ export function PhScheduleToolbar({ domain, onPrint }: Props) {
             </div>
 
             <div className="space-y-3 border-t border-slate-200 pt-3 dark:border-slate-700">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setIsMoreFiltersOpen((open) => !open)}
+                    aria-expanded={showMoreFilters}
+                    aria-controls="ph-more-filters"
+                    className="sm:hidden w-full min-h-11 justify-between !px-3 !text-sm"
+                >
+                    <span className="inline-flex items-center gap-2"><SlidersHorizontal className="h-4 w-4" aria-hidden />Cari &amp; tampilan</span>
+                    <ChevronDown className={`h-4 w-4 transition-transform ${showMoreFilters ? 'rotate-180' : ''}`} aria-hidden />
+                </Button>
+                <div id="ph-more-filters" className={`${showMoreFilters ? 'flex' : 'hidden'} sm:flex flex-col gap-3 lg:flex-row lg:items-center`}>
                     <div className="relative flex-1">
                         <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                         <Input aria-label="Cari jadwal PH berdasarkan mapel atau materi" type="search" placeholder="Cari jadwal PH: mapel atau materi..." value={domain.searchQuery} onChange={(e) => domain.setSearchQuery(e.target.value)} className="min-h-11 bg-white pl-10 dark:bg-slate-900" />
@@ -83,7 +99,7 @@ export function PhScheduleToolbar({ domain, onPrint }: Props) {
                                 Hapus filter
                             </Button>
                         )}
-                        <div role="group" aria-label="Pilihan Tampilan PH" className="inline-flex max-w-full rounded-xl bg-white p-1 dark:bg-slate-900">
+                        <div role="group" aria-label="Pilihan Tampilan PH" className={`${showMoreFilters ? 'inline-flex' : 'hidden'} sm:inline-flex max-w-full rounded-xl bg-white p-1 dark:bg-slate-900`}>
                             {modes.map((mode) => (
                                 <button
                                     type="button"
