@@ -149,7 +149,7 @@ const queueOfflineRequest = async (url: string, init?: RequestInit): Promise<voi
         body: init?.body ? String(init.body) : null,
         headers: headersRecord
       }
-    });
+    }, { requirePersistence: tableName === 'attendance' });
 
     logger.info('Request queued for offline processing', 'ResilientSupabase', {
       table: tableName,

@@ -14,6 +14,18 @@ export type Database = {
   }
   public: {
     Tables: {
+      modul_ajar_ai_cache: {
+        Row: { user_id: string; operation: string; request_fingerprint: string; prompt_version: number; contract_version: number; content: Json; created_at: string; expires_at: string }
+        Insert: { user_id: string; operation: string; request_fingerprint: string; prompt_version: number; contract_version: number; content: Json; created_at?: string; expires_at?: string }
+        Update: { user_id?: string; operation?: string; request_fingerprint?: string; prompt_version?: number; contract_version?: number; content?: Json; created_at?: string; expires_at?: string }
+        Relationships: []
+      }
+      modul_ajar_ai_usage: {
+        Row: { id: string; user_id: string; operation: string; request_fingerprint: string; cache_hit: boolean; status: string; attempts: Json; input_tokens: number | null; output_tokens: number | null; reasoning_tokens: number | null; total_tokens: number | null; latency_ms: number; created_at: string }
+        Insert: { id?: string; user_id: string; operation: string; request_fingerprint: string; cache_hit: boolean; status: string; attempts: Json; input_tokens?: number | null; output_tokens?: number | null; reasoning_tokens?: number | null; total_tokens?: number | null; latency_ms: number; created_at?: string }
+        Update: { status?: string }
+        Relationships: []
+      }
       user_notification_preferences: {
         Row: { user_id: string; task_reminders: boolean; task_reminder_days: number; updated_at: string }
         Insert: { user_id: string; task_reminders?: boolean; task_reminder_days?: number; updated_at?: string }
