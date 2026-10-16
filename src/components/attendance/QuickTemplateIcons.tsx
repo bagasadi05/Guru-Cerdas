@@ -10,6 +10,8 @@ import {
     CalendarOff,
 } from 'lucide-react';
 import { AttendanceStatus } from '../../types/enums';
+import { useI18n } from '../../utils/i18n';
+import { attendanceCopy } from '../../locales/attendance';
 
 export interface Template {
     id: string;
@@ -58,8 +60,10 @@ const templates: Template[] = [
 export const QuickTemplateIcons: React.FC<QuickTemplateIconsProps> = ({
     onApplyTemplate,
 }) => {
+    const { language } = useI18n();
+    const copy = attendanceCopy[language];
     return (
-        <div className="flex-1 flex flex-wrap items-center justify-start sm:justify-between gap-2 px-1 sm:px-4">
+        <div className="flex flex-wrap items-center gap-2">
             {templates.map((template) => (
                 <button
                     key={template.id}
@@ -70,23 +74,20 @@ export const QuickTemplateIcons: React.FC<QuickTemplateIconsProps> = ({
                         onApplyTemplate(template);
                     }}
                     className={`
-                        group flex flex-col items-center justify-center gap-1
-                        w-16 sm:w-20 min-h-[64px] px-2 py-2 rounded-xl
+                        group flex items-center justify-center gap-1.5
+                        min-h-11 px-2.5 py-2 rounded-xl
                         transition-all duration-200 active:scale-95 cursor-pointer
                         hover:bg-slate-100/70 dark:hover:bg-slate-800/60
                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-900
                     `}
                     title={template.description}
-                    aria-label={template.name}
+                    aria-label={template.id === 'all-present' ? copy.allPresent : copy.allHoliday}
                 >
-                    <span className={`w-10 h-10 rounded-xl flex items-center justify-center ${template.iconBg} ${template.color}`}>
+                    <span className={`shrink-0 ${template.color}`}>
                         {template.icon}
                     </span>
-                    <span className="sm:hidden text-[11px] leading-tight font-medium text-slate-600 dark:text-slate-300">
-                        {template.shortName}
-                    </span>
-                    <span className="hidden sm:inline text-xs font-medium text-slate-600 dark:text-slate-300">
-                        {template.name}
+                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                        {template.id === 'all-present' ? copy.allPresent : copy.allHoliday}
                     </span>
                 </button>
             ))}

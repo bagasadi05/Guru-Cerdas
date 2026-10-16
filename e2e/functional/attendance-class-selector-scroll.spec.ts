@@ -57,6 +57,7 @@ async function setupSupabaseMocks(page: Page) {
 }
 
 test('rightmost class pill tap scrolls only the strip, never the page or body', async ({ page }) => {
+  await page.route('**/release-notes.json*', route => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript((session) => {
     window.localStorage.setItem('portal-guru-auth', JSON.stringify(session));
@@ -65,13 +66,13 @@ test('rightmost class pill tap scrolls only the strip, never the page or body', 
   await setupSupabaseMocks(page);
 
   await page.goto('/absensi');
-  await page.getByText('Direktori Peserta Didik').waitFor();
+  await page.getByRole('heading', { name: /Daftar siswa/ }).waitFor();
 
   const readScrollState = () =>
     page.evaluate(() => {
       const main = document.getElementById('main-content');
       const strip = document.querySelector<HTMLElement>('[data-tutorial="class-selector"] > div:nth-child(2)');
-      const exportBtn = [...document.querySelectorAll('button')].find((b) => b.textContent?.includes('Ekspor Data'));
+      const exportBtn = document.querySelector<HTMLElement>('button[aria-label="Pilihan lain absensi"]');
       return {
         windowScrollX: window.scrollX,
         bodyScrollLeft: document.body.scrollLeft,

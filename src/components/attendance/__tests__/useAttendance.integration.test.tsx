@@ -5,6 +5,7 @@ import React from 'react';
 import { useAttendance } from '../useAttendance';
 import { useAuth } from '../../../hooks/useAuth';
 import { useSemester } from '../../../contexts/SemesterContext';
+import { I18nProvider } from '../../../utils/i18n';
 
 // Mock dependencies
 vi.mock('../../../hooks/useAuth', () => ({
@@ -81,7 +82,7 @@ describe('useAttendance integration', () => {
   it('initializes default state correctly', () => {
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>
-        {children}
+        <I18nProvider>{children}</I18nProvider>
       </QueryClientProvider>
     );
 

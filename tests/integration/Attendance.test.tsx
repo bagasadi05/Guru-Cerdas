@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthContext } from '../../src/hooks/useAuth';
 import { ToastProvider } from '../../src/hooks/useToast';
+import { I18nProvider } from '../../src/utils/i18n';
 
 // Mock Supabase
 const mockAttendance: any[] = [];
@@ -123,7 +124,7 @@ describe('AttendancePage Integration', () => {
                 }}>
                     <ToastProvider>
                         <MemoryRouter>
-                            <AttendancePage />
+                            <I18nProvider><AttendancePage /></I18nProvider>
                         </MemoryRouter>
                     </ToastProvider>
                 </AuthContext.Provider>
@@ -147,8 +148,8 @@ describe('AttendancePage Integration', () => {
         fireEvent.click(hadirButtons[0]);
 
         // Click save — use a scoped regex so we don't match unrelated "Simpan" buttons.
-        const saveButton = await screen.findByRole('button', { name: /Simpan Perubahan Absensi/i });
-        fireEvent.click(saveButton);
+        const saveButtons = await screen.findAllByRole('button', { name: /Simpan Sekarang/i });
+        fireEvent.click(saveButtons[0]);
 
         // Verify the upsert call happened via supabase.from('attendance').
         // waitFor polls until the assertion passes (or times out) which is

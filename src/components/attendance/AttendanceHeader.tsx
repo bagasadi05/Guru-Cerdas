@@ -1,6 +1,9 @@
 import React from 'react';
-import { Button } from '../ui/Button';
+import { MoreHorizontal } from 'lucide-react';
 import { BrainCircuitIcon, DownloadCloudIcon } from '../Icons';
+import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../ui/DropdownMenu';
+import { useI18n } from '../../utils/i18n';
+import { attendanceCopy } from '../../locales/attendance';
 
 interface AttendanceHeaderProps {
     onAnalyze: () => void;
@@ -8,42 +11,33 @@ interface AttendanceHeaderProps {
     isOnline: boolean;
 }
 
+// Analysis and export are occasional, so they sit behind one menu and the
+// class, date and student list stay near the top of the screen.
 export const AttendanceHeader: React.FC<AttendanceHeaderProps> = ({ onAnalyze, onExport, isOnline }) => {
+    const { language } = useI18n();
     return (
-        <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 p-6 md:p-8 shadow-xl shadow-slate-900/15 mb-6">
-            {/* Decorative background elements */}
-            <div className="absolute top-0 right-0 -mt-20 -mr-20 w-72 h-72 bg-emerald-500/30 rounded-full blur-[80px] pointer-events-none mix-blend-screen"></div>
-            <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-72 h-72 bg-green-500/30 rounded-full blur-[80px] pointer-events-none mix-blend-screen"></div>
-            <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }}></div>
-
-            <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left z-10">
-                <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6">
-                    <div className="flex-shrink-0 group hidden md:block">
-                        <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center border border-white/30 shadow-lg ring-1 ring-white/30 group-hover:scale-105 transition-transform duration-300">
-                            <BrainCircuitIcon className="w-8 h-8 text-white" />
-                        </div>
-                    </div>
-                    <div className="flex-1 space-y-1.5 mt-1">
-                        <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight font-serif drop-shadow-sm">
-                            Insight Kehadiran
-                        </h1>
-                        <p className="text-sm md:text-base text-green-100/90 leading-relaxed max-w-2xl mx-auto md:mx-0 font-normal tracking-wide">
-                            Visualisasi dan analisis cerdas untuk memonitor kedisiplinan siswa setiap harinya.
-                        </p>
-                    </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 self-center">
-                    <Button onClick={onAnalyze} variant="ghost" disabled={!isOnline} className="flex-1 sm:flex-none justify-center bg-white hover:bg-emerald-50 !text-emerald-700 border-none shadow-lg shadow-black/10 transition-all duration-200 font-semibold px-5 h-11 rounded-xl cursor-pointer active:scale-95">
-                        <BrainCircuitIcon className="w-4 h-4 mr-2" />
-                        Analisis Cerdas
-                    </Button>
-                    <Button onClick={onExport} variant="outline" className="flex-1 sm:flex-none justify-center bg-emerald-900/40 hover:bg-emerald-900/60 text-white border-emerald-400/30 shadow-lg shadow-black/10 transition-all duration-200 font-medium px-5 h-11 rounded-xl cursor-pointer active:scale-95">
-                        <DownloadCloudIcon className="w-4 h-4 mr-2" />
-                        Ekspor Data
-                    </Button>
-                </div>
+        <header className="flex items-start justify-between gap-3 mb-2 sm:mb-4">
+            <div className="min-w-0">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight font-serif text-slate-900 dark:text-white">
+                    Absensi
+                </h1>
+                <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-2xl">
+                    {attendanceCopy[language].guidance}
+                </p>
             </div>
+            <DropdownMenu>
+                <DropdownTrigger aria-label="Pilihan lain absensi" className="!min-h-11 !min-w-11 !h-11 !w-11 !p-0 !rounded-xl shrink-0">
+                    <MoreHorizontal className="h-5 w-5" />
+                </DropdownTrigger>
+                <DropdownContent align="right">
+                    <DropdownItem className="min-h-11" icon={<BrainCircuitIcon className="w-4 h-4" />} onClick={onAnalyze} disabled={!isOnline}>
+                        Analisis kehadiran dengan AI
+                    </DropdownItem>
+                    <DropdownItem className="min-h-11" icon={<DownloadCloudIcon className="w-4 h-4" />} onClick={onExport}>
+                        Ekspor Data
+                    </DropdownItem>
+                </DropdownContent>
+            </DropdownMenu>
         </header>
     );
 };

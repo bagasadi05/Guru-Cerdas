@@ -16,6 +16,7 @@ import { useAttendanceActions } from './hooks/useAttendanceActions';
 import { useAttendanceStreaks } from './useAttendanceStreaks';
 import { useAttendanceAI } from './useAttendanceAI';
 import { useAttendanceExport } from './useAttendanceExport';
+import { useAttendanceContextGuard, type AttendanceContext } from './hooks/useAttendanceContextGuard';
 
 export const useAttendance = () => {
     const { user, isAdmin } = useAuth();
@@ -138,10 +139,34 @@ export const useAttendance = () => {
         setIsDirty: state.setIsDirty,
     });
 
+    const applyContext = (next: AttendanceContext) => {
+        data.localDirtyRef.current = false;
+        state.setIsDirty(false);
+        state.setSelectedSemesterId(next.semesterId);
+        state.setSelectedClass(next.classId);
+        state.setSelectedDate(next.date);
+        state.setCalendarMonth(next.date.slice(0, 7));
+        state.setSelectedStudents(new Set());
+        if (next.classId !== state.selectedClass) state.setSearchQuery('');
+    };
+
     const queryClient = useQueryClient();
     const [missingWeekdays, setMissingWeekdays] = useState<MissingWeekday[]>([]);
     const [isAutoFilling, setIsAutoFilling] = useState(false);
     const [isAssistantDismissed, setIsAssistantDismissed] = useState(false);
+    const context = { classId: state.selectedClass, date: state.selectedDate, semesterId: state.selectedSemesterId };
+    const guard = useAttendanceContextGuard({
+        ownerId: user?.id, context, isDirty: state.isDirty,
+        isBusy: actions.isSaving || actions.isResetting || isAutoFilling,
+        commit: applyContext, save: actions.handleSave,
+    });
+    const changeSemester = (semesterId: string | null) => {
+        const semester = semesters.find(item => item.id === semesterId);
+        const date = semester && (state.selectedDate < semester.start_date || state.selectedDate > semester.end_date) ? semester.start_date : state.selectedDate;
+        const classes = data.classes.filter(item => isAdmin || item.user_id === user?.id || data.teacherAssignments.some(assignment => assignment.class_id === item.id && (!semesterId || assignment.semester_id === semesterId)));
+        const classId = classes.some(item => item.id === state.selectedClass) ? state.selectedClass : classes[0]?.id ?? '';
+        guard.requestContext({ classId, date, semesterId });
+    };
 
     // Reset dismissed state if class changes
     useEffect(() => {
@@ -163,11 +188,11 @@ export const useAttendance = () => {
                 studentIds,
                 today
             );
-            setMissingWeekdays(missing);
+            setMissingWeekdays(missing.filter(day => day.date < today && day.date < selectedDate));
         } catch (err) {
             console.warn('Failed to check missing weekdays:', err);
         }
-    }, [selectedClass, students, today]);
+    }, [selectedClass, students, today, selectedDate]);
 
     useEffect(() => {
         if (!selectedClass || !students || students.length === 0) {
@@ -183,7 +208,7 @@ export const useAttendance = () => {
             today
         ).then(missing => {
             if (isMounted) {
-                setMissingWeekdays(missing);
+                setMissingWeekdays(missing.filter(day => day.date < today && day.date < selectedDate));
             }
         }).catch(err => {
             console.warn('Failed to check missing weekdays:', err);
@@ -192,15 +217,16 @@ export const useAttendance = () => {
         return () => {
             isMounted = false;
         };
-    }, [selectedClass, studentIdsKey, students, today]);
+    }, [selectedClass, studentIdsKey, students, today, selectedDate]);
 
-    const handleAutoFillWeekdays = useCallback(async (targetDate?: string) => {
-        if (!state.selectedClass) return;
+    const handleAutoFillWeekdays = useCallback(async () => {
+        const targetDate = missingWeekdays.at(-1)?.date;
+        if (!state.selectedClass || !targetDate || targetDate >= today || targetDate >= selectedDate || isAutoFilling) return;
         setIsAutoFilling(true);
         try {
             const res = await attendanceAutoFillService.autoFillWeeklyAttendance({
                 classId: state.selectedClass,
-                targetDate: targetDate || state.selectedDate,
+                targetDate,
                 notes: '[Auto-fill Cepat: Hadir]',
             });
             toast.success(`Berhasil mengisi ${res.total_inserted} data kehadiran sebagai Hadir!`);
@@ -214,7 +240,7 @@ export const useAttendance = () => {
         } finally {
             setIsAutoFilling(false);
         }
-    }, [state.selectedClass, state.selectedDate, toast, queryClient, checkMissingWeekdays]);
+    }, [state.selectedClass, selectedDate, today, missingWeekdays, isAutoFilling, toast, queryClient, checkMissingWeekdays]);
 
     const isCurrentDateAutoFilled = useMemo(() => {
         return attendanceAutoFillService.isDateAutoFilled(state.attendanceRecords);
@@ -232,6 +258,14 @@ export const useAttendance = () => {
         ...actions,
         ...exportApi, 
         ...aiApi,
+        ...guard,
+        setSelectedClass: (classId: string) => guard.requestContext({ ...context, classId }),
+        setSelectedDate: (date: string) => {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+            const withinSemester = !selectedSemester || (date >= selectedSemester.start_date && date <= selectedSemester.end_date);
+            if (withinSemester) guard.requestContext({ ...context, date });
+        },
+        setSelectedSemesterId: changeSemester,
         attendanceSummary, 
         unmarkedStudents, 
         filteredStudents,

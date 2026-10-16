@@ -5,12 +5,17 @@ import {
     CheckCircleIcon,
     UsersIcon,
     BarChart3,
+    CheckSquare,
+    Square,
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { EmptyState } from '../ui/EmptyState';
 import { ErrorState } from '../ui/ErrorState';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
+import { Modal } from '../ui/Modal';
+import { useI18n } from '../../utils/i18n';
+import { attendanceCopy } from '../../locales/attendance';
 
 import { useAttendance } from '../attendance/useAttendance';
 import { useWarnUnsavedChanges } from '../../hooks/useWarnUnsavedChanges';
@@ -32,6 +37,8 @@ import { AttendanceModals } from '../attendance/AttendanceModals';
 const AttendanceCalendar = lazy(() => import('../attendance/AttendanceCalendar').then(module => ({ default: module.AttendanceCalendar })));
 
 const AttendancePage: React.FC = () => {
+    const { language } = useI18n();
+    const copy = attendanceCopy[language];
     const {
         today,
         yesterday,
@@ -96,6 +103,8 @@ const AttendancePage: React.FC = () => {
         confirmResetAttendance,
         handleSave,
         performSave,
+        confirmSave = performSave,
+        cancelSave = () => setIsSaveConfirmOpen(false),
         isSaveConfirmOpen,
         setIsSaveConfirmOpen,
         handleExport,
@@ -109,6 +118,11 @@ const AttendancePage: React.FC = () => {
         handleAutoFillWeekdays,
         isCurrentDateAutoFilled,
         isDirty,
+        pendingContext,
+        isResolvingContext,
+        keepEditing,
+        discardAndContinue,
+        saveAndContinue,
     } = useAttendance();
 
     const [highlightedStudentId, setHighlightedStudentId] = useState<string | null>(null);
@@ -167,8 +181,7 @@ const AttendancePage: React.FC = () => {
     }
 
     return (
-        <div className="w-full min-h-full p-4 sm:p-6 lg:p-8 flex flex-col max-w-7xl mx-auto">
-            <h1 className="sr-only">Absensi</h1>
+        <div className="w-full min-h-full px-0 py-4 sm:p-6 lg:p-8 flex flex-col max-w-7xl mx-auto">
             <AttendanceHeader
                 onAnalyze={handleAnalyzeAttendance}
                 onExport={() => setIsExportModalOpen(true)}
@@ -195,6 +208,8 @@ const AttendancePage: React.FC = () => {
             <main className="bg-transparent flex flex-col">
                 {/* Assistant Banners: Missing Weekdays & Auto-filled indicators */}
                 <AttendanceAssistantBanners
+                    key={`${selectedClass}_${selectedDate}`}
+                    className={attendanceClasses.find(item => item.id === selectedClass)?.name}
                     missingWeekdays={missingWeekdays}
                     isAssistantDismissed={isAssistantDismissed}
                     setIsAssistantDismissed={setIsAssistantDismissed}
@@ -218,12 +233,20 @@ const AttendancePage: React.FC = () => {
                     />
                 )}
 
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2 px-1">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2 px-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+                        <div className="flex items-center justify-between gap-2">
                         <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-2 tracking-wide">
-                            Direktori Peserta Didik
+                            {copy.students}
                             <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold py-1 px-2.5 rounded-full border border-slate-200 dark:border-slate-700">{filteredStudents.length}</span>
                         </h3>
+                        {viewMode === 'list' && filteredStudents.length > 0 && <button type="button" onClick={handleSelectAll}
+                            aria-pressed={filteredStudents.every(student => selectedStudents.has(student.id))}
+                            className="min-h-11 flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300 rounded-lg focus-visible:ring-2 focus-visible:ring-emerald-500">
+                            {filteredStudents.every(student => selectedStudents.has(student.id)) ? <CheckSquare size={16} /> : <Square size={16} />}
+                            {filteredStudents.every(student => selectedStudents.has(student.id)) ? 'Batal pilih' : 'Pilih semua'}
+                        </button>}
+                        </div>
                         <div className="relative flex-1 sm:w-64">
                             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <Input
@@ -240,7 +263,7 @@ const AttendancePage: React.FC = () => {
                             <Button
                                 onClick={markRestAsPresent}
                                 size="default"
-                                className="w-full sm:w-auto text-sm font-bold shadow-md bg-brand-600 hover:bg-brand-700 border border-brand-500/30 transition-all cursor-pointer active:scale-95 duration-200 min-h-[44px] rounded-xl"
+                                className="w-full sm:w-auto text-sm font-bold shadow-md bg-brand-600 hover:bg-brand-700 border border-brand-500/30 transition-all cursor-pointer active:scale-95 duration-200 !min-h-11 rounded-xl"
                             >
                                 <CheckCircleIcon className="w-4 h-4 mr-2" />
                                 Tandai Sisa Hadir ({unmarkedStudents.length})
@@ -282,7 +305,7 @@ const AttendancePage: React.FC = () => {
                             <AttendanceCalendar
                                 records={calendarSummaryRecords}
                                 selectedDate={selectedDate}
-                                onDateClick={(date) => setSelectedDate(date)}
+                                onDateClick={(date) => { setSelectedDate(date); setViewMode('list'); }}
                                 onMonthChange={(date) => setCalendarMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`)}
                             />
                         </Suspense>
@@ -297,6 +320,7 @@ const AttendancePage: React.FC = () => {
                             onNoteClick={handleNoteClick}
                             onToggleSelect={handleToggleSelect}
                             onSelectAll={handleSelectAll}
+                            showSelectionHeader={false}
                         />
                     )}
                 </div>
@@ -308,17 +332,13 @@ const AttendancePage: React.FC = () => {
                             onClick={handleSave}
                             disabled={isSaving}
                             data-tutorial="attendance-save"
-                            className={`w-full h-14 text-base sm:text-lg font-bold rounded-2xl transition-all cursor-pointer active:scale-[0.98] text-white ${
+                            className={`w-full !h-14 text-base sm:text-lg font-bold rounded-2xl transition-all cursor-pointer active:scale-[0.98] text-white ${
                                 isDirty
                                     ? 'bg-emerald-600 hover:bg-emerald-700 shadow-md ring-2 ring-emerald-400/50'
                                     : 'bg-brand-700 hover:bg-brand-800 shadow-md border border-white/20'
                             }`}
                         >
-                            {isSaving
-                                ? 'Menyimpan...'
-                                : isDirty
-                                ? (isOnline ? 'Simpan Perubahan Absensi Sekarang' : 'Simpan Offline')
-                                : (isOnline ? 'Simpan Perubahan Absensi' : 'Simpan Offline')}
+                            {isSaving ? copy.saving : (isOnline ? copy.save : copy.offline)}
                         </Button>
                     </div>
                 )}
@@ -399,13 +419,26 @@ const AttendancePage: React.FC = () => {
                 isSaveConfirmOpen={isSaveConfirmOpen}
                 setIsSaveConfirmOpen={setIsSaveConfirmOpen}
                 unmarkedStudentsCount={unmarkedStudents.length}
-                performSave={performSave}
+                performSave={confirmSave}
+                cancelSave={cancelSave}
                 isResetModalOpen={isResetModalOpen}
                 setIsResetModalOpen={setIsResetModalOpen}
                 selectedClassName={attendanceClasses.find(c => c.id === selectedClass)?.name}
                 confirmResetAttendance={confirmResetAttendance}
                 isResetting={isResetting}
             />
+
+            <Modal isOpen={!!pendingContext && !isResolvingContext && !isSaveConfirmOpen} onClose={() => keepEditing?.()} title={copy.unsavedTitle}>
+                <p className="text-sm text-slate-600 dark:text-slate-300">{copy.unsavedDescription}</p>
+                <p className="mt-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    {attendanceClasses.find(item => item.id === selectedClass)?.name} · {selectedDate}
+                </p>
+                <div className="mt-5 flex flex-col gap-2">
+                    <Button variant="outline" onClick={() => keepEditing?.()} className="min-h-11">{copy.stay}</Button>
+                    <Button variant="outline" onClick={() => discardAndContinue?.()} className="min-h-11 text-rose-700 dark:text-rose-300">{copy.discard}</Button>
+                    <Button onClick={() => void saveAndContinue?.()} disabled={isSaving} className="min-h-11">{copy.saveAndMove}</Button>
+                </div>
+            </Modal>
 
             {/* Floating Save Bar for unsaved changes */}
             <AttendanceFloatingSaveBar

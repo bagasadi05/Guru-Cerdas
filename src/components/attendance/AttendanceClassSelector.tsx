@@ -46,7 +46,7 @@ export const AttendanceClassSelector: React.FC<AttendanceClassSelectorProps> = (
   const currentClassName = classes.find(c => c.id === selectedClass)?.name || 'Pilih Kelas';
 
   return (
-    <div className="mb-5 sm:mb-6" data-tutorial="class-selector">
+    <div className="mb-1 sm:mb-6" data-tutorial="class-selector">
       {/* Header Indicator */}
       <div className="flex items-center justify-between mb-2 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
         <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
@@ -70,6 +70,7 @@ export const AttendanceClassSelector: React.FC<AttendanceClassSelectorProps> = (
               type="button"
               key={classItem.id}
               data-class-id={classItem.id}
+              aria-pressed={isSelected}
               onClick={() => onSelectClass(classItem.id)}
               data-tutorial="class-pill"
               className={`min-h-[44px] px-4 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 snap-start transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${

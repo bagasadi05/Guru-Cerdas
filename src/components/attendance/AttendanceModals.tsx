@@ -5,6 +5,8 @@ import BottomSheet from '../ui/BottomSheet';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { AiAnalysis } from '../../types';
+import { attendanceCopy } from '../../locales/attendance';
+import { useI18n } from '../../utils/i18n';
 
 const AttendanceExportModal = lazy(() =>
     import('./AttendanceExportModal').then(module => ({ default: module.AttendanceExportModal }))
@@ -58,7 +60,8 @@ export interface AttendanceModalsProps {
     isSaveConfirmOpen: boolean;
     setIsSaveConfirmOpen: (open: boolean) => void;
     unmarkedStudentsCount: number;
-    performSave: () => Promise<void> | void;
+    performSave: () => Promise<unknown> | void;
+    cancelSave?: () => void;
 
     // Reset Attendance Modal
     isResetModalOpen: boolean;
@@ -103,12 +106,16 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
     setIsSaveConfirmOpen,
     unmarkedStudentsCount,
     performSave,
+    cancelSave,
     isResetModalOpen,
     setIsResetModalOpen,
     selectedClassName,
     confirmResetAttendance,
     isResetting,
 }) => {
+    const { language } = useI18n();
+    const copy = attendanceCopy[language];
+    const cancelConfirmation = () => { if (cancelSave) cancelSave(); else setIsSaveConfirmOpen(false); };
     return (
         <>
             {isSaving && (
@@ -144,7 +151,7 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
                     />
                     <div className="flex justify-end gap-2">
                         <Button variant="ghost" onClick={() => setIsNoteModalOpen(false)}>Batal</Button>
-                        <Button onClick={handleSaveNote}>Simpan Catatan</Button>
+                        <Button onClick={handleSaveNote}>{copy.noteApply}</Button>
                     </div>
                 </div>
             </Modal>
@@ -233,7 +240,7 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
             {/* Save Confirmation Modal */}
             <Modal
                 isOpen={isSaveConfirmOpen}
-                onClose={() => setIsSaveConfirmOpen(false)}
+                onClose={cancelConfirmation}
                 title="Konfirmasi Simpan"
             >
                 <div className="space-y-4">
@@ -250,9 +257,9 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
                         </div>
                     </div>
 
-                    <div className="flex gap-3 pt-2">
+                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
                         <Button
-                            onClick={() => setIsSaveConfirmOpen(false)}
+                            onClick={cancelConfirmation}
                             variant="outline"
                             className="flex-1 min-h-[44px]"
                         >
@@ -261,7 +268,7 @@ export const AttendanceModals: React.FC<AttendanceModalsProps> = ({
                         <Button
                             onClick={() => {
                                 setIsSaveConfirmOpen(false);
-                                performSave();
+                                void performSave();
                             }}
                             className="flex-1 bg-brand-700 hover:bg-brand-800 text-white min-h-[44px]"
                         >

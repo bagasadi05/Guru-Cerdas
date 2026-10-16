@@ -1,8 +1,13 @@
-import React from 'react';
-import { CalendarClock, Loader2, XIcon, CheckCircle2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { CalendarClock, ChevronDown, Loader2, XIcon, CheckCircle2 } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { Modal } from '../ui/Modal';
+import { useI18n } from '../../utils/i18n';
+import { attendanceCopy } from '../../locales/attendance';
+import { getMondayOfWeek } from '../../services/attendanceAutoFillService';
 
 interface AttendanceAssistantBannersProps {
+    className?: string;
     missingWeekdays: { date: string; formattedDate: string }[];
     isAssistantDismissed: boolean;
     setIsAssistantDismissed: (dismissed: boolean) => void;
@@ -14,92 +19,53 @@ interface AttendanceAssistantBannersProps {
 }
 
 export const AttendanceAssistantBanners: React.FC<AttendanceAssistantBannersProps> = ({
-    missingWeekdays,
-    isAssistantDismissed,
-    setIsAssistantDismissed,
-    handleAutoFillWeekdays,
-    isAutoFilling,
-    isCurrentDateAutoFilled,
-    isAutoFillBannerDismissed,
-    setIsAutoFillBannerDismissed,
+    className, missingWeekdays, isAssistantDismissed, setIsAssistantDismissed,
+    handleAutoFillWeekdays, isAutoFilling, isCurrentDateAutoFilled,
+    isAutoFillBannerDismissed, setIsAutoFillBannerDismissed,
 }) => {
-    return (
-        <>
-            {/* Smart Assistant: Missing Weekdays Reminder */}
-            {missingWeekdays.length > 0 && !isAssistantDismissed && (
-                <div className="mb-4 p-3.5 sm:p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 animate-fade-in">
-                    <div className="flex items-start gap-3">
-                        <div className="p-2.5 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5">
-                            <CalendarClock size={20} />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <h4 className="text-xs sm:text-sm font-bold text-amber-900 dark:text-amber-200">
-                                    Pengingat Absensi Hari Terlewat
-                                </h4>
-                                <span className="text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-300 font-semibold">
-                                    {missingWeekdays.length} hari belum diabsen
-                                </span>
-                            </div>
-                            <p className="text-[11px] sm:text-xs text-amber-800/90 dark:text-amber-300/90 mt-0.5 leading-relaxed">
-                                Kelas ini belum diabsen pada: <strong className="font-semibold">{missingWeekdays.map(m => m.formattedDate).join(', ')}</strong>.
-                                Setiap Sabtu sore sistem otomatis mengisinya sebagai <em>Hadir</em>, atau Anda dapat mengisinya sekarang secara instan.
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2 w-full md:w-auto justify-end shrink-0">
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => handleAutoFillWeekdays()}
-                            disabled={isAutoFilling}
-                            className="bg-amber-600 hover:bg-amber-700 text-white shadow-sm border-none font-semibold text-xs px-3.5 py-2 h-auto min-h-[44px] rounded-xl cursor-pointer active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-                        >
-                            {isAutoFilling ? (
-                                <>
-                                    <Loader2 size={14} className="mr-1.5 animate-spin" />
-                                    Mengisi...
-                                </>
-                            ) : (
-                                <>
-                                    <CalendarClock size={14} className="mr-1.5" />
-                                    Isi Hadir Semua
-                                </>
-                            )}
-                        </Button>
-                        <button
-                            type="button"
-                            onClick={() => setIsAssistantDismissed(true)}
-                            className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-amber-700 dark:text-amber-400 hover:bg-amber-200/60 dark:hover:bg-amber-900/40 rounded-xl transition-colors cursor-pointer active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-                            title="Tutup pengingat"
-                            aria-label="Tutup pengingat"
-                        >
-                            <XIcon size={18} />
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {/* Auto-filled Date Indicator Banner */}
-            {isCurrentDateAutoFilled && !isAutoFillBannerDismissed && (
-                <div className="mb-4 p-3 rounded-2xl bg-emerald-50/90 dark:bg-emerald-950/25 border border-emerald-200/80 dark:border-emerald-800/50 flex items-center justify-between gap-3 text-xs text-emerald-800 dark:text-emerald-300 animate-fade-in">
-                    <div className="flex items-center gap-2.5">
-                        <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        <span>
-                            <strong>Absensi Terisi Otomatis:</strong> Data kehadiran tanggal ini diisi otomatis oleh sistem sebagai <em>Hadir</em>. Anda dapat mengedit siswa yang Sakit, Izin, atau Alpha seperti biasa.
-                        </span>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => setIsAutoFillBannerDismissed(true)}
-                        className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200/50 dark:hover:bg-emerald-900/40 rounded-xl transition-colors shrink-0 cursor-pointer active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
-                        title="Tutup pemberitahuan"
-                        aria-label="Tutup pemberitahuan"
-                    >
-                        <XIcon size={18} />
+    const { language } = useI18n();
+    const copy = attendanceCopy[language];
+    const [expanded, setExpanded] = useState(false);
+    const [confirming, setConfirming] = useState(false);
+    const lastDate = missingWeekdays.at(-1)?.date;
+    const range = lastDate ? `${getMondayOfWeek(lastDate)} — ${lastDate}` : '';
+    return <>
+        {missingWeekdays.length > 0 && !isAssistantDismissed && (
+            <section className="mb-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200">
+                <div className="flex items-center gap-1 p-1 sm:p-2">
+                    <button type="button" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}
+                        className="flex flex-1 min-w-0 items-center gap-2 min-h-11 px-1 text-left text-xs font-semibold rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600">
+                        <CalendarClock size={18} className="shrink-0" aria-hidden="true" />
+                        <span>{copy.missing.replace('{count}', String(missingWeekdays.length))}<span className="sr-only">. {copy.showMissing}</span></span>
+                        <ChevronDown size={16} className={`ml-auto shrink-0 ${expanded ? 'rotate-180' : ''}`} aria-hidden="true" />
                     </button>
+                    <button type="button" onClick={() => setIsAssistantDismissed(true)} aria-label={copy.closeReminder}
+                        className="flex items-center justify-center w-11 h-11 shrink-0 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"><XIcon size={18} /></button>
                 </div>
-            )}
-        </>
-    );
+                {expanded && <div className="px-3 pb-3 text-xs space-y-3">
+                    <p>{missingWeekdays.map(day => day.formattedDate).join(', ')}</p>
+                    <p>{copy.missingHelp}</p>
+                    <Button onClick={() => setConfirming(true)} disabled={isAutoFilling} className="!min-h-11 !h-auto py-2 w-full sm:w-auto">
+                        {isAutoFilling ? <><Loader2 size={16} className="animate-spin mr-2" />{copy.filling}</> : copy.fillMissing.replace('{count}', String(missingWeekdays.length))}
+                    </Button>
+                </div>}
+            </section>
+        )}
+        {isCurrentDateAutoFilled && !isAutoFillBannerDismissed && <div className="mb-3 p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/25 border border-emerald-200 dark:border-emerald-800 flex items-center gap-2 text-xs text-emerald-800 dark:text-emerald-300">
+            <CheckCircle2 size={18} className="shrink-0" /><span className="flex-1">{copy.autoFilled}</span>
+            <button type="button" onClick={() => setIsAutoFillBannerDismissed(true)} aria-label={copy.closeNotice}
+                className="flex items-center justify-center w-11 h-11 shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"><XIcon size={18} /></button>
+        </div>}
+        <Modal isOpen={confirming} onClose={() => setConfirming(false)} title={copy.fillTitle}>
+            <div className="space-y-4">
+                <p className="font-semibold text-slate-900 dark:text-slate-100">{className}<br />{range}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-300">{copy.fillRange}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-300">{copy.fillDescription}</p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <Button variant="secondary" onClick={() => setConfirming(false)}>{copy.cancel}</Button>
+                    <Button disabled={isAutoFilling || !lastDate} onClick={() => { setConfirming(false); void handleAutoFillWeekdays(); }} className="!h-auto !min-h-11 py-2">{copy.fillConfirm}</Button>
+                </div>
+            </div>
+        </Modal>
+    </>;
 };

@@ -182,7 +182,7 @@ export const getQueue = async (): Promise<QueuedMutation[]> => {
  * @param {Omit<QueuedMutation, 'id' | 'status' | 'retryCount' | 'maxRetries' | 'createdAt'>} mutation - Mutation payload to queue for later sync.
  * @returns {Promise<void>} Resolves after the mutation has been persisted.
  */
-export const addToQueue = async (mutation: Omit<QueuedMutation, 'id' | 'status' | 'retryCount' | 'maxRetries' | 'createdAt'>): Promise<void> => {
+export const addToQueue = async (mutation: Omit<QueuedMutation, 'id' | 'status' | 'retryCount' | 'maxRetries' | 'createdAt'>, options?: { requirePersistence?: boolean }): Promise<void> => {
     const newMutation: QueuedMutation = {
         ...mutation,
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -194,12 +194,12 @@ export const addToQueue = async (mutation: Omit<QueuedMutation, 'id' | 'status' 
 
     try {
         const database = await initDB();
-        return new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
             const transaction = database.transaction(STORE_NAME, 'readwrite');
             const store = transaction.objectStore(STORE_NAME);
             const request = store.add(newMutation);
 
-            request.onsuccess = () => {
+            transaction.oncomplete = () => {
                 window.dispatchEvent(new Event('storage'));
                 resolve();
             };
@@ -207,8 +207,11 @@ export const addToQueue = async (mutation: Omit<QueuedMutation, 'id' | 'status' 
             request.onerror = () => {
                 reject(request.error);
             };
+            transaction.onerror = () => reject(transaction.error || new Error('Offline queue transaction failed'));
+            transaction.onabort = () => reject(transaction.error || new Error('Offline queue transaction aborted'));
         });
-    } catch {
+    } catch (error) {
+        if (options?.requirePersistence) throw error;
         // Fallback to storage utility
         const queue = await getQueueFromStorageUtility();
         queue.push(newMutation);

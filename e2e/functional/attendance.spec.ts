@@ -41,7 +41,7 @@ async function setupSupabaseMocks(page: Page) {
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([
           { id: 'att-1', student_id: 'student-1', status: 'Hadir', date: new Date().toISOString().split('T')[0] }
         ]) });
-      } else if (method === 'POST' || method === 'PATCH') {
+      } else if (method === 'POST' || method === 'PATCH' || method === 'DELETE') {
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
       }
     } else {
@@ -55,6 +55,7 @@ async function setupSupabaseMocks(page: Page) {
 }
 
 async function authenticate(page: Page) {
+  await page.route('**/release-notes.json*', route => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
   await page.addInitScript((session) => {
     window.localStorage.setItem('portal-guru-auth', JSON.stringify(session));
     window.localStorage.setItem('onboarding_completed', 'true');
@@ -72,7 +73,7 @@ test.describe('Absensi E2E', () => {
     await page.waitForTimeout(1500); 
     
     // Verify directory header and student name
-    await expect(page.getByText('Direktori Peserta Didik')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Daftar siswa/ })).toBeVisible();
     await expect(page.getByText('Budi Santoso')).toBeVisible();
     await expect(page.getByText('Siti Aminah')).toBeVisible();
   });
@@ -86,7 +87,7 @@ test.describe('Absensi E2E', () => {
     await firstStudentCard.getByRole('button', { name: 'Sakit', exact: true }).click();
     
     // Save attendance
-    await page.getByRole('button', { name: 'Simpan Perubahan Absensi' }).click();
+    await page.locator('[data-tutorial="attendance-save"]').click();
 
     // Since Siti is unmarked, the confirmation modal should appear
     await expect(page.getByText('Siswa Belum Diabsen')).toBeVisible();
@@ -102,8 +103,9 @@ test.describe('Absensi E2E', () => {
     await page.goto('/absensi');
     await page.waitForTimeout(1500);
 
-    // Find export button
-    await page.getByRole('button', { name: /Ekspor Data/i }).first().click();
+    // Export lives in the header's overflow menu
+    await page.getByRole('button', { name: 'Pilihan lain absensi' }).click();
+    await page.getByRole('menuitem', { name: /Ekspor Data/i }).click();
 
     // Export Modal should appear
     await expect(page.getByRole('heading', { name: /Laporan Absensi/i })).toBeVisible();

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { User } from '@supabase/supabase-js';
 import type { AppUser } from '../../../hooks/useAuth';
@@ -9,6 +9,15 @@ import type { AttendanceRecord, StudentRow, SemesterRow } from '../../../types';
 import type { useToast } from '../../../hooks/useToast';
 import { queryKeys } from '../../../lib/queryKeys';
 import { triggerPerfectAttendanceConfetti, triggerSubtleConfetti } from '../../../utils/confetti';
+import type { TablesInsert } from '../../../services/database.types';
+import { attendanceCopy } from '../../../locales/attendance';
+import { useI18n } from '../../../utils/i18n';
+
+export type AttendanceSaveResult = 'saved' | 'queued' | 'failed';
+interface SaveInput {
+    records: TablesInsert<'attendance'>[];
+    queryKey: ['attendanceData', string, string, string];
+}
 
 const ATTENDANCE_CONFLICT_KEY = 'student_id,date';
 
@@ -70,9 +79,17 @@ export const useAttendanceActions = ({
     setIsDirty,
 }: UseAttendanceActionsProps) => {
     const queryClient = useQueryClient();
+    const { language } = useI18n();
+    const copy = attendanceCopy[language];
+    const saveLock = useRef(false);
+    const confirmation = useRef<{ promise: Promise<AttendanceSaveResult | null>; resolve: (result: AttendanceSaveResult | null) => void; save: () => Promise<AttendanceSaveResult> } | null>(null);
+    const activeContext = useRef('');
+    activeContext.current = `${user?.id}:${selectedClass}:${selectedDate}`;
+    useEffect(() => () => { confirmation.current?.resolve(null); confirmation.current = null; }, [user?.id, selectedClass, selectedDate]);
 
-    const { mutate: saveAttendance, isPending: isSaving } = useMutation<any, Error, any, any>({
-        mutationFn: async (records) => {
+    const { mutate: saveAttendance, mutateAsync: saveAsync, isPending: isSaving } = useMutation<{ synced: boolean }, Error, SaveInput, { previousAttendance: Record<string, AttendanceRecord> | undefined }>({
+        networkMode: 'always',
+        mutationFn: async ({ records }) => {
             // Conflict on (student_id, date), not id: the unique index also covers
             // soft-deleted rows, so a reset day or a second teacher saving the same
             // class must update the existing row instead of inserting a new one.
@@ -81,32 +98,34 @@ export const useAttendanceActions = ({
                 if (error) throw error;
                 return { synced: !wasLastResponseQueued() };
             }
-            await addToQueue({ table: 'attendance', operation: 'upsert', payload: records as Record<string, unknown>[], onConflict: ATTENDANCE_CONFLICT_KEY });
+            await addToQueue({ table: 'attendance', operation: 'upsert', payload: records as Record<string, unknown>[], onConflict: ATTENDANCE_CONFLICT_KEY, userId: user?.id }, { requirePersistence: true });
             return { synced: false };
         },
-        onMutate: async (records) => {
-            await queryClient.cancelQueries({ queryKey: ['attendanceData', user?.id, selectedClass, selectedDate] });
-            const prev = queryClient.getQueryData(['attendanceData', user?.id, selectedClass, selectedDate]);
-            queryClient.setQueryData(['attendanceData', user?.id, selectedClass, selectedDate], (old: any = {}) => {
-                const n = { ...old }; records.forEach((r: any) => { if (r.student_id) n[r.student_id] = { id: r.id, status: r.status, note: r.notes || '' }; });
+        onMutate: async ({ records, queryKey }) => {
+            await queryClient.cancelQueries({ queryKey });
+            const prev = queryClient.getQueryData<Record<string, AttendanceRecord>>(queryKey);
+            queryClient.setQueryData(queryKey, (old: Record<string, AttendanceRecord> = {}) => {
+                const n = { ...old }; records.forEach(r => { if (r.student_id) n[r.student_id] = { status: r.status as AttendanceStatus, note: r.notes || '' }; });
                 return n;
             });
             return { previousAttendance: prev };
         },
-        onError: (err: any, _r, ctx: any) => {
-            queryClient.setQueryData(['attendanceData', user?.id, selectedClass, selectedDate], ctx?.previousAttendance);
+        onError: (err, vars, ctx) => {
+            queryClient.setQueryData(vars.queryKey, ctx?.previousAttendance);
             toast.error(err.message?.includes('foreign key') ? 'Data siswa telah diperbarui.' : `Gagal menyimpan: ${err.message}`);
         },
         onSuccess: (data, vars) => {
             if (data.synced) {
                 toast.success('Absensi berhasil disimpan!');
-                const all = vars.every((r: any) => r.status === 'Hadir');
-                setTimeout(() => all && vars.length > 0 ? triggerPerfectAttendanceConfetti() : triggerSubtleConfetti(), 300);
+                const all = vars.records.every(r => r.status === 'Hadir');
+                setTimeout(() => all && vars.records.length > 0 ? triggerPerfectAttendanceConfetti() : triggerSubtleConfetti(), 300);
             } else toast.info('Absensi disimpan offline.');
+            if (activeContext.current === `${vars.queryKey[1]}:${vars.queryKey[2]}:${vars.queryKey[3]}`) {
+                localDirtyRef.current = false;
+                setIsDirty(false);
+            }
         },
         onSettled: () => { 
-            localDirtyRef.current = false; 
-            setIsDirty(false);
             queryClient.invalidateQueries({ queryKey: ['attendanceCalendar'] }); 
             queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all }); 
         },
@@ -120,7 +139,7 @@ export const useAttendanceActions = ({
         const updated = { ...attendanceRecords };
         Array.from(selectedStudents).forEach(id => { updated[id] = { ...updated[id], status: updated[id]?.status || 'Izin', note: noteText }; });
         setAttendanceRecords(updated); setSelectedStudents(new Set()); setIsNoteModalOpen(false); setNoteText('');
-        toast.success('Catatan berhasil disimpan');
+        toast.info(copy.noteApplied);
     };
 
     const handleStatusChange = useCallback((studentId: string, status: AttendanceStatus) => {
@@ -134,9 +153,10 @@ export const useAttendanceActions = ({
         if (isSaving) { toast.warning('Tunggu sampai proses simpan selesai.'); return; }
         if (isSundayDate(selectedDate)) { toast.error(SUNDAY_BLOCK_MESSAGE); return; }
         localDirtyRef.current = true; initialSyncRef.current = true;
+        setIsDirty(true);
         const updated = { ...attendanceRecords };
         unmarkedStudents.forEach(s => { updated[s.id] = { status: AttendanceStatus.Hadir, note: '' }; });
-        setAttendanceRecords(updated); performSave(updated);
+        setAttendanceRecords(updated);
     };
 
     const handleApplyTemplate = (template: { defaultStatus: AttendanceStatus; applyToAll: boolean }) => {
@@ -148,7 +168,6 @@ export const useAttendanceActions = ({
         const updated = { ...attendanceRecords };
         students.forEach(s => { if (template.applyToAll || !updated[s.id]?.status) updated[s.id] = { ...updated[s.id], status: template.defaultStatus, note: updated[s.id]?.note || '' }; });
         setAttendanceRecords(updated);
-        queryClient.setQueryData(['attendanceData', user?.id, selectedClass, selectedDate], updated);
         if (template.applyToAll) toast.success(`Semua siswa ditandai ${template.defaultStatus}`);
         else if (uc > 0) toast.success(`${uc} siswa ditandai ${template.defaultStatus}`);
         else toast.info('Semua siswa sudah memiliki status');
@@ -177,8 +196,8 @@ export const useAttendanceActions = ({
 
     const confirmResetAttendance = () => resetAttendance();
 
-    const performSave = (recordsOverride?: Record<string, AttendanceRecord>) => {
-        if (!user || !students || isSaving) return;
+    const performSave = async (recordsOverride?: Record<string, AttendanceRecord>): Promise<AttendanceSaveResult> => {
+        if (!user || !students.length || isSaving || saveLock.current) return 'failed';
         const records = { ...(recordsOverride || attendanceRecords) };
         if (!recordsOverride) {
             unmarkedStudents.forEach(s => { records[s.id] = { status: AttendanceStatus.Hadir, note: '' }; });
@@ -187,10 +206,12 @@ export const useAttendanceActions = ({
         // Sunday attendance inflates presence stats; only an all-"Libur" day is allowed.
         if (isSundayDate(selectedDate) && Object.values(records).some(r => r.status && r.status !== AttendanceStatus.Libur)) {
             toast.error(SUNDAY_BLOCK_MESSAGE);
-            return;
+            return 'failed';
         }
 
         const withIds = Object.fromEntries(Object.entries(records).map(([id, r]) => [id, { ...r, id: r.id || crypto.randomUUID() }])) as Record<string, AttendanceRecord>;
+        localDirtyRef.current = true;
+        setIsDirty(true);
         setAttendanceRecords(withIds);
         
         const validIds = new Set(students.map(s => s.id));
@@ -202,15 +223,42 @@ export const useAttendanceActions = ({
             teacher_id: user.id, notes: r.note, user_id: user.id, semester_id: semId, deleted_at: null,
         }));
         
-        if (toUpsert.length === 0) { toast.warning('Tidak ada siswa valid.'); return; }
-        saveAttendance(toUpsert);
+        if (toUpsert.length === 0) { toast.warning('Tidak ada siswa valid.'); return 'failed'; }
+        saveLock.current = true;
+        try {
+            const result = await saveAsync({ records: toUpsert, queryKey: ['attendanceData', user.id, selectedClass, selectedDate] });
+            return result.synced ? 'saved' : 'queued';
+        } catch {
+            return 'failed';
+        } finally {
+            saveLock.current = false;
+        }
     };
 
-    const handleSave = () => {
-        if (!user || !students) return;
-        if (isSundayDate(selectedDate) && unmarkedStudents.length > 0) { toast.error(SUNDAY_BLOCK_MESSAGE); return; }
-        if (unmarkedStudents.length > 0) { setIsSaveConfirmOpen(true); return; }
-        performSave();
+    const handleSave = (): Promise<AttendanceSaveResult | null> => {
+        if (confirmation.current) return confirmation.current.promise;
+        if (!user || !students.length || isSaving || saveLock.current) return Promise.resolve('failed');
+        if (isSundayDate(selectedDate) && unmarkedStudents.length > 0) { toast.error(SUNDAY_BLOCK_MESSAGE); return Promise.resolve('failed'); }
+        if (unmarkedStudents.length > 0) {
+            let resolve!: (result: AttendanceSaveResult | null) => void;
+            const promise = new Promise<AttendanceSaveResult | null>(done => { resolve = done; });
+            confirmation.current = { promise, resolve, save: () => performSave() };
+            setIsSaveConfirmOpen(true);
+            return promise;
+        }
+        return performSave();
+    };
+    const cancelSave = () => {
+        confirmation.current?.resolve(null);
+        confirmation.current = null;
+        setIsSaveConfirmOpen(false);
+    };
+    const confirmSave = async () => {
+        const pending = confirmation.current;
+        if (!pending) return;
+        confirmation.current = null;
+        setIsSaveConfirmOpen(false);
+        pending.resolve(await pending.save());
     };
 
     return {
@@ -223,6 +271,8 @@ export const useAttendanceActions = ({
         handleResetAttendance,
         confirmResetAttendance,
         performSave,
+        confirmSave,
+        cancelSave,
         handleSave
     };
 };
