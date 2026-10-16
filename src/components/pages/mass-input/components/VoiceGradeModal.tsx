@@ -53,7 +53,9 @@ export const VoiceGradeModal: React.FC<VoiceGradeModalProps> = ({
 
     // Keyboard ref to avoid stale closure
     const engineRef = useRef(engine);
-    engineRef.current = engine;
+    useEffect(() => {
+        engineRef.current = engine;
+    }, [engine]);
 
     // Global keyboard shortcuts (modal-level)
     useEffect(() => {

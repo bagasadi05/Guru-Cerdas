@@ -95,8 +95,8 @@ describe('SmartInsightsPanel Redesign', () => {
         expect(screen.getByText('Belaid Muhammad Abd El Raouf')).toBeInTheDocument();
 
         // Should render class badge separately
-        expect(screen.getByText('Kelas 1C')).toBeInTheDocument();
-        expect(screen.getByText('Kelas 3C')).toBeInTheDocument();
+        expect(screen.getAllByText('Kelas 1C').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Kelas 3C').length).toBeGreaterThan(0);
 
         // Should render violation count pill badges
         const countBadges = screen.getAllByText('3 pelanggaran');

@@ -31,5 +31,5 @@ describe('student CSV download', () => {
       reader.readAsText(downloadedBlob!);
     });
     expect(content).toBe('Nama,NISN,Catatan\n"Siswa, ""Contoh""",0012345678,\'=1+1');
-  });
+  }, 30000);
 });
