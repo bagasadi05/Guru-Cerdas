@@ -158,7 +158,7 @@ export async function generateGeminiContent(
   }
 
   if (usesDirectEndpoint() && getGeminiKeyCount() === 0) {
-    throw new Error('Gemini API key tidak ditemukan. Cek VITE_GEMINI_API_KEY di .env');
+    throw new Error('Gemini API key tidak ditemukan. Set GEMINI_API_KEY di env server (atau VITE_GEMINI_PROXY_URL untuk proxy).');
   }
 
   try {
@@ -183,7 +183,7 @@ export class GeminiProvider implements AiProvider {
 
   async generateContent(messages: GeminiMessage[], model: string, options: AiRequestTimeout = {}): Promise<GeminiResponse> {
     if (isDev() && !import.meta.env.VITE_GEMINI_PROXY_URL && !devApiKey()) {
-      throw new Error('Gemini API key tidak dikonfigurasi. Tambahkan VITE_GEMINI_API_KEY di .env.');
+      throw new Error('Gemini API key tidak dikonfigurasi. Set GEMINI_API_KEY di env server (atau VITE_GEMINI_PROXY_URL untuk proxy).');
     }
 
     if (usesDirectEndpoint() && getGeminiKeyCount() === 0) {
