@@ -7,7 +7,13 @@ import { useSemester } from '../../../contexts/SemesterContext';
 import { softDelete } from '../../../services/SoftDeleteService';
 import { exportPhScheduleIcs } from '../../../services/scheduleExportService';
 import { PhScheduleEngine, ExamStatus } from './PhScheduleEngine';
-import { validatePhDraft, type PhDraft } from './phScheduleValidation';
+import {
+    MAX_ASH_PER_DAY,
+    findNextAvailableAshDate,
+    getSameDaySchedules,
+    validatePhDraft,
+    type PhDraft,
+} from './phScheduleValidation';
 import type { PhScheduleRow, ClassRow } from '../../../types';
 import { choosePhClass } from './phSchedulePresentation';
 
@@ -372,10 +378,13 @@ export function usePhScheduleDomain({
 
     const openAdd = useCallback((initialDate?: unknown) => {
         setEditingSchedule(null);
-        const dateToUse = typeof initialDate === 'string' ? initialDate : todayStr;
+        let dateToUse = typeof initialDate === 'string' ? initialDate : todayStr;
+        if (typeof initialDate !== 'string' && getSameDaySchedules(dateToUse, rawSchedules).length >= MAX_ASH_PER_DAY) {
+            dateToUse = findNextAvailableAshDate(dateToUse, rawSchedules, undefined, selectedSemester?.end_date) || dateToUse;
+        }
         setFormData({ subject: '', date: dateToUse, period_label: '1-2' });
         setDialogOpen(true);
-    }, [todayStr]);
+    }, [todayStr, rawSchedules, selectedSemester?.end_date]);
 
     const openEdit = useCallback((s: PhScheduleRow) => {
         setEditingSchedule(s);
@@ -386,11 +395,15 @@ export function usePhScheduleDomain({
     const handleDuplicate = useCallback(
         (s: PhScheduleRow) => {
             setEditingSchedule(null);
-            setFormData({ subject: s.subject, date: s.date, period_label: s.period_label });
+            const targetDate =
+                getSameDaySchedules(s.date, rawSchedules).length >= MAX_ASH_PER_DAY
+                    ? findNextAvailableAshDate(s.date, rawSchedules, undefined, selectedSemester?.end_date) || s.date
+                    : s.date;
+            setFormData({ subject: s.subject, date: targetDate, period_label: s.period_label });
             setDialogOpen(true);
             toast.info('Data jadwal disalin ke formulir. Silakan sesuaikan lalu simpan.');
         },
-        [toast]
+        [toast, rawSchedules, selectedSemester?.end_date]
     );
 
     const closeModal = useCallback(() => {

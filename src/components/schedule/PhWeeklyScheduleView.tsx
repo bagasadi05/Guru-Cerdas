@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Plus, Clock, MoreVertical, Edit3, Copy, Tras
 import { Button } from '../ui/Button';
 import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../ui/DropdownMenu';
 import { PhScheduleEngine } from './engine/PhScheduleEngine';
-import { comparePhPeriods } from './engine/phScheduleValidation';
+import { MAX_ASH_PER_DAY, comparePhPeriods } from './engine/phScheduleValidation';
 import type { PhScheduleRow } from '../../types';
 import { parseSubjectString, phSubjectColor } from './engine/phSchedulePresentation';
 
@@ -237,11 +237,17 @@ export const PhWeeklyScheduleView: React.FC<PhWeeklyScheduleViewProps> = ({
                                         </div>
                                         {day.isToday ? (
                                             <span className="shrink-0 rounded-lg bg-brand-700 px-2 py-0.5 text-xs font-bold text-white dark:bg-brand-600">
-                                                Hari ini
+                                                Hari ini ({items.length}/{MAX_ASH_PER_DAY})
                                             </span>
                                         ) : (
-                                            <span className="shrink-0 text-xs font-semibold tabular-nums text-slate-500 dark:text-slate-400">
-                                                {items.length} ASH
+                                            <span
+                                                className={`shrink-0 text-xs font-semibold tabular-nums ${
+                                                    items.length >= MAX_ASH_PER_DAY
+                                                        ? 'rounded-md bg-amber-100 px-1.5 py-0.5 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
+                                                        : 'text-slate-500 dark:text-slate-400'
+                                                }`}
+                                            >
+                                                {items.length}/{MAX_ASH_PER_DAY} ASH
                                             </span>
                                         )}
                                     </div>
@@ -318,15 +324,24 @@ export const PhWeeklyScheduleView: React.FC<PhWeeklyScheduleViewProps> = ({
                                         )}
 
                                         {canAdd && (
-                                            <button
-                                                type="button"
-                                                onClick={() => onAdd(day.dateStr)}
-                                                title={`Tambah Jadwal ASH untuk ${day.dayName}, ${day.dateFormatted}`}
-                                                className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 px-3 text-xs sm:text-sm font-semibold text-brand-700 dark:text-brand-300 hover:border-brand-400 hover:bg-brand-50/50 dark:hover:border-brand-700 dark:hover:bg-brand-950/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-                                            >
-                                                <Plus className="h-4 w-4" aria-hidden />
-                                                <span>Tambah ASH</span>
-                                            </button>
+                                            items.length >= MAX_ASH_PER_DAY ? (
+                                                <div
+                                                    aria-label={`Kuota penuh untuk ${day.dayName}`}
+                                                    className="flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/40 px-3 text-xs font-semibold text-slate-400 dark:text-slate-500 select-none"
+                                                >
+                                                    Kuota Penuh ({MAX_ASH_PER_DAY}/{MAX_ASH_PER_DAY} ASH)
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onAdd(day.dateStr)}
+                                                    title={`Tambah Jadwal ASH untuk ${day.dayName}, ${day.dateFormatted}`}
+                                                    className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 px-3 text-xs sm:text-sm font-semibold text-brand-700 dark:text-brand-300 hover:border-brand-400 hover:bg-brand-50/50 dark:hover:border-brand-700 dark:hover:bg-brand-950/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                                                >
+                                                    <Plus className="h-4 w-4" aria-hidden />
+                                                    <span>Tambah ASH</span>
+                                                </button>
+                                            )
                                         )}
                                     </div>
                                 </article>

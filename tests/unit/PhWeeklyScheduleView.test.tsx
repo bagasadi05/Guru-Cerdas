@@ -248,4 +248,31 @@ describe('PhWeeklyScheduleView Component', () => {
         expect(screen.queryByText('Edit Jadwal')).not.toBeInTheDocument();
         expect(screen.queryByText('Hapus')).not.toBeInTheDocument();
     });
+
+    it('replaces "+ Tambah ASH" with "Kuota Penuh (2/2 ASH)" on days that already have 2 ASH', () => {
+        const twoOnMonday: PhScheduleRow[] = [
+            mockSchedules[0],
+            {
+                ...mockSchedules[1],
+                id: 'ph-monday-2',
+                date: monday.dateStr,
+                period_label: '5-6',
+            },
+        ];
+
+        render(
+            <PhWeeklyScheduleView
+                schedules={twoOnMonday}
+                canAdd={true}
+                canModify={() => true}
+                onAdd={vi.fn()}
+                onEdit={vi.fn()}
+                onDuplicate={vi.fn()}
+                onDelete={vi.fn()}
+                onInputNilai={vi.fn()}
+            />
+        );
+
+        expect(screen.getByText('Kuota Penuh (2/2 ASH)')).toBeInTheDocument();
+    });
 });

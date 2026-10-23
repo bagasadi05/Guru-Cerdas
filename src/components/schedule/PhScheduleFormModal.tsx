@@ -15,7 +15,13 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { PERIOD_PRESETS, normalizeSubjectDisplay } from './engine/usePhScheduleDomain';
-import { phPeriodsOverlap, validatePhDraft } from './engine/phScheduleValidation';
+import {
+    MAX_ASH_PER_DAY,
+    findNextAvailableAshDate,
+    getSameDaySchedules,
+    phPeriodsOverlap,
+    validatePhDraft,
+} from './engine/phScheduleValidation';
 import type { PhScheduleRow } from '../../types';
 import { parseSubjectString } from './engine/phSchedulePresentation';
 
@@ -242,6 +248,20 @@ export const PhScheduleFormModal: React.FC<PhScheduleFormModalProps> = ({
         );
     }, [subjectSuggestions, subjectSearch]);
 
+    // Same-day schedules & daily quota (max 2 ASH per day)
+    const sameDaySchedules = useMemo(
+        () => getSameDaySchedules(formData.date, rawSchedules, editingSchedule?.id),
+        [formData.date, rawSchedules, editingSchedule?.id]
+    );
+    const isDailyQuotaFull = sameDaySchedules.length >= MAX_ASH_PER_DAY;
+    const nextAvailableDate = useMemo(
+        () =>
+            isDailyQuotaFull
+                ? findNextAvailableAshDate(formData.date, rawSchedules, editingSchedule?.id, semester?.end_date)
+                : null,
+        [isDailyQuotaFull, formData.date, rawSchedules, editingSchedule?.id, semester?.end_date]
+    );
+
     // Schedule conflict detection
     const conflictSchedule = useMemo(() => {
         if (!formData.date || !formData.period_label || rawSchedules.length === 0) return null;
@@ -296,12 +316,27 @@ export const PhScheduleFormModal: React.FC<PhScheduleFormModalProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
                         {/* Tanggal Pelaksanaan */}
                         <div className="space-y-2">
-                            <label
-                                htmlFor="ph-modal-date"
-                                className="block text-sm font-semibold text-slate-700 dark:text-slate-300"
-                            >
-                                Tanggal Pelaksanaan <span className="text-brand-500">*</span>
-                            </label>
+                            <div className="flex items-center justify-between gap-2">
+                                <label
+                                    htmlFor="ph-modal-date"
+                                    className="block text-sm font-semibold text-slate-700 dark:text-slate-300"
+                                >
+                                    Tanggal Pelaksanaan <span className="text-brand-500">*</span>
+                                </label>
+                                {formData.date && (
+                                    <span
+                                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold tabular-nums ${
+                                            isDailyQuotaFull
+                                                ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300'
+                                                : sameDaySchedules.length === 1
+                                                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
+                                                    : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
+                                        }`}
+                                    >
+                                        Kuota: {sameDaySchedules.length}/{MAX_ASH_PER_DAY} ASH
+                                    </span>
+                                )}
+                            </div>
                             <Input
                                 id="ph-modal-date"
                                 type="date"
@@ -592,8 +627,40 @@ export const PhScheduleFormModal: React.FC<PhScheduleFormModalProps> = ({
                     )}
                 </div>
 
+                {/* Daily Quota Exceeded Warning (Max 2 ASH per day) */}
+                {isDailyQuotaFull && (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-xs">
+                        <div className="flex items-start gap-2.5">
+                            <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                            <div>
+                                <span className="font-bold">
+                                    Kuota Harian Penuh (Maksimal {MAX_ASH_PER_DAY} ASH per Hari)
+                                </span>
+                                <p className="text-xs opacity-90 mt-0.5">
+                                    Tanggal ini sudah terisi {sameDaySchedules.length} jadwal ASH:{' '}
+                                    <strong>
+                                        {sameDaySchedules
+                                            .map((s) => `${s.subject} (Jam ${s.period_label})`)
+                                            .join(' & ')}
+                                    </strong>
+                                    . Silakan pilih tanggal lain.
+                                </p>
+                            </div>
+                        </div>
+                        {nextAvailableDate && (
+                            <button
+                                type="button"
+                                onClick={() => setFormData((prev) => ({ ...prev, date: nextAvailableDate }))}
+                                className="shrink-0 min-h-[38px] px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-colors cursor-pointer"
+                            >
+                                Pilih Hari Kosong ({getDayInfo(nextAvailableDate)?.formatted || nextAvailableDate})
+                            </button>
+                        )}
+                    </div>
+                )}
+
                 {/* Inline Conflict Warning */}
-                {conflictSchedule && (
+                {!isDailyQuotaFull && conflictSchedule && (
                     <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs">
                         <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                         <div>
@@ -607,7 +674,7 @@ export const PhScheduleFormModal: React.FC<PhScheduleFormModalProps> = ({
                 )}
 
                 {/* Validation Error */}
-                {validationError && (
+                {validationError && !isDailyQuotaFull && (
                     <p role="status" className="text-sm font-medium text-amber-700 dark:text-amber-300">
                         {validationError}
                     </p>
@@ -627,7 +694,7 @@ export const PhScheduleFormModal: React.FC<PhScheduleFormModalProps> = ({
                     <Button
                         type="submit"
                         variant="primary"
-                        disabled={isPending || !selectedSubject.trim() || Boolean(validationError)}
+                        disabled={isPending || !selectedSubject.trim() || Boolean(validationError) || isDailyQuotaFull}
                         className="!bg-brand-700 hover:!bg-brand-800 text-white rounded-xl font-bold min-h-[44px] px-6 shadow-xs flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                         {isPending ? (

@@ -101,7 +101,7 @@ describe('PhScheduleEngine (Pure Domain Engine)', () => {
             '2026-09-20'
         );
 
-        expect(waText).toContain('*JADWAL PENILAIAN HARIAN (PH)*');
+        expect(waText).toContain('*JADWAL ASESMEN SUMATIF HARIAN (ASH)*');
         expect(waText).toContain('Kelas 9A');
         expect(waText).toContain('Semester Ganjil');
         expect(waText).toContain('Matematika');

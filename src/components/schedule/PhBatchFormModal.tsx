@@ -3,7 +3,13 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Plus, Trash2, Layers, AlertTriangle } from 'lucide-react';
-import { validatePhDraft, type PhDraft } from './engine/phScheduleValidation';
+import {
+    MAX_ASH_PER_DAY,
+    findNextAvailableAshDate,
+    getSameDaySchedules,
+    validatePhDraft,
+    type PhDraft,
+} from './engine/phScheduleValidation';
 
 interface Props {
     className: string;
@@ -67,7 +73,7 @@ export function PhBatchFormModal({
                 {/* Header Description & Counter */}
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 pb-2.5 dark:border-slate-800">
                     <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                        Isi tanggal, mata pelajaran, dan jam untuk setiap ASH sekaligus.
+                        Isi tanggal, mata pelajaran, dan jam untuk setiap ASH sekaligus (maksimal {MAX_ASH_PER_DAY} ASH per hari).
                     </p>
                     <span className="rounded-xl bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-800 dark:bg-brand-950/60 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
                         {drafts.length} / 20 jadwal
@@ -154,7 +160,7 @@ export function PhBatchFormModal({
                             </div>
 
                             {/* Row Validation Issue */}
-                            {issues[index] && draft.subject.trim() && (
+                            {issues[index] && (draft.subject.trim() || issues[index]?.includes('Maksimal')) && (
                                 <div className="flex items-center gap-1.5 rounded-xl bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-700 dark:text-amber-300 border border-amber-500/30">
                                     <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" />
                                     <p role="status">{issues[index]}</p>
@@ -170,14 +176,23 @@ export function PhBatchFormModal({
                         className="min-h-11 w-full gap-2 rounded-xl border-dashed border-slate-300 dark:border-slate-700 text-xs sm:text-sm font-semibold text-brand-700 hover:border-brand-500 hover:bg-brand-50/50 dark:text-brand-300 dark:hover:bg-brand-950/30"
                         disabled={drafts.length >= 20}
                         onClick={() =>
-                            setDrafts((items) => [
-                                ...items,
-                                {
-                                    subject: '',
-                                    date: items[items.length - 1].date,
-                                    period_label: '',
-                                },
-                            ])
+                            setDrafts((items) => {
+                                const lastDate = items[items.length - 1].date;
+                                const combined = [...existing, ...items];
+                                const sameDayCount = getSameDaySchedules(lastDate, combined).length;
+                                const nextDate =
+                                    sameDayCount >= MAX_ASH_PER_DAY
+                                        ? findNextAvailableAshDate(lastDate, combined, undefined, semester?.end_date) || lastDate
+                                        : lastDate;
+                                return [
+                                    ...items,
+                                    {
+                                        subject: '',
+                                        date: nextDate,
+                                        period_label: '',
+                                    },
+                                ];
+                            })
                         }
                     >
                         <Plus className="h-4 w-4" />
