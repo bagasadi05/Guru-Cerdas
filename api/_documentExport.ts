@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import { authenticateRequest } from './_auth';
+import { authenticateRequest } from './_auth.js';
 import {
   ExportDataError,
   buildExportFileName,

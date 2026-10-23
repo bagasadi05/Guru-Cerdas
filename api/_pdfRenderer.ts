@@ -2,7 +2,7 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 import chromium from '@sparticuz/chromium';
 import puppeteer, { type Browser, type LaunchOptions } from 'puppeteer-core';
-import { ExportHttpError } from './_documentExport';
+import { ExportHttpError } from './_documentExport.js';
 import {
   PAGE_MARGIN_MM,
   buildHeaderFooterTemplates,

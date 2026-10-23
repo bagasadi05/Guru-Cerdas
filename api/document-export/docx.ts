@@ -1,5 +1,5 @@
 import { Packer } from 'docx';
-import { createDocumentExportHandler } from '../_documentExport';
+import { createDocumentExportHandler } from '../_documentExport.js';
 import { buildModulAjarDocx } from '../../src/lib/modulAjarExport';
 
 /** POST /api/document-export/docx — body: { lessonPlanId, paperSize?, variant? } */

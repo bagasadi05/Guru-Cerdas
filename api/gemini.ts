@@ -1,7 +1,6 @@
-import { validBudget, geminiConfig, upstreamAbort } from './_aiBudget';
-import { retryHint, type AiBudgetProfile } from '../src/lib/aiRequestPolicy';
+import { validBudget, geminiConfig, upstreamAbort, retryHint, type AiBudgetProfile } from './_aiBudget.js';
 import type { IncomingMessage, ServerResponse } from 'http';
-import { authenticateRequest } from './_auth';
+import { authenticateRequest } from './_auth.js';
 
 /**
  * Gemini serverless proxy — keeps GEMINI_API_KEY server-side.

@@ -1,7 +1,6 @@
-import { validBudget, groqConfig, upstreamAbort } from './_aiBudget';
-import { retryHint, type AiBudgetProfile } from '../src/lib/aiRequestPolicy';
+import { validBudget, groqConfig, upstreamAbort, retryHint, type AiBudgetProfile } from './_aiBudget.js';
 import type { IncomingMessage, ServerResponse } from 'http';
-import { authenticateRequest } from './_auth';
+import { authenticateRequest } from './_auth.js';
 
 /**
  * Groq serverless proxy — keeps GROQ_API_KEY server-side.
