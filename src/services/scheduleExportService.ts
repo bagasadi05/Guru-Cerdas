@@ -226,7 +226,7 @@ export function exportPhScheduleIcs(
     toast: { success: (msg: string) => void; warning: (msg: string) => void }
 ) {
     if (!schedules || schedules.length === 0) {
-        toast.warning("Tidak ada jadwal PH untuk diekspor.");
+        toast.warning("Tidak ada jadwal ASH untuk diekspor.");
         return;
     }
 
@@ -240,7 +240,7 @@ export function exportPhScheduleIcs(
         'PRODID:-//Guru Cerdas//Jadwal PH//ID',
         'CALSCALE:GREGORIAN',
         'METHOD:PUBLISH',
-        `X-WR-CALNAME:Jadwal PH ${className}`,
+        `X-WR-CALNAME:Jadwal ASH ${className}`,
         'X-WR-TIMEZONE:Asia/Jakarta',
     ];
 
@@ -267,18 +267,18 @@ export function exportPhScheduleIcs(
         lines.push(`DTSTAMP:${stamp}`);
         lines.push(`DTSTART;TZID=Asia/Jakarta:${dtStart}`);
         lines.push(`DTEND;TZID=Asia/Jakarta:${dtEnd}`);
-        lines.push(`SUMMARY:PH ${item.subject} (${className})`);
-        lines.push(`DESCRIPTION:Penilaian Harian (PH) ${item.subject} untuk ${className}, Jam Ke-${item.period_label}`);
+        lines.push(`SUMMARY:ASH ${item.subject} (${className})`);
+        lines.push(`DESCRIPTION:Asesmen Sumatif Harian (ASH) ${item.subject} untuk ${className}, Jam Ke-${item.period_label}`);
         lines.push(`LOCATION:Sekolah`);
         lines.push('BEGIN:VALARM');
         lines.push('TRIGGER:-P1D');
         lines.push('ACTION:DISPLAY');
-        lines.push(`DESCRIPTION:Pengingat: Besok Penilaian Harian (PH) ${item.subject}`);
+        lines.push(`DESCRIPTION:Pengingat: Besok Asesmen Sumatif Harian (ASH) ${item.subject}`);
         lines.push('END:VALARM');
         lines.push('BEGIN:VALARM');
         lines.push('TRIGGER:-PT1H');
         lines.push('ACTION:DISPLAY');
-        lines.push(`DESCRIPTION:Pengingat: 1 jam lagi PH ${item.subject}`);
+        lines.push(`DESCRIPTION:Pengingat: 1 jam lagi ASH ${item.subject}`);
         lines.push('END:VALARM');
         lines.push('END:VEVENT');
     });
@@ -289,11 +289,11 @@ export function exportPhScheduleIcs(
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `Jadwal_PH_${className.replace(/\s+/g, '_')}_${formatExportDate()}.ics`;
+    link.download = `Jadwal_ASH_${className.replace(/\s+/g, '_')}_${formatExportDate()}.ics`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(link.href);
-    toast.success("File kalender PH (.ics) berhasil diunduh!");
+    toast.success("File kalender ASH (.ics) berhasil diunduh!");
 }
 

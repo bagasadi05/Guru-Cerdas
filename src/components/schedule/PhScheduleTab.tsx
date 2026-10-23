@@ -93,7 +93,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
 
     const handleExecutePrint = useReactToPrint({
         contentRef: printSheetRef,
-        documentTitle: `Agenda_PH_${domain.currentClassName}`,
+        documentTitle: `Agenda_ASH_${domain.currentClassName}`,
         pageStyle: `
             @page { size: A4 portrait; margin: 12mm; }
             @media print {
@@ -140,10 +140,10 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
             navigate('/input-massal', {
                 state: {
                     prefill: {
-                        mode: 'form',
+                        mode: 'subject_grade',
                         classId: item.class_id,
-                        subject: item.subject,
-                        assessment_name: `PH ${item.subject}`,
+                        subject: parseSubjectString(item.subject).baseSubject || item.subject,
+                        assessment_name: 'PH 1', notes: parseSubjectString(item.subject).topic || '', semester: item.semester_id,
                     },
                 },
             });
@@ -163,18 +163,18 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
     }
 
     return (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-4 sm:space-y-6 animate-fade-in">
             <PhScheduleToolbar domain={domain} onPrint={handleTriggerPrint} />
             {!domain.isLoadingSchedules && !domain.loadError && domain.nextUpcomingPh && (
-                <section aria-label="PH berikutnya" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-brand-200 bg-brand-50 px-4 py-3.5 dark:border-brand-800 dark:bg-brand-950/40">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-brand-800 dark:text-brand-300">PH berikutnya</span>
-                    <p className="min-w-0 flex-1 text-sm text-slate-800 dark:text-slate-100">
+                <section aria-label="ASH berikutnya" className="flex flex-wrap items-center justify-between gap-x-2.5 gap-y-1.5 rounded-2xl border border-brand-200/80 bg-brand-50/70 px-3.5 py-2.5 text-xs sm:text-sm dark:border-brand-800/60 dark:bg-brand-950/30">
+                    <span className="order-1 shrink-0 rounded-lg bg-brand-700 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white dark:bg-brand-600">ASH berikutnya</span>
+                    <p className="order-3 sm:order-2 w-full sm:w-auto sm:flex-1 min-w-0 text-xs sm:text-sm leading-snug text-slate-800 dark:text-slate-100">
                         <span className="font-semibold">{domain.nextUpcomingPh.subject}</span>
                         <span className="text-slate-600 dark:text-slate-300">
                             {' · '}{PhScheduleEngine.formatDateHeading(domain.nextUpcomingPh.date)}{' · jam '}{domain.nextUpcomingPh.period_label}
                         </span>
                     </p>
-                    <span className="rounded-lg bg-white px-2 py-1 text-xs font-semibold text-brand-800 dark:bg-slate-900 dark:text-brand-200">
+                    <span className="order-2 sm:order-3 shrink-0 rounded-lg bg-white px-2.5 py-0.5 text-xs font-bold text-brand-800 shadow-2xs dark:bg-slate-900 dark:text-brand-300">
                         {PhScheduleEngine.getRelativeDateLabel(domain.nextUpcomingPh.date)}
                     </span>
                 </section>
@@ -201,11 +201,11 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                 <div className="bg-amber-50 dark:bg-amber-500/10 rounded-2xl border border-amber-200 dark:border-amber-500/20 p-4 flex items-start gap-3">
                     <AlertTriangleIcon className="w-5 h-5 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden />
                     <div className="space-y-1 text-sm text-amber-900 dark:text-amber-200">
-                        <p className="font-semibold">Beberapa PH menumpuk pada hari yang sama</p>
+                        <p className="font-semibold">Beberapa ASH menumpuk pada hari yang sama</p>
                         <ul className="list-inside list-disc space-y-0.5">
                             {domain.scheduleAnomalies.heavyDays.map((h) => (
                                 <li key={h.date}>
-                                    <strong>{PhScheduleEngine.formatDateHeading(h.date)}</strong>: {h.count} PH dalam sehari.
+                                    <strong>{PhScheduleEngine.formatDateHeading(h.date)}</strong>: {h.count} ASH dalam sehari.
                                 </li>
                             ))}
                         </ul>
@@ -216,40 +216,40 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
 
             {domain.selectedSemester?.is_locked && (
                 <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200">
-                    Semester ini terkunci, jadi jadwal PH hanya dapat dilihat.
+                    Semester ini terkunci, jadi jadwal ASH hanya dapat dilihat.
                 </p>
             )}
             {/* Main Content Area */}
             {!domain.isLoadingClasses && !domain.loadError && (!domain.effectiveClassId || !domain.selectedSemesterId) ? (
                 <div className="space-y-3 rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center dark:border-slate-700 dark:bg-slate-900">
                     <CalendarIcon className="mx-auto h-10 w-10 text-slate-400" aria-hidden />
-                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Pilih kelas dan semester di atas untuk melihat jadwal PH.</p>
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Pilih kelas dan semester di atas untuk melihat jadwal ASH.</p>
                 </div>
             ) : domain.loadError ? (
                 <div role="alert" className="space-y-3 rounded-2xl border border-rose-200 bg-rose-50 p-5 dark:border-rose-900 dark:bg-rose-950/30">
-                    <h3 className="font-semibold text-rose-900 dark:text-rose-200">Jadwal PH gagal dimuat</h3>
-                    <p className="text-sm text-rose-800 dark:text-rose-300">Periksa koneksi internet Anda, lalu muat ulang. Jadwal tidak ditampilkan agar tidak terbaca sebagai kelas tanpa PH.</p>
+                    <h3 className="font-semibold text-rose-900 dark:text-rose-200">Jadwal ASH gagal dimuat</h3>
+                    <p className="text-sm text-rose-800 dark:text-rose-300">Periksa koneksi internet Anda, lalu muat ulang. Jadwal tidak ditampilkan agar tidak terbaca sebagai kelas tanpa ASH.</p>
                     <Button type="button" onClick={domain.retryLoad}>Coba lagi</Button>
                 </div>
             ) : domain.isLoadingSchedules || domain.isLoadingClasses ? (
                 <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white py-16 dark:border-slate-800 dark:bg-slate-900" role="status">
                     <div className="h-8 w-8 animate-spin rounded-full border-[3px] border-brand-500 border-t-transparent" />
-                    <p className="text-sm text-slate-600 dark:text-slate-300">Memuat jadwal Penilaian Harian…</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">Memuat jadwal Asesmen Sumatif Harian (ASH)…</p>
                 </div>
             ) : domain.rawSchedules.length === 0 ? (
                 <div className="flex flex-col items-center space-y-4 rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900">
                     <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300"><CalendarIcon className="h-7 w-7" aria-hidden /></div>
                     <div className="max-w-md space-y-1.5">
-                        <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-white">Belum ada jadwal PH</h2>
+                        <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-white">Belum ada jadwal ASH</h2>
                         <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                            Belum ada agenda penilaian harian untuk {domain.currentClassName} pada semester ini.
+                            Belum ada agenda asesmen sumatif harian untuk {domain.currentClassName} pada semester ini.
                             {domain.canAdd ? ' Tambahkan jadwal agar wali kelas dan guru lain ikut melihatnya.' : ''}
                         </p>
                     </div>
                     {domain.canAdd && (
                         <Button type="button" variant="primary" onClick={() => domain.openAdd()} className="min-h-11 w-full max-w-[280px] gap-1.5 rounded-xl">
                             <PlusIcon className="h-4 w-4" aria-hidden />
-                            Tambah Jadwal PH
+                            Tambah Jadwal ASH
                         </Button>
                     )}
                 </div>
@@ -270,7 +270,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                 <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-8 text-center dark:border-slate-800 dark:bg-slate-900">
                     <SearchIcon className="mx-auto h-8 w-8 text-slate-400" aria-hidden />
                     <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Tidak ada jadwal yang cocok</p>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Kata kunci atau filter di atas menyaring semua jadwal. Hapus filter untuk melihat {domain.rawSchedules.length} PH di kelas ini.</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Kata kunci atau filter di atas menyaring semua jadwal. Hapus filter untuk melihat {domain.rawSchedules.length} ASH di kelas ini.</p>
                     <Button type="button" variant="outline" className="min-h-11" onClick={() => { domain.setSearchQuery(''); domain.setStatusFilter('all'); domain.setSelectedMonth('all'); }}>Hapus filter</Button>
                 </div>
             ) : domain.viewMode === 'table' ? (
@@ -322,7 +322,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                                         variant="primary"
                                                         onClick={() => handleInputNilai(item)}
                                                         className="!min-h-11 px-2.5 text-xs !bg-teal-700 hover:!bg-teal-800 text-white"
-                                                        title="Input Nilai PH Siswa"
+                                                        title="Input Nilai ASH Siswa"
                                                     >
                                                         <ClipboardPenIcon className="w-3.5 h-3.5 mr-1" />
                                                         <span>Nilai</span>
@@ -382,7 +382,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                             </span>
                                         )}
                                     </div>
-                                    <span className="text-xs text-slate-600 dark:text-slate-400">{items.length} PH</span>
+                                    <span className="text-xs text-slate-600 dark:text-slate-400">{items.length} ASH</span>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -399,7 +399,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                                             <CalendarIcon className="h-4 w-4" aria-hidden />
                                                         </div>
                                                         <div className="min-w-0">
-                                                            <h4 className="break-words text-base font-semibold leading-6 text-slate-900 dark:text-white">
+                                                            <h4 className="break-words hyphens-none text-base font-semibold leading-6 text-slate-900 dark:text-white">
                                                                 <span aria-hidden className={`mr-2 inline-block h-2.5 w-2.5 rounded-full ${phSubjectColor(item.subject)}`} />
                                                                 {parseSubjectString(item.subject).baseSubject}
                                                             </h4>
@@ -472,8 +472,8 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                 currentSemesterName={domain.currentSemesterName}
             />
             {domain.isBatchOpen && <PhBatchFormModal className={domain.currentClassName} semester={domain.selectedSemester} existing={domain.rawSchedules} initialDate={domain.todayStr} pending={domain.batchMutation.isPending} canManage={domain.canAdd} onClose={() => domain.setIsBatchOpen(false)} onSave={(drafts) => domain.batchMutation.mutate(drafts)} />}
-            <Modal isOpen={domain.isReportPreviewOpen} onClose={() => domain.setIsReportPreviewOpen(false)} maxWidth="max-w-2xl" title={`PH di laporan WhatsApp — ${domain.currentClassName}`}>
-                <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">Bagian PH memakai semester aktif, untuk hari ini dan tujuh hari ke depan. Pratinjau ini tidak mengirim pesan.</p>
+            <Modal isOpen={domain.isReportPreviewOpen} onClose={() => domain.setIsReportPreviewOpen(false)} maxWidth="max-w-2xl" title={`ASH di laporan WhatsApp — ${domain.currentClassName}`}>
+                <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">Bagian ASH memakai semester aktif, untuk hari ini dan tujuh hari ke depan. Pratinjau ini tidak mengirim pesan.</p>
                 {domain.reportPreview.isLoading ? <p role="status">Memuat pratinjau…</p> : domain.reportPreview.error ? <div role="alert"><p>Pratinjau gagal dimuat.</p><Button onClick={() => void domain.reportPreview.refetch()}>Coba lagi</Button></div> : <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5 dark:border-slate-700 dark:bg-slate-800"><p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Cuplikan pesan</p><pre className="whitespace-pre-wrap break-words font-sans text-sm leading-7 text-slate-800 dark:text-slate-100">{domain.reportPreview.data}</pre></div>}
             </Modal>
 
@@ -485,7 +485,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
             >
                 <div className="space-y-4 pt-2">
                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                        Pilih jadwal PH yang ingin disalin untuk dibagikan ke grup WhatsApp kelas atau paguyuban orang tua:
+                        Pilih jadwal ASH yang ingin disalin untuk dibagikan ke grup WhatsApp kelas atau paguyuban orang tua:
                     </p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -498,10 +498,10 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                 <ClockIcon className="w-5 h-5" />
                             </div>
                             <div className="font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors">
-                                PH Mendatang Saja
+                                ASH Mendatang Saja
                             </div>
                             <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                Salin {domain.statusCounts.upcoming + domain.statusCounts.today} jadwal PH aktif & yang akan datang.
+                                Salin {domain.statusCounts.upcoming + domain.statusCounts.today} jadwal ASH aktif & yang akan datang.
                             </div>
                         </button>
 
@@ -514,10 +514,10 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                 <CalendarIcon className="w-5 h-5" />
                             </div>
                             <div className="font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors">
-                                Seluruh Jadwal PH
+                                Seluruh Jadwal ASH
                             </div>
                             <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                Salin semua {domain.statusCounts.all} jadwal PH untuk semester ini.
+                                Salin semua {domain.statusCounts.all} jadwal ASH untuk semester ini.
                             </div>
                         </button>
                     </div>
@@ -534,13 +534,13 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
             <Modal
                 isOpen={domain.isPrintModalOpen}
                 onClose={() => domain.setIsPrintModalOpen(false)}
-                title="Cetak Jadwal Penilaian Harian"
+                title="Cetak Jadwal Asesmen Sumatif Harian"
             >
                 <div className="space-y-4 pt-2">
                     <div id="ph-schedule-print-area" ref={printSheetRef} className="bg-white text-slate-900 p-6 rounded-xl border border-slate-200 text-xs sm:text-sm space-y-4">
                         <div className="text-center border-b pb-3 border-slate-300">
                             <h2 className="text-base sm:text-lg font-bold uppercase tracking-wide">
-                                Agenda Penilaian Harian (PH)
+                                Agenda Asesmen Sumatif Harian (ASH)
                             </h2>
                             <p className="text-xs text-slate-600">
                                 Kelas: <strong>{domain.currentClassName}</strong> &bull; Semester: <strong>{domain.currentSemesterName}</strong>
@@ -548,7 +548,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                         </div>
 
                         <div className="overflow-x-auto">
-                            <table className="w-full border-collapse border border-slate-300 text-xs min-w-[480px]" aria-label="Tabel Agenda Penilaian Harian Cetak">
+                            <table className="w-full border-collapse border border-slate-300 text-xs min-w-[480px]" aria-label="Tabel Agenda Asesmen Sumatif Harian Cetak">
                                 <thead>
                                     <tr className="bg-slate-100 text-slate-800">
                                         <th className="border border-slate-300 px-2 py-1.5 w-8 text-center">No</th>
@@ -605,10 +605,10 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                         domain.deleteMutation.mutate(domain.deleteConfirm.id);
                     }
                 }}
-                title="Hapus Jadwal Penilaian Harian?"
+                title="Hapus Jadwal Asesmen Sumatif Harian?"
                 message={
                     <span>
-                        Apakah Anda yakin ingin menghapus jadwal PH untuk mata pelajaran{' '}
+                        Apakah Anda yakin ingin menghapus jadwal ASH untuk mata pelajaran{' '}
                         <strong>"{domain.deleteConfirm?.subject}"</strong> pada tanggal{' '}
                         <strong>{domain.deleteConfirm?.date ? PhScheduleEngine.formatDateHeading(domain.deleteConfirm.date) : ''}</strong>?
                     </span>

@@ -35,10 +35,10 @@ export function validatePhDraft(
     if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.date)
         || Number.isNaN(Date.parse(`${draft.date}T00:00:00Z`))
         || new Date(`${draft.date}T00:00:00Z`).toISOString().slice(0, 10) !== draft.date) return 'Tanggal pelaksanaan tidak valid.';
-    if (draft.date < semester.start_date || draft.date > semester.end_date) return 'Tanggal PH harus berada dalam periode semester yang dipilih.';
+    if (draft.date < semester.start_date || draft.date > semester.end_date) return 'Tanggal ASH harus berada dalam periode semester yang dipilih.';
     if (!parsePhPeriod(draft.period_label)) return 'Isi jam pelajaran 1–20, misalnya 1 atau 1-2.';
     if (existing.some((item) => !(draft.id && item.id === draft.id) && item.date === draft.date && phPeriodsOverlap(item.period_label, draft.period_label))) {
-        return 'Jam pelajaran bertumpang tindih dengan jadwal PH lain pada tanggal tersebut.';
+        return 'Jam pelajaran bertumpang tindih dengan jadwal ASH lain pada tanggal tersebut.';
     }
     return null;
 }

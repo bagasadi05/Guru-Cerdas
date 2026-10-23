@@ -45,7 +45,7 @@ export const ScheduleCard: React.FC<ScheduleCardProps> = ({ item, classNameLabel
                         {hasPhToday && (
                             <span className="inline-flex items-center gap-1 text-xs font-extrabold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60">
                                 <ClipboardPenIcon className="w-3 h-3 text-amber-700 dark:text-amber-300 shrink-0" />
-                                <span>PH Hari Ini</span>
+                                <span>ASH Hari Ini</span>
                             </span>
                         )}
                     </div>

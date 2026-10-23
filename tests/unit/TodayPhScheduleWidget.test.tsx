@@ -96,16 +96,16 @@ describe('TodayPhScheduleWidget Component', () => {
         renderWidget(mockClasses);
 
         await waitFor(() => {
-            expect(screen.getByText('Agenda Penilaian Harian (PH)')).toBeInTheDocument();
+            expect(screen.getByText('Agenda Asesmen Sumatif Harian (ASH)')).toBeInTheDocument();
         });
 
-        expect(screen.getByText('Tidak Ada Jadwal PH Terdekat')).toBeInTheDocument();
+        expect(screen.getByText('Tidak Ada Jadwal ASH Terdekat')).toBeInTheDocument();
         expect(
-            screen.getByText(/Tidak ada agenda Penilaian Harian dalam 7 hari ke depan/i)
+            screen.getByText(/Tidak ada agenda Asesmen Sumatif Harian dalam 7 hari ke depan/i)
         ).toBeInTheDocument();
 
         // Check action buttons in empty state
-        const createBtn = screen.getByRole('button', { name: /\+ Buat Jadwal PH Baru/i });
+        const createBtn = screen.getByRole('button', { name: /\+ Buat Jadwal ASH Baru/i });
         expect(createBtn).toBeInTheDocument();
         fireEvent.click(createBtn);
         expect(mockNavigate).toHaveBeenCalledWith('/jadwal?tab=ph&action=add');
@@ -167,10 +167,10 @@ describe('TodayPhScheduleWidget Component', () => {
         expect(screen.getByText('Teks Laporan Hasil Observasi')).toBeInTheDocument();
         expect(screen.getByText('Kelas 8B')).toBeInTheDocument();
 
-        // Clicking a card navigates to full PH schedule page
+        // Clicking a card navigates to full PH schedule page with the class ID
         const todayCard = screen.getByText('Bahasa Arab').closest('.cursor-pointer');
         expect(todayCard).not.toBeNull();
         fireEvent.click(todayCard!);
-        expect(mockNavigate).toHaveBeenCalledWith('/jadwal?tab=ph');
+        expect(mockNavigate).toHaveBeenCalledWith('/jadwal?tab=ph&kelas=c1');
     });
 });

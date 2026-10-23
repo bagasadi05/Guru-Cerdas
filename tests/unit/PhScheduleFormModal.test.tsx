@@ -100,12 +100,12 @@ describe('PhScheduleFormModal Component', () => {
             />
         );
 
-        expect(screen.getByText('Tambah Jadwal Penilaian Harian')).toBeInTheDocument();
+        expect(screen.getByText('Tambah Jadwal Asesmen Sumatif Harian (ASH)')).toBeInTheDocument();
         expect(screen.getByText('Kelas 7A')).toBeInTheDocument();
         expect(screen.getByText('Semester Ganjil')).toBeInTheDocument();
         expect(screen.getByLabelText(/Tanggal Pelaksanaan/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/Mata Pelajaran/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Materi \/ Topik PH/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/Materi \/ Topik ASH/i)).toBeInTheDocument();
         expect(screen.getByText('Jam Pelajaran Ke-')).toBeInTheDocument();
     });
 
@@ -226,7 +226,7 @@ describe('PhScheduleFormModal Component', () => {
         );
 
         expect(screen.getByText('Jam pelajaran bertumpang tindih')).toBeInTheDocument();
-        expect(screen.getByText(/Sudah ada jadwal PH/i)).toBeInTheDocument();
+        expect(screen.getByText(/Sudah ada jadwal ASH/i)).toBeInTheDocument();
     });
 
     it('displays centered quick date buttons and weekend indicator correctly', () => {

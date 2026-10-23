@@ -50,12 +50,13 @@ export const useMassInputData = (selectedClass: string, subject?: string, assess
             if (mode === 'violation' || mode === 'quiz') {
                 const { data, error } = await supabase.rpc('get_active_classes');
                 if (error) throw error; 
-                const classesData = (data || []) as unknown as ClassRow[];
+                const classesData = ((data || []) as unknown as ClassRow[]).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
                 return [{ id: 'all', name: 'Semua Kelas (Lintas Kelas)', user_id: 'system' } as ClassRow, ...classesData];
             }
             
             const { data, error } = await supabase.from('classes').select('id, name, user_id').is('deleted_at', null).eq('is_archived', false).order('name');
-            if (error) throw error; return (data || []) as unknown as ClassRow[];
+            if (error) throw error; 
+            return ((data || []) as unknown as ClassRow[]).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
         },
         enabled: !!user,
     });

@@ -295,7 +295,7 @@ export function usePhScheduleDomain({
     // Mutations
     const createMutation = useMutation({
         mutationFn: async (data: { class_id: string; semester_id: string; subject: string; date: string; period_label: string }) => {
-            if (!user || !canAdd) throw new Error('Anda tidak memiliki izin menambah PH di kelas ini.');
+            if (!user || !canAdd) throw new Error('Anda tidak memiliki izin menambah ASH di kelas ini.');
             const issue = validatePhDraft(data, selectedSemester, rawSchedules);
             if (issue) throw new Error(issue);
             const { error } = await supabase.from('ph_schedules').insert({ ...data, created_by: user.id });
@@ -306,7 +306,7 @@ export function usePhScheduleDomain({
             queryClient.invalidateQueries({ queryKey: ['ph-report-preview'] });
             setDialogOpen(false);
             setEditingSchedule(null);
-            toast.success('Jadwal PH berhasil ditambahkan!');
+            toast.success('Jadwal ASH berhasil ditambahkan!');
         },
         onError: (err: Error) => toast.error(`Gagal menambahkan: ${err.message}`),
     });
@@ -314,7 +314,7 @@ export function usePhScheduleDomain({
     const updateMutation = useMutation({
         mutationFn: async ({ id, ...data }: { id: string; subject: string; date: string; period_label: string }) => {
             const target = rawSchedules.find((s) => s.id === id);
-            if (!target || !canModify(target)) throw new Error('Hanya pembuat jadwal, wali kelas, atau admin yang dapat mengubah PH ini.');
+            if (!target || !canModify(target)) throw new Error('Hanya pembuat jadwal, wali kelas, atau admin yang dapat mengubah ASH ini.');
             const issue = validatePhDraft({ ...data, id }, selectedSemester, rawSchedules);
             if (issue) throw new Error(issue);
             const { data: updated, error } = await supabase.from('ph_schedules').update(data).eq('id', id).eq('class_id', effectiveClassId).eq('semester_id', selectedSemesterId).select('id');
@@ -326,7 +326,7 @@ export function usePhScheduleDomain({
             queryClient.invalidateQueries({ queryKey: ['ph-report-preview'] });
             setDialogOpen(false);
             setEditingSchedule(null);
-            toast.success('Jadwal PH berhasil diperbarui!');
+            toast.success('Jadwal ASH berhasil diperbarui!');
         },
         onError: (err: Error) => toast.error(`Gagal memperbarui: ${err.message}`),
     });
@@ -334,7 +334,7 @@ export function usePhScheduleDomain({
     const deleteMutation = useMutation({
         mutationFn: async (id: string) => {
             const target = rawSchedules.find((s) => s.id === id);
-            if (!target || !canModify(target)) throw new Error('Hanya pembuat jadwal, wali kelas, atau admin yang dapat mengubah PH ini.');
+            if (!target || !canModify(target)) throw new Error('Hanya pembuat jadwal, wali kelas, atau admin yang dapat mengubah ASH ini.');
             const result = await softDelete('ph_schedules', id);
             if (!result.success) throw new Error(result.error || 'Gagal menghapus');
         },
@@ -342,14 +342,14 @@ export function usePhScheduleDomain({
             queryClient.invalidateQueries({ queryKey: ['ph-schedules'] });
             queryClient.invalidateQueries({ queryKey: ['ph-report-preview'] });
             setDeleteConfirm(null);
-            toast.success('Jadwal PH berhasil dihapus.');
+            toast.success('Jadwal ASH berhasil dihapus.');
         },
         onError: (err: Error) => toast.error(`Gagal menghapus: ${err.message}`),
     });
 
     const batchMutation = useMutation({
         mutationFn: async (drafts: PhDraft[]) => {
-            if (!user || !canAdd) throw new Error('Anda tidak memiliki izin menambah PH di kelas ini.');
+            if (!user || !canAdd) throw new Error('Anda tidak memiliki izin menambah ASH di kelas ini.');
             if (!drafts.length || drafts.length > 20) throw new Error('Isi 1–20 jadwal dalam satu penyimpanan.');
             for (const [index, draft] of drafts.entries()) {
                 const issue = validatePhDraft(draft, selectedSemester, [...rawSchedules, ...drafts.slice(0, index)]);
@@ -365,7 +365,7 @@ export function usePhScheduleDomain({
             queryClient.invalidateQueries({ queryKey: ['ph-schedules'] });
             queryClient.invalidateQueries({ queryKey: ['ph-report-preview'] });
             setIsBatchOpen(false);
-            toast.success('Semua jadwal PH berhasil disimpan.');
+            toast.success('Semua jadwal ASH berhasil disimpan.');
         },
         onError: (err: Error) => toast.error(`Gagal menyimpan jadwal: ${err.message}`),
     });
@@ -405,7 +405,7 @@ export function usePhScheduleDomain({
             e.preventDefault();
             if (createMutation.isPending || updateMutation.isPending) return;
             if (editingSchedule ? !canModify(editingSchedule) : !canAdd) {
-                toast.warning(editingSchedule ? 'Hanya pembuat jadwal, wali kelas, atau admin yang dapat mengubah PH ini.' : 'Anda tidak memiliki izin menambah PH di kelas ini.');
+                toast.warning(editingSchedule ? 'Hanya pembuat jadwal, wali kelas, atau admin yang dapat mengubah ASH ini.' : 'Anda tidak memiliki izin menambah ASH di kelas ini.');
                 return;
             }
             const issue = validatePhDraft({ ...formData, id: editingSchedule?.id }, selectedSemester, rawSchedules);
@@ -444,8 +444,8 @@ export function usePhScheduleDomain({
             if (!text) {
                 toast.warning(
                     filterMode === 'upcoming'
-                        ? 'Tidak ada jadwal PH mendatang.'
-                        : 'Tidak ada jadwal PH untuk dibagikan.'
+                        ? 'Tidak ada jadwal ASH mendatang.'
+                        : 'Tidak ada jadwal ASH untuk dibagikan.'
                 );
                 return;
             }
@@ -465,7 +465,7 @@ export function usePhScheduleDomain({
 
     const handleExportIcs = useCallback(() => {
         if (rawSchedules.length === 0) {
-            toast.warning('Tidak ada jadwal PH untuk diekspor.');
+            toast.warning('Tidak ada jadwal ASH untuk diekspor.');
             return;
         }
         exportPhScheduleIcs(rawSchedules, currentClassName, toast);

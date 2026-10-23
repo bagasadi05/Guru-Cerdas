@@ -70,7 +70,7 @@ const REMINDER_PROMPT_SNOOZE_MS = 7 * 24 * 60 * 60 * 1000;
 
 const MAIN_TABS = [
     { key: 'jadwal', param: 'mengajar', label: 'Mengajar', fullLabel: 'Jadwal Mengajar', icon: CalendarIcon },
-    { key: 'ph', param: 'ph', label: 'Jadwal PH', fullLabel: 'Jadwal PH', icon: ClipboardPenIcon },
+    { key: 'ph', param: 'ph', label: 'Jadwal ASH', fullLabel: 'Jadwal ASH', icon: ClipboardPenIcon },
     { key: 'jurnal', param: 'jurnal', label: 'Jurnal', fullLabel: 'Jurnal', icon: BookOpenIcon },
 ] as const;
 
@@ -451,7 +451,7 @@ const SchedulePage: React.FC = () => {
         if (classParam) setSelectedClassId(classParam);
     }, [classParam]);
     // A bare /jadwal opens today's teaching timetable, the screen teachers come for.
-    const activeMainTab = rawTab === 'jurnal' ? 'jurnal' : rawTab === 'ph' ? 'ph' : 'jadwal';
+    const activeMainTab = rawTab === 'jurnal' ? 'jurnal' : (rawTab === 'ph' || rawTab === 'ash') ? 'ph' : 'jadwal';
 
     if (authLoading || pageLoading) return <SchedulePageSkeleton />;
 
@@ -463,16 +463,16 @@ const SchedulePage: React.FC = () => {
                         <header className="space-y-3">
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
-                                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight font-serif text-slate-900 dark:text-white">
+                                    <h1 className="text-lg sm:text-2xl font-bold tracking-tight font-serif text-slate-900 dark:text-white">
                                         {activeMainTab === 'ph'
-                                            ? 'Jadwal Penilaian Harian'
+                                            ? 'Jadwal Asesmen Sumatif Harian (ASH)'
                                             : activeMainTab === 'jurnal'
                                             ? 'Jurnal Mengajar'
                                             : 'Jadwal Mengajar'}
                                     </h1>
                                     <p className="hidden sm:block mt-1 text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-2xl font-sans">
                                         {activeMainTab === 'ph'
-                                            ? 'Susun agenda ulangan harian, catat materi penilaian, dan bagikan jadwal ke siswa atau orang tua.'
+                                            ? 'Susun agenda asesmen sumatif harian, catat materi penilaian, dan bagikan jadwal ke siswa atau orang tua.'
                                             : activeMainTab === 'jurnal'
                                             ? 'Catat pelaksanaan belajar mengajar, kehadiran kelas, dan catatan penting setiap pertemuan.'
                                             : 'Lihat jam mengajar hari ini dan isi jurnal setelah pelajaran selesai.'}
@@ -512,7 +512,7 @@ const SchedulePage: React.FC = () => {
                                             role="tab"
                                             aria-selected={isActive}
                                             onClick={() => setSearchParams({ tab: tab.param })}
-                                            className={`min-h-11 px-2 sm:px-4 text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer active:scale-95 ${
+                                            className={`min-h-11 px-1.5 sm:px-4 text-xs sm:text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 min-w-0 whitespace-nowrap cursor-pointer active:scale-95 ${
                                                 isActive
                                                     ? 'bg-white dark:bg-[#111c2e] text-emerald-700 dark:text-[#00d284] shadow-sm'
                                                     : 'text-slate-600 dark:text-[#94a3b8] hover:text-slate-900 dark:hover:text-white'

@@ -63,8 +63,8 @@ describe('TasksPage', () => {
 
         await waitFor(() => {
             // Use getAllByText since column headers appear multiple times
-            const todoElements = screen.getAllByText('To Do');
-            const inProgressElements = screen.getAllByText('In Progress');
+            const todoElements = screen.getAllByText('Belum Mulai');
+            const inProgressElements = screen.getAllByText('Sedang Dikerjakan');
             const doneElements = screen.getAllByText('Selesai');
             
             expect(todoElements.length).toBeGreaterThan(0);

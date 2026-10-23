@@ -54,4 +54,25 @@ describe('AcademicTab', () => {
         await waitFor(() => expect(screen.getByText('Saran dari AI')).toBeInTheDocument());
         expect(gemini.generateGeminiJson).toHaveBeenCalledTimes(1);
     });
+
+    it('switches between the 4 distinct KPI card views without duplicate tab bars', async () => {
+        renderTab(80);
+
+        // 1. Default view is remedial (Di Bawah KKTP)
+        expect(screen.getByText('Siswa di Bawah KKTP')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Input Remedial/i })).toBeInTheDocument();
+
+        // 2. Click Rata-rata Nilai card -> opens Analisis Per Mata Pelajaran
+        fireEvent.click(screen.getByRole('button', { name: /Rata-rata Nilai & Analisis Per Mata Pelajaran/i }));
+        expect(await screen.findByText('Analisis Per Mata Pelajaran')).toBeInTheDocument();
+
+        // 3. Click Kelengkapan Nilai card -> opens Audit Kelengkapan Nilai with ASH / PH terminology
+        fireEvent.click(screen.getByRole('button', { name: /Kelengkapan Nilai & Audit Nilai Kosong/i }));
+        expect(await screen.findByText('Audit Kelengkapan Nilai')).toBeInTheDocument();
+        expect(screen.getByText('Hanya ASH / PH')).toBeInTheDocument();
+
+        // 4. Click Tren & Capaian card -> opens Grafik Tren & Sebaran Predikat Kelas
+        fireEvent.click(screen.getByRole('button', { name: /Tren Nilai & Capaian Siswa/i }));
+        expect(await screen.findByText('Sebaran Predikat Kelas')).toBeInTheDocument();
+    });
 });

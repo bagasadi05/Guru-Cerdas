@@ -44,12 +44,6 @@ export interface PhScheduleFormModalProps {
     semester?: { start_date: string; end_date: string };
 }
 
-/**
- * Parses a combined subject string into subject name and optional topic.
- * e.g. "Matematika (Pecahan & Desimal)" -> { baseSubject: "Matematika", topic: "Pecahan & Desimal" }
- * e.g. "IPA - Ekosistem" -> { baseSubject: "IPA", topic: "Ekosistem" }
- * e.g. "Fikih" -> { baseSubject: "Fikih", topic: "" }
- */
 export { parseSubjectString } from './engine/phSchedulePresentation';
 
 /**
@@ -99,72 +93,58 @@ export const PhScheduleFormModal: React.FC<PhScheduleFormModalProps> = ({
     setFormData,
     handleSubmit,
     isPending,
-    subjectSuggestions,
+    subjectSuggestions = [],
     rawSchedules = [],
     currentClassName,
     currentSemesterName,
     semester,
 }) => {
-    // Initial parse
-    const initialParsed = useMemo(() => {
-        const parsed = parseSubjectString(formData.subject);
-        return {
-            baseSubject: normalizeSubjectDisplay(parsed.baseSubject),
-            topic: parsed.topic,
-        };
-    }, [formData.subject]);
-
-    // Internal state with lazy initialization from formData
-    const [selectedSubject, setSelectedSubject] = useState<string>(() => initialParsed.baseSubject);
-    const [topic, setTopic] = useState<string>(() => initialParsed.topic);
-    const [isCustomSubject, setIsCustomSubject] = useState<boolean>(() => {
-        const base = initialParsed.baseSubject;
-        return !subjectSuggestions.includes(base) && base.length > 0;
-    });
-    const [isCustomPeriod, setIsCustomPeriod] = useState<boolean>(() => {
-        const p = formData.period_label || '1-2';
-        return !PERIOD_PRESETS.includes(p) && p.length > 0 && p !== '1-2';
-    });
-
-    // Custom dropdown state
-    const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
-    const [subjectSearch, setSubjectSearch] = useState<string>('');
+    // Subject state
+    const [selectedSubject, setSelectedSubject] = useState<string>('');
+    const [topic, setTopic] = useState<string>('');
+    const [isCustomSubject, setIsCustomSubject] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [subjectSearch, setSubjectSearch] = useState('');
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // Track previous open state to only initialize when modal transitions to open
-    const prevIsOpenRef = useRef<boolean>(false);
-    const prevEditingIdRef = useRef<string | undefined>(undefined);
+    // Period state
+    const [isCustomPeriod, setIsCustomPeriod] = useState(false);
 
+    // Sync state whenever editingSchedule or modal opens
     useEffect(() => {
-        // Only run initialization when modal opens or editing schedule reference changes
-        if (isOpen && (!prevIsOpenRef.current || prevEditingIdRef.current !== editingSchedule?.id)) {
+        if (!isOpen) return;
+
+        if (formData.subject) {
             const { baseSubject, topic: parsedTopic } = parseSubjectString(formData.subject);
-            const normalizedBase = normalizeSubjectDisplay(baseSubject);
-            // This effect reinitializes local form state only on open/edit-target changes, not during user typing.
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setSelectedSubject(normalizedBase);
+            setSelectedSubject(baseSubject);
             setTopic(parsedTopic);
 
-            const isKnown = subjectSuggestions.includes(normalizedBase);
-            setIsCustomSubject(!isKnown && normalizedBase.length > 0);
-
-            // Default period to '1-2' if empty
-            const currentPeriod = formData.period_label || '1-2';
-            const isKnownPeriod = PERIOD_PRESETS.includes(currentPeriod);
-            setIsCustomPeriod(!isKnownPeriod && currentPeriod.length > 0 && currentPeriod !== '1-2');
-
-            if (!formData.period_label) {
-                setFormData((prev) => ({ ...prev, period_label: '1-2' }));
+            const isKnown = subjectSuggestions.some(
+                (s) => s.toLowerCase() === baseSubject.toLowerCase()
+            );
+            setIsCustomSubject(!isKnown && baseSubject.length > 0);
+        } else {
+            const defaultSubject = subjectSuggestions[0] || '';
+            setSelectedSubject(defaultSubject);
+            setTopic('');
+            setIsCustomSubject(false);
+            if (defaultSubject) {
+                setFormData((prev) => ({ ...prev, subject: defaultSubject }));
             }
-
-            setIsDropdownOpen(false);
-            setSubjectSearch('');
         }
-        prevIsOpenRef.current = isOpen;
-        prevEditingIdRef.current = editingSchedule?.id;
-    }, [isOpen, editingSchedule, subjectSuggestions, formData.subject, formData.period_label, setFormData]);
 
-    // Click outside dropdown listener
+        if (formData.period_label) {
+            const isPreset = PERIOD_PRESETS.includes(formData.period_label);
+            setIsCustomPeriod(!isPreset);
+        } else {
+            setIsCustomPeriod(false);
+        }
+
+        setIsDropdownOpen(false);
+        setSubjectSearch('');
+    }, [isOpen, editingSchedule]);
+
+    // Close subject dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -174,18 +154,17 @@ export const PhScheduleFormModal: React.FC<PhScheduleFormModalProps> = ({
         if (isDropdownOpen) {
             document.addEventListener('mousedown', handleClickOutside);
         }
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, [isDropdownOpen]);
 
-    // Helper to update formData.subject cleanly
+    // Subject handlers
     const updateCombinedSubject = useCallback(
         (subj: string, top: string) => {
             const cleanSubj = subj.trim();
-            const cleanTopic = top.trim();
-            let combined = cleanSubj;
-            if (cleanSubj && cleanTopic) {
-                combined = `${cleanSubj} (${cleanTopic})`;
-            }
+            const cleanTop = top.trim();
+            const combined = cleanTop ? `${cleanSubj} (${cleanTop})` : cleanSubj;
             setFormData((prev) => ({ ...prev, subject: combined }));
         },
         [setFormData]
@@ -223,7 +202,6 @@ export const PhScheduleFormModal: React.FC<PhScheduleFormModalProps> = ({
 
     const handleCustomPeriodClick = () => {
         setIsCustomPeriod(true);
-        // Clear preset from input so user can type freely
         if (PERIOD_PRESETS.includes(formData.period_label)) {
             setFormData((prev) => ({ ...prev, period_label: '' }));
         }
@@ -274,6 +252,7 @@ export const PhScheduleFormModal: React.FC<PhScheduleFormModalProps> = ({
                 s.id !== editingSchedule?.id
         );
     }, [formData.date, formData.period_label, rawSchedules, editingSchedule]);
+
     const validationError = validatePhDraft({ ...formData, id: editingSchedule?.id }, semester, rawSchedules);
 
     return (
@@ -282,14 +261,14 @@ export const PhScheduleFormModal: React.FC<PhScheduleFormModalProps> = ({
             onClose={onClose}
             placement="bottom"
             maxWidth="max-w-2xl"
-            title={editingSchedule ? 'Edit Jadwal Penilaian Harian' : 'Tambah Jadwal Penilaian Harian'}
+            title={editingSchedule ? 'Edit Jadwal Asesmen Sumatif Harian (ASH)' : 'Tambah Jadwal Asesmen Sumatif Harian (ASH)'}
             icon={
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-brand-500/15 border border-brand-500/30 text-brand-600 dark:text-brand-300 flex items-center justify-center shrink-0 shadow-sm">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-brand-500/15 border border-brand-500/30 text-brand-600 dark:text-brand-300 flex items-center justify-center shrink-0 shadow-xs">
                     <CalendarCheck className="w-5 h-5 stroke-[2.2]" />
                 </div>
             }
         >
-            <form onSubmit={handleSubmit} className="space-y-5 pt-1">
+            <form onSubmit={handleSubmit} className="space-y-4 pt-1">
                 {/* Context Class Subtitle */}
                 {currentClassName && (
                     <div className="flex items-center gap-2 pb-1.5 border-b border-slate-200/80 dark:border-slate-800 text-xs">
@@ -307,212 +286,285 @@ export const PhScheduleFormModal: React.FC<PhScheduleFormModalProps> = ({
                     </div>
                 )}
 
-                {/* Field 1: Tanggal Pelaksanaan */}
-                <div>
-                    <label
-                        htmlFor="ph-modal-date"
-                        className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2"
-                    >
-                        Tanggal Pelaksanaan
-                    </label>
-                    <Input
-                        id="ph-modal-date"
-                        type="date"
-                        min={semester?.start_date}
-                        max={semester?.end_date}
-                        value={formData.date}
-                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                        className="h-11 rounded-xl font-medium"
-                        required
-                    />
+                {/* SECTION 1: Waktu & Jam Pelaksanaan */}
+                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 sm:p-4 space-y-3.5 dark:border-slate-800 dark:bg-slate-850/50">
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <Clock className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                        <span>1. Waktu &amp; Jam Pelaksanaan</span>
+                    </div>
 
-                    {/* Day contextual indicator & Quick presets CENTERED */}
-                    <div className="flex flex-col items-center justify-center gap-2 mt-2 w-full text-center">
-                        {dayInfo ? (
-                            <div
-                                className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold ${
-                                    dayInfo.isWeekend
-                                        ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30'
-                                        : 'bg-brand-500/10 text-brand-700 dark:text-brand-400 border border-brand-500/20'
-                                }`}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+                        {/* Tanggal Pelaksanaan */}
+                        <div className="space-y-2">
+                            <label
+                                htmlFor="ph-modal-date"
+                                className="block text-sm font-semibold text-slate-700 dark:text-slate-300"
                             >
-                                <Calendar className="w-3.5 h-3.5 shrink-0" />
-                                <span>{dayInfo.formatted}</span>
-                                {dayInfo.isWeekend && (
-                                    <span className="text-xs ml-1 bg-amber-500/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
-                                        Akhir pekan
-                                    </span>
+                                Tanggal Pelaksanaan <span className="text-brand-500">*</span>
+                            </label>
+                            <Input
+                                id="ph-modal-date"
+                                type="date"
+                                min={semester?.start_date}
+                                max={semester?.end_date}
+                                value={formData.date}
+                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                className="h-11 rounded-xl font-medium bg-white dark:bg-slate-900"
+                                required
+                            />
+
+                            {/* Day contextual indicator & Quick presets */}
+                            <div className="flex flex-col items-center justify-center gap-2 mt-2 w-full text-center">
+                                {dayInfo ? (
+                                    <div
+                                        className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold ${
+                                            dayInfo.isWeekend
+                                                ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30'
+                                                : 'bg-brand-500/10 text-brand-700 dark:text-brand-400 border border-brand-500/20'
+                                        }`}
+                                    >
+                                        <Calendar className="w-3.5 h-3.5 shrink-0" />
+                                        <span>{dayInfo.formatted}</span>
+                                        {dayInfo.isWeekend && (
+                                            <span className="text-xs ml-1 bg-amber-500/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                                                Akhir pekan
+                                            </span>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <span className="text-xs text-slate-400">Pilih tanggal ujian</span>
                                 )}
-                            </div>
-                        ) : (
-                            <span className="text-xs text-slate-400">Pilih tanggal ujian</span>
-                        )}
 
-                        {/* Quick Date Shortcuts - CENTERED */}
-                        <div className="flex items-center justify-center gap-2 w-full pt-0.5">
-                            <button
-                                type="button"
-                                onClick={() => setQuickDate(0)}
-                                className="min-h-11 px-3 py-2.5 text-sm font-medium rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 border border-slate-200 dark:border-slate-700 hover:border-brand-500/50 shadow-sm active:scale-95 transition-all"
-                            >
-                                Hari Ini
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setQuickDate(1)}
-                                className="min-h-11 px-3 py-2.5 text-sm font-medium rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 border border-slate-200 dark:border-slate-700 hover:border-brand-500/50 shadow-sm active:scale-95 transition-all"
-                            >
-                                Besok
-                            </button>
-                            <button
-                                type="button"
-                                onClick={setQuickNextMonday}
-                                className="min-h-11 px-3 py-2.5 text-sm font-medium rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 border border-slate-200 dark:border-slate-700 hover:border-brand-500/50 shadow-sm active:scale-95 transition-all"
-                            >
-                                Senin Depan
-                            </button>
+                                {/* Quick Date Shortcuts - CENTERED */}
+                                <div className="flex items-center justify-center gap-1.5 w-full pt-0.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => setQuickDate(0)}
+                                        className="min-h-11 px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 border border-slate-200 dark:border-slate-700 hover:border-brand-500/50 shadow-2xs active:scale-95 transition-all"
+                                    >
+                                        Hari Ini
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setQuickDate(1)}
+                                        className="min-h-11 px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 border border-slate-200 dark:border-slate-700 hover:border-brand-500/50 shadow-2xs active:scale-95 transition-all"
+                                    >
+                                        Besok
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={setQuickNextMonday}
+                                        className="min-h-11 px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 border border-slate-200 dark:border-slate-700 hover:border-brand-500/50 shadow-2xs active:scale-95 transition-all"
+                                    >
+                                        Senin Depan
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Jam Pelajaran Ke- */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                    Jam Pelajaran Ke-
+                                </label>
+                                <span className="text-xs text-slate-400">Pilih jam atau kustom</span>
+                            </div>
+
+                            {/* Segmented Preset Grid */}
+                            <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+                                {PERIOD_PRESETS.map((label) => {
+                                    const isSelected = !isCustomPeriod && formData.period_label === label;
+                                    return (
+                                        <button
+                                            key={label}
+                                            type="button"
+                                            onClick={() => handlePresetPeriod(label)}
+                                            className={`min-h-11 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1 border active:scale-95 ${
+                                                isSelected
+                                                    ? 'bg-brand-600 text-white border-brand-500 shadow-sm shadow-brand-500/20 scale-[1.02]'
+                                                    : 'bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                            }`}
+                                        >
+                                            <Clock className="w-3.5 h-3.5 hidden sm:inline" />
+                                            <span>Jam {label}</span>
+                                        </button>
+                                    );
+                                })}
+
+                                {/* Kustom Button */}
+                                <button
+                                    type="button"
+                                    onClick={handleCustomPeriodClick}
+                                    className={`min-h-11 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1 border active:scale-95 ${
+                                        isCustomPeriod
+                                            ? 'bg-brand-600 text-white border-brand-500 shadow-sm shadow-brand-500/20 scale-[1.02]'
+                                            : 'bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                    }`}
+                                >
+                                    <span>+ Kustom</span>
+                                </button>
+                            </div>
+
+                            {/* Custom Period Input */}
+                            {isCustomPeriod && (
+                                <div className="mt-2 animate-fade-in">
+                                    <Input
+                                        type="text"
+                                        value={formData.period_label}
+                                        onChange={(e) => handleCustomPeriodChange(e.target.value)}
+                                        placeholder="cth. 1-3 atau 7-8"
+                                        className="h-11 rounded-xl font-medium bg-white dark:bg-slate-900"
+                                        autoFocus
+                                        required
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
 
-                {/* Field 2: Mata Pelajaran (List / Dropdown & Kustom) */}
-                <div className="space-y-2">
-                    <div className="space-y-1">
-                        <label
-                            htmlFor="ph-modal-subject-trigger"
-                            className="block text-sm font-semibold text-slate-700 dark:text-slate-300"
-                        >
-                            Mata Pelajaran <span className="text-brand-500">*</span>
-                        </label>
-                        <span className="text-sm text-slate-400">Pilih mata pelajaran atau tambah sendiri</span>
+                {/* SECTION 2: Mata Pelajaran & Materi */}
+                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 sm:p-4 space-y-3.5 dark:border-slate-800 dark:bg-slate-850/50">
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <BookOpen className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                        <span>2. Mata Pelajaran &amp; Materi</span>
                     </div>
 
-                    {!isCustomSubject ? (
-                        <div className="relative" ref={dropdownRef}>
-                            {/* Dropdown Trigger Button */}
-                            <button
-                                id="ph-modal-subject-trigger"
-                                type="button"
-                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className={`w-full h-11 px-3.5 rounded-xl border text-left flex items-center justify-between text-sm font-medium transition-all ${
-                                    isDropdownOpen
-                                        ? 'border-brand-500 ring-2 ring-brand-500/20 bg-white dark:bg-slate-800'
-                                        : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/80 hover:border-slate-400 dark:hover:border-slate-600'
-                                } text-slate-900 dark:text-white`}
+                    {/* Mata Pelajaran */}
+                    <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                            <label
+                                htmlFor="ph-modal-subject-trigger"
+                                className="block text-sm font-semibold text-slate-700 dark:text-slate-300"
                             >
-                                <div className="flex items-center gap-2 truncate">
-                                    <BookOpen className="w-4 h-4 text-brand-500 shrink-0" />
-                                    <span className={selectedSubject ? 'font-bold' : 'text-slate-400 dark:text-slate-500'}>
-                                        {selectedSubject || '-- Pilih Mata Pelajaran --'}
-                                    </span>
-                                </div>
-                                <ChevronDown
-                                    className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
-                                        isDropdownOpen ? 'rotate-180' : ''
-                                    }`}
-                                />
-                            </button>
+                                Mata Pelajaran <span className="text-brand-500">*</span>
+                            </label>
+                            <span className="text-xs text-slate-400">Pilih mata pelajaran atau tambah sendiri</span>
+                        </div>
 
-                            {/* Dropdown List Popover */}
-                            {isDropdownOpen && (
-                                <div className="absolute left-0 right-0 z-50 mt-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 shadow-2xl overflow-hidden animate-fade-in">
-                                    {/* Search Filter Header */}
-                                    <div className="p-2 border-b border-slate-100 dark:border-slate-750 bg-slate-50/50 dark:bg-slate-800/50">
-                                        <div className="relative">
-                                            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                                            <input
-                                                type="text"
-                                                value={subjectSearch}
-                                                onChange={(e) => setSubjectSearch(e.target.value)}
-                                                placeholder="Cari mata pelajaran..."
-                                                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                                                autoFocus
-                                            />
-                                        </div>
+                        {!isCustomSubject ? (
+                            <div className="relative" ref={dropdownRef}>
+                                <button
+                                    id="ph-modal-subject-trigger"
+                                    type="button"
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    className={`w-full h-11 px-3.5 rounded-xl border text-left flex items-center justify-between text-sm font-medium transition-all ${
+                                        isDropdownOpen
+                                            ? 'border-brand-500 ring-2 ring-brand-500/20 bg-white dark:bg-slate-800'
+                                            : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-400 dark:hover:border-slate-600'
+                                    } text-slate-900 dark:text-white`}
+                                >
+                                    <div className="flex items-center gap-2 truncate">
+                                        <BookOpen className="w-4 h-4 text-brand-500 shrink-0" />
+                                        <span className={selectedSubject ? 'font-bold' : 'text-slate-400 dark:text-slate-500'}>
+                                            {selectedSubject || '-- Pilih Mata Pelajaran --'}
+                                        </span>
                                     </div>
+                                    <ChevronDown
+                                        className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
+                                            isDropdownOpen ? 'rotate-180' : ''
+                                        }`}
+                                    />
+                                </button>
 
-                                    {/* Subjects List Scrollable */}
-                                    <div className="max-h-48 overflow-y-auto py-1 divide-y divide-slate-100 dark:divide-slate-800/40">
-                                        {filteredSubjectSuggestions.length === 0 ? (
-                                            <div className="p-3 text-xs text-center text-slate-400">
-                                                Mata pelajaran tidak ditemukan
+                                {isDropdownOpen && (
+                                    <div className="absolute left-0 right-0 z-50 mt-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-750 shadow-2xl overflow-hidden animate-fade-in">
+                                        <div className="p-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+                                            <div className="relative">
+                                                <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                                <input
+                                                    type="text"
+                                                    value={subjectSearch}
+                                                    onChange={(e) => setSubjectSearch(e.target.value)}
+                                                    placeholder="Cari mata pelajaran..."
+                                                    className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                                                    autoFocus
+                                                />
                                             </div>
-                                        ) : (
-                                            filteredSubjectSuggestions.map((s) => {
-                                                const isSelected = selectedSubject === s;
-                                                return (
-                                                    <button
-                                                        key={s}
-                                                        type="button"
-                                                        onClick={() => handleSelectSubject(s)}
-                                                        className={`w-full px-3.5 py-2 text-xs text-left flex items-center justify-between transition-colors ${
-                                                            isSelected
-                                                                ? 'bg-brand-500/15 text-brand-600 dark:text-brand-400 font-bold'
-                                                                : 'text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750'
-                                                        }`}
-                                                    >
-                                                        <span>{s}</span>
-                                                        {isSelected && (
-                                                            <Check className="w-3.5 h-3.5 stroke-[2.5] text-brand-500" />
-                                                        )}
-                                                    </button>
-                                                );
-                                            })
-                                        )}
-                                    </div>
+                                        </div>
 
-                                    {/* Pinned Add Custom Option */}
+                                        <div className="max-h-48 overflow-y-auto py-1 divide-y divide-slate-100 dark:divide-slate-800/40">
+                                            {filteredSubjectSuggestions.length === 0 ? (
+                                                <div className="p-3 text-xs text-center text-slate-400">
+                                                    Mata pelajaran tidak ditemukan
+                                                </div>
+                                            ) : (
+                                                filteredSubjectSuggestions.map((s) => {
+                                                    const isSelected = selectedSubject === s;
+                                                    return (
+                                                        <button
+                                                            key={s}
+                                                            type="button"
+                                                            onClick={() => handleSelectSubject(s)}
+                                                            className={`w-full px-3.5 py-2 text-xs text-left flex items-center justify-between transition-colors ${
+                                                                isSelected
+                                                                    ? 'bg-brand-500/15 text-brand-600 dark:text-brand-400 font-bold'
+                                                                    : 'text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
+                                                            }`}
+                                                        >
+                                                            <span>{s}</span>
+                                                            {isSelected && (
+                                                                <Check className="w-3.5 h-3.5 stroke-[2.5] text-brand-500" />
+                                                            )}
+                                                        </button>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSelectSubject('__CUSTOM__')}
+                                            className="w-full px-3.5 py-2.5 text-xs text-left font-bold text-brand-600 dark:text-brand-300 hover:bg-brand-50 dark:hover:bg-brand-950/40 border-t border-slate-200 dark:border-slate-700 flex items-center gap-1.5 transition-colors bg-white dark:bg-slate-900"
+                                        >
+                                            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                                            <span>Tambah Mapel Kustom...</span>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="space-y-1.5 animate-fade-in">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-semibold text-brand-600 dark:text-brand-400 flex items-center gap-1">
+                                        <Plus className="w-3.5 h-3.5" />
+                                        <span>Mata Pelajaran Kustom:</span>
+                                    </span>
                                     <button
                                         type="button"
-                                        onClick={() => handleSelectSubject('__CUSTOM__')}
-                                        className="w-full px-3.5 py-2.5 text-xs text-left font-bold text-brand-600 dark:text-brand-300 hover:bg-brand-50 dark:hover:bg-brand-950/40 border-t border-slate-200 dark:border-slate-700 flex items-center gap-1.5 transition-colors bg-white dark:bg-slate-900"
+                                        onClick={() => {
+                                            setIsCustomSubject(false);
+                                            const fallback = subjectSuggestions[0] || '';
+                                            setSelectedSubject(fallback);
+                                            updateCombinedSubject(fallback, topic);
+                                        }}
+                                        className="text-xs text-slate-500 hover:text-brand-500 underline font-medium"
                                     >
-                                        <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                                        <span>Tambah Mapel Kustom...</span>
+                                        ← Kembali ke List Mapel
                                     </button>
                                 </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="space-y-1.5 animate-fade-in">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-semibold text-brand-600 dark:text-brand-400 flex items-center gap-1">
-                                    <Plus className="w-3.5 h-3.5" />
-                                    <span>Mata Pelajaran Kustom:</span>
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setIsCustomSubject(false);
-                                        const fallback = subjectSuggestions[0] || '';
-                                        setSelectedSubject(fallback);
-                                        updateCombinedSubject(fallback, topic);
-                                    }}
-                                    className="text-xs text-slate-500 hover:text-brand-500 underline font-medium"
-                                >
-                                    ← Kembali ke List Mapel
-                                </button>
+                                <Input
+                                    type="text"
+                                    value={selectedSubject}
+                                    onChange={(e) => handleCustomSubjectChange(e.target.value)}
+                                    placeholder="Ketik nama mata pelajaran baru..."
+                                    className="h-11 rounded-xl font-medium bg-white dark:bg-slate-900"
+                                    autoFocus
+                                    required
+                                />
                             </div>
-                            <Input
-                                type="text"
-                                value={selectedSubject}
-                                onChange={(e) => handleCustomSubjectChange(e.target.value)}
-                                placeholder="Ketik nama mata pelajaran baru..."
-                                className="h-11 rounded-xl font-medium"
-                                autoFocus
-                                required
-                            />
-                        </div>
-                    )}
+                        )}
+                    </div>
 
                     {/* Dedicated Topic / Materi Field */}
-                    <div className="pt-1">
+                    <div className="space-y-1.5">
                         <label
                             htmlFor="ph-modal-topic"
-                            className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5"
+                            className="block text-sm font-semibold text-slate-700 dark:text-slate-300"
                         >
-                            Materi / Topik PH{' '}
-                            <span className="text-xs font-normal text-slate-500">(opsional)</span>
+                            Materi / Topik ASH{' '}
+                            <span className="text-xs font-normal text-slate-400">(opsional)</span>
                         </label>
                         <Input
                             id="ph-modal-topic"
@@ -520,13 +572,13 @@ export const PhScheduleFormModal: React.FC<PhScheduleFormModalProps> = ({
                             value={topic}
                             onChange={(e) => handleTopicChange(e.target.value)}
                             placeholder="cth. Pecahan & Desimal, Bab 1: Bilangan Cacah..."
-                            className="h-11 rounded-xl"
+                            className="h-11 rounded-xl bg-white dark:bg-slate-900"
                         />
                     </div>
 
                     {/* Real-time Preview Pill */}
                     {selectedSubject.trim() ? (
-                        <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 text-xs">
+                        <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 text-xs">
                             <Sparkles className="w-4 h-4 text-brand-500 dark:text-brand-300 shrink-0" />
                             <span className="text-slate-500 dark:text-slate-400 font-medium shrink-0">Nama di Jadwal:</span>
                             <span className="font-bold text-slate-900 dark:text-white truncate">
@@ -534,69 +586,9 @@ export const PhScheduleFormModal: React.FC<PhScheduleFormModalProps> = ({
                             </span>
                         </div>
                     ) : (
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
-                            Pilih mata pelajaran untuk melanjutkan.
+                        <p className="text-xs text-slate-400">
+                            Pilih mata pelajaran untuk melihat pratinjau jadwal.
                         </p>
-                    )}
-                </div>
-
-                {/* Field 3: Jam Pelajaran Ke- */}
-                <div>
-                    <div className="flex justify-between items-center mb-1.5">
-                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-                            Jam Pelajaran Ke-
-                        </label>
-                        <span className="text-xs text-slate-500">Pilih jam atau kustom</span>
-                    </div>
-
-                    {/* Segmented Preset Grid: 4 Preset Buttons + 1 Kustom Button */}
-                    <div className="grid grid-cols-5 gap-1.5">
-                        {PERIOD_PRESETS.map((label) => {
-                            const isSelected = !isCustomPeriod && formData.period_label === label;
-                            return (
-                                <button
-                                    key={label}
-                                    type="button"
-                                    onClick={() => handlePresetPeriod(label)}
-                                    className={`min-h-11 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1 border active:scale-95 ${
-                                        isSelected
-                                            ? 'bg-brand-600 text-white border-brand-500 shadow-md shadow-brand-500/20 scale-[1.02]'
-                                            : 'bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700/80'
-                                    }`}
-                                >
-                                    <Clock className="w-3.5 h-3.5 hidden sm:inline" />
-                                    <span>Jam {label}</span>
-                                </button>
-                            );
-                        })}
-
-                        {/* Kustom Button */}
-                        <button
-                            type="button"
-                            onClick={handleCustomPeriodClick}
-                            className={`min-h-11 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1 border active:scale-95 ${
-                                isCustomPeriod
-                                    ? 'bg-brand-600 text-white border-brand-500 shadow-md shadow-brand-500/20 scale-[1.02]'
-                                    : 'bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700/80'
-                            }`}
-                        >
-                            <span>+ Kustom</span>
-                        </button>
-                    </div>
-
-                    {/* Custom Period Input: only displayed when Kustom is active */}
-                    {isCustomPeriod && (
-                        <div className="mt-2 animate-fade-in">
-                            <Input
-                                type="text"
-                                value={formData.period_label}
-                                onChange={(e) => handleCustomPeriodChange(e.target.value)}
-                                placeholder="cth. 1-3 atau 7-8"
-                                className="h-11 rounded-xl font-medium"
-                                autoFocus
-                                required
-                            />
-                        </div>
                     )}
                 </div>
 
@@ -607,15 +599,21 @@ export const PhScheduleFormModal: React.FC<PhScheduleFormModalProps> = ({
                         <div>
                             <span className="font-bold">Jam pelajaran bertumpang tindih</span>
                             <p className="text-xs opacity-90 mt-0.5">
-                                Sudah ada jadwal PH <strong>"{conflictSchedule.subject}"</strong> pada Jam{' '}
+                                Sudah ada jadwal ASH <strong>"{conflictSchedule.subject}"</strong> pada Jam{' '}
                                 {conflictSchedule.period_label} di tanggal yang sama.
                             </p>
                         </div>
                     </div>
                 )}
 
-                {/* Footer Action Buttons: Side-by-side on mobile and desktop */}
-                {validationError && <p role="status" className="text-sm text-amber-700 dark:text-amber-300">{validationError}</p>}
+                {/* Validation Error */}
+                {validationError && (
+                    <p role="status" className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                        {validationError}
+                    </p>
+                )}
+
+                {/* Footer Action Buttons */}
                 <div className="grid grid-cols-2 gap-2.5 pt-3 sm:pt-4 border-t border-slate-100 dark:border-slate-800 sm:flex sm:justify-end">
                     <Button
                         type="button"
@@ -630,7 +628,7 @@ export const PhScheduleFormModal: React.FC<PhScheduleFormModalProps> = ({
                         type="submit"
                         variant="primary"
                         disabled={isPending || !selectedSubject.trim() || Boolean(validationError)}
-                        className="!bg-brand-700 hover:!bg-brand-800 rounded-xl font-bold min-h-[44px] px-6 shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto"
+                        className="!bg-brand-700 hover:!bg-brand-800 text-white rounded-xl font-bold min-h-[44px] px-6 shadow-xs flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                         {isPending ? (
                             <>
@@ -645,7 +643,7 @@ export const PhScheduleFormModal: React.FC<PhScheduleFormModalProps> = ({
                         ) : (
                             <>
                                 <Plus className="w-4 h-4 stroke-[2.5]" />
-                                <span>Tambah PH</span>
+                                <span>Tambah ASH</span>
                             </>
                         )}
                     </Button>

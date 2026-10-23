@@ -24,7 +24,7 @@ import { Download, RefreshCwIcon, UsersIcon, CalendarIcon, LayoutDashboard, Grad
 
 const TABS = [
     { id: 'overview', label: 'Ringkasan', icon: LayoutDashboard },
-    { id: 'academic', label: 'Akademik', icon: GraduationCap },
+    { id: 'academic', label: 'Nilai & Akademik', icon: GraduationCap },
     { id: 'attendance', label: 'Kehadiran', icon: Clock },
     { id: 'character', label: 'Karakter', icon: ShieldAlert },
     { id: 'predictive', label: 'Prediksi & AI', icon: Sparkles },
@@ -91,9 +91,18 @@ const AnalyticsPage: React.FC = () => {
         studentAttendanceSummaries, autoFillStats, missingWeekdays
     } = useAnalyticsData({ dateRange, selectedClassId });
 
+    const classOptions = React.useMemo(() => {
+        const sorted = [...classes].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+        return [
+            { value: 'all', label: isLeadership ? 'Semua Kelas' : 'Semua Kelas Anda' },
+            ...sorted.map(cls => ({ value: cls.id, label: cls.name }))
+        ];
+    }, [classes, isLeadership]);
+
     const tabParam = searchParams.get('tab');
     const requestedTab: TabId = isTabId(tabParam) ? tabParam : 'overview';
-    const activeTab: TabId = requestedTab === 'comparison' && !isLeadership ? 'overview' : requestedTab;
+    const isRestrictedTab = requestedTab === 'comparison' || requestedTab === 'predictive';
+    const activeTab: TabId = isRestrictedTab && !isLeadership ? 'overview' : requestedTab;
 
     React.useEffect(() => {
         const steps = [
@@ -268,20 +277,30 @@ const AnalyticsPage: React.FC = () => {
                         <CustomDropdown
                             value={selectedClassId}
                             onChange={setSelectedClassId}
-                            options={[
-                                { value: 'all', label: isLeadership ? 'Semua Kelas' : 'Semua Kelas Anda' },
-                                ...classes.map(cls => ({ value: cls.id, label: cls.name }))
-                            ]}
+                            options={classOptions}
                         />
                     </div>
-                    <div className="flex items-center gap-3 px-2 sm:px-4 py-1 w-full sm:w-auto min-w-[220px]">
-                        <CalendarIcon className="w-4 h-4 text-slate-400 hidden sm:block flex-shrink-0" />
-                        <CustomDropdown
-                            value={dateRange}
-                            onChange={setDateRange}
-                            options={monthOptions}
-                        />
-                    </div>
+                    {activeTab === 'academic' ? (
+                        <div className="flex flex-wrap items-center gap-2 px-2 sm:px-4 py-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-100">
+                                <GraduationCap className="w-4 h-4 text-brand-600 dark:text-brand-400 shrink-0" />
+                                {activeSemester?.name ? `Semester ${activeSemester.name}` : 'Semua Semester'}
+                            </span>
+                            <span className="text-slate-300 dark:text-slate-700" aria-hidden>•</span>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-brand-50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 border border-brand-200/60 dark:border-brand-800/60">
+                                Batas KKTP: {kktp}
+                            </span>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-3 px-2 sm:px-4 py-1 w-full sm:w-auto min-w-[220px]">
+                            <CalendarIcon className="w-4 h-4 text-slate-400 hidden sm:block flex-shrink-0" />
+                            <CustomDropdown
+                                value={dateRange}
+                                onChange={setDateRange}
+                                options={monthOptions}
+                            />
+                        </div>
+                    )}
                     {isFetching && hasData && (
                         <span className="px-2 sm:ml-auto text-xs text-slate-500 dark:text-slate-400" role="status">
                             Memperbarui data…
@@ -301,7 +320,7 @@ const AnalyticsPage: React.FC = () => {
 
             {/* Smart Navigation Tabs */}
             <div id="tour-tabs" className="flex overflow-x-auto scrollbar-hide gap-2 p-1 sm:p-1.5 bg-slate-100 dark:bg-slate-800/50 rounded-2xl snap-x">
-                {TABS.filter(tab => tab.id !== 'comparison' || isLeadership).map(tab => (
+                {TABS.filter(tab => isLeadership || (tab.id !== 'comparison' && tab.id !== 'predictive')).map(tab => (
                     <button type="button"
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
