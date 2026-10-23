@@ -85,7 +85,7 @@ const AnalyticsPage: React.FC = () => {
     const {
         classes, isLeadership, kktp, activeSemester,
         isLoading, isFetching, isError, hasData, refetch,
-        students, attendance, academicRecords, violations, quizPoints, tasks,
+        students, attendance, academicRecords, violations, quizPoints, tasks, phSchedules,
         gradeStats, attendanceStats, classStats, atRiskStudents, topPerformingStudents,
         dailyAttendance, taskStats, genderStats, violationsStats, quizPointsStats,
         studentAttendanceSummaries, autoFillStats, missingWeekdays
@@ -194,7 +194,7 @@ const AnalyticsPage: React.FC = () => {
                     <AcademicTab
                         gradeStats={gradeStats} classes={classes} students={students}
                         academicRecords={academicRecords} selectedClassId={selectedClassId}
-                        kktp={kktp} semesterName={activeSemester?.name ?? null}
+                        kktp={kktp} semesterName={activeSemester?.name ?? null} phSchedules={phSchedules}
                     />
                 );
             case 'attendance':
@@ -246,7 +246,7 @@ const AnalyticsPage: React.FC = () => {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <h1 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white">
-                            Performa Siswa
+                            Perkembangan Siswa
                         </h1>
                         <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 mt-1">
                             {isLeadership ? 'Pantau performa seluruh madrasah secara menyeluruh' : 'Asisten pintar untuk memantau perkembangan siswa Anda'}

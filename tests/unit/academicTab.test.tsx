@@ -75,4 +75,28 @@ describe('AcademicTab', () => {
         fireEvent.click(screen.getByRole('button', { name: /Tren Nilai & Capaian Siswa/i }));
         expect(await screen.findByText('Sebaran Predikat Kelas')).toBeInTheDocument();
     });
+
+    it('surfaces students who have not completed PH or have unentered grades directly on the main academic tab', async () => {
+        renderWithProviders(
+            <AcademicTab
+                gradeStats={calculateOverallGradeStats(records, 80)}
+                classes={[{ id: 'c1', name: '4A' }]}
+                students={[
+                    ...students,
+                    { id: 's3', name: 'Citra', class_id: 'c1', gender: 'Perempuan' },
+                ]}
+                academicRecords={records}
+                selectedClassId="all"
+                kktp={80}
+                semesterName="Ganjil"
+                phSchedules={[
+                    { id: 'ph-past', class_id: 'c1', subject: 'Matematika (Pecahan)', date: '2026-08-01', period_label: '1-2' },
+                ]}
+            />,
+        );
+
+        expect(screen.getByText('Siswa Belum PH / Nilai Belum Masuk')).toBeInTheDocument();
+        expect(screen.getByText('Citra')).toBeInTheDocument();
+        expect(screen.queryByText(/Matematika/i)).not.toBeInTheDocument();
+    });
 });

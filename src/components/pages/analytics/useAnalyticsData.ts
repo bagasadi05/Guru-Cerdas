@@ -80,7 +80,7 @@ export const useAnalyticsData = ({ dateRange, selectedClassId }: { dateRange: st
         placeholderData: keepPreviousData,
     });
 
-    const { students, attendance, tasks, academicRecords, violations, quizPoints } = dataQuery.data ?? EMPTY_ANALYTICS_DATA;
+    const { students, attendance, tasks, academicRecords, violations, quizPoints, phSchedules = [] } = dataQuery.data ?? EMPTY_ANALYTICS_DATA;
 
     const isLoading = allowedClassesQuery.isLoading || (allowedClasses.length > 0 && dataQuery.isLoading);
     const error = allowedClassesQuery.error ?? dataQuery.error;
@@ -311,7 +311,7 @@ export const useAnalyticsData = ({ dateRange, selectedClassId }: { dateRange: st
         hasData: !!dataQuery.data,
         refetch,
 
-        students, attendance, academicRecords, violations, quizPoints, tasks,
+        students, attendance, academicRecords, violations, quizPoints, tasks, phSchedules,
 
         gradeStats, attendanceStats, classStats, atRiskStudents, topPerformingStudents,
         dailyAttendance, taskStats, genderStats, violationsStats, quizPointsStats,

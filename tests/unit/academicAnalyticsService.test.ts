@@ -14,6 +14,7 @@ import {
     calculateAcademicKPI,
     calculateAcademicTrends,
     findStudentsBelowKKTP,
+    analyzeGradeCompletion,
     generateOfflineAcademicInsights,
     generateAIAcademicInsights,
 } from '../../src/services/academicAnalyticsService';
@@ -136,6 +137,7 @@ describe('calculateAcademicKPI', () => {
         expect(kpi.studentCoverageRate).toBe(100);
         expect(kpi.gradeCompleteness).toBe(75);
         expect(kpi.missingGradeCount).toBe(1);
+        expect(kpi.studentsWithMissingGrades).toBe(1);
     });
 
     it('averages the per-subject trend deltas', () => {
@@ -226,5 +228,48 @@ describe('generateAIAcademicInsights', () => {
         const result = await generateAIAcademicInsights(subjects, kpi, below, '4A', 75);
         expect(result.source).toBe('offline');
         expect(result.insights.length).toBeGreaterThan(0);
+    });
+});
+
+describe('analyzeGradeCompletion', () => {
+    const classes = [{ id: 'c1', name: '4A' }];
+    const students = [
+        student('s1', 'Ani', 'c1'),
+        student('s2', 'Budi', 'c1'),
+        student('s3', 'Citra', 'c1'),
+    ];
+
+    it('only flags assessments that already have grades entered by the teacher and ignores ungraded subjects', () => {
+        const records = [
+            rec('s1', 'Matematika', 'PH 1', 85),
+            rec('s2', 'Matematika', 'PH 1', 78),
+            rec('s1', 'IPAS', 'PH 1', 90),
+            rec('s3', 'IPAS', 'PH 1', 88),
+        ];
+        const phSchedules = [
+            // Subjects with 0 grades entered by the teacher (e.g. Bahasa Arab, Fikih) must NOT be flagged
+            { id: 'sch-1', class_id: 'c1', subject: 'Bahasa Arab', date: '2026-10-01', period_label: '1-2' },
+            { id: 'sch-2', class_id: 'c1', subject: 'Fikih', date: '2026-10-15', period_label: '3-4' },
+        ];
+
+        const summary = analyzeGradeCompletion(students, classes, records, phSchedules, {
+            subject: 'all',
+            phOnly: true,
+        });
+
+        // Ani has completed both Matematika PH 1 and IPAS PH 1 -> should NOT be in missingStudents
+        expect(summary.missingStudents.find((s) => s.studentId === 's1')).toBeUndefined();
+
+        // Budi is only missing IPAS PH 1 (2/3 classmates already graded)
+        const budi = summary.missingStudents.find((s) => s.studentId === 's2')!;
+        expect(budi.missingItems).toEqual([
+            { subject: 'IPAS', assessmentName: 'PH 1', source: 'partial_class', gradedCount: 2, classSize: 3 },
+        ]);
+
+        // Citra is only missing Matematika PH 1 (2/3 classmates already graded)
+        const citra = summary.missingStudents.find((s) => s.studentId === 's3')!;
+        expect(citra.missingItems).toEqual([
+            { subject: 'Matematika', assessmentName: 'PH 1', source: 'partial_class', gradedCount: 2, classSize: 3 },
+        ]);
     });
 });

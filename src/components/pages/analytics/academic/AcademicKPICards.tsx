@@ -246,7 +246,9 @@ export const AcademicKPICards: React.FC<AcademicKPICardsProps> = ({
                                     {kpi.expectedGradeCount === 0
                                         ? 'Belum ada penilaian'
                                         : kpi.missingGradeCount > 0
-                                            ? `${kpi.missingGradeCount} nilai belum terisi`
+                                            ? kpi.studentsWithMissingGrades && kpi.studentsWithMissingGrades > 0
+                                                ? `${kpi.studentsWithMissingGrades} siswa (${kpi.missingGradeCount} nilai kosong)`
+                                                : `${kpi.missingGradeCount} nilai belum terisi`
                                             : 'Semua nilai sudah terisi'}
                                 </p>
                             </div>

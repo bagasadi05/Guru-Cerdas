@@ -2,7 +2,13 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/Card';
 import { GraduationCapIcon, InfoIcon, ClipboardPen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import type { AnalyticsAcademicRecord, AnalyticsClass, GradeDistribution, Student } from './types';
+import type {
+    AnalyticsAcademicRecord,
+    AnalyticsClass,
+    AnalyticsPhSchedule,
+    GradeDistribution,
+    Student,
+} from './types';
 // Lazy load heavy components to optimize initial bundle size
 const AcademicTrendChart = React.lazy(() =>
     import('./academic/AcademicTrendChart').then((m) => ({ default: m.AcademicTrendChart }))
@@ -17,10 +23,12 @@ import { AcademicKPICards, type AcademicSubView } from './academic/AcademicKPICa
 import { SubjectAnalysisGrid } from './academic/SubjectAnalysisGrid';
 import { AcademicInsightPanel } from './academic/AcademicInsightPanel';
 import { StudentsBelowKKTPList } from './academic/StudentsBelowKKTPList';
+import { MissingGradesAlertCard } from './academic/MissingGradesAlertCard';
 import {
     calculateSubjectStats,
     calculateAcademicKPI,
     findStudentsBelowKKTP,
+    analyzeGradeCompletion,
     generateOfflineAcademicInsights,
     generateAIAcademicInsights,
     type SubjectStats,
@@ -61,6 +69,7 @@ interface AcademicTabProps {
     selectedClassId: string;
     kktp: number;
     semesterName: string | null;
+    phSchedules?: AnalyticsPhSchedule[];
 }
 
 export const AcademicTab: React.FC<AcademicTabProps> = ({
@@ -71,6 +80,7 @@ export const AcademicTab: React.FC<AcademicTabProps> = ({
     selectedClassId,
     kktp,
     semesterName,
+    phSchedules = [],
 }) => {
     const navigate = useNavigate();
     const [selectedSubject, setSelectedSubject] = useState<SubjectStats | null>(null);
@@ -88,6 +98,16 @@ export const AcademicTab: React.FC<AcademicTabProps> = ({
     const studentsBelowKKTP = useMemo(
         () => findStudentsBelowKKTP(academicRecords, students, classes, kktp),
         [academicRecords, students, classes, kktp],
+    );
+
+    const phCompletionSummary = useMemo(
+        () =>
+            analyzeGradeCompletion(students, classes, academicRecords, phSchedules, {
+                classId: selectedClassId,
+                subject: 'all',
+                phOnly: true,
+            }),
+        [students, classes, academicRecords, phSchedules, selectedClassId],
     );
 
     const studentClassIds = useMemo(() => {
@@ -126,7 +146,7 @@ export const AcademicTab: React.FC<AcademicTabProps> = ({
         selectedClassId !== 'all' ? selectedClassId : classes.length === 1 ? classes[0].id : null;
 
     const handleNavigateInput = useCallback(
-        (targetClassId?: string | null, subjectName?: string) => {
+        (targetClassId?: string | null, subjectName?: string, assessmentName?: string, notes?: string) => {
             const resolvedClassId = targetClassId !== undefined ? targetClassId : inputClassId;
             navigate('/input-massal', {
                 state: {
@@ -134,12 +154,29 @@ export const AcademicTab: React.FC<AcademicTabProps> = ({
                         mode: 'subject_grade',
                         ...(resolvedClassId ? { classId: resolvedClassId } : {}),
                         ...(subjectName ? { subject: subjectName } : {}),
+                        ...(assessmentName ? { assessment_name: assessmentName } : {}),
+                        ...(notes ? { notes } : {}),
                     },
                 },
             });
         },
         [navigate, inputClassId]
     );
+
+    const handleNavigateMissingGrade = useCallback(
+        (params: { classId?: string | null; subject?: string; assessmentName?: string; notes?: string }) => {
+            handleNavigateInput(params.classId, params.subject, params.assessmentName, params.notes);
+        },
+        [handleNavigateInput],
+    );
+
+    const handleOpenCompletionView = useCallback(() => {
+        setSubView('completion');
+        setTimeout(
+            () => document.getElementById('completion-section')?.scrollIntoView({ behavior: 'smooth' }),
+            50,
+        );
+    }, []);
 
     const handleSelectSubjectByName = useCallback(
         (subjectName: string) => {
@@ -191,15 +228,11 @@ export const AcademicTab: React.FC<AcademicTabProps> = ({
                 return;
             }
             if (action === 'scroll-completion') {
-                setSubView('completion');
-                setTimeout(
-                    () => document.getElementById('completion-section')?.scrollIntoView({ behavior: 'smooth' }),
-                    50
-                );
+                handleOpenCompletionView();
                 return;
             }
         },
-        [handleNavigateInput, inputClassId]
+        [handleNavigateInput, inputClassId, handleOpenCompletionView]
     );
 
     const hasData = academicRecords.length > 0;
@@ -234,7 +267,7 @@ export const AcademicTab: React.FC<AcademicTabProps> = ({
                 onSelectSubView={setSubView}
             />
 
-            {/* View 1: Di Bawah KKTP -> Daftar Remedial & Insight AI */}
+            {/* View 1: Di Bawah KKTP -> Daftar Remedial, Siswa Belum PH & Insight AI */}
             {subView === 'remedial' && (
                 <div className="space-y-5 animate-fade-in">
                     <div id="below-kktp-section" className="scroll-mt-4">
@@ -245,6 +278,14 @@ export const AcademicTab: React.FC<AcademicTabProps> = ({
                             defaultClassId={inputClassId}
                             onSelectSubject={handleSelectSubjectByName}
                             onInputRemedial={handleNavigateInput}
+                        />
+                    </div>
+
+                    <div id="missing-ph-section" className="scroll-mt-4">
+                        <MissingGradesAlertCard
+                            summary={phCompletionSummary}
+                            onInputGrade={handleNavigateMissingGrade}
+                            onOpenFullAudit={handleOpenCompletionView}
                         />
                     </div>
 
@@ -282,6 +323,7 @@ export const AcademicTab: React.FC<AcademicTabProps> = ({
                             students={students}
                             academicRecords={academicRecords}
                             selectedClassId={selectedClassId}
+                            phSchedules={phSchedules}
                         />
                     </React.Suspense>
                 </div>

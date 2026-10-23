@@ -35,6 +35,15 @@ export type AnalyticsAcademicRecord = Pick<Database['public']['Tables']['academi
 export type AnalyticsViolation = Pick<Database['public']['Tables']['violations']['Row'], 'id' | 'student_id' | 'type' | 'description' | 'points' | 'date' | 'created_at'>;
 export type AnalyticsQuizPoint = Pick<Database['public']['Tables']['quiz_points']['Row'], 'id' | 'student_id' | 'points' | 'category' | 'created_at'>;
 
+export interface AnalyticsPhSchedule {
+    id: string;
+    class_id: string;
+    subject: string;
+    date: string;
+    period_label: string;
+    semester_id?: string | null;
+}
+
 export interface StudentAttendanceSummary {
     student: Student;
     hadir: number;
@@ -75,6 +84,7 @@ export interface AnalyticsDataPayload {
     academicRecords: AnalyticsAcademicRecord[];
     violations: AnalyticsViolation[];
     quizPoints: AnalyticsQuizPoint[];
+    phSchedules?: AnalyticsPhSchedule[];
     
     // Processed stats (can be moved out or kept depending on who calculates them)
     // We will calculate them in a view model hook

@@ -119,11 +119,11 @@ export const MENU_ENTRIES: MenuEntry[] = [
   { href: '/brankas', label: 'Arsip Kelas', icon: Archive, section: 'academic', moreOrder: 7 },
   {
     href: '/analytics',
-    label: 'Analitik Akademik',
+    label: 'Perkembangan Siswa',
     icon: BarChart3,
     section: 'insights',
     moreOrder: 9,
-    barLabel: 'Analitik',
+    barLabel: 'Perkembangan',
     barIcon: BarChart3Icon,
     bar: { leadership: 3 },
   },

@@ -108,7 +108,7 @@ export const StudentAnalyticsTab: React.FC<StudentAnalyticsTabProps> = ({
                     <RadarIcon className="w-6 h-6" />
                 </div>
                 <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Analitik Akademik</h3>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Perkembangan Akademik</h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400">Visualisasi performa per mata pelajaran</p>
                 </div>
             </div>

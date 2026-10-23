@@ -184,7 +184,7 @@ export const StudentsBelowKKTPList: React.FC<StudentsBelowKKTPListProps> = ({
                                                 </Link>
                                                 {g.className && g.className !== '-' && (
                                                     <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                                                        Kelas {g.className}
+                                                        {/^kelas\b/i.test(g.className.trim()) ? g.className.trim() : `Kelas ${g.className.trim()}`}
                                                     </span>
                                                 )}
                                             </div>

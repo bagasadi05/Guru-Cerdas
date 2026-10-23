@@ -59,7 +59,7 @@ describe('menu registry', () => {
                 'Perangkat Ajar',
                 'Penugasan',
                 'Arsip Kelas',
-                'Analitik Akademik',
+                'Perkembangan Siswa',
                 'Ekstrakurikuler',
                 'Pemulihan & Audit',
                 'Pengaturan Sistem',
@@ -116,7 +116,7 @@ describe('menu registry', () => {
                     { href: '/dashboard', label: 'Beranda' },
                     { href: '/siswa', label: 'Siswa' },
                     { href: '/absensi', label: 'Absensi' },
-                    { href: '/analytics', label: 'Analitik' },
+                    { href: '/analytics', label: 'Perkembangan' },
                 ]);
             }
         });

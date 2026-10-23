@@ -2,26 +2,24 @@
  * @fileoverview Grade Completion Analysis Section
  *
  * Komponen analisis kelengkapan penilaian. Memperlihatkan siswa yang
- * belum melaksanakan / belum terisi nilainya untuk Penilaian Harian (PH)
- * atau jenis penilaian lain pada mata pelajaran tertentu.
- *
- * Fitur:
- * - Filter mata pelajaran (subject)
- * - Filter jenis penilaian (assessment_name) atau "Semua"
- * - Toggle "Hanya Penilaian Harian (PH)" untuk mempersempit ke pola PH/UH/Ulangan Harian
- * - Statistik: total siswa, sudah dinilai, belum dinilai, persen kelengkapan
- * - Daftar siswa yang belum dinilai (group berdasar kelas)
- * - Tombol Input Nilai → navigate ke /input-massal dengan prefill
+ * belum melaksanakan / belum terisi nilainya untuk Asesmen Sumatif Harian (ASH / PH)
+ * atau jenis penilaian lain yang sudah sebagian dinilai oleh guru di kelas tersebut.
  *
  * @module components/pages/analytics/GradeCompletionAnalysis
  */
 
 import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/Card';
 import { Select } from '../../ui/Select';
 import { Button } from '../../ui/Button';
 import { ClipboardPenIcon, UserMinusIcon, CheckCircleIcon, AlertCircleIcon } from '../../Icons';
+import {
+    analyzeGradeCompletion,
+    type StudentMissingGrades,
+} from '../../../services/academicAnalyticsService';
+import type { AnalyticsPhSchedule } from './types';
 
 // =============================================================================
 // TYPES
@@ -53,31 +51,9 @@ export interface GradeCompletionAnalysisProps {
     academicRecords: AcademicRecordRef[];
     /** ID kelas yang dipilih dari filter global Analytics ('all' = semua) */
     selectedClassId: string;
+    /** Jadwal ASH / PH (opsional) */
+    phSchedules?: AnalyticsPhSchedule[];
 }
-
-interface MissingStudent {
-    id: string;
-    name: string;
-    class_id: string | null;
-    className: string;
-    /** Daftar assessment yang belum diisi (saat mode "Semua" assessment) */
-    missingAssessments?: string[];
-}
-
-// =============================================================================
-// CONSTANTS
-// =============================================================================
-
-/**
- * Pola pengenal Asesmen Sumatif Harian (ASH) / Penilaian Harian (PH).
- * Menangkap variasi penamaan umum: "ASH", "PH", "UH", "Asesmen Sumatif Harian", "Ulangan Harian", "Penilaian Harian".
- */
-const ASH_PH_PATTERN = /(\bash\b|\bph\b|\buh\b|asesmen\s*sumatif\s*harian|ulangan\s*harian|penilaian\s*harian)/i;
-
-const isPHAssessment = (name: string | null | undefined): boolean => {
-    if (!name) return false;
-    return ASH_PH_PATTERN.test(name);
-};
 
 // =============================================================================
 // COMPONENT
@@ -88,14 +64,16 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
     students,
     academicRecords,
     selectedClassId,
+    phSchedules = [],
 }) => {
     const navigate = useNavigate();
 
     const [phOnly, setPhOnly] = useState<boolean>(true);
-    const [subjectFilter, setSubjectFilter] = useState<string>('');
+    const [subjectFilter, setSubjectFilter] = useState<string>('all');
     const [assessmentFilter, setAssessmentFilter] = useState<string>('');
     /** Filter kelas lokal komponen (di luar filter kelas global Analytics). 'all' = semua kelas dalam scope. */
     const [classFilter, setClassFilter] = useState<string>('all');
+    const [studentSearch, setStudentSearch] = useState<string>('');
 
     // ==========================================================================
     // DERIVED DATA
@@ -106,13 +84,6 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
         if (selectedClassId === 'all') return students;
         return students.filter((s) => s.class_id === selectedClassId);
     }, [students, selectedClassId]);
-
-    /** Map id kelas → nama kelas */
-    const classNameMap = useMemo(() => {
-        const map = new Map<string, string>();
-        classes.forEach((c) => map.set(c.id, c.name));
-        return map;
-    }, [classes]);
 
     /** Opsi kelas untuk filter lokal: kelas yang punya siswa dalam scope */
     const classOptions = useMemo<ClassRef[]>(() => {
@@ -127,7 +98,6 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
 
     /** Reset filter kelas lokal jika opsinya tidak lagi valid (mis. global filter berubah) */
     React.useEffect(() => {
-        // Force 'all' kalau cuma satu kelas (dropdown disembunyikan)
         if (classOptions.length <= 1 && classFilter !== 'all') {
             setClassFilter('all');
             return;
@@ -137,51 +107,40 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
         }
     }, [classFilter, classOptions]);
 
-    /** Siswa target setelah filter kelas global + filter kelas lokal */
-    const targetStudents = useMemo<StudentRef[]>(() => {
-        if (classFilter === 'all') return scopedStudents;
-        return scopedStudents.filter((s) => s.class_id === classFilter);
-    }, [scopedStudents, classFilter]);
+    /** Ringkasan awal untuk mendapatkan daftar mapel yang sudah ada nilainya di kelas terpilih */
+    const baseSummary = useMemo(
+        () =>
+            analyzeGradeCompletion(scopedStudents, classes, academicRecords, phSchedules, {
+                classId: classFilter,
+                subject: 'all',
+                phOnly,
+            }),
+        [scopedStudents, classes, academicRecords, phSchedules, classFilter, phOnly],
+    );
 
-    /** Set student_id yang termasuk dalam scope kelas terpilih */
-    const targetStudentIds = useMemo(() => {
-        return new Set(targetStudents.map((s) => s.id));
-    }, [targetStudents]);
+    const subjectOptions = baseSummary.availableSubjects;
 
-    /** Daftar mata pelajaran unik yang muncul di academicRecords (dalam scope kelas) */
-    const subjectOptions = useMemo<string[]>(() => {
-        const set = new Set<string>();
-        academicRecords.forEach((r) => {
-            if (!r.subject) return;
-            if (!targetStudentIds.has(r.student_id)) return;
-            set.add(r.subject);
-        });
-        return Array.from(set).sort((a, b) => a.localeCompare(b, 'id'));
-    }, [academicRecords, targetStudentIds]);
-
-    /** Subject efektif - default ke pilihan pertama jika belum di-set */
+    /** Subject efektif - 'all' untuk semua mapel atau nama mapel valid */
     const effectiveSubject = useMemo(() => {
-        if (subjectFilter && subjectOptions.includes(subjectFilter)) return subjectFilter;
-        return subjectOptions[0] ?? '';
+        if (subjectOptions.length === 0) return '';
+        if (subjectFilter === 'all') return 'all';
+        if (subjectOptions.includes(subjectFilter)) return subjectFilter;
+        return 'all';
     }, [subjectFilter, subjectOptions]);
 
-    /** Daftar assessment_name unik untuk subject terpilih, dengan filter PH bila aktif */
-    const assessmentOptions = useMemo<string[]>(() => {
-        if (!effectiveSubject) return [];
-        const set = new Set<string>();
-        academicRecords.forEach((r) => {
-            if (r.subject !== effectiveSubject) return;
-            if (!r.assessment_name) return;
-            if (!targetStudentIds.has(r.student_id)) return;
-            const trimmed = r.assessment_name.trim();
-            if (!trimmed) return;
-            if (phOnly && !isPHAssessment(trimmed)) return;
-            set.add(trimmed);
-        });
-        return Array.from(set).sort((a, b) =>
-            a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }),
-        );
-    }, [academicRecords, effectiveSubject, targetStudentIds, phOnly]);
+    /** Analisis kelengkapan sesuai filter aktif */
+    const completion = useMemo(
+        () =>
+            analyzeGradeCompletion(scopedStudents, classes, academicRecords, phSchedules, {
+                classId: classFilter,
+                subject: effectiveSubject || 'all',
+                assessmentName: assessmentFilter,
+                phOnly,
+            }),
+        [scopedStudents, classes, academicRecords, phSchedules, classFilter, effectiveSubject, assessmentFilter, phOnly],
+    );
+
+    const assessmentOptions = completion.availableAssessments;
 
     /** Reset assessment filter saat subject/PH-only berubah dan opsi tidak valid */
     React.useEffect(() => {
@@ -190,112 +149,32 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
         }
     }, [assessmentFilter, assessmentOptions]);
 
-    /**
-     * Hitung siswa yang belum mengisi nilai.
-     *
-     * Kasus 1 - assessmentFilter spesifik:
-     *   Siswa dianggap "belum" jika tidak punya record untuk
-     *   subject + assessment_name terpilih.
-     *
-     * Kasus 2 - assessmentFilter kosong:
-     *   - phOnly true: siswa "belum" jika belum lengkap pada SETIAP
-     *     PH-assessment yang terdaftar di assessmentOptions.
-     *   - phOnly false: siswa "belum" jika belum lengkap pada SETIAP
-     *     assessment yang terdaftar di assessmentOptions.
-     *   Daftar assessment yang belum diisi disertakan sebagai missingAssessments.
-     */
-    const { missingStudents, totalConsidered } = useMemo<{
-        missingStudents: MissingStudent[];
-        totalConsidered: number;
-    }>(() => {
-        if (!effectiveSubject) {
-            return { missingStudents: [], totalConsidered: 0 };
-        }
+    const {
+        missingStudents,
+        totalStudents: totalConsidered,
+        completionPercentage,
+    } = completion;
 
-        // Index record untuk lookup cepat: student_id -> Set<assessment_name>
-        const studentAssessmentMap = new Map<string, Set<string>>();
-        academicRecords.forEach((r) => {
-            if (r.subject !== effectiveSubject) return;
-            if (!r.assessment_name) return;
-            if (!targetStudentIds.has(r.student_id)) return;
-            const name = r.assessment_name.trim();
-            if (!name) return;
-            let set = studentAssessmentMap.get(r.student_id);
-            if (!set) {
-                set = new Set<string>();
-                studentAssessmentMap.set(r.student_id, set);
-            }
-            set.add(name);
-        });
-
-        const missing: MissingStudent[] = [];
-
-        if (assessmentFilter) {
-            // Kasus 1: cek satu assessment
-            for (const s of targetStudents) {
-                const assessments = studentAssessmentMap.get(s.id);
-                if (!assessments || !assessments.has(assessmentFilter)) {
-                    missing.push({
-                        id: s.id,
-                        name: s.name,
-                        class_id: s.class_id,
-                        className: classNameMap.get(s.class_id ?? '') || '-',
-                        missingAssessments: [assessmentFilter],
-                    });
-                }
-            }
-        } else {
-            // Kasus 2: cek semua assessment yang ada di assessmentOptions
-            // Jika belum ada assessment apapun (assessmentOptions kosong), berarti
-            // belum ada satupun PH/penilaian yang diinput → semua siswa target adalah missing.
-            if (assessmentOptions.length === 0) {
-                for (const s of targetStudents) {
-                    missing.push({
-                        id: s.id,
-                        name: s.name,
-                        class_id: s.class_id,
-                        className: classNameMap.get(s.class_id ?? '') || '-',
-                        missingAssessments: [],
-                    });
-                }
-            } else {
-                for (const s of targetStudents) {
-                    const assessments = studentAssessmentMap.get(s.id) ?? new Set<string>();
-                    const missingForStudent = assessmentOptions.filter((a) => !assessments.has(a));
-                    if (missingForStudent.length > 0) {
-                        missing.push({
-                            id: s.id,
-                            name: s.name,
-                            class_id: s.class_id,
-                            className: classNameMap.get(s.class_id ?? '') || '-',
-                            missingAssessments: missingForStudent,
-                        });
-                    }
-                }
-            }
-        }
-
-        // Sort: kelas dulu, lalu nama
-        missing.sort((a, b) => {
-            const cls = a.className.localeCompare(b.className, 'id');
-            return cls !== 0 ? cls : a.name.localeCompare(b.name, 'id');
-        });
-
-        return { missingStudents: missing, totalConsidered: targetStudents.length };
-    }, [
-        effectiveSubject,
-        assessmentFilter,
-        academicRecords,
-        targetStudents,
-        targetStudentIds,
-        assessmentOptions,
-        classNameMap,
-    ]);
+    /** Filter nama siswa secara lokal */
+    const searchedMissingStudents = useMemo(() => {
+        const q = studentSearch.trim().toLowerCase();
+        if (!q) return missingStudents;
+        return missingStudents.filter(
+            (s) =>
+                s.studentName.toLowerCase().includes(q) ||
+                s.className.toLowerCase().includes(q) ||
+                s.missingItems.some(
+                    (i) =>
+                        i.subject.toLowerCase().includes(q) ||
+                        i.assessmentName.toLowerCase().includes(q),
+                ),
+        );
+    }, [missingStudents, studentSearch]);
 
     /** Pengelompokan missing per kelas untuk tampilan ringkas */
     const missingByClass = useMemo(() => {
-        const groups = new Map<string, MissingStudent[]>();
-        missingStudents.forEach((m) => {
+        const groups = new Map<string, StudentMissingGrades[]>();
+        searchedMissingStudents.forEach((m) => {
             const key = m.className;
             const list = groups.get(key);
             if (list) list.push(m);
@@ -303,24 +182,19 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
         });
         return Array.from(groups.entries())
             .map(([className, items]) => ({ className, items }))
-            .sort((a, b) => a.className.localeCompare(b.className, 'id'));
-    }, [missingStudents]);
-
-    const completionPercentage = useMemo(() => {
-        if (totalConsidered === 0) return 0;
-        const filled = totalConsidered - missingStudents.length;
-        return Math.round((filled / totalConsidered) * 100);
-    }, [totalConsidered, missingStudents.length]);
+            .sort((a, b) => a.className.localeCompare(b.className, 'id', { numeric: true }));
+    }, [searchedMissingStudents]);
 
     // ==========================================================================
     // HANDLERS
     // ==========================================================================
 
-    const handleOpenInput = (overrideClassId?: string | null) => {
-        if (!effectiveSubject) return;
-
-        // Tentukan kelas tujuan
-        let classIdToPass: string | null = overrideClassId ?? null;
+    const handleOpenInput = (params?: {
+        classId?: string | null;
+        subject?: string | null;
+        assessmentName?: string | null;
+    }) => {
+        let classIdToPass: string | null = params?.classId ?? null;
         if (!classIdToPass) {
             if (classFilter !== 'all') {
                 classIdToPass = classFilter;
@@ -329,23 +203,29 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
             }
         }
         if (!classIdToPass && missingStudents.length > 0) {
-            classIdToPass = missingStudents[0].class_id;
+            classIdToPass = missingStudents[0].classId;
         }
 
-        // Tentukan assessment tujuan
-        let assessmentToPass: string | null = assessmentFilter || null;
-        if (!assessmentToPass) {
-            const first = missingStudents[0]?.missingAssessments?.[0];
-            assessmentToPass = first || null;
-        }
+        const firstMissingItem = missingStudents[0]?.missingItems[0];
+        const subjectToPass =
+            params?.subject ||
+            (effectiveSubject && effectiveSubject !== 'all' ? effectiveSubject : firstMissingItem?.subject) ||
+            subjectOptions[0] ||
+            '';
+
+        const assessmentToPass =
+            params?.assessmentName ||
+            assessmentFilter ||
+            firstMissingItem?.assessmentName ||
+            null;
 
         navigate('/input-massal', {
             state: {
                 prefill: {
                     mode: 'subject_grade',
-                    classId: classIdToPass,
-                    subject: effectiveSubject,
-                    assessment_name: assessmentToPass,
+                    ...(classIdToPass ? { classId: classIdToPass } : {}),
+                    ...(subjectToPass ? { subject: subjectToPass } : {}),
+                    ...(assessmentToPass ? { assessment_name: assessmentToPass } : {}),
                 },
             },
         });
@@ -362,7 +242,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
             <CardHeader>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center shrink-0">
                             <UserMinusIcon className="w-5 h-5 text-amber-500" />
                         </div>
                         <div>
@@ -370,7 +250,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                                 Audit Kelengkapan Nilai
                             </CardTitle>
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                Lihat siswa yang belum melaksanakan ASH / PH atau yang nilainya belum terisi
+                                Lihat siswa yang nilainya belum terisi pada mapel dan ASH / PH yang sudah dinilai oleh guru
                             </p>
                         </div>
                     </div>
@@ -441,12 +321,18 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                             }}
                             disabled={noSubject}
                         >
-                            {noSubject && <option value="">Belum ada data nilai</option>}
-                            {subjectOptions.map((s) => (
-                                <option key={s} value={s}>
-                                    {s}
-                                </option>
-                            ))}
+                            {noSubject ? (
+                                <option value="">Belum ada data nilai</option>
+                            ) : (
+                                <>
+                                    <option value="all">Semua Mata Pelajaran ({subjectOptions.length})</option>
+                                    {subjectOptions.map((s) => (
+                                        <option key={s} value={s}>
+                                            {s}
+                                        </option>
+                                    ))}
+                                </>
+                            )}
                         </Select>
                     </div>
                     <div>
@@ -476,7 +362,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                 {effectiveSubject && totalConsidered > 0 && (
                     <div className="grid grid-cols-3 gap-3 mb-5">
                         <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 text-center">
-                            <p className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100">
+                            <p className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 tabular-nums">
                                 {totalConsidered}
                             </p>
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -484,19 +370,19 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                             </p>
                         </div>
                         <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-center">
-                            <p className="text-xl sm:text-2xl font-bold text-emerald-700 dark:text-emerald-400">
+                            <p className="text-xl sm:text-2xl font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">
                                 {totalConsidered - missingStudents.length}
                             </p>
                             <p className="text-xs text-emerald-700 dark:text-emerald-400/80 mt-0.5">
-                                Sudah Dinilai
+                                Sudah Lengkap
                             </p>
                         </div>
                         <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-900/20 text-center">
-                            <p className="text-xl sm:text-2xl font-bold text-rose-600 dark:text-rose-400">
+                            <p className="text-xl sm:text-2xl font-bold text-rose-600 dark:text-rose-400 tabular-nums">
                                 {missingStudents.length}
                             </p>
                             <p className="text-xs text-rose-700 dark:text-rose-400/80 mt-0.5">
-                                Belum Dinilai
+                                Belum Lengkap
                             </p>
                         </div>
                     </div>
@@ -506,14 +392,14 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                 {effectiveSubject && totalConsidered > 0 && (
                     <div className="mb-5">
                         <div className="flex justify-between text-xs mb-2 font-semibold uppercase tracking-wider">
-                            <span className="text-slate-500">Kelengkapan</span>
+                            <span className="text-slate-500">Kelengkapan Penilaian</span>
                             <span
                                 className={
                                     completionPercentage >= 80
-                                        ? 'text-emerald-700'
+                                        ? 'text-emerald-700 dark:text-emerald-400'
                                         : completionPercentage >= 50
-                                            ? 'text-amber-700'
-                                            : 'text-rose-600'
+                                            ? 'text-amber-700 dark:text-amber-400'
+                                            : 'text-rose-600 dark:text-rose-400'
                                 }
                             >
                                 {completionPercentage}%
@@ -521,12 +407,13 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                         </div>
                         <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
                             <div
-                                className={`h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r ${completionPercentage >= 80
-                                    ? 'from-emerald-500 to-emerald-600'
-                                    : completionPercentage >= 50
-                                        ? 'from-amber-500 to-orange-600'
-                                        : 'from-rose-500 to-red-600'
-                                    }`}
+                                className={`h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r ${
+                                    completionPercentage >= 80
+                                        ? 'from-emerald-500 to-emerald-600'
+                                        : completionPercentage >= 50
+                                            ? 'from-amber-500 to-orange-600'
+                                            : 'from-rose-500 to-red-600'
+                                }`}
                                 style={{ width: `${completionPercentage}%` }}
                             />
                         </div>
@@ -543,8 +430,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                             Belum ada data nilai
                         </p>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4 max-w-sm mx-auto">
-                            Input minimal satu nilai untuk mulai memantau siswa yang belum melaksanakan
-                            Asesmen Sumatif Harian (ASH / PH).
+                            Input minimal satu nilai untuk mulai memantau siswa yang belum melaksanakan Asesmen Sumatif Harian (ASH / PH).
                         </p>
                         <Button variant="primary" size="sm" onClick={() => navigate('/input-massal')}>
                             <ClipboardPenIcon className="w-4 h-4 mr-1.5" />
@@ -563,26 +449,42 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                             {assessmentFilter
                                 ? `Tidak ada siswa yang tertinggal pada "${assessmentFilter}".`
                                 : phOnly
-                                    ? 'Tidak ada siswa yang tertinggal pada ASH / PH yang terdaftar.'
-                                    : 'Tidak ada siswa yang tertinggal pada penilaian yang terdaftar.'}
+                                    ? 'Tidak ada siswa yang tertinggal pada ASH / PH yang sudah berjalan.'
+                                    : 'Tidak ada siswa yang tertinggal pada penilaian yang sudah berjalan.'}
                         </p>
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {/* Heading row */}
-                        <div className="flex items-center justify-between">
+                        {/* Heading & search row */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-                                <AlertCircleIcon className="w-4 h-4 text-rose-500" />
-                                Daftar Belum Dinilai ({missingStudents.length})
+                                <AlertCircleIcon className="w-4 h-4 text-rose-500 shrink-0" />
+                                <span>Daftar Belum Dinilai ({searchedMissingStudents.length} siswa)</span>
                             </p>
-                            <Button variant="primary" size="sm" onClick={() => handleOpenInput()}>
-                                <ClipboardPenIcon className="w-4 h-4 mr-1.5" />
-                                Input Nilai
-                            </Button>
+
+                            <div className="flex items-center gap-2">
+                                {missingStudents.length > 5 && (
+                                    <div className="relative flex-1 sm:w-56">
+                                        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                        <input
+                                            type="search"
+                                            value={studentSearch}
+                                            onChange={(e) => setStudentSearch(e.target.value)}
+                                            placeholder="Cari nama siswa..."
+                                            aria-label="Cari nama siswa yang belum dinilai"
+                                            className="w-full min-h-[36px] pl-8 pr-3 py-1.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                                        />
+                                    </div>
+                                )}
+                                <Button variant="primary" size="sm" onClick={() => handleOpenInput()}>
+                                    <ClipboardPenIcon className="w-4 h-4 mr-1.5" />
+                                    Input Nilai
+                                </Button>
+                            </div>
                         </div>
 
                         {/* Group by class */}
-                        <div className="space-y-3 max-h-[28rem] overflow-y-auto pr-1">
+                        <div className="space-y-3 max-h-[32rem] overflow-y-auto pr-1">
                             {missingByClass.map(({ className, items }) => (
                                 <div
                                     key={className}
@@ -595,44 +497,94 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                                                 {items.length} siswa
                                             </span>
                                         </p>
-                                        {/* Per-class quick action: only show if a class context exists */}
-                                        {items[0]?.class_id && (
+                                        {items[0]?.classId && (
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
                                                 className="min-h-[44px] px-2 text-xs"
-                                                onClick={() => handleOpenInput(items[0].class_id)}
+                                                onClick={() =>
+                                                    handleOpenInput({
+                                                        classId: items[0].classId,
+                                                        subject: items[0].missingItems[0]?.subject,
+                                                        assessmentName: items[0].missingItems[0]?.assessmentName,
+                                                    })
+                                                }
                                             >
                                                 Input untuk kelas ini
                                             </Button>
                                         )}
                                     </div>
                                     <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                                        {items.map((s) => (
-                                            <li
-                                                key={s.id}
-                                                className="px-4 py-2.5 flex items-center justify-between gap-3"
-                                            >
-                                                <div className="min-w-0">
-                                                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">
-                                                        {s.name}
-                                                    </p>
-                                                    {!assessmentFilter &&
-                                                        s.missingAssessments &&
-                                                        s.missingAssessments.length > 0 && (
-                                                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                                                                Belum:{' '}
-                                                                {s.missingAssessments.slice(0, 3).join(', ')}
-                                                                {s.missingAssessments.length > 3 &&
-                                                                    ` +${s.missingAssessments.length - 3} lagi`}
-                                                            </p>
+                                        {items.map((s) => {
+                                            const firstItem = s.missingItems[0];
+                                            return (
+                                                <li
+                                                    key={s.studentId}
+                                                    className="px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors"
+                                                >
+                                                    <div className="min-w-0 flex-1 space-y-1.5">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <Link
+                                                                to={`/siswa/${s.studentId}`}
+                                                                className="text-sm font-semibold text-slate-800 dark:text-slate-100 hover:text-brand-600 dark:hover:text-brand-400 hover:underline truncate"
+                                                            >
+                                                                {s.studentName}
+                                                            </Link>
+                                                            <span className="flex-shrink-0 text-[11px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+                                                                {s.missingItems.length > 0
+                                                                    ? `Belum ${s.missingItems.length} PH`
+                                                                    : 'Belum'}
+                                                            </span>
+                                                        </div>
+
+                                                        {s.missingItems.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1.5">
+                                                                {s.missingItems.map((item) => {
+                                                                    const label =
+                                                                        effectiveSubject === 'all'
+                                                                            ? `${item.subject} · ${item.assessmentName}`
+                                                                            : item.assessmentName;
+                                                                    return (
+                                                                        <button
+                                                                            key={`${item.subject}::${item.assessmentName}`}
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                handleOpenInput({
+                                                                                    classId: s.classId,
+                                                                                    subject: item.subject,
+                                                                                    assessmentName: item.assessmentName,
+                                                                                })
+                                                                            }
+                                                                            title={`Sudah dinilai ${item.gradedCount}/${item.classSize} siswa di kelas — klik untuk input nilai ${item.subject} (${item.assessmentName})`}
+                                                                            className="inline-flex items-center gap-1 min-h-[28px] px-2 py-0.5 rounded-md text-xs font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors cursor-pointer"
+                                                                        >
+                                                                            <span>{label}</span>
+                                                                        </button>
+                                                                    );
+                                                                })}
+                                                            </div>
                                                         )}
-                                                </div>
-                                                <span className="flex-shrink-0 text-xs font-semibold uppercase tracking-wide px-2 py-1 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
-                                                    Belum
-                                                </span>
-                                            </li>
-                                        ))}
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                handleOpenInput({
+                                                                    classId: s.classId,
+                                                                    subject: firstItem?.subject,
+                                                                    assessmentName: firstItem?.assessmentName,
+                                                                })
+                                                            }
+                                                            className="inline-flex items-center gap-1 min-h-[34px] px-2.5 py-1 rounded-lg bg-brand-50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800/60 hover:bg-brand-100 dark:hover:bg-brand-900/50 text-xs font-bold transition-colors cursor-pointer"
+                                                        >
+                                                            <ClipboardPenIcon className="w-3.5 h-3.5" />
+                                                            <span>Input Nilai</span>
+                                                        </button>
+                                                    </div>
+                                                </li>
+                                            );
+                                        })}
                                     </ul>
                                 </div>
                             ))}

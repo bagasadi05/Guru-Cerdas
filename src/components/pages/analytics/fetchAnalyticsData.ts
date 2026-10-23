@@ -4,7 +4,7 @@ import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../..
 import { normalizeAcademicRecords } from '../../../services/academicAnalyticsService';
 import type {
     AnalyticsClass, Student, AnalyticsAttendance, AnalyticsTask,
-    AnalyticsAcademicRecord, AnalyticsViolation, AnalyticsQuizPoint, AnalyticsDataPayload,
+    AnalyticsAcademicRecord, AnalyticsViolation, AnalyticsQuizPoint, AnalyticsPhSchedule, AnalyticsDataPayload,
 } from './types';
 
 export interface AnalyticsQueryParams {
@@ -23,7 +23,7 @@ export type AnalyticsRecords = Omit<AnalyticsDataPayload, 'classes'>;
 
 export const EMPTY_ANALYTICS_DATA: AnalyticsRecords = {
     students: [], attendance: [], tasks: [],
-    academicRecords: [], violations: [], quizPoints: [],
+    academicRecords: [], violations: [], quizPoints: [], phSchedules: [],
 };
 
 export function getMonthBounds(dateRange: string): { start: string; end: string } | null {
@@ -129,13 +129,24 @@ export async function fetchAnalyticsData({ userId, classIds, dateRange, semester
         quizPoints.push(...qpz);
     }
 
-    const tasks = await fetchAllPages<AnalyticsTask>((from, to) => supabase
-        .from('tasks')
-        .select('id, status, due_date')
-        .eq('user_id', userId)
-        .is('deleted_at', null)
-        .order('id')
-        .range(from, to));
+    const [tasks, phSchedules] = await Promise.all([
+        fetchAllPages<AnalyticsTask>((from, to) => supabase
+            .from('tasks')
+            .select('id, status, due_date')
+            .eq('user_id', userId)
+            .is('deleted_at', null)
+            .order('id')
+            .range(from, to)),
+        fetchAllPages<AnalyticsPhSchedule>((from, to) => {
+            let q = supabase
+                .from('ph_schedules')
+                .select('id, class_id, subject, date, period_label, semester_id')
+                .in('class_id', classIds)
+                .is('deleted_at', null);
+            if (semesterId) q = q.eq('semester_id', semesterId);
+            return q.order('date').order('id').range(from, to);
+        }),
+    ]);
 
     return {
         students,
@@ -144,5 +155,6 @@ export async function fetchAnalyticsData({ userId, classIds, dateRange, semester
         academicRecords: normalizeAcademicRecords(dedupeAcademicRecords(academicRecords)),
         violations: dedupeViolations(violations),
         quizPoints: dedupeQuizPoints(quizPoints),
+        phSchedules,
     };
 }

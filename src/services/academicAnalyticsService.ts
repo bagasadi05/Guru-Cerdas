@@ -16,6 +16,7 @@ import { logger } from './logger';
 import type {
     Student,
     AnalyticsAcademicRecord,
+    AnalyticsPhSchedule,
     GradeDistribution,
 } from '../components/pages/analytics/types';
 
@@ -49,6 +50,8 @@ export interface AcademicKPI {
     gradeCompleteness: number;
     expectedGradeCount: number;
     missingGradeCount: number;
+    /** Unique students missing at least one expected grade. */
+    studentsWithMissingGrades?: number;
 }
 
 export interface OverallGradeStats {
@@ -95,7 +98,75 @@ export interface StudentBelowKKTP {
     gap: number;
 }
 
+export interface MissingAssessmentItem {
+    subject: string;
+    assessmentName: string;
+    /** 'partial_class' = sebagian siswa di kelas sudah dinilai oleh guru pada mapel & PH ini */
+    source: 'partial_class';
+    /** Jumlah teman sekelas yang sudah dinilai pada PH ini */
+    gradedCount: number;
+    /** Total siswa di kelas tersebut */
+    classSize: number;
+}
+
+export interface StudentMissingGrades {
+    studentId: string;
+    studentName: string;
+    classId: string | null;
+    className: string;
+    missingItems: MissingAssessmentItem[];
+    subjectCount: number;
+}
+
+export interface UngradedPhSchedule {
+    scheduleId: string;
+    classId: string;
+    className: string;
+    subject: string;
+    topic: string;
+    suggestedAssessmentName: string;
+    date: string;
+    periodLabel: string;
+    studentCount: number;
+}
+
+export interface GradeCompletionOptions {
+    /** 'all' or a specific class_id */
+    classId?: string;
+    /** 'all' or '' for all subjects, or a specific subject name */
+    subject?: string;
+    /** '' or 'all' for all assessments, or a specific assessment name */
+    assessmentName?: string;
+    /** Default true: only ASH / PH / UH assessments */
+    phOnly?: boolean;
+    /** ISO date 'YYYY-MM-DD' for today */
+    referenceToday?: string;
+}
+
+export interface GradeCompletionSummary {
+    missingStudents: StudentMissingGrades[];
+    ungradedSchedules: UngradedPhSchedule[];
+    totalStudents: number;
+    completeStudentsCount: number;
+    expectedSlotCount: number;
+    filledSlotCount: number;
+    missingSlotCount: number;
+    completionPercentage: number;
+    availableSubjects: string[];
+    availableAssessments: string[];
+}
+
 export const DEFAULT_KKTP = 75;
+
+/**
+ * Pattern recognizing daily assessments: ASH (Asesmen Sumatif Harian), PH (Penilaian Harian), UH (Ulangan Harian).
+ */
+export const ASH_PH_PATTERN = /(\bash\b|\bph\b|\buh\b|asesmen\s*sumatif\s*harian|ulangan\s*harian|penilaian\s*harian)/i;
+
+export function isPHAssessment(name: string | null | undefined): boolean {
+    if (!name) return false;
+    return ASH_PH_PATTERN.test(name.trim());
+}
 
 /** A subject this far under the KKTP is critical rather than a warning. */
 const CRITICAL_MARGIN = 7;
@@ -299,10 +370,14 @@ export function calculateSubjectStats(
 function calculateCompleteness(records: AnalyticsAcademicRecord[], students: Student[]) {
     const classOf = new Map<string, string>();
     const classSize = new Map<string, number>();
+    const studentsByClass = new Map<string, string[]>();
     for (const s of students) {
         const classId = s.class_id ?? '';
         classOf.set(s.id, classId);
         classSize.set(classId, (classSize.get(classId) ?? 0) + 1);
+        const list = studentsByClass.get(classId) ?? [];
+        list.push(s.id);
+        studentsByClass.set(classId, list);
     }
 
     const filledByKey = new Map<string, { classId: string; students: Set<string> }>();
@@ -317,11 +392,18 @@ function calculateCompleteness(records: AnalyticsAcademicRecord[], students: Stu
 
     let expected = 0;
     let filled = 0;
+    const missingStudentIds = new Set<string>();
     filledByKey.forEach((entry) => {
+        const classStudentIds = studentsByClass.get(entry.classId) ?? [];
         expected += classSize.get(entry.classId) ?? 0;
         filled += entry.students.size;
+        for (const studentId of classStudentIds) {
+            if (!entry.students.has(studentId)) {
+                missingStudentIds.add(studentId);
+            }
+        }
     });
-    return { expected, filled };
+    return { expected, filled, missingStudentCount: missingStudentIds.size };
 }
 
 export function calculateAcademicKPI(
@@ -343,7 +425,7 @@ export function calculateAcademicKPI(
         }
     });
 
-    const { expected, filled } = calculateCompleteness(academicRecords, students);
+    const { expected, filled, missingStudentCount } = calculateCompleteness(academicRecords, students);
 
     return {
         overallAverage,
@@ -357,6 +439,189 @@ export function calculateAcademicKPI(
         gradeCompleteness: expected > 0 ? Math.round((filled / expected) * 100) : 0,
         expectedGradeCount: expected,
         missingGradeCount: expected - filled,
+        studentsWithMissingGrades: missingStudentCount,
+    };
+}
+
+/**
+ * Analyzes grade & PH completion across subjects and classes based on assessments
+ * that have ALREADY been partially or fully graded by the teacher in each class
+ * (at least 1 student in that class has a recorded score for that subject & assessment).
+ * Subjects or assessments with 0 grades entered are never flagged.
+ */
+export function analyzeGradeCompletion(
+    students: Array<{ id: string; name: string; class_id: string | null }>,
+    classes: Array<{ id: string; name: string }>,
+    academicRecords: Array<{ student_id: string; subject?: string | null; assessment_name?: string | null }>,
+    _phSchedules: AnalyticsPhSchedule[] = [],
+    options: GradeCompletionOptions = {},
+): GradeCompletionSummary {
+    const phOnly = options.phOnly ?? true;
+    const classIdFilter = options.classId && options.classId !== 'all' ? options.classId : 'all';
+    const subjectFilter = options.subject && options.subject !== 'all' ? options.subject.trim() : 'all';
+    const assessmentFilter = options.assessmentName && options.assessmentName !== 'all' ? options.assessmentName.trim() : '';
+
+    const classNameMap = new Map<string, string>();
+    for (const c of classes) {
+        classNameMap.set(c.id, c.name);
+    }
+
+    const targetStudents = classIdFilter === 'all'
+        ? students
+        : students.filter((s) => s.class_id === classIdFilter);
+
+    const studentById = new Map(targetStudents.map((s) => [s.id, s]));
+    const studentsByClass = new Map<string, Array<{ id: string; name: string; class_id: string | null }>>();
+    for (const s of targetStudents) {
+        const cId = s.class_id ?? '';
+        const list = studentsByClass.get(cId) ?? [];
+        list.push(s);
+        studentsByClass.set(cId, list);
+    }
+
+    // Build canonical subject names so case variants ("matematika" vs "Matematika") merge cleanly
+    const canonicalSubjects = new Map<string, string>();
+    const getCanonicalSubject = (raw: string): string => {
+        const cleaned = collapseSpaces(raw);
+        if (!cleaned) return '';
+        const key = cleaned.toLowerCase();
+        if (!canonicalSubjects.has(key)) {
+            canonicalSubjects.set(key, cleaned);
+        }
+        return canonicalSubjects.get(key)!;
+    };
+
+    interface AssessmentSlot {
+        classId: string;
+        subject: string;
+        assessmentName: string;
+        filledStudentIds: Set<string>;
+    }
+
+    const allSubjectsSet = new Set<string>();
+    const slotsMap = new Map<string, AssessmentSlot>();
+
+    for (const r of academicRecords) {
+        const student = studentById.get(r.student_id);
+        if (!student) continue;
+
+        const subj = getCanonicalSubject(r.subject ?? '');
+        if (!subj) continue;
+
+        const assName = collapseSpaces(r.assessment_name);
+        if (!assName) continue;
+
+        if (phOnly && !isPHAssessment(assName)) continue;
+
+        // Only subjects that actually have at least 1 matching assessment filled by the teacher are included
+        allSubjectsSet.add(subj);
+
+        const cId = student.class_id ?? '';
+        const slotKey = `${cId}::${subj}::${assName}`;
+        let slot = slotsMap.get(slotKey);
+        if (!slot) {
+            slot = {
+                classId: cId,
+                subject: subj,
+                assessmentName: assName,
+                filledStudentIds: new Set<string>(),
+            };
+            slotsMap.set(slotKey, slot);
+        }
+        slot.filledStudentIds.add(student.id);
+    }
+
+    const availableSubjects = Array.from(allSubjectsSet).sort((a, b) => a.localeCompare(b, 'id'));
+
+    const allSlots = Array.from(slotsMap.values());
+    const slotsMatchingSubject = subjectFilter === 'all'
+        ? allSlots
+        : allSlots.filter((s) => s.subject === subjectFilter);
+
+    const availableAssessmentsSet = new Set<string>();
+    for (const slot of slotsMatchingSubject) {
+        availableAssessmentsSet.add(slot.assessmentName);
+    }
+    const availableAssessments = Array.from(availableAssessmentsSet).sort((a, b) =>
+        a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }),
+    );
+
+    const activeSlots = assessmentFilter
+        ? slotsMatchingSubject.filter((s) => s.assessmentName === assessmentFilter)
+        : slotsMatchingSubject;
+
+    const missingByStudent = new Map<string, MissingAssessmentItem[]>();
+    let expectedSlotCount = 0;
+    let filledSlotCount = 0;
+
+    for (const slot of activeSlots) {
+        // Only consider assessments where at least 1 student in that class has been graded
+        if (slot.filledStudentIds.size === 0) continue;
+
+        const classStudents = studentsByClass.get(slot.classId) ?? [];
+        if (classStudents.length === 0) continue;
+
+        expectedSlotCount += classStudents.length;
+        filledSlotCount += slot.filledStudentIds.size;
+
+        for (const s of classStudents) {
+            if (!slot.filledStudentIds.has(s.id)) {
+                const list = missingByStudent.get(s.id) ?? [];
+                list.push({
+                    subject: slot.subject,
+                    assessmentName: slot.assessmentName,
+                    source: 'partial_class',
+                    gradedCount: slot.filledStudentIds.size,
+                    classSize: classStudents.length,
+                });
+                missingByStudent.set(s.id, list);
+            }
+        }
+    }
+
+    const missingStudents: StudentMissingGrades[] = [];
+    for (const s of targetStudents) {
+        const items = missingByStudent.get(s.id);
+        if (!items || items.length === 0) continue;
+
+        const sortedItems = [...items].sort((a, b) =>
+            a.subject.localeCompare(b.subject, 'id') ||
+            a.assessmentName.localeCompare(b.assessmentName, undefined, { numeric: true, sensitivity: 'base' }),
+        );
+        const subjectCount = new Set(sortedItems.map((i) => i.subject)).size;
+
+        missingStudents.push({
+            studentId: s.id,
+            studentName: s.name,
+            classId: s.class_id,
+            className: classNameMap.get(s.class_id ?? '') || '-',
+            missingItems: sortedItems,
+            subjectCount,
+        });
+    }
+
+    missingStudents.sort((a, b) => {
+        const cls = a.className.localeCompare(b.className, 'id', { numeric: true });
+        if (cls !== 0) return cls;
+        return a.studentName.localeCompare(b.studentName, 'id');
+    });
+
+    const missingSlotCount = Math.max(0, expectedSlotCount - filledSlotCount);
+    const completionPercentage = expectedSlotCount > 0
+        ? Math.round((filledSlotCount / expectedSlotCount) * 100)
+        : 0;
+
+    return {
+        missingStudents,
+        ungradedSchedules: [],
+        totalStudents: targetStudents.length,
+        completeStudentsCount: Math.max(0, targetStudents.length - missingStudents.length),
+        expectedSlotCount,
+        filledSlotCount,
+        missingSlotCount,
+        completionPercentage,
+        availableSubjects,
+        availableAssessments,
     };
 }
 

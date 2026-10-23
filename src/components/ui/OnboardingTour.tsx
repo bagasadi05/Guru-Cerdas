@@ -89,7 +89,7 @@ const tourSteps: TourStep[] = [
     },
     {
         target: '[href="/analytics"]',
-        title: 'Performa Siswa',
+        title: 'Perkembangan Siswa',
         description: 'Lihat statistik dan grafik perkembangan siswa secara keseluruhan. Ini membantu Anda memantau tren akademik, kehadiran, dan kedisiplinan.',
         icon: <BarChart3Icon className="w-5 h-5" />,
         position: 'right',
