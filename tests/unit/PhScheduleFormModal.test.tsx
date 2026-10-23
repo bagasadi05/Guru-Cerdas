@@ -100,12 +100,12 @@ describe('PhScheduleFormModal Component', () => {
             />
         );
 
-        expect(screen.getByText('Tambah Jadwal Penilaian Harian')).toBeInTheDocument();
+        expect(screen.getByText('Tambah Jadwal Asesmen Sumatif Harian (ASH)')).toBeInTheDocument();
         expect(screen.getByText('Kelas 7A')).toBeInTheDocument();
         expect(screen.getByText('Semester Ganjil')).toBeInTheDocument();
         expect(screen.getByLabelText(/Tanggal Pelaksanaan/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/Mata Pelajaran/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Materi \/ Topik PH/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/Materi \/ Topik ASH/i)).toBeInTheDocument();
         expect(screen.getByText('Jam Pelajaran Ke-')).toBeInTheDocument();
     });
 
@@ -226,7 +226,7 @@ describe('PhScheduleFormModal Component', () => {
         );
 
         expect(screen.getByText('Jam pelajaran bertumpang tindih')).toBeInTheDocument();
-        expect(screen.getByText(/Sudah ada jadwal PH/i)).toBeInTheDocument();
+        expect(screen.getByText(/Sudah ada jadwal ASH/i)).toBeInTheDocument();
     });
 
     it('displays centered quick date buttons and weekend indicator correctly', () => {
@@ -284,5 +284,53 @@ describe('PhScheduleFormModal Component', () => {
         expect(screen.getByText('Menyimpan...')).toBeInTheDocument();
         const submitBtn = screen.getByRole('button', { name: /Menyimpan/i });
         expect(submitBtn).toBeDisabled();
+    });
+
+    it('blocks adding a 3rd ASH on the same day (max 2 ASH per day) and suggests next available day', () => {
+        const setFormData = vi.fn();
+        const twoSameDaySchedules: PhScheduleRow[] = [
+            ...mockRawSchedules,
+            {
+                id: 'ph-existing-2',
+                class_id: 'cls-1',
+                semester_id: 'sem-1',
+                subject: 'Bahasa Indonesia',
+                date: '2026-09-28',
+                period_label: '5-6',
+                created_by: 'user-1',
+                created_at: '2026-09-01T00:00:00Z',
+                updated_at: '2026-09-01T00:00:00Z',
+                deleted_at: null,
+            },
+        ];
+
+        render(
+            <PhScheduleFormModal
+                isOpen={true}
+                onClose={vi.fn()}
+                editingSchedule={null}
+                formData={{
+                    subject: 'Matematika',
+                    date: '2026-09-28',
+                    period_label: '1-2',
+                }}
+                setFormData={setFormData}
+                handleSubmit={vi.fn()}
+                isPending={false}
+                subjectSuggestions={mockSuggestions}
+                rawSchedules={twoSameDaySchedules}
+                semester={{ start_date: '2026-07-01', end_date: '2026-12-31' }}
+            />
+        );
+
+        expect(screen.getByText(/Kuota: 2\/2 ASH/i)).toBeInTheDocument();
+        expect(screen.getByText(/Kuota Harian Penuh \(Maksimal 2 ASH per Hari\)/i)).toBeInTheDocument();
+
+        const submitBtn = screen.getByRole('button', { name: /Tambah ASH/i });
+        expect(submitBtn).toBeDisabled();
+
+        const nextDayBtn = screen.getByRole('button', { name: /Pilih Hari Kosong/i });
+        fireEvent.click(nextDayBtn);
+        expect(setFormData).toHaveBeenCalled();
     });
 });

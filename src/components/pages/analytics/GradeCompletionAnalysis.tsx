@@ -69,14 +69,14 @@ interface MissingStudent {
 // =============================================================================
 
 /**
- * Pola pengenal Penilaian Harian.
- * Menangkap variasi penamaan umum: "PH", "UH", "Ulangan Harian", "Penilaian Harian".
+ * Pola pengenal Asesmen Sumatif Harian (ASH) / Penilaian Harian (PH).
+ * Menangkap variasi penamaan umum: "ASH", "PH", "UH", "Asesmen Sumatif Harian", "Ulangan Harian", "Penilaian Harian".
  */
-const PH_PATTERN = /(\bph\b|\buh\b|ulangan\s*harian|penilaian\s*harian)/i;
+const ASH_PH_PATTERN = /(\bash\b|\bph\b|\buh\b|asesmen\s*sumatif\s*harian|ulangan\s*harian|penilaian\s*harian)/i;
 
 const isPHAssessment = (name: string | null | undefined): boolean => {
     if (!name) return false;
-    return PH_PATTERN.test(name);
+    return ASH_PH_PATTERN.test(name);
 };
 
 // =============================================================================
@@ -122,7 +122,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
         });
         return classes
             .filter((c) => ids.has(c.id))
-            .sort((a, b) => a.name.localeCompare(b.name, 'id'));
+            .sort((a, b) => a.name.localeCompare(b.name, 'id', { numeric: true, sensitivity: 'base' }));
     }, [classes, scopedStudents]);
 
     /** Reset filter kelas lokal jika opsinya tidak lagi valid (mis. global filter berubah) */
@@ -370,15 +370,15 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                                 Audit Kelengkapan Nilai
                             </CardTitle>
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                Lihat siswa yang belum melaksanakan PH atau yang nilainya belum terisi
+                                Lihat siswa yang belum melaksanakan ASH / PH atau yang nilainya belum terisi
                             </p>
                         </div>
                     </div>
 
-                    {/* PH-only toggle */}
+                    {/* ASH/PH-only toggle */}
                     <label className="inline-flex items-center gap-2 cursor-pointer select-none self-start sm:self-center">
                         <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                            Hanya PH
+                            Hanya ASH / PH
                         </span>
                         <span className="relative inline-flex">
                             <input
@@ -389,7 +389,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                                     setAssessmentFilter('');
                                 }}
                                 className="sr-only peer"
-                                aria-label="Hanya tampilkan Penilaian Harian"
+                                aria-label="Hanya tampilkan Asesmen Sumatif Harian (ASH / PH)"
                             />
                             <span
                                 className="w-10 h-5 bg-slate-200 dark:bg-slate-700 rounded-full peer-checked:bg-brand-600 transition-colors"
@@ -451,7 +451,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                     </div>
                     <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                            Jenis Penilaian {phOnly && <span className="normal-case font-normal text-slate-500">(filter PH)</span>}
+                            Jenis Penilaian {phOnly && <span className="normal-case font-normal text-slate-500">(filter ASH / PH)</span>}
                         </label>
                         <Select
                             value={assessmentFilter}
@@ -461,7 +461,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                             <option value="">
                                 {assessmentOptions.length === 0
                                     ? 'Belum ada penilaian'
-                                    : `Semua${phOnly ? ' PH' : ''} (${assessmentOptions.length})`}
+                                    : `Semua${phOnly ? ' ASH / PH' : ''} (${assessmentOptions.length})`}
                             </option>
                             {assessmentOptions.map((a) => (
                                 <option key={a} value={a}>
@@ -544,7 +544,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                         </p>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4 max-w-sm mx-auto">
                             Input minimal satu nilai untuk mulai memantau siswa yang belum melaksanakan
-                            Penilaian Harian.
+                            Asesmen Sumatif Harian (ASH / PH).
                         </p>
                         <Button variant="primary" size="sm" onClick={() => navigate('/input-massal')}>
                             <ClipboardPenIcon className="w-4 h-4 mr-1.5" />
@@ -563,7 +563,7 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                             {assessmentFilter
                                 ? `Tidak ada siswa yang tertinggal pada "${assessmentFilter}".`
                                 : phOnly
-                                    ? 'Tidak ada siswa yang tertinggal pada PH yang terdaftar.'
+                                    ? 'Tidak ada siswa yang tertinggal pada ASH / PH yang terdaftar.'
                                     : 'Tidak ada siswa yang tertinggal pada penilaian yang terdaftar.'}
                         </p>
                     </div>

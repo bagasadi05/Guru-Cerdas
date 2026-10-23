@@ -65,7 +65,7 @@ describe('PhWeeklyScheduleView Component', () => {
         expect(screen.getByText(wednesday.dateFormatted)).toBeInTheDocument();
 
         // Check header total count badge
-        expect(screen.getByText('2 PH Terjadwal')).toBeInTheDocument();
+        expect(screen.getByText('2 ASH Terjadwal')).toBeInTheDocument();
     });
 
     it('renders schedule items on matching days', () => {
@@ -93,10 +93,10 @@ describe('PhWeeklyScheduleView Component', () => {
         render(<PhWeeklyScheduleView schedules={[]} canAdd canModify={() => true}
             onAdd={onAdd} onEdit={vi.fn()} onDuplicate={vi.fn()} onDelete={vi.fn()} onInputNilai={vi.fn()}
             referenceDate="2026-10-09" />);
-        expect(screen.getByText('Belum ada jadwal PH minggu ini')).toBeInTheDocument();
-        expect(screen.queryByText('Tidak ada PH')).not.toBeInTheDocument();
-        expect(screen.getAllByRole('button', { name: 'Tambah PH minggu ini' })).toHaveLength(1);
-        fireEvent.click(screen.getByRole('button', { name: 'Tambah PH minggu ini' }));
+        expect(screen.getByText('Belum ada jadwal ASH minggu ini')).toBeInTheDocument();
+        expect(screen.queryByText('Tidak ada ASH')).not.toBeInTheDocument();
+        expect(screen.getAllByRole('button', { name: 'Tambah ASH minggu ini' })).toHaveLength(1);
+        fireEvent.click(screen.getByRole('button', { name: 'Tambah ASH minggu ini' }));
         expect(onAdd).toHaveBeenCalledWith('2026-10-09');
     });
 
@@ -121,7 +121,7 @@ describe('PhWeeklyScheduleView Component', () => {
         expect(handleInputNilai).toHaveBeenCalledWith(mockSchedules[0]);
     });
 
-    it('calls onAdd with the prefilled day date when clicking "Tambah PH" on empty day', () => {
+    it('calls onAdd with the prefilled day date when clicking "Tambah ASH" on empty day', () => {
         const handleAdd = vi.fn();
         render(
             <PhWeeklyScheduleView
@@ -137,7 +137,7 @@ describe('PhWeeklyScheduleView Component', () => {
         );
 
         // Tuesday, Thursday, Friday are empty
-        const addButtons = screen.getAllByRole('button', { name: /Tambah PH/i });
+        const addButtons = screen.getAllByRole('button', { name: /Tambah ASH/i });
         expect(addButtons.length).toBeGreaterThan(0);
 
         fireEvent.click(addButtons[0]);
@@ -204,7 +204,7 @@ describe('PhWeeklyScheduleView Component', () => {
         expect(screen.getByText('Matematika Wajib')).toBeInTheDocument();
     });
 
-    it('hides "+ Tambah PH" and action triggers when the teacher cannot add PH', () => {
+    it('hides "+ Tambah ASH" and action triggers when the teacher cannot add PH', () => {
         render(
             <PhWeeklyScheduleView
                 schedules={mockSchedules}
@@ -218,7 +218,7 @@ describe('PhWeeklyScheduleView Component', () => {
             />
         );
 
-        expect(screen.queryByRole('button', { name: /Tambah PH/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Tambah ASH/i })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: /Menu Aksi Jadwal/i })).not.toBeInTheDocument();
     });
 
@@ -247,5 +247,32 @@ describe('PhWeeklyScheduleView Component', () => {
         expect(screen.getByText('Duplikasi')).toBeInTheDocument();
         expect(screen.queryByText('Edit Jadwal')).not.toBeInTheDocument();
         expect(screen.queryByText('Hapus')).not.toBeInTheDocument();
+    });
+
+    it('replaces "+ Tambah ASH" with "Kuota Penuh (2/2 ASH)" on days that already have 2 ASH', () => {
+        const twoOnMonday: PhScheduleRow[] = [
+            mockSchedules[0],
+            {
+                ...mockSchedules[1],
+                id: 'ph-monday-2',
+                date: monday.dateStr,
+                period_label: '5-6',
+            },
+        ];
+
+        render(
+            <PhWeeklyScheduleView
+                schedules={twoOnMonday}
+                canAdd={true}
+                canModify={() => true}
+                onAdd={vi.fn()}
+                onEdit={vi.fn()}
+                onDuplicate={vi.fn()}
+                onDelete={vi.fn()}
+                onInputNilai={vi.fn()}
+            />
+        );
+
+        expect(screen.getByText('Kuota Penuh (2/2 ASH)')).toBeInTheDocument();
     });
 });

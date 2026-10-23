@@ -38,33 +38,37 @@ const batches = (ids: string[]) =>
         ids.slice(i * STUDENT_ID_BATCH, (i + 1) * STUDENT_ID_BATCH));
 
 export async function fetchAllowedClasses(userId: string, isLeadership: boolean): Promise<AnalyticsClass[]> {
+    let rawClasses: AnalyticsClass[];
     if (isLeadership) {
-        return fetchAllPages<AnalyticsClass>((from, to) => supabase
+        rawClasses = await fetchAllPages<AnalyticsClass>((from, to) => supabase
             .from('classes')
             .select('id, name')
             .is('deleted_at', null)
             .eq('is_archived', false)
+            .order('name')
             .order('id')
             .range(from, to));
+    } else {
+        const { data: assignments, error: assignmentsError } = await supabase
+            .from('teacher_class_assignments')
+            .select('class_id')
+            .eq('teacher_user_id', userId)
+            .is('deleted_at', null);
+        if (assignmentsError) throw assignmentsError;
+
+        const assignedClassIds = Array.from(new Set((assignments ?? []).map((a) => a.class_id).filter(Boolean))) as string[];
+
+        let query = supabase.from('classes').select('id, name').is('deleted_at', null).eq('is_archived', false);
+        query = assignedClassIds.length > 0
+            ? query.or(`user_id.eq.${userId},id.in.(${assignedClassIds.map((id) => `"${id}"`).join(',')})`)
+            : query.eq('user_id', userId);
+
+        const { data, error } = await query;
+        if (error) throw error;
+        rawClasses = (data ?? []) as AnalyticsClass[];
     }
 
-    const { data: assignments, error: assignmentsError } = await supabase
-        .from('teacher_class_assignments')
-        .select('class_id')
-        .eq('teacher_user_id', userId)
-        .is('deleted_at', null);
-    if (assignmentsError) throw assignmentsError;
-
-    const assignedClassIds = Array.from(new Set((assignments ?? []).map((a) => a.class_id).filter(Boolean))) as string[];
-
-    let query = supabase.from('classes').select('id, name').is('deleted_at', null).eq('is_archived', false);
-    query = assignedClassIds.length > 0
-        ? query.or(`user_id.eq.${userId},id.in.(${assignedClassIds.map((id) => `"${id}"`).join(',')})`)
-        : query.eq('user_id', userId);
-
-    const { data, error } = await query;
-    if (error) throw error;
-    return (data ?? []) as AnalyticsClass[];
+    return [...rawClasses].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 }
 
 /**

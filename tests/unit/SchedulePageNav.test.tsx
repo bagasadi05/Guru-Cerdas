@@ -90,11 +90,11 @@ describe('SchedulePage navigation', () => {
     expect(screen.queryByRole('button', { name: /Buka Jadwal Mengajar/i })).not.toBeInTheDocument();
   });
 
-  it('renders Jadwal PH directly when entering /jadwal?tab=ph', async () => {
+  it('renders Jadwal ASH directly when entering /jadwal?tab=ph', async () => {
     renderSchedulePage('/jadwal?tab=ph');
 
     expect(await screen.findByTestId('ph-schedule-mock')).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /Jadwal PH/ })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: /Jadwal ASH/ })).toHaveAttribute('aria-selected', 'true');
   });
 
   it('renders Jurnal Mengajar directly when entering /jadwal?tab=jurnal', async () => {

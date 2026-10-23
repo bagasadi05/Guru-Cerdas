@@ -41,7 +41,9 @@ export const ScheduleViewToolbar: React.FC<ScheduleViewToolbarProps> = ({
               onChange={onClassChange}
               options={[
                 { value: '', label: 'Semua Kelas' },
-                ...classes.map((c) => ({ value: c.id, label: c.name })),
+                ...[...classes]
+                  .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }))
+                  .map((c) => ({ value: c.id, label: c.name })),
               ]}
               placeholder="Semua Kelas"
             />

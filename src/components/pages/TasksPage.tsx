@@ -109,14 +109,14 @@ const fetchTasks = async (userId: string): Promise<TaskRow[]> => {
 // Status configuration
 const statusConfig: Record<TaskStatus, { title: string; icon: React.ReactNode; color: string; bgColor: string; textColor: string }> = {
     todo: {
-        title: 'To Do',
+        title: 'Belum Mulai',
         icon: <CircleIcon className="w-4 h-4" />,
         color: 'text-slate-400',
         bgColor: 'bg-slate-500/20',
         textColor: 'text-slate-600 dark:text-slate-400'
     },
     in_progress: {
-        title: 'In Progress',
+        title: 'Sedang Dikerjakan',
         icon: <PlayCircleIcon className="w-4 h-4" />,
         color: 'text-blue-400',
         bgColor: 'bg-blue-500/20',
@@ -673,11 +673,11 @@ const TasksPage: React.FC = () => {
                 </div>
                 <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg p-3 sm:p-6 text-center">
                     <div className="text-xl sm:text-4xl font-bold text-slate-400 mb-0.5 sm:mb-1">{stats.todo}</div>
-                    <div className="text-xxs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">To Do</div>
+                    <div className="text-xxs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Belum Mulai</div>
                 </div>
                 <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg p-3 sm:p-6 text-center">
                     <div className="text-xl sm:text-4xl font-bold text-blue-500 mb-0.5 sm:mb-1">{stats.inProgress}</div>
-                    <div className="text-xxs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Progress</div>
+                    <div className="text-xxs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Dikerjakan</div>
                 </div>
                 <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg p-3 sm:p-6 text-center">
                     <div className="text-xl sm:text-4xl font-bold text-emerald-600 dark:text-emerald-400 mb-0.5 sm:mb-1">{stats.done}</div>
@@ -837,8 +837,8 @@ const TasksPage: React.FC = () => {
                                 value={status}
                                 onChange={(val) => setStatus(val as TaskStatus)}
                                 options={[
-                                    { value: 'todo', label: 'To Do' },
-                                    { value: 'in_progress', label: 'In Progress' },
+                                    { value: 'todo', label: 'Belum Mulai' },
+                                    { value: 'in_progress', label: 'Sedang Dikerjakan' },
                                     { value: 'done', label: 'Selesai' },
                                 ]}
                             />

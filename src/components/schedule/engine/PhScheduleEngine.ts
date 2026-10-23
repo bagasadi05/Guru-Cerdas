@@ -262,7 +262,7 @@ export class PhScheduleEngine {
 
         const dateMap = this.groupByDate(this.filterAndSort(listToShare, {}, referenceToday));
 
-        let message = `📅 *JADWAL PENILAIAN HARIAN (PH)*\n`;
+        let message = `📅 *JADWAL ASESMEN SUMATIF HARIAN (ASH)*\n`;
         message += `🏫 *Kelas:* ${context.className}\n`;
         if (context.semesterName) message += `🗓️ *Semester:* ${context.semesterName}\n`;
         message += `─────────────────────────\n\n`;
@@ -278,7 +278,7 @@ export class PhScheduleEngine {
             message += `\n`;
         });
 
-        message += `_Semoga pelaksanaan Penilaian Harian berjalan lancar dan sukses. Aamiin._ 🤲`;
+        message += `_Semoga pelaksanaan Asesmen Sumatif Harian (ASH) berjalan lancar dan sukses. Aamiin._ 🤲`;
         return message;
     }
 

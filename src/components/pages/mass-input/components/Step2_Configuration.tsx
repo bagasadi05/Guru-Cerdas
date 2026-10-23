@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Input } from '../../../ui/Input';
 import { CustomDropdown } from '../../../ui/CustomDropdown';
 import { Button } from '../../../ui/Button';
@@ -137,6 +137,24 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
 }) => {
     const [isCustomAssessment, setIsCustomAssessment] = useState(false);
 
+    const selectedClassName = classes?.find(c => c.id === selectedClass)?.name;
+    const configSummary = useMemo(() => {
+        if (!selectedClassName) return 'Parameter kelas & penilaian';
+        const parts: string[] = [selectedClassName];
+        if (mode === 'subject_grade') {
+            if (subjectGradeInfo.subject) parts.push(subjectGradeInfo.subject);
+            if (subjectGradeInfo.assessment_name) parts.push(subjectGradeInfo.assessment_name);
+        } else if (mode === 'quiz') {
+            if (quizInfo.subject) parts.push(quizInfo.subject);
+            if (quizInfo.name) parts.push(quizInfo.name);
+        } else if (mode === 'attitude') {
+            if (attitudeCategory) parts.push(attitudeCategory);
+            if (attitudeName) parts.push(attitudeName);
+        } else if (mode === 'violation') {
+            if (selectedViolationCode) parts.push(selectedViolationCode);
+        }
+        return parts.join(' · ');
+    }, [selectedClassName, mode, subjectGradeInfo.subject, subjectGradeInfo.assessment_name, quizInfo.subject, quizInfo.name, attitudeCategory, attitudeName, selectedViolationCode]);
 
     return (
         <div className="lg:col-span-1 space-y-6 animate-fade-in-left">
@@ -145,19 +163,21 @@ export const Step2_Configuration: React.FC<Step2_ConfigurationProps> = ({
                     type="button"
                     aria-expanded={isConfigOpen}
                     aria-controls="mass-input-configuration"
-                    className="w-full p-4 sm:p-5 rounded-t-2xl border-b border-slate-200/80 dark:border-slate-800 flex justify-between items-center cursor-pointer bg-slate-50/70 dark:bg-slate-800/40 hover:bg-slate-100/80 dark:hover:bg-slate-800/70 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset"
+                    className={`w-full p-4 sm:p-5 ${isConfigOpen ? 'rounded-t-2xl border-b' : 'rounded-2xl'} border-slate-200/80 dark:border-slate-800 flex justify-between items-center cursor-pointer bg-slate-50/70 dark:bg-slate-800/40 hover:bg-slate-100/80 dark:hover:bg-slate-800/70 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset`}
                     onClick={() => setIsConfigOpen(!isConfigOpen)}
                 >
-                    <div className="flex items-center gap-3 text-left">
+                    <div className="flex items-center gap-3 text-left min-w-0">
                         <div className="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-sm shadow-brand-600/20 flex-shrink-0">
                             <SlidersHorizontal className="w-5 h-5" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <span className="block font-extrabold text-base text-slate-900 dark:text-white leading-tight">Konfigurasi</span>
-                            <span className="block text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Parameter kelas & penilaian</span>
+                            <span className="block text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate font-medium">
+                                {configSummary}
+                            </span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                         <span className="hidden lg:inline text-xs font-semibold text-slate-500 dark:text-slate-400">
                             {isConfigOpen ? 'Sembunyikan' : 'Tampilkan'}
                         </span>

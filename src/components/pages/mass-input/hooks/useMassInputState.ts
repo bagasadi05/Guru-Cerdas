@@ -120,15 +120,15 @@ export function useMassInputState() {
     useEffect(() => {
         const prefill = location.state?.prefill;
         if (prefill) {
-            const { mode: preMode, classId, subject, assessment_name } = prefill;
+            const { mode: preMode, classId, subject, assessment_name, notes, semester } = prefill;
             const timer = setTimeout(() => {
-                if (preMode) { setMode(preMode); setStep(2); }
+                if (preMode) { setMode(preMode === 'form' ? 'subject_grade' : preMode); setStep(2); }
                 if (classId) setSelectedClass(classId);
-                if (subject || assessment_name) {
+                if (subject || assessment_name || notes || semester) {
                     setSubjectGradeInfo(prev => ({
                         ...prev,
                         subject: subject || prev.subject,
-                        assessment_name: assessment_name || prev.assessment_name,
+                        assessment_name: assessment_name || prev.assessment_name, notes: notes ?? prev.notes, semester: semester || prev.semester,
                     }));
                 }
                 navigate(location.pathname, { replace: true, state: {} });

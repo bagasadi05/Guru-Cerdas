@@ -139,7 +139,7 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
                     <div>
                         <div className="flex items-center gap-2">
                             <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-white tracking-tight">
-                                Agenda Penilaian Harian (PH)
+                                Agenda Asesmen Sumatif Harian (ASH)
                             </h3>
                             {totalAgendaCount > 0 && (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
@@ -176,10 +176,10 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
                         </div>
                         <div className="max-w-md space-y-1">
                             <h4 className="font-bold text-sm sm:text-base text-slate-800 dark:text-slate-200">
-                                Tidak Ada Jadwal PH Terdekat
+                                Tidak Ada Jadwal ASH Terdekat
                             </h4>
                             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                                Tidak ada agenda Penilaian Harian dalam 7 hari ke depan. Semua jadwal asesmen siswa berjalan terkendali.
+                                Tidak ada agenda Asesmen Sumatif Harian dalam 7 hari ke depan. Semua jadwal asesmen siswa berjalan terkendali.
                             </p>
                         </div>
                         <div className="pt-1 flex flex-wrap items-center justify-center gap-2.5">
@@ -189,7 +189,7 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
                                 className="rounded-xl text-xs font-bold h-9 min-h-[38px] px-3.5 bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm"
                             >
                                 <Plus className="w-3.5 h-3.5 mr-1.5 stroke-[2.5]" />
-                                <span>+ Buat Jadwal PH Baru</span>
+                                <span>+ Buat Jadwal ASH Baru</span>
                             </Button>
                             <Button
                                 variant="outline"
@@ -198,7 +198,7 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
                                 className="rounded-xl text-xs font-semibold h-9 min-h-[38px] px-3.5 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
                             >
                                 <CalendarDays className="w-3.5 h-3.5 mr-1.5" />
-                                <span>Buka Kalender PH</span>
+                                <span>Buka Kalender ASH</span>
                             </Button>
                         </div>
                     </div>
@@ -227,7 +227,7 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
                                         return (
                                             <div
                                                 key={schedule.id}
-                                                onClick={() => navigate('/jadwal?tab=ph')}
+                                                onClick={() => navigate(`/jadwal?tab=ph&kelas=${schedule.class_id}`)}
                                                 className="group relative p-4 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-white dark:to-slate-850 border-2 border-emerald-500/40 dark:border-emerald-500/30 hover:border-emerald-500 transition-all duration-200 shadow-sm flex flex-col justify-between cursor-pointer"
                                             >
                                                 <div className="space-y-2.5">
@@ -269,7 +269,7 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
                                                     </span>
                                                     <button
                                                         type="button"
-                                                        onClick={() => navigate('/jadwal?tab=ph')}
+                                                        onClick={() => navigate(`/jadwal?tab=ph&kelas=${schedule.class_id}`)}
                                                         className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:text-emerald-600 group-hover:underline min-h-[36px]"
                                                     >
                                                         <span>Kelola Nilai & Detail</span>
@@ -306,7 +306,7 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
                                         return (
                                             <div
                                                 key={schedule.id}
-                                                onClick={() => navigate('/jadwal?tab=ph')}
+                                                onClick={() => navigate(`/jadwal?tab=ph&kelas=${schedule.class_id}`)}
                                                 className="p-3 rounded-xl bg-slate-50/70 dark:bg-slate-850/60 border border-slate-200/80 dark:border-slate-750 hover:border-emerald-500/60 dark:hover:border-emerald-500/50 hover:bg-white dark:hover:bg-slate-800 transition-all duration-150 cursor-pointer group flex flex-col justify-between"
                                             >
                                                 <div className="space-y-1.5">

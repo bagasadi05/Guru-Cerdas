@@ -131,7 +131,7 @@ export const DropdownTrigger: React.FC<DropdownTriggerProps> = ({ children, clas
         <button
             ref={context.triggerRef}
             type="button"
-            className={`inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500 dark:focus-visible:ring-offset-slate-950 ${className}`}
+            className={`inline-flex items-center justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500 dark:focus-visible:ring-offset-slate-950 ${className}`}
             onClick={handleClick}
             onKeyDown={handleKeyDown}
             aria-haspopup="true"
@@ -181,7 +181,7 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({ children, onClick, c
     return (
         <button type="button"
             className={`
-                group flex w-full items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white
+                group flex w-full items-center text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white
                 focus:outline-none focus-visible:bg-slate-100 focus-visible:dark:bg-slate-800 focus-visible:text-slate-900 focus-visible:dark:text-white
                 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                 ${className}
