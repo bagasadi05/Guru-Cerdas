@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026.10.25",
+    "date": "2026-10-25",
+    "title": "Konektivitas lebih tangguh (anti Lie-Fi), pemuatan dashboard lebih cepat, dan sinkronisasi terpadu",
+    "changes": [
+      { "type": "peningkatan", "text": "Deteksi internet cerdas: aplikasi kini memverifikasi sambungan internet aktif secara otomatis agar tidak keliru menganggap online saat terhubung ke Wi-Fi tanpa internet (Lie-Fi)." },
+      { "type": "peningkatan", "text": "Penyelarasan status offline: seluruh indikator offline dan antrean sinkronisasi kini terhubung ke satu sistem pemantau jaringan yang konsisten." },
+      { "type": "peningkatan", "text": "Pemuatan dashboard lebih cepat: widget peringkat siswa dan modul tur bantuan kini dimuat secara asinkron sehingga halaman utama terbuka lebih gesit." }
+    ]
+  },
+  {
     "id": "2026.10.16",
     "date": "2026-10-16",
     "title": "Perlindungan draf absensi, AI hemat kuota, dan navigasi jadwal lebih ringkas",
