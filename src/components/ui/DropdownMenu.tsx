@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/refs */
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface DropdownMenuProps {
     children: React.ReactNode;
@@ -37,13 +38,14 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({ children }) => {
     const triggerRef = useRef<HTMLButtonElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
 
-    // Close on click outside
+    // Close on click outside (handles mouse and touch)
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
+        const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+            const target = event.target as Element | null;
             if (
                 triggerRef.current &&
                 !triggerRef.current.contains(event.target as Node) &&
-                !(event.target as Element).closest('.dropdown-content')
+                !target?.closest?.('.dropdown-content')
             ) {
                 setIsOpen(false);
             }
@@ -51,13 +53,15 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({ children }) => {
 
         if (isOpen) {
             document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('touchstart', handleClickOutside);
         }
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
         };
     }, [isOpen]);
 
-    // Keyboard: ArrowDown opens menu and focuses first item, ArrowUp/Down navigate items, Esc closes
+    // Keyboard navigation: ArrowDown, ArrowUp, Home, End, Escape
     useEffect(() => {
         if (!isOpen) return;
         const handleKey = (e: KeyboardEvent) => {
@@ -146,15 +150,87 @@ export const DropdownTrigger: React.FC<DropdownTriggerProps> = ({ children, clas
 export const DropdownContent: React.FC<DropdownContentProps> = ({ children, className = '', align = 'right' }) => {
     const context = React.useContext(DropdownContext);
     if (!context) throw new Error('DropdownContent must be used within DropdownMenu');
+    const { isOpen, triggerRef, contentRef, setIsOpen } = context;
 
-    if (!context.isOpen) return null;
+    useLayoutEffect(() => {
+        if (!isOpen) return;
 
-    const alignmentClasses = align === 'right' ? 'right-0 origin-top-right' : 'left-0 origin-top-left';
+        const updatePosition = () => {
+            const trigger = triggerRef.current;
+            const content = contentRef.current;
+            if (!trigger || !content) return;
 
-    return (
+            const rect = trigger.getBoundingClientRect();
+
+            // Detect if running in mock/jsdom environment with zeroed rect
+            const isJsdom = rect.width === 0 && rect.height === 0 && rect.top === 0 && rect.left === 0 && rect.bottom === 0;
+            if (isJsdom) {
+                content.style.top = '0px';
+                content.style.left = '0px';
+                content.style.opacity = '1';
+                content.style.pointerEvents = 'auto';
+                return;
+            }
+
+            const menuWidth = content.offsetWidth || 200;
+            const menuHeight = content.offsetHeight || 160;
+
+            const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 360;
+            const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 640;
+
+            // If trigger scrolled entirely out of view, close menu
+            if (rect.bottom < 0 || rect.top > viewportHeight) {
+                setIsOpen(false);
+                return;
+            }
+
+            // Vertical: below trigger by default, flip above if overflowing viewport bottom
+            let top = rect.bottom + 6;
+            if (top + menuHeight > viewportHeight - 8 && rect.top - menuHeight - 6 > 8) {
+                top = rect.top - menuHeight - 6;
+            }
+
+            // Horizontal: align right or left with safety viewport clamping
+            let left: number;
+            if (align === 'right') {
+                left = rect.right - menuWidth;
+            } else {
+                left = rect.left;
+            }
+
+            // Clamping within viewport prevents truncation/clipping on narrow screens
+            const maxLeft = Math.max(8, viewportWidth - menuWidth - 8);
+            left = Math.min(Math.max(8, left), maxLeft);
+
+            content.style.top = `${top}px`;
+            content.style.left = `${left}px`;
+            content.style.opacity = '1';
+            content.style.pointerEvents = 'auto';
+        };
+
+        updatePosition();
+        window.addEventListener('resize', updatePosition);
+        window.addEventListener('scroll', updatePosition, true);
+
+        return () => {
+            window.removeEventListener('resize', updatePosition);
+            window.removeEventListener('scroll', updatePosition, true);
+        };
+    }, [isOpen, align, triggerRef, contentRef, setIsOpen]);
+
+    if (!isOpen) return null;
+
+    const contentElement = (
         <div
-            ref={context.contentRef}
-            className={`dropdown-content absolute z-50 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-none animate-fade-in-up ${alignmentClasses} ${className}`}
+            ref={contentRef}
+            style={{
+                position: 'fixed',
+                top: '-9999px',
+                left: '-9999px',
+                opacity: 0,
+                pointerEvents: 'none',
+            }}
+            className={`dropdown-content fixed z-[9999] w-56 rounded-md shadow-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-none animate-fade-in-up ${className}`}
             role="menu"
             aria-orientation="vertical"
             aria-labelledby="menu-button"
@@ -165,6 +241,12 @@ export const DropdownContent: React.FC<DropdownContentProps> = ({ children, clas
             </div>
         </div>
     );
+
+    if (typeof document !== 'undefined') {
+        return createPortal(contentElement, document.body);
+    }
+
+    return contentElement;
 };
 
 export const DropdownItem: React.FC<DropdownItemProps> = ({ children, onClick, className = '', icon, disabled = false }) => {
@@ -200,3 +282,5 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({ children, onClick, c
         </button>
     );
 };
+
+export default DropdownMenu;

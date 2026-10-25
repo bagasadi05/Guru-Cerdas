@@ -239,7 +239,7 @@ export const PhWeeklyScheduleView: React.FC<PhWeeklyScheduleViewProps> = ({
                             return (
                                 <article
                                     key={day.dateStr}
-                                    className={`min-w-0 overflow-hidden rounded-2xl border transition-all ${
+                                    className={`min-w-0 rounded-2xl border transition-all ${
                                         isSelectedInMobile ? 'block' : 'hidden md:block'
                                     } ${
                                         day.isToday
@@ -250,7 +250,7 @@ export const PhWeeklyScheduleView: React.FC<PhWeeklyScheduleViewProps> = ({
                                     }`}
                                 >
                                     {/* Day Header */}
-                                    <div className={`flex items-center justify-between gap-2 border-b px-3.5 py-2.5 ${
+                                    <div className={`flex items-center justify-between gap-2 border-b rounded-t-2xl px-3.5 py-2.5 ${
                                         day.isToday
                                             ? 'border-teal-500/20 bg-gradient-to-r from-teal-500/10 via-brand-500/5 to-transparent dark:border-teal-500/20 dark:from-teal-500/15 dark:via-brand-950/30'
                                             : day.holiday
