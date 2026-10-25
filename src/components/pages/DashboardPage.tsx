@@ -25,7 +25,7 @@ import DashboardGreeting from '../dashboard/DashboardGreeting';
 import SemesterTransitionBanner from '../dashboard/SemesterTransitionBanner';
 import GradeAuditWidget from '../dashboard/GradeAuditWidget';
 import FloatingActionButton from '../ui/FloatingActionButton';
-import { LeaderboardCard } from '../gamification/LeaderboardCard';
+
 import TodayActionPanel from '../dashboard/TodayActionPanel';
 import TodayAgendaCard from '../dashboard/TodayAgendaCard';
 import TodayJournalWidget from '../dashboard/TodayJournalWidget';
@@ -34,6 +34,7 @@ import { DashboardAlertStack } from '../dashboard/DashboardAlertStack';
 import { DashboardSection } from '../dashboard/DashboardSection';
 import {
   LazyAttendanceStatsWidget,
+  LazyLeaderboardCard,
   LazyClassAnalyticsSection,
   LazyActivityFeedWidget,
   LazyParentMessagesWidget,
@@ -280,13 +281,15 @@ const DashboardPage: React.FC = () => {
         {data && data.students.length > 0 && (
           <div className={`grid grid-cols-1 ${isLeadershipOnly ? 'lg:grid-cols-1' : 'lg:grid-cols-2'} gap-4 mt-4 items-stretch`}>
             <div className="h-full w-full">
-              <LeaderboardCard
+              <Suspense fallback={<CardSkeleton />}>
+                <LazyLeaderboardCard
                 studentsData={data.students.map((s) => {
                   const className = data.classes.find((c) => c.id === s.class_id)?.name || 'N/A';
                   return transformToGameData(s, className, data.academicRecords, [], [], data.violations);
                 })}
                 classes={data.classes}
               />
+              </Suspense>
             </div>
 
             {!isLeadershipOnly && <DashboardSummaryCards data={data} />}

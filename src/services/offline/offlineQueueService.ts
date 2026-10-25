@@ -2,6 +2,7 @@ import { openDatabase, QUEUE_STORAGE_KEY, MAX_RETRIES, RETRY_DELAYS } from './en
 import { logger } from '../logger';
 import { storageGetJSON, storageSetJSON } from '../../utils/storage';
 import { supabase } from '../supabase';
+import { networkConnectivity } from '../networkConnectivity';
 import type {
     QueueItem,
     SyncResult,
@@ -63,12 +64,12 @@ class OfflineQueueService {
     }
 
     private setupOnlineListener(): void {
-        if (typeof window !== 'undefined') {
-            window.addEventListener('online', () => {
+        networkConnectivity.subscribe((online) => {
+            if (online) {
                 logger.info('Connection restored, starting sync', 'OfflineQueue');
                 this.processQueue();
-            });
-        }
+            }
+        });
     }
 
     private notifyListeners(): void {
@@ -112,7 +113,7 @@ class OfflineQueueService {
         logger.info(`Added to offline queue: ${type} ${table}`, 'OfflineQueue', { id });
 
         // Try to sync if online
-        if (navigator.onLine) {
+        if (networkConnectivity.isOnline()) {
             this.processQueue();
         }
 
@@ -237,7 +238,7 @@ class OfflineQueueService {
     }
 
     private async handleSyncError(item: QueueItem<Record<string, unknown>>, error: Error | { message?: string }): Promise<void> {
-        const errCode = (error as any)?.code;
+        const errCode = (error as { code?: string })?.code;
         const errMsg = error.message || '';
         const isSessionIssue = errCode === 'SESSION_NULL' || errCode === 'SESSION_EXPIRED' || errCode === 'USER_MISMATCH' || errCode === 'USER_AMBIGUOUS';
 

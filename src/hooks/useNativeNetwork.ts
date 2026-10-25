@@ -1,70 +1,47 @@
 import { useState, useEffect, useCallback } from 'react';
-import { logger } from '../services/logger';
+import { networkConnectivity, type ConnectionType } from '../services/networkConnectivity';
 
 /**
  * Network status hook for PWA / web browsers.
- * Uses browser online/offline events and navigator.onLine.
+ * Uses networkConnectivity service with Lie-Fi protection.
  */
 export interface NetworkState {
     isConnected: boolean;
-    connectionType: string;
+    connectionType: ConnectionType;
     wasOffline: boolean;
 }
 
 export const useNativeNetwork = () => {
     const [state, setState] = useState<NetworkState>(() => {
-        const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+        const isOnline = networkConnectivity.isOnline();
         return {
             isConnected: isOnline,
-            connectionType: isOnline ? 'wifi' : 'none',
-            wasOffline: !isOnline
+            connectionType: networkConnectivity.getConnectionType(),
+            wasOffline: !isOnline,
         };
     });
 
     const checkConnection = useCallback(() => {
-        const isOnline = navigator.onLine;
-        setState(prev => ({
-            isConnected: isOnline,
-            connectionType: isOnline ? 'wifi' : 'none',
-            wasOffline: !isOnline ? true : prev.wasOffline
-        }));
+        void networkConnectivity.checkConnectivity(true);
     }, []);
 
     useEffect(() => {
-
-        const handleOnline = () => {
-            logger.info('Network status changed', 'Network', { connected: true });
-            setState(prev => ({
-                ...prev,
-                isConnected: true,
-                connectionType: 'wifi'
+        const unsubscribe = networkConnectivity.subscribe((online) => {
+            setState((prev) => ({
+                isConnected: online,
+                connectionType: networkConnectivity.getConnectionType(),
+                wasOffline: !online ? true : prev.wasOffline,
             }));
-        };
+        });
 
-        const handleOffline = () => {
-            logger.info('Network status changed', 'Network', { connected: false });
-            setState(prev => ({
-                ...prev,
-                isConnected: false,
-                connectionType: 'none',
-                wasOffline: true
-            }));
-        };
+        return unsubscribe;
+    }, []);
 
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
-
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
-    }, [checkConnection]);
-
-    // Reset wasOffline after reconnection
+    // Reset wasOffline 5 seconds after reconnection
     useEffect(() => {
         if (state.isConnected && state.wasOffline) {
             const timer = setTimeout(() => {
-                setState(prev => ({ ...prev, wasOffline: false }));
+                setState((prev) => ({ ...prev, wasOffline: false }));
             }, 5000);
             return () => clearTimeout(timer);
         }
@@ -72,7 +49,7 @@ export const useNativeNetwork = () => {
 
     return {
         ...state,
-        refresh: checkConnection
+        refresh: checkConnection,
     };
 };
 

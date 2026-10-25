@@ -6,7 +6,7 @@ import { usePushClickNavigation } from '../hooks/usePushClickNavigation';
 import { useAuth } from '../hooks/useAuth';
 import PageTransition from './ui/PageTransition';
 import { supabase } from '../services/supabase';
-import { useOnboarding } from './ui/OnboardingTour';
+import { useOnboarding } from '../hooks/useOnboarding';
 import { SearchTrigger } from './SearchTrigger';
 import { SkipLinks } from './AccessibilityComponents';
 import { UploadProgressIndicator } from './ui/PerformanceIndicators';

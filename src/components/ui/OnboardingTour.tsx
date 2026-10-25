@@ -399,31 +399,6 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ onComplete, isOp
     );
 };
 
-// Hook to manage onboarding state
-export const useOnboarding = () => {
-    const [showTour, setShowTour] = useState(false);
 
-    useEffect(() => {
-        // Check if onboarding has been completed
-        const completed = localStorage.getItem('onboarding_completed');
-        if (!completed) {
-            // Delay showing tour to let page load
-            const timer = setTimeout(() => setShowTour(true), 1500);
-            return () => clearTimeout(timer);
-        }
-    }, []);
-
-    const startTour = () => {
-        localStorage.removeItem('onboarding_completed');
-        setShowTour(true);
-    };
-    const endTour = () => setShowTour(false);
-    const resetTour = () => {
-        localStorage.removeItem('onboarding_completed');
-        setShowTour(true);
-    };
-
-    return { showTour, startTour, endTour, resetTour };
-};
 
 export default OnboardingTour;

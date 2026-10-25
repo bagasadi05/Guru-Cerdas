@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
+import { networkConnectivity } from '../services/networkConnectivity';
 
 /**
  * Custom hook for monitoring the browser's online/offline status
  * 
- * Tracks the network connectivity status of the browser and provides real-time updates
- * when the connection state changes. This is useful for implementing offline-first features,
- * showing connectivity indicators, or disabling network-dependent features when offline.
- * 
- * The hook listens to the browser's 'online' and 'offline' events and updates the state accordingly.
- * On initial mount, it checks the current navigator.onLine status.
+ * Tracks real network connectivity status with Lie-Fi protection
+ * (verifies actual HTTP WAN reachability when connected to Wi-Fi/cellular).
  * 
  * @returns Boolean indicating whether the browser is currently online (true) or offline (false)
  * 
@@ -18,63 +15,20 @@ import { useState, useEffect } from 'react';
  * 
  * function NetworkIndicator() {
  *   const isOnline = useOfflineStatus();
- * 
- *   return (
- *     <div>
- *       {isOnline ? (
- *         <span className="text-green-500">Connected</span>
- *       ) : (
- *         <span className="text-red-500">Offline</span>
- *       )}
- *     </div>
- *   );
- * }
- * ```
- * 
- * @example
- * ```typescript
- * // Disable form submission when offline
- * function MyForm() {
- *   const isOnline = useOfflineStatus();
- * 
- *   const handleSubmit = (e) => {
- *     e.preventDefault();
- *     if (!isOnline) {
- *       alert('Cannot submit while offline');
- *       return;
- *     }
- *     // Submit form...
- *   };
- * 
- *   return (
- *     <form onSubmit={handleSubmit}>
- *       <button type="submit" disabled={!isOnline}>
- *         Submit
- *       </button>
- *     </form>
- *   );
+ *   return <span>{isOnline ? 'Online' : 'Offline'}</span>;
  * }
  * ```
  * 
  * @since 1.0.0
  */
-export const useOfflineStatus = () => {
-  const [isOnline, setIsOnline] = useState(() =>
-    typeof navigator !== 'undefined' ? navigator.onLine : true
-  );
+export const useOfflineStatus = (): boolean => {
+  const [isOnline, setIsOnline] = useState<boolean>(() => networkConnectivity.isOnline());
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
+    return networkConnectivity.subscribe(setIsOnline);
   }, []);
 
   return isOnline;
 };
+
+export default useOfflineStatus;
