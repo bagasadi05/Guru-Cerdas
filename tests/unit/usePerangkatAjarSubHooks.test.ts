@@ -30,16 +30,25 @@ describe('usePerangkatAjarSubHooks', () => {
       const rememberForUndo = vi.fn();
 
       const rme: RmeSummary = {
+        semesterNumber: 1,
         totalWeeks: 18,
         effectiveWeeks: 16,
-        allocatedWeeks: 14,
-        reserveWeeks: 2,
-        examWeeks: 2,
-        holidayWeeks: 0,
-        otherWeeks: 0,
-        totalJp: 64,
-        allocatedJp: 56,
+        nonEffectiveWeeks: 2,
+        nonEffectiveBreakdown: {
+          KBM: 16,
+          MPLS: 1,
+          STS: 1,
+          SAS: 0,
+          RAPOR: 0,
+          LIBUR_SEMESTER: 0,
+          LIBUR_NASIONAL: 0,
+          KEGIATAN_KHUSUS: 0,
+          NON_ACTIVE: 0,
+        },
+        weeklyJpQuota: 4,
+        totalAvailableJp: 64,
         reserveJp: 8,
+        netTeachingJp: 56,
       };
 
       const { result } = renderHook(() =>
@@ -58,11 +67,12 @@ describe('usePerangkatAjarSubHooks', () => {
 
       act(() => {
         result.current.handleAddProtaItem({
-          semester: 1,
-          chapterNumber: 'Bab 1',
-          topic: 'Bilangan Cacah',
-          subTopics: ['Membaca bilangan'],
-          allocatedJp: 8,
+          semesterNumber: 1,
+          elementOrDomain: 'Bilangan',
+          learningObjectiveCode: 'TP 1.1',
+          learningObjectiveText: 'Membaca dan menulis bilangan cacah sampai 10.000',
+          coreTopic: 'Bilangan Cacah',
+          targetJp: 8,
         });
       });
 
