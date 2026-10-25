@@ -898,8 +898,8 @@ describe('bintangPdfGenerator', () => {
         expect(mengetahuiCall).toBeDefined();
         expect(parentRoleCall).toBeDefined();
 
-        const teacherClearance = Number(teacherCall[2]) - Number(dateCall[2]);
-        const parentClearance = Number(parentRoleCall[2]) - Number(mengetahuiCall[2]);
+        const teacherClearance = Number(teacherCall![2]) - Number(dateCall![2]);
+        const parentClearance = Number(parentRoleCall![2]) - Number(mengetahuiCall![2]);
 
         // At least 20mm clearance between date and teacher name
         expect(teacherClearance).toBeGreaterThanOrEqual(20);

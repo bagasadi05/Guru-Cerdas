@@ -6,9 +6,7 @@ import { announcementTemplates } from './constants';
 import React from 'react';
 
 // Mock Lucide icons
-vi.mock('lucide-react', () => ({
-    Loader2: () => <div data-testid="loader-icon">Loading</div>,
-}));
+vi.mock('lucide-react', async (importOriginal) => { const actual = await importOriginal<Record<string, unknown>>(); return { ...actual, Loader2: () => <div data-testid="loader-icon">Loading</div> }; });
 
 describe('Admin Module - StatCard Component', () => {
     it('renders with correct label and value', () => {
