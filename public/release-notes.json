@@ -7,7 +7,8 @@
       { "type": "peningkatan", "text": "Deteksi internet cerdas: aplikasi kini memverifikasi sambungan internet aktif secara otomatis agar tidak keliru menganggap online saat terhubung ke Wi-Fi tanpa internet (Lie-Fi)." },
       { "type": "peningkatan", "text": "Penyelarasan status offline: seluruh indikator offline dan antrean sinkronisasi kini terhubung ke satu sistem pemantau jaringan yang konsisten." },
       { "type": "peningkatan", "text": "Pemuatan dashboard lebih cepat: widget peringkat siswa dan modul tur bantuan kini dimuat secara asinkron sehingga halaman utama terbuka lebih gesit." },
-      { "type": "perbaikan", "text": "Menu aksi jadwal (Edit, Duplikasi, Hapus) pada kartu jadwal mingguan kini tidak lagi terpotong oleh batas kolom atau tepi layar." }
+      { "type": "perbaikan", "text": "Menu aksi jadwal (Edit, Duplikasi, Hapus) pada kartu jadwal mingguan kini tidak lagi terpotong oleh batas kolom atau tepi layar." },
+      { "type": "perbaikan", "text": "Informasi jumlah siswa dan rata-rata nilai pada kartu jadwal kini membungkus rapi (wrap) dan label tombol aksi tidak lagi terpotong ('Lihat Nilai')." }
     ]
   },
   {
