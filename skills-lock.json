@@ -49,6 +49,12 @@
       "skillPath": "skills/in-progress/claude-handoff/SKILL.md",
       "computedHash": "42f1977fa8db92811d5d3d535d80d027c236849fbcbc120049a208731d63a2e1"
     },
+    "clean-architecture": {
+      "source": "nathankim0/clean-architecture-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/clean-architecture/skills/clean-architecture/SKILL.md",
+      "computedHash": "2fb4c313b1ecc38d48da9fc7c2705aee3d2d641eba738674fabc84de219f0183"
+    },
     "code-review": {
       "source": "mattpocock/skills",
       "sourceType": "github",
@@ -115,6 +121,12 @@
       "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
       "computedHash": "3929c6892605b67b60503ced451876e9b313d1a909ab7066fbcd9967c56ed226"
     },
+    "kent-beck-style": {
+      "source": "nathankim0/clean-architecture-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/kent-beck-style/skills/kent-beck-style/SKILL.md",
+      "computedHash": "546ec88461c2e4acbfe78a49a7a3340740f66d2400ed2f49e2b848c8cf12dcb7"
+    },
     "loop-me": {
       "source": "mattpocock/skills",
       "sourceType": "github",
@@ -168,6 +180,18 @@
       "sourceType": "github",
       "skillPath": "skills/in-progress/setup-ts-deep-modules/SKILL.md",
       "computedHash": "6dbd0830059a887ca6206dfa8c24baf7e28be7321471d2b899887fff9b77e34f"
+    },
+    "supabase": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase/SKILL.md",
+      "computedHash": "af1844ade632808fc0c15cf2db87daf3b2431c5262dc8a0c3ea7d70880fadf91"
+    },
+    "supabase-postgres-best-practices": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase-postgres-best-practices/SKILL.md",
+      "computedHash": "128fac78002d916c8ca908245d398e634f540d8bcf20915b2b2359aeb18eba59"
     },
     "tdd": {
       "source": "mattpocock/skills",

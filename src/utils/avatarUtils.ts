@@ -20,9 +20,20 @@ const hashString = (value: string) => {
     return Math.abs(hash);
 };
 
+const isUuidLike = (value?: string | null) => {
+    if (!value) return false;
+    const trimmed = value.trim();
+    return (
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed) ||
+        /^[0-9a-f]{16,}$/i.test(trimmed)
+    );
+};
+
 const getInitials = (name?: string | null) => {
-    const words = (name || 'Siswa')
-        .trim()
+    const raw = (name || '').trim();
+    if (!raw || isUuidLike(raw)) return 'S';
+
+    const words = raw
         .split(/\s+/)
         .filter(Boolean);
 
@@ -37,28 +48,40 @@ const createLocalAvatar = (options: {
 }) => {
     const isMale = options.gender === 'Laki-laki' || options.gender === 'L';
     const seed = options.seed || options.name || 'student';
+    const gradId = `av_${hashString(seed)}_${isMale ? 'm' : 'f'}`;
+
+    // Modern, vibrant premium gradients
     const palettes = isMale
         ? [
-            ['#dbeafe', '#2563eb', '#0f172a'],
-            ['#dcfce7', '#16a34a', '#052e16'],
-            ['#e0f2fe', '#0284c7', '#082f49'],
+            ['#0d9488', '#059669'], // Teal -> Emerald
+            ['#0284c7', '#2563eb'], // Sky -> Blue
+            ['#6366f1', '#4f46e5'], // Indigo -> Deep Violet
+            ['#0891b2', '#0369a1'], // Cyan -> Marine
         ]
         : [
-            ['#fce7f3', '#db2777', '#500724'],
-            ['#fae8ff', '#a21caf', '#581c87'],
-            ['#ffe4e6', '#e11d48', '#4c0519'],
+            ['#f43f5e', '#be123c'], // Rose -> Crimson
+            ['#d946ef', '#9333ea'], // Fuchsia -> Violet
+            ['#ec4899', '#be185d'], // Pink -> Magenta
+            ['#f59e0b', '#e11d48'], // Amber -> Sunset Rose
         ];
-    const [background, accent, text] = palettes[hashString(seed) % palettes.length];
-    const initials = getInitials(options.name || seed);
+
+    const [color1, color2] = palettes[hashString(seed) % palettes.length];
+    const displayName = options.name && !isUuidLike(options.name) ? options.name : null;
+    const initials = getInitials(displayName || (isUuidLike(seed) ? null : seed));
     const escapedInitials = initials.replace(/[<>&"']/g, '');
+
     const svg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" role="img" aria-label="${escapedInitials}">
-  <rect width="160" height="160" rx="80" fill="${background}"/>
-  <circle cx="122" cy="36" r="24" fill="${accent}" opacity="0.18"/>
-  <circle cx="38" cy="126" r="32" fill="${accent}" opacity="0.14"/>
-  <circle cx="80" cy="62" r="30" fill="${accent}" opacity="0.22"/>
-  <path d="M35 132c8-28 27-44 45-44s37 16 45 44" fill="${accent}" opacity="0.25"/>
-  <text x="80" y="94" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="44" font-weight="800" fill="${text}">${escapedInitials}</text>
+  <defs>
+    <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="${color1}" />
+      <stop offset="100%" stop-color="${color2}" />
+    </linearGradient>
+  </defs>
+  <rect width="160" height="160" rx="80" fill="url(#${gradId})"/>
+  <circle cx="126" cy="34" r="30" fill="#ffffff" opacity="0.14"/>
+  <circle cx="34" cy="130" r="38" fill="#ffffff" opacity="0.08"/>
+  <text x="80" y="98" text-anchor="middle" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="50" font-weight="700" fill="#ffffff" letter-spacing="1">${escapedInitials}</text>
 </svg>`.trim();
 
     return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;

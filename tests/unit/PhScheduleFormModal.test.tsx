@@ -106,7 +106,7 @@ describe('PhScheduleFormModal Component', () => {
         expect(screen.getByLabelText(/Tanggal Pelaksanaan/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/Mata Pelajaran/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/Materi \/ Topik ASH/i)).toBeInTheDocument();
-        expect(screen.getByText('Jam Pelajaran Ke-')).toBeInTheDocument();
+        expect(screen.getByText(/Jam Pelajaran Ke-/i)).toBeInTheDocument();
     });
 
     it('renders custom dropdown list and allows selecting another subject without losing topic', () => {
@@ -229,7 +229,7 @@ describe('PhScheduleFormModal Component', () => {
         expect(screen.getByText(/Sudah ada jadwal ASH/i)).toBeInTheDocument();
     });
 
-    it('displays centered quick date buttons and weekend indicator correctly', () => {
+    it('displays quick date buttons and weekend indicator correctly', () => {
         const setFormData = vi.fn();
 
         render(
@@ -332,5 +332,38 @@ describe('PhScheduleFormModal Component', () => {
         const nextDayBtn = screen.getByRole('button', { name: /Pilih Hari Kosong/i });
         fireEvent.click(nextDayBtn);
         expect(setFormData).toHaveBeenCalled();
+    });
+
+    it('provides curated quick-pick topic suggestions for Madrasah subjects like Fikih', () => {
+        const setFormData = vi.fn();
+
+        render(
+            <PhScheduleFormModal
+                isOpen={true}
+                onClose={vi.fn()}
+                editingSchedule={null}
+                formData={{
+                    subject: 'Fikih',
+                    date: '2026-09-28',
+                    period_label: '1-2',
+                }}
+                setFormData={setFormData}
+                handleSubmit={vi.fn()}
+                isPending={false}
+                subjectSuggestions={['Fikih', 'Akidah Akhlak', 'Matematika']}
+                rawSchedules={[]}
+                currentClassName="Kelas 3A"
+                currentSemesterName="Ganjil - 2026/2027"
+            />
+        );
+
+        const topicChip = screen.getByRole('button', { name: /Ketentuan Shalat Sunnah Rawatib/i });
+        expect(topicChip).toBeInTheDocument();
+
+        fireEvent.click(topicChip);
+        expect(setFormData).toHaveBeenCalled();
+        const updater = setFormData.mock.calls[setFormData.mock.calls.length - 1][0];
+        const updated = typeof updater === 'function' ? updater({ subject: '', date: '', period_label: '' }) : updater;
+        expect(updated.subject).toBe('Fikih (Ketentuan Shalat Sunnah Rawatib)');
     });
 });

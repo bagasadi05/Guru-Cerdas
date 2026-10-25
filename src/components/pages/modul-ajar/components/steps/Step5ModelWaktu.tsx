@@ -47,7 +47,19 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
   adjustInti,
   adjustPenutup,
 }) => {
-  const [activeCategoryTab, setActiveCategoryTab] = React.useState<ModelCategory>('hots');
+  const selectedModelObj = LEARNING_MODELS.find(
+    m => m.id === formState.selectedModelId || m.nama === formState.modelPembelajaran
+  );
+
+  const [activeCategoryTab, setActiveCategoryTab] = React.useState<ModelCategory>(
+    selectedModelObj?.kategori || 'hots'
+  );
+
+  React.useEffect(() => {
+    if (selectedModelObj?.kategori) {
+      setActiveCategoryTab(selectedModelObj.kategori);
+    }
+  }, [selectedModelObj?.kategori]);
 
   const totalMeetingMinutes = (formState.jpPerPertemuan || 2) * (formState.durasiPerJp || 35);
   const currentAllocatedSum = (formState.alokasiPendahuluan || 0) + (formState.alokasiInti || 0) + (formState.alokasiPenutup || 0);
@@ -56,10 +68,6 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
   const pctPendahuluan = Math.round(((formState.alokasiPendahuluan || 0) / (totalMeetingMinutes || 1)) * 100);
   const pctInti = Math.round(((formState.alokasiInti || 0) / (totalMeetingMinutes || 1)) * 100);
   const pctPenutup = Math.round(((formState.alokasiPenutup || 0) / (totalMeetingMinutes || 1)) * 100);
-
-  const selectedModelObj = LEARNING_MODELS.find(
-    m => m.id === formState.selectedModelId || m.nama === formState.modelPembelajaran
-  );
 
   const handleSelectRubrik = (templates: RefRubrikTemplate[]) => {
     const mapped: RubrikRow[] = templates.map(tmpl => ({
@@ -81,96 +89,14 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
       </div>
       
       <div className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Jumlah Pertemuan (KBM)</label>
-            <input 
-              type="number" 
-              value={formState.jumlahPertemuan}
-              onChange={(e) => onChange('jumlahPertemuan', parseInt(e.target.value) || 1)}
-              className="w-full p-2.5 rounded-lg border border-slate-200 text-sm text-center dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Jam Pelajaran (JP) / Pertemuan</label>
-            <input 
-              type="number" 
-              value={formState.jpPerPertemuan}
-              onChange={(e) => onChange('jpPerPertemuan', parseInt(e.target.value) || 1)}
-              className="w-full p-2.5 rounded-lg border border-slate-200 text-sm text-center dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Durasi 1 JP (Menit)</label>
-            <input 
-              type="number" 
-              value={formState.durasiPerJp}
-              onChange={(e) => onChange('durasiPerJp', parseInt(e.target.value) || 35)}
-              className="w-full p-2.5 rounded-lg border border-slate-200 text-sm text-center dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-            />
-          </div>
-        </div>
-
-        {/* Pilihan Ukuran Kertas Cetak & Dokumen */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-            Pilihan Ukuran Kertas Dokumen
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { id: 'A4', label: '📄 A4 (210 × 297 mm)', desc: 'Standar Nasional & Printer Biasa' },
-              { id: 'F4', label: '📑 F4 / Folio (215 × 330 mm)', desc: 'Format Populer Arsip Perangkat Guru' }
-            ].map(paper => (
-              <button
-                key={paper.id}
-                type="button"
-                onClick={() => onChange('paperSize', paper.id)}
-                className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
-                  (formState.paperSize || 'A4') === paper.id
-                    ? 'bg-brand-50 border-brand-500 text-brand-700 dark:bg-brand-950/40 dark:border-brand-500 dark:text-brand-300 shadow-xs'
-                    : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:border-slate-300'
-                }`}
-              >
-                <div className="text-xs font-bold">{paper.label}</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{paper.desc}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Pendekatan Pembelajaran */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Fokus Pendekatan Pembelajaran</label>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { id: 'Student Centered', label: 'Student Centered', desc: 'Berpusat pada keaktifan dan eksplorasi siswa' },
-              { id: 'Teacher Centered', label: 'Teacher Centered', desc: 'Berpusat pada pengarahan dan bimbingan guru' }
-            ].map(p => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => onChange('pendekatanPembelajaran', p.id)}
-                className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
-                  (formState.pendekatanPembelajaran || 'Student Centered') === p.id
-                    ? 'bg-brand-50 border-brand-500 text-brand-700 dark:bg-brand-950/40 dark:border-brand-500 dark:text-brand-300 shadow-xs'
-                    : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:border-slate-300'
-                }`}
-              >
-                <div className="text-xs font-bold">{p.label}</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400">{p.desc}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Categorized Model Picker */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-1.5">
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
               Model Pembelajaran & Sintaks (Langkah Kegiatan)
             </label>
-            <span className="text-[10px] text-brand-600 dark:text-brand-400 font-semibold bg-brand-50 dark:bg-brand-950/50 px-2 py-0.5 rounded">
-              Pilihan Model
+            <span className="text-[10px] text-brand-700 dark:text-brand-300 font-bold bg-brand-50 dark:bg-brand-950/50 px-2.5 py-0.5 rounded-full">
+              {formState.modelPembelajaran ? `Terpilih: ${formState.modelPembelajaran}` : 'Pilih Model'}
             </span>
           </div>
 
@@ -209,7 +135,8 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
                     onChange('selectedModelId', model.id);
                     onChange('modelPembelajaran', model.nama);
                   }}
-                  className={`p-3 rounded-xl border text-left transition-all relative ${
+                  aria-pressed={isSelected}
+                  className={`p-3 rounded-xl border text-left transition-all relative cursor-pointer ${
                     isSelected
                       ? 'bg-brand-600 text-white border-brand-600 shadow-md'
                       : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-brand-400'
@@ -270,6 +197,31 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
           )}
         </div>
 
+        {/* Pendekatan Pembelajaran */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Fokus Pendekatan Pembelajaran</label>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { id: 'Student Centered', label: 'Student Centered', desc: 'Berpusat pada keaktifan dan eksplorasi siswa' },
+              { id: 'Teacher Centered', label: 'Teacher Centered', desc: 'Berpusat pada pengarahan dan bimbingan guru' }
+            ].map(p => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => onChange('pendekatanPembelajaran', p.id)}
+                className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                  (formState.pendekatanPembelajaran || 'Student Centered') === p.id
+                    ? 'bg-brand-50 border-brand-500 text-brand-700 dark:bg-brand-950/40 dark:border-brand-500 dark:text-brand-300 shadow-xs'
+                    : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:border-slate-300'
+                }`}
+              >
+                <div className="text-xs font-bold">{p.label}</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400">{p.desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Metode Pembelajaran */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 font-medium">
@@ -304,6 +256,37 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
               </div>
             </div>
           )}
+        </div>
+
+        {/* Jumlah Pertemuan, JP & Durasi */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Jumlah Pertemuan (KBM)</label>
+            <input 
+              type="number" 
+              value={formState.jumlahPertemuan}
+              onChange={(e) => onChange('jumlahPertemuan', parseInt(e.target.value) || 1)}
+              className="w-full p-2.5 rounded-lg border border-slate-200 text-sm text-center dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Jam Pelajaran (JP) / Pertemuan</label>
+            <input 
+              type="number" 
+              value={formState.jpPerPertemuan}
+              onChange={(e) => onChange('jpPerPertemuan', parseInt(e.target.value) || 1)}
+              className="w-full p-2.5 rounded-lg border border-slate-200 text-sm text-center dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Durasi 1 JP (Menit)</label>
+            <input 
+              type="number" 
+              value={formState.durasiPerJp}
+              onChange={(e) => onChange('durasiPerJp', parseInt(e.target.value) || 35)}
+              className="w-full p-2.5 rounded-lg border border-slate-200 text-sm text-center dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+            />
+          </div>
         </div>
 
         {/* Smart Time Calculator & Visual Time Allocator Card */}
@@ -420,6 +403,33 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
                 className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-600"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Pilihan Ukuran Kertas Cetak & Dokumen */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            Pilihan Ukuran Kertas Dokumen
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { id: 'A4', label: '📄 A4 (210 × 297 mm)', desc: 'Standar Nasional & Printer Biasa' },
+              { id: 'F4', label: '📑 F4 / Folio (215 × 330 mm)', desc: 'Format Populer Arsip Perangkat Guru' }
+            ].map(paper => (
+              <button
+                key={paper.id}
+                type="button"
+                onClick={() => onChange('paperSize', paper.id)}
+                className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                  (formState.paperSize || 'A4') === paper.id
+                    ? 'bg-brand-50 border-brand-500 text-brand-700 dark:bg-brand-950/40 dark:border-brand-500 dark:text-brand-300 shadow-xs'
+                    : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 hover:border-slate-300'
+                }`}
+              >
+                <div className="text-xs font-bold">{paper.label}</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">{paper.desc}</div>
+              </button>
+            ))}
           </div>
         </div>
 

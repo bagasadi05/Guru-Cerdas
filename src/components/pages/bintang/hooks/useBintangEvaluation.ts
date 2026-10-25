@@ -467,7 +467,9 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
 
             setIsGenerating(true);
             try {
+                const now = new Date().toISOString();
                 const evalInserts = targets.map(student => ({
+                    updated_at: now,
                     student_id: student.id,
                     month: selectedMonth,
                     evaluator_id: user.id,

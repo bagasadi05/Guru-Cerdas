@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
+import { CheckCircle2, AlertCircle, BellRing, UserCheck } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { usePhScheduleDomain } from './engine/usePhScheduleDomain';
 import { PhScheduleEngine, type ExamStatus } from './engine/PhScheduleEngine';
@@ -137,18 +138,25 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
 
     const handleInputNilai = useCallback(
         (item: PhScheduleRow) => {
+            const gradeStatus = domain.gradeStatusById.get(item.id);
+            const dynamicAssessmentName =
+                gradeStatus?.assessmentName ||
+                PhScheduleEngine.getAssessmentSequenceName(item, domain.rawSchedules);
+
             navigate('/input-massal', {
                 state: {
                     prefill: {
                         mode: 'subject_grade',
                         classId: item.class_id,
                         subject: parseSubjectString(item.subject).baseSubject || item.subject,
-                        assessment_name: 'PH 1', notes: parseSubjectString(item.subject).topic || '', semester: item.semester_id,
+                        assessment_name: dynamicAssessmentName,
+                        notes: parseSubjectString(item.subject).topic || '',
+                        semester: item.semester_id,
                     },
                 },
             });
         },
-        [navigate]
+        [navigate, domain.gradeStatusById, domain.rawSchedules]
     );
 
     const isPending = domain.createMutation.isPending || domain.updateMutation.isPending;
@@ -165,6 +173,55 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
     return (
         <div className="space-y-4 sm:space-y-6 animate-fade-in">
             <PhScheduleToolbar domain={domain} onPrint={handleTriggerPrint} />
+
+            {/* Homeroom / External Teacher Notification Banner */}
+            {domain.newExternalSchedules.length > 0 && (
+                <div
+                    role="status"
+                    className="rounded-2xl border border-indigo-200 bg-indigo-50/90 p-4 shadow-xs dark:border-indigo-500/30 dark:bg-indigo-950/35 flex flex-col sm:flex-row sm:items-start justify-between gap-3"
+                >
+                    <div className="flex items-start gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-xs">
+                            <BellRing className="h-4 w-4 animate-pulse" aria-hidden />
+                        </div>
+                        <div className="space-y-1 text-xs sm:text-sm">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <h4 className="font-bold text-indigo-950 dark:text-indigo-100">
+                                    {domain.isHomeroomForSelectedClass
+                                        ? `Info Wali Kelas: ${domain.newExternalSchedules.length} Jadwal ASH Baru dari Guru Mapel`
+                                        : `${domain.newExternalSchedules.length} Jadwal ASH Baru Ditambahkan Guru Lain`}
+                                </h4>
+                                <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                                    Baru
+                                </span>
+                            </div>
+                            <ul className="list-disc list-inside text-indigo-900 dark:text-indigo-200 space-y-0.5">
+                                {domain.newExternalSchedules.slice(0, 4).map((ext) => (
+                                    <li key={ext.id}>
+                                        <strong>{ext.subject}</strong> — {PhScheduleEngine.formatDateHeading(ext.date)} (Jam ke-{ext.period_label})
+                                    </li>
+                                ))}
+                                {domain.newExternalSchedules.length > 4 && (
+                                    <li className="italic">
+                                        +{domain.newExternalSchedules.length - 4} jadwal lainnya di kelas {domain.currentClassName}
+                                    </li>
+                                )}
+                            </ul>
+                        </div>
+                    </div>
+                    <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={domain.acknowledgeNewSchedules}
+                        className="shrink-0 self-end sm:self-center border-indigo-300 bg-white text-xs font-semibold text-indigo-800 hover:bg-indigo-100 dark:border-indigo-700 dark:bg-slate-900 dark:text-indigo-200 dark:hover:bg-indigo-900/50"
+                    >
+                        <UserCheck className="mr-1.5 h-3.5 w-3.5" />
+                        Tandai Sudah Dilihat
+                    </Button>
+                </div>
+            )}
+
             {!domain.isLoadingSchedules && !domain.loadError && domain.nextUpcomingPh && (
                 <section aria-label="ASH berikutnya" className="flex flex-wrap items-center justify-between gap-x-2.5 gap-y-1.5 rounded-2xl border border-brand-200/80 bg-brand-50/70 px-3.5 py-2.5 text-xs sm:text-sm dark:border-brand-800/60 dark:bg-brand-950/30">
                     <span className="order-1 shrink-0 rounded-lg bg-brand-700 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white dark:bg-brand-600">ASH berikutnya</span>
@@ -190,6 +247,22 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                             {domain.scheduleAnomalies.conflicts.map((c, i) => (
                                 <li key={i}>
                                     Tanggal <strong>{PhScheduleEngine.formatDateHeading(c.date)}</strong> (Jam {c.period}): {c.subjects.join(' dan ')} dijadwalkan bersamaan.
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            )}
+
+            {domain.scheduleAnomalies.holidaySchedules.length > 0 && (
+                <div className="bg-amber-50 dark:bg-amber-500/10 rounded-2xl border border-amber-200 dark:border-amber-500/20 p-4 flex items-start gap-3">
+                    <AlertTriangleIcon className="w-5 h-5 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden />
+                    <div className="space-y-1 text-sm text-amber-900 dark:text-amber-200">
+                        <p className="font-semibold">Jadwal ASH bertepatan dengan Hari Libur / Cuti Bersama (Kaldik)</p>
+                        <ul className="list-inside list-disc space-y-0.5">
+                            {domain.scheduleAnomalies.holidaySchedules.map((h) => (
+                                <li key={h.id}>
+                                    <strong>{PhScheduleEngine.formatDateHeading(h.date)}</strong> ({h.kind === 'CUTI' ? 'Cuti Bersama' : 'Libur Nasional'}: {h.holidayName}): {h.subject}
                                 </li>
                             ))}
                         </ul>
@@ -265,13 +338,28 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                     onDuplicate={domain.handleDuplicate}
                     onDelete={(item) => domain.setDeleteConfirm(item)}
                     onInputNilai={handleInputNilai}
+                    gradeStatusById={domain.gradeStatusById}
+                    isCreatedByOtherTeacher={domain.isCreatedByOtherTeacher}
+                    isNewlyAddedByOtherTeacher={domain.isNewlyAddedByOtherTeacher}
                 />
             ) : domain.filteredSchedules.length === 0 ? (
                 <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-8 text-center dark:border-slate-800 dark:bg-slate-900">
                     <SearchIcon className="mx-auto h-8 w-8 text-slate-400" aria-hidden />
                     <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Tidak ada jadwal yang cocok</p>
                     <p className="text-sm text-slate-600 dark:text-slate-400">Kata kunci atau filter di atas menyaring semua jadwal. Hapus filter untuk melihat {domain.rawSchedules.length} ASH di kelas ini.</p>
-                    <Button type="button" variant="outline" className="min-h-11" onClick={() => { domain.setSearchQuery(''); domain.setStatusFilter('all'); domain.setSelectedMonth('all'); }}>Hapus filter</Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="min-h-11"
+                        onClick={() => {
+                            domain.setSearchQuery('');
+                            domain.setStatusFilter('all');
+                            domain.setSelectedMonth('all');
+                            domain.setSelectedSubject('all');
+                        }}
+                    >
+                        Hapus filter
+                    </Button>
                 </div>
             ) : domain.viewMode === 'table' ? (
                 /* Table View */
@@ -283,7 +371,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                     <th className="py-3 px-3.5 sm:px-4">Tanggal & Waktu</th>
                                     <th className="py-3 px-3.5 sm:px-4">Mata Pelajaran & Materi</th>
                                     <th className="py-3 px-3.5 sm:px-4">Jam Ke-</th>
-                                    <th className="py-3 px-3.5 sm:px-4">Status</th>
+                                    <th className="py-3 px-3.5 sm:px-4">Status & Nilai</th>
                                     <th className="py-3 px-3.5 sm:px-4 text-right">Aksi</th>
                                 </tr>
                             </thead>
@@ -291,8 +379,18 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                 {domain.filteredSchedules.map((item) => {
                                     const st = PhScheduleEngine.getItemStatus(item.date, domain.todayStr);
                                     const rel = PhScheduleEngine.getRelativeDateLabel(item.date);
+                                    const gradeStatus = domain.gradeStatusById.get(item.id);
+                                    const seqLabel = gradeStatus?.assessmentName || PhScheduleEngine.getAssessmentSequenceName(item, domain.rawSchedules);
+                                    const isOtherTeacher = domain.isCreatedByOtherTeacher(item);
+                                    const isNewFromOther = domain.isNewlyAddedByOtherTeacher(item);
+
                                     return (
-                                        <tr key={item.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                        <tr
+                                            key={item.id}
+                                            className={`transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 ${
+                                                isNewFromOther ? 'bg-indigo-50/40 dark:bg-indigo-950/20' : ''
+                                            }`}
+                                        >
                                             <td className="py-3 px-3.5 sm:px-4 whitespace-nowrap">
                                                 <div className="font-semibold text-slate-900 dark:text-white">
                                                     {PhScheduleEngine.formatDateHeading(item.date)}
@@ -300,8 +398,23 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                                 {rel && <div className="text-xs text-slate-600 dark:text-slate-400">{rel}</div>}
                                             </td>
                                             <td className="py-3 px-3.5 sm:px-4">
-                                                <span aria-hidden className={`mr-2 inline-block h-2.5 w-2.5 rounded-full ${phSubjectColor(item.subject)}`} />
-                                                <span className="font-bold text-slate-800 dark:text-slate-200">{parseSubjectString(item.subject).baseSubject}</span>
+                                                <div className="flex flex-wrap items-center gap-1.5">
+                                                    <span aria-hidden className={`inline-block h-2.5 w-2.5 rounded-full shrink-0 ${phSubjectColor(item.subject)}`} />
+                                                    <span className="font-bold text-slate-800 dark:text-slate-200">{parseSubjectString(item.subject).baseSubject}</span>
+                                                    <span className="rounded bg-brand-100/80 px-1.5 py-0.5 text-[10px] font-bold text-brand-800 dark:bg-brand-900/50 dark:text-brand-200">
+                                                        {seqLabel}
+                                                    </span>
+                                                    {isNewFromOther && (
+                                                        <span className="rounded bg-indigo-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                                                            Baru
+                                                        </span>
+                                                    )}
+                                                    {isOtherTeacher && (
+                                                        <span className="rounded bg-indigo-100/80 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300">
+                                                            Guru Mapel
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{parseSubjectString(item.subject).topic || 'Materi belum diisi'}</p>
                                             </td>
                                             <td className="py-3 px-3.5 sm:px-4 whitespace-nowrap">
@@ -310,9 +423,29 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                                 </span>
                                             </td>
                                             <td className="py-3 px-3.5 sm:px-4 whitespace-nowrap">
-                                                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_BADGE[st]}`}>
-                                                    {STATUS_LABEL[st]}
-                                                </span>
+                                                <div className="flex flex-col items-start gap-1">
+                                                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_BADGE[st]}`}>
+                                                        {STATUS_LABEL[st]}
+                                                    </span>
+                                                    {gradeStatus?.state === 'complete' && (
+                                                        <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                                            <CheckCircle2 className="h-3 w-3 shrink-0" />
+                                                            Nilai Lengkap ({gradeStatus.gradedCount}/{gradeStatus.totalStudents})
+                                                        </span>
+                                                    )}
+                                                    {gradeStatus?.state === 'partial' && (
+                                                        <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                                                            <AlertCircle className="h-3 w-3 shrink-0" />
+                                                            Nilai {gradeStatus.gradedCount}/{gradeStatus.totalStudents}
+                                                        </span>
+                                                    )}
+                                                    {gradeStatus?.state === 'overdue' && (
+                                                        <span className="inline-flex items-center gap-1 rounded-md bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+                                                            <AlertCircle className="h-3 w-3 shrink-0" />
+                                                            Belum Dinilai
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="py-3 px-3.5 sm:px-4 text-right whitespace-nowrap">
                                                 <div className="flex items-center justify-end gap-1.5">
@@ -321,11 +454,21 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                                         size="sm"
                                                         variant="primary"
                                                         onClick={() => handleInputNilai(item)}
-                                                        className="!min-h-11 px-2.5 text-xs !bg-teal-700 hover:!bg-teal-800 text-white"
-                                                        title="Input Nilai ASH Siswa"
+                                                        className={`!min-h-11 px-2.5 text-xs text-white ${
+                                                            gradeStatus?.state === 'complete'
+                                                                ? '!bg-emerald-700 hover:!bg-emerald-800'
+                                                                : '!bg-teal-700 hover:!bg-teal-800'
+                                                        }`}
+                                                        title={`Input Nilai ${seqLabel}`}
                                                     >
                                                         <ClipboardPenIcon className="w-3.5 h-3.5 mr-1" />
-                                                        <span>Nilai</span>
+                                                        <span>
+                                                            {gradeStatus?.state === 'complete'
+                                                                ? 'Lihat Nilai'
+                                                                : gradeStatus?.state === 'partial'
+                                                                    ? `Nilai (${gradeStatus.gradedCount}/${gradeStatus.totalStudents})`
+                                                                    : `Nilai (${seqLabel})`}
+                                                        </span>
                                                     </Button>
                                                     {domain.canModify(item) && (
                                                         <>
@@ -386,11 +529,21 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                    {items.map((item) => (
+                                    {items.map((item) => {
+                                        const gradeStatus = domain.gradeStatusById.get(item.id);
+                                        const seqLabel = gradeStatus?.assessmentName || PhScheduleEngine.getAssessmentSequenceName(item, domain.rawSchedules);
+                                        const isOtherTeacher = domain.isCreatedByOtherTeacher(item);
+                                        const isNewFromOther = domain.isNewlyAddedByOtherTeacher(item);
+
+                                        return (
                                             <div
                                                 key={item.id}
                                                 className={`flex flex-col justify-between gap-3 rounded-2xl border bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:bg-slate-900 ${
-                                                    st === 'today' ? 'border-brand-300 dark:border-brand-700' : 'border-slate-200 dark:border-slate-800'
+                                                    isNewFromOther
+                                                        ? 'border-indigo-400 ring-1 ring-indigo-300/60 dark:border-indigo-500/70'
+                                                        : st === 'today'
+                                                            ? 'border-brand-300 dark:border-brand-700'
+                                                            : 'border-slate-200 dark:border-slate-800'
                                                 }`}
                                             >
                                                 <div className="flex items-start justify-between gap-2">
@@ -404,9 +557,24 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                                                 {parseSubjectString(item.subject).baseSubject}
                                                             </h4>
                                                             <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{parseSubjectString(item.subject).topic || 'Materi belum diisi'}</p>
-                                                            <span className="mt-1 inline-flex rounded bg-slate-100 px-1.5 py-0.5 text-xs tabular-nums text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                                                                Jam ke-{item.period_label}
-                                                            </span>
+                                                            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                                                <span className="inline-flex rounded bg-slate-100 px-1.5 py-0.5 text-xs tabular-nums text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                                                                    Jam ke-{item.period_label}
+                                                                </span>
+                                                                <span className="inline-flex rounded bg-brand-100/80 px-1.5 py-0.5 text-[11px] font-bold text-brand-800 dark:bg-brand-900/50 dark:text-brand-200">
+                                                                    {seqLabel}
+                                                                </span>
+                                                                {isNewFromOther && (
+                                                                    <span className="inline-flex rounded bg-indigo-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                                                                        Baru
+                                                                    </span>
+                                                                )}
+                                                                {isOtherTeacher && (
+                                                                    <span className="inline-flex rounded bg-indigo-100/80 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300">
+                                                                        Guru Mapel
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
 
@@ -435,20 +603,49 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                                     )}
                                                 </div>
 
-                                                <div className="flex items-center justify-between border-t border-slate-100 pt-2 dark:border-slate-800">
+                                                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2.5 dark:border-slate-800">
+                                                    <div>
+                                                        {gradeStatus?.state === 'complete' && (
+                                                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-100/90 px-2 py-0.5 text-xs font-semibold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                                                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                                                                Nilai Lengkap ({gradeStatus.gradedCount}/{gradeStatus.totalStudents})
+                                                            </span>
+                                                        )}
+                                                        {gradeStatus?.state === 'partial' && (
+                                                            <span className="inline-flex items-center gap-1 rounded-md bg-amber-100/90 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                                                                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                                                                Nilai {gradeStatus.gradedCount}/{gradeStatus.totalStudents}
+                                                            </span>
+                                                        )}
+                                                        {gradeStatus?.state === 'overdue' && (
+                                                            <span className="inline-flex items-center gap-1 rounded-md bg-rose-100/90 px-2 py-0.5 text-xs font-semibold text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
+                                                                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                                                                Belum Dinilai
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <Button
                                                         type="button"
                                                         size="sm"
                                                         variant="primary"
                                                         onClick={() => handleInputNilai(item)}
-                                                        className="min-h-11 px-3 text-sm rounded-xl"
+                                                        className={`min-h-11 px-3 text-sm rounded-xl ${
+                                                            gradeStatus?.state === 'complete'
+                                                                ? '!bg-emerald-700 hover:!bg-emerald-800 text-white'
+                                                                : ''
+                                                        }`}
                                                     >
                                                         <ClipboardPenIcon className="w-3.5 h-3.5 mr-1" />
-                                                        Input Nilai
+                                                        {gradeStatus?.state === 'complete'
+                                                            ? 'Lihat / Edit Nilai'
+                                                            : gradeStatus?.state === 'partial'
+                                                                ? `Lengkapi Nilai (${gradeStatus.gradedCount}/${gradeStatus.totalStudents})`
+                                                                : `Input Nilai (${seqLabel})`}
                                                     </Button>
                                                 </div>
                                             </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         );
@@ -482,13 +679,30 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                 isOpen={domain.isWaModalOpen}
                 onClose={() => domain.setIsWaModalOpen(false)}
                 title="Salin Format WhatsApp"
+                maxWidth="max-w-2xl"
             >
                 <div className="space-y-4 pt-2">
                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                        Pilih jadwal ASH yang ingin disalin untuk dibagikan ke grup WhatsApp kelas atau paguyuban orang tua:
+                        Pilih cakupan jadwal ASH yang ingin disalin untuk dibagikan ke grup WhatsApp kelas atau paguyuban orang tua:
                     </p>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <button
+                            type="button"
+                            onClick={() => domain.handleCopyWhatsApp('this_week')}
+                            className="p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-800 hover:border-teal-500 dark:hover:border-teal-500 bg-white dark:bg-slate-900/50 hover:bg-teal-50/40 dark:hover:bg-teal-950/20 text-left transition-all group"
+                        >
+                            <div className="w-10 h-10 rounded-xl bg-teal-100 dark:bg-teal-900/40 text-teal-700 flex items-center justify-center mb-2.5">
+                                <CalendarIcon className="w-5 h-5" />
+                            </div>
+                            <div className="font-bold text-slate-900 dark:text-white group-hover:text-teal-600 transition-colors">
+                                ASH Pekan Ini
+                            </div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                Rekap jadwal ASH minggu berjalan untuk pengumuman mingguan wali murid.
+                            </div>
+                        </button>
+
                         <button
                             type="button"
                             onClick={() => domain.handleCopyWhatsApp('upcoming')}
@@ -501,7 +715,7 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                 ASH Mendatang Saja
                             </div>
                             <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                Salin {domain.statusCounts.upcoming + domain.statusCounts.today} jadwal ASH aktif & yang akan datang.
+                                Salin {domain.statusCounts.upcoming + domain.statusCounts.today} jadwal ASH aktif &amp; yang akan datang.
                             </div>
                         </button>
 
@@ -552,22 +766,36 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                                 <thead>
                                     <tr className="bg-slate-100 text-slate-800">
                                         <th className="border border-slate-300 px-2 py-1.5 w-8 text-center">No</th>
-                                        <th className="border border-slate-300 px-3 py-1.5 text-left">Hari & Tanggal</th>
+                                        <th className="border border-slate-300 px-3 py-1.5 text-left">Hari &amp; Tanggal</th>
                                         <th className="border border-slate-300 px-2 py-1.5 w-20 text-center">Jam Ke-</th>
-                                        <th className="border border-slate-300 px-3 py-1.5 text-left">Mata Pelajaran & Materi</th>
+                                        <th className="border border-slate-300 px-3 py-1.5 text-left">Mata Pelajaran &amp; Materi</th>
+                                        <th className="border border-slate-300 px-2 py-1.5 w-24 text-center">Status Nilai</th>
                                         <th className="border border-slate-300 px-3 py-1.5 w-24 text-center">Paraf Guru</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {domain.filteredSchedules.map((item, idx) => (
-                                        <tr key={item.id}>
-                                            <td className="border border-slate-300 px-2 py-1.5 text-center">{idx + 1}</td>
-                                            <td className="border border-slate-300 px-3 py-1.5">{PhScheduleEngine.formatDateHeading(item.date)}</td>
-                                            <td className="border border-slate-300 px-2 py-1.5 text-center font-mono">{item.period_label}</td>
-                                            <td className="border border-slate-300 px-3 py-1.5 font-medium">{item.subject}</td>
-                                            <td className="border border-slate-300 px-3 py-1.5 text-center"></td>
-                                        </tr>
-                                    ))}
+                                    {domain.filteredSchedules.map((item, idx) => {
+                                        const gradeStatus = domain.gradeStatusById.get(item.id);
+                                        const seqLabel = gradeStatus?.assessmentName || PhScheduleEngine.getAssessmentSequenceName(item, domain.rawSchedules);
+                                        return (
+                                            <tr key={item.id}>
+                                                <td className="border border-slate-300 px-2 py-1.5 text-center">{idx + 1}</td>
+                                                <td className="border border-slate-300 px-3 py-1.5">{PhScheduleEngine.formatDateHeading(item.date)}</td>
+                                                <td className="border border-slate-300 px-2 py-1.5 text-center font-mono">{item.period_label}</td>
+                                                <td className="border border-slate-300 px-3 py-1.5 font-medium">
+                                                    {item.subject} <span className="text-slate-500">[{seqLabel}]</span>
+                                                </td>
+                                                <td className="border border-slate-300 px-2 py-1.5 text-center">
+                                                    {gradeStatus?.state === 'complete'
+                                                        ? `Lengkap (${gradeStatus.gradedCount}/${gradeStatus.totalStudents})`
+                                                        : gradeStatus?.state === 'partial'
+                                                            ? `Sebagian (${gradeStatus.gradedCount}/${gradeStatus.totalStudents})`
+                                                            : '-'}
+                                                </td>
+                                                <td className="border border-slate-300 px-3 py-1.5 text-center"></td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
@@ -575,11 +803,13 @@ export const PhScheduleTab: React.FC<PhScheduleTabProps> = ({
                         <div className="pt-4 flex justify-between text-xs text-slate-600">
                             <div className="text-center">
                                 <p>Mengetahui,</p>
-                                <p className="mt-8 font-bold">( Wali Kelas )</p>
+                                <p className="mt-8 font-bold">( Wali Kelas {domain.currentClassName} )</p>
                             </div>
                             <div className="text-center">
                                 <p>Guru Pengampu,</p>
-                                <p className="mt-8 font-bold">( ........................................ )</p>
+                                <p className="mt-8 font-bold">
+                                    ( {domain.teacherFullName || '........................................'} )
+                                </p>
                             </div>
                         </div>
                     </div>

@@ -117,9 +117,9 @@ export const ImportFromTeacherModal: React.FC<ImportFromTeacherModalProps> = ({ 
 
             setTeacherClasses(classesWithStudents);
             setStep('select');
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Search error:', error);
-            toast.error(`Gagal mencari data: ${error.message}`);
+            toast.error(`Gagal mencari data: ${error instanceof Error ? error.message : String(error)}`);
         } finally {
             setIsSearching(false);
         }
@@ -209,9 +209,9 @@ export const ImportFromTeacherModal: React.FC<ImportFromTeacherModalProps> = ({ 
 
             toast.success(`Berhasil mengimport ${selectedClasses.size} kelas dan ${getSelectedStudentCount()} siswa!`);
             handleClose();
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Import error:', error);
-            toast.error(`Gagal mengimport data: ${error.message}`);
+            toast.error(`Gagal mengimport data: ${error instanceof Error ? error.message : String(error)}`);
             setStep('select');
         } finally {
             setIsImporting(false);

@@ -1,587 +1,70 @@
-import React, { useState, useMemo } from 'react';
-import { useAuth } from '../../hooks/useAuth';
+import React from 'react';
 import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Modal } from '../ui/Modal';
-import {
-    PlusIcon,
-    TrashIcon,
-    EditIcon,
-    CalendarIcon,
-    SearchIcon,
-    CheckSquareIcon,
-} from '../Icons';
-import { supabase } from '../../services/supabase';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Database } from '../../services/database.types';
-import { useToast } from '../../hooks/useToast';
 import { TasksPageSkeleton } from '../skeletons/PageSkeletons';
-import { MoreVerticalIcon, Loader2Icon, PlayCircleIcon, CircleIcon, CheckCircle2Icon, AlertTriangleIcon, ArrowRightIcon } from '../Icons';
-import { ValidationService } from '../../services/ValidationService';
-import { ValidationRules } from '../../types';
 import { EmptyError } from '../EmptyStates';
-import { CustomDropdown } from '../ui/CustomDropdown';
-import { useSoftDelete } from '../../hooks/useSoftDelete';
-
-// Native date helpers
-const isDateOnly = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
-
-// Parse YYYY-MM-DD as a local date to avoid timezone shifts.
-const parseDateOnly = (value: string) => {
-    const [year, month, day] = value.split('-').map(Number);
-    return new Date(year, month - 1, day);
-};
-
-const formatDateInputValue = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-};
-
-const normalizeDueDateForInput = (dueDate: string | null) => {
-    if (!dueDate) return '';
-    if (isDateOnly(dueDate)) return dueDate;
-    const parsed = new Date(dueDate);
-    if (Number.isNaN(parsed.getTime())) return '';
-    return formatDateInputValue(parsed);
-};
-
-const formatDateDisplay = (dueDate: string) => {
-    const date = isDateOnly(dueDate) ? parseDateOnly(dueDate) : new Date(dueDate);
-    if (Number.isNaN(date.getTime())) return '-';
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-    return `${date.getDate()} ${months[date.getMonth()]}`;
-};
-
-const isOverdue = (dueDate: string | null) => {
-    if (!dueDate) return false;
-    const now = new Date();
-    if (isDateOnly(dueDate)) {
-        const date = parseDateOnly(dueDate);
-        const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
-        return endOfDay < now;
-    }
-    const parsed = new Date(dueDate);
-    if (Number.isNaN(parsed.getTime())) return false;
-    return parsed < now;
-};
-
-const renderDescription = (text: string | null) => {
-    if (!text) return null;
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const parts = text.split(urlRegex);
-    return parts.map((part, index) => {
-        if (urlRegex.test(part)) {
-            return (
-                <a
-                    key={index}
-                    href={part}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-brand-600 dark:text-brand-400 hover:underline font-medium break-all"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    {part}
-                </a>
-            );
-        }
-        return part;
-    });
-};
-
-type TaskRow = Database['public']['Tables']['tasks']['Row'];
-type TaskInsert = Database['public']['Tables']['tasks']['Insert'];
-type TaskStatus = 'todo' | 'in_progress' | 'done';
-
-const fetchTasks = async (userId: string): Promise<TaskRow[]> => {
-    const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('user_id', userId)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data || [];
-};
-
-// Status configuration
-const statusConfig: Record<TaskStatus, { title: string; icon: React.ReactNode; color: string; bgColor: string; textColor: string }> = {
-    todo: {
-        title: 'Belum Mulai',
-        icon: <CircleIcon className="w-4 h-4" />,
-        color: 'text-slate-400',
-        bgColor: 'bg-slate-500/20',
-        textColor: 'text-slate-600 dark:text-slate-400'
-    },
-    in_progress: {
-        title: 'Sedang Dikerjakan',
-        icon: <PlayCircleIcon className="w-4 h-4" />,
-        color: 'text-blue-400',
-        bgColor: 'bg-blue-500/20',
-        textColor: 'text-blue-600 dark:text-blue-400'
-    },
-    done: {
-        title: 'Selesai',
-        icon: <CheckCircle2Icon className="w-4 h-4" />,
-        color: 'text-emerald-400',
-        bgColor: 'bg-emerald-500/20',
-        textColor: 'text-emerald-600 dark:text-emerald-400'
-    },
-};
-
-const statusOrder: TaskStatus[] = ['todo', 'in_progress', 'done'];
-
-const taskRules: ValidationRules = {
-    title: [ValidationService.validators.required("Judul tugas harus diisi")]
-};
-
-// Task Card Component
-interface TaskCardProps {
-    task: TaskRow;
-    onEdit: (task: TaskRow) => void;
-    onDelete: (id: string) => void;
-    onStatusChange: (id: string, newStatus: TaskStatus) => void;
-    isUpdating?: boolean;
-}
-
-const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete, onStatusChange, isUpdating }) => {
-    const [showMenu, setShowMenu] = useState(false);
-    const overdue = isOverdue(task.due_date) && task.status !== 'done';
-    const currentStatus = statusConfig[task.status];
-
-    // Get next status
-    const currentIndex = statusOrder.indexOf(task.status);
-    const nextStatus = currentIndex < statusOrder.length - 1 ? statusOrder[currentIndex + 1] : null;
-    const prevStatus = currentIndex > 0 ? statusOrder[currentIndex - 1] : null;
-
-    return (
-        <div
-            draggable={!isUpdating}
-            onDragStart={(e) => {
-                e.dataTransfer.setData("text/plain", task.id);
-                e.dataTransfer.effectAllowed = "move";
-            }}
-            className={`
-                rounded-2xl p-4 border transition-all duration-300 group relative overflow-hidden cursor-grab active:cursor-grabbing
-                bg-white dark:bg-slate-800/50 border-slate-200 dark:border-white/5 hover:border-brand-500/30 hover:shadow-lg hover:shadow-brand-600/10 shadow-sm
-                ${overdue ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-transparent'}
-                ${isUpdating ? 'opacity-60 pointer-events-none' : ''}
-            `}
-        >
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-50/50 dark:from-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-
-            {/* Header with Status Badge */}
-            <div className="flex items-start gap-3">
-                {/* Status Badge */}
-                <div className={`p-2 rounded-xl ${currentStatus.bgColor} ${currentStatus.color}`}>
-                    {currentStatus.icon}
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                        <div>
-                            <h4 className={`font-medium text-slate-800 dark:text-white leading-snug ${task.status === 'done' ? 'line-through text-slate-400 dark:text-slate-400' : ''}`}>
-                                {task.title}
-                            </h4>
-                            <span className={`text-xs font-medium ${currentStatus.textColor}`}>
-                                {currentStatus.title}
-                            </span>
-                        </div>
-
-                        {/* Menu */}
-                        <div className="relative">
-                            <button type="button"
-                                onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                                className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all cursor-pointer active:scale-90"
-                                aria-label="Opsi tugas"
-                                aria-expanded={showMenu}
-                                aria-haspopup="menu"
-                            >
-                                <MoreVerticalIcon className="w-5 h-5 sm:w-4 sm:h-4" />
-                            </button>
-
-                            {showMenu && (
-                                <>
-                                    <div role="presentation" aria-hidden="true" onKeyDown={(e) => { if (e.key === 'Escape') setShowMenu(false); }} className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                                    <div className="absolute right-0 top-full mt-1 w-40 sm:w-36 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 py-1 z-20">
-                                        <button type="button"
-                                            onClick={(e) => { e.stopPropagation(); onEdit(task); setShowMenu(false); }}
-                                            className="w-full flex items-center gap-3 sm:gap-2 px-4 sm:px-3 py-3 sm:py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 cursor-pointer active:scale-[0.98] transition-transform"
-                                        >
-                                            <EditIcon className="w-4 h-4" />
-                                            Edit
-                                        </button>
-                                        <button type="button"
-                                            onClick={(e) => { e.stopPropagation(); onDelete(task.id); setShowMenu(false); }}
-                                            className="w-full flex items-center gap-3 sm:gap-2 px-4 sm:px-3 py-3 sm:py-2 text-sm text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 cursor-pointer active:scale-[0.98] transition-transform"
-                                        >
-                                            <TrashIcon className="w-4 h-4" />
-                                            Hapus
-                                        </button>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-
-                    {task.description && (
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 line-clamp-2">
-                            {renderDescription(task.description)}
-                        </p>
-                    )}
-
-                    {/* Footer with Date and Status Buttons */}
-                    <div className="flex items-center justify-between gap-3 mt-4">
-                        {/* Due Date */}
-                        {task.due_date && (
-                            <div className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-lg ${overdue
-                                ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400'
-                                : 'bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400'
-                                }`}>
-                                {overdue ? <AlertTriangleIcon className="w-3 h-3" /> : <CalendarIcon className="w-3 h-3" />}
-                                {formatDateDisplay(task.due_date)}
-                            </div>
-                        )}
-
-                        {/* Status Change Buttons */}
-                        <div className="flex items-center gap-2 ml-auto">
-                            {prevStatus && (
-                                <button type="button"
-                                    onClick={() => onStatusChange(task.id, prevStatus)}
-                                    className="px-3 py-2 sm:px-2.5 sm:py-1.5 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600/50 hover:text-slate-800 dark:hover:text-white transition-all flex items-center gap-1.5 sm:gap-1 cursor-pointer active:scale-95 duration-150"
-                                    title={`Pindah ke ${statusConfig[prevStatus].title}`}
-                                    disabled={isUpdating}
-                                >
-                                    <ArrowRightIcon className="w-3.5 h-3.5 sm:w-3 sm:h-3 rotate-180" />
-                                    {statusConfig[prevStatus].title}
-                                </button>
-                            )}
-                            {nextStatus && (
-                                <button type="button"
-                                    onClick={() => onStatusChange(task.id, nextStatus)}
-                                    className={`px-3 py-2 sm:px-2.5 sm:py-1.5 text-xs font-medium rounded-lg transition-all flex items-center gap-1.5 sm:gap-1 cursor-pointer active:scale-95 duration-150 ${nextStatus === 'done'
-                                        ? 'bg-emerald-500/20 text-emerald-700 hover:bg-emerald-500/30'
-                                        : 'bg-blue-500/20 text-blue-600 hover:bg-blue-500/30'
-                                        }`}
-                                    title={`Pindah ke ${statusConfig[nextStatus].title}`}
-                                    disabled={isUpdating}
-                                >
-                                    {statusConfig[nextStatus].title}
-                                    <ArrowRightIcon className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// Column Component (non-draggable)
-interface ColumnProps {
-    status: TaskStatus;
-    tasks: TaskRow[];
-    onEdit: (task: TaskRow) => void;
-    onDelete: (id: string) => void;
-    onStatusChange: (id: string, newStatus: TaskStatus) => void;
-    onAddTask: (status: TaskStatus) => void;
-    updatingTaskId: string | null;
-}
-
-const Column: React.FC<ColumnProps> = ({
-    status,
-    tasks,
-    onEdit,
-    onDelete,
-    onStatusChange,
-    onAddTask,
-    updatingTaskId
-}) => {
-    const config = statusConfig[status];
-    const [isDragOver, setIsDragOver] = useState(false);
-
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "move";
-        if (!isDragOver) setIsDragOver(true);
-    };
-
-    const handleDragLeave = () => {
-        setIsDragOver(false);
-    };
-
-    const handleDropLocal = (e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragOver(false);
-        const id = e.dataTransfer.getData("text/plain");
-        if (id) {
-            onStatusChange(id, status);
-        }
-    };
-
-    return (
-        <div className="w-full">
-            {/* Column Header */}
-            <div className="flex items-center justify-between mb-4 px-2">
-                <div className="flex items-center gap-2">
-                    <div className={`w-8 h-8 rounded-xl ${config.bgColor} flex items-center justify-center ${config.color} shadow-sm`}>
-                        {config.icon}
-                    </div>
-                    <div>
-                        <h3 className="font-bold text-slate-800 dark:text-white dark:text-shadow-sm">{config.title}</h3>
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-200/50 dark:bg-slate-700/50 px-2 py-0.5 rounded-full">{tasks.length} tugas</span>
-                    </div>
-                </div>
-                <button type="button"
-                    onClick={() => onAddTask(status)}
-                    className="p-2 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all cursor-pointer active:scale-90"
-                    title="Tambah tugas"
-                    aria-label="Tambah tugas baru"
-                >
-                    <PlusIcon className="w-4 h-4" />
-                </button>
-            </div>
-
-            {/* Task List */}
-            <div
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDropLocal}
-                className={`rounded-3xl p-3 min-h-[300px] transition-all duration-300 ${
-                    isDragOver
-                        ? 'bg-brand-500/10 border-2 border-dashed border-brand-500 shadow-lg shadow-brand-600/5'
-                        : 'bg-white/50 dark:bg-slate-800/30 border border-slate-200/80 dark:border-slate-700/30 shadow-inner'
-                }`}
-            >
-                <div className="space-y-3">
-                    {tasks.length === 0 ? (
-                        <div className="text-center py-8">
-                            <div className={`w-12 h-12 mx-auto rounded-xl ${config.bgColor} flex items-center justify-center ${config.color} mb-3`}>
-                                {config.icon}
-                            </div>
-                            <p className="text-sm text-slate-500">Tidak ada tugas</p>
-                            <button type="button"
-                                onClick={() => onAddTask(status)}
-                                className="mt-3 text-sm text-brand-400 hover:text-brand-300 cursor-pointer active:scale-95 duration-150 font-medium"
-                            >
-                                + Tambah tugas
-                            </button>
-                        </div>
-                    ) : (
-                        tasks.map(task => (
-                            <TaskCard
-                                key={task.id}
-                                task={task}
-                                onEdit={onEdit}
-                                onDelete={onDelete}
-                                onStatusChange={onStatusChange}
-                                isUpdating={updatingTaskId === task.id}
-                            />
-                        ))
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-};
+import {
+    AlertTriangleIcon,
+    Loader2Icon,
+    CheckSquareIcon,
+    PlusIcon,
+} from '../Icons';
+import {
+    useTasksPageState,
+    statusOrder,
+    TaskColumn,
+    TasksHeader,
+    TasksStatsCards,
+    TasksMobileTabs,
+    TasksModals,
+} from './tasks';
 
 const TasksPage: React.FC = () => {
-    const { user } = useAuth();
-    const toast = useToast();
-    const queryClient = useQueryClient();
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingTask, setEditingTask] = useState<TaskRow | null>(null);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
-    const [mobileActiveTab, setMobileActiveTab] = useState<TaskStatus>('todo');
-    const [taskToDeleteId, setTaskToDeleteId] = useState<string | null>(null);
-    const [isConfirmingClearAll, setIsConfirmingClearAll] = useState(false);
-
-    // Form state
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [dueDate, setDueDate] = useState('');
-    const [status, setStatus] = useState<TaskStatus>('todo');
-    const [errors, setErrors] = useState<Record<string, string>>({});
-
-    const isPastDate = useMemo(() => {
-        if (!dueDate) return false;
-        const chosenDate = parseDateOnly(dueDate);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return chosenDate < today;
-    }, [dueDate]);
-
-    const { data: tasks = [], isLoading, isError, error, refetch, isFetching } = useQuery({
-        queryKey: ['tasks', user?.id],
-        queryFn: () => fetchTasks(user!.id),
-        enabled: !!user,
-    });
-    const taskLoadErrorMessage = error instanceof Error
-        ? error.message
-        : 'Gagal memuat tugas. Silakan coba lagi.';
-
-    const createTaskMutation = useMutation({
-        mutationFn: async (task: TaskInsert) => {
-            const { error } = await supabase.from('tasks').insert(task);
-            if (error) throw error;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            toast.success('Tugas berhasil ditambahkan');
-            resetForm();
-            setIsModalOpen(false);
-        },
-        onError: () => toast.error('Gagal menambahkan tugas'),
-    });
-
-    const updateTaskMutation = useMutation({
-        mutationFn: async ({ id, updates }: { id: string; updates: Partial<TaskRow> }) => {
-            const { error } = await supabase.from('tasks').update(updates).eq('id', id);
-            if (error) throw error;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            toast.success('Tugas berhasil diperbarui');
-            resetForm();
-            setIsModalOpen(false);
-            setEditingTask(null);
-        },
-        onError: () => toast.error('Gagal memperbarui tugas'),
-    });
-
-    const { deleteItem: softDeleteTask, deleteItems: softDeleteBulkTasks } = useSoftDelete({
-        entity: 'tasks',
-        queryKey: ['tasks'],
-        entityLabel: 'tugas',
-    });
-
-    const deleteTaskMutation = useMutation({
-        mutationFn: async (id: string) => {
-            await softDeleteTask(id);
-        },
-    });
-
-    const clearCompletedTasksMutation = useMutation({
-        mutationFn: async () => {
-            if (!user) return;
-            const completedTaskIds = tasks.filter((t) => t.status === 'done').map((t) => t.id);
-            if (completedTaskIds.length === 0) return;
-            await softDeleteBulkTasks(completedTaskIds);
-        },
-    });
-
-    const updateStatusMutation = useMutation({
-        mutationFn: async ({ id, newStatus }: { id: string; newStatus: TaskStatus }) => {
-            setUpdatingTaskId(id);
-            const { error } = await supabase.from('tasks').update({ status: newStatus }).eq('id', id);
-            if (error) throw error;
-        },
-        onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            toast.success(`Status diubah ke ${statusConfig[variables.newStatus].title}`);
-            setUpdatingTaskId(null);
-        },
-        onError: () => {
-            toast.error('Gagal mengubah status');
-            setUpdatingTaskId(null);
-        },
-    });
-
-    const resetForm = () => {
-        setTitle('');
-        setDescription('');
-        setDueDate('');
-        setStatus('todo');
-        setEditingTask(null);
-        setErrors({});
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!user) return;
-
-        const validationResult = ValidationService.validateForm({ title }, taskRules);
-        if (!validationResult.isValid) {
-            setErrors(validationResult.errors);
-            return;
-        }
-        setErrors({});
-
-        if (editingTask) {
-            updateTaskMutation.mutate({
-                id: editingTask.id,
-                updates: { title, description: description || null, due_date: dueDate || null, status },
-            });
-        } else {
-            createTaskMutation.mutate({
-                user_id: user.id,
-                title,
-                description: description || null,
-                due_date: dueDate || null,
-                status,
-            });
-        }
-    };
-
-    const handleEdit = (task: TaskRow) => {
-        setEditingTask(task);
-        setTitle(task.title);
-        setDescription(task.description || '');
-        setDueDate(normalizeDueDateForInput(task.due_date));
-        setStatus(task.status);
-        setIsModalOpen(true);
-    };
-
-    const handleAddTask = (newStatus: TaskStatus) => {
-        resetForm();
-        setStatus(newStatus);
-        setIsModalOpen(true);
-    };
-
-    const handleStatusChange = (id: string, newStatus: TaskStatus) => {
-        updateStatusMutation.mutate({ id, newStatus });
-    };
-
-    // Filter tasks
-    const filteredTasks = useMemo(() => {
-        return tasks.filter(task => {
-            const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (task.description?.toLowerCase().includes(searchQuery.toLowerCase()));
-            return matchesSearch;
-        });
-    }, [tasks, searchQuery]);
-
-    // Group tasks by status
-    const tasksByStatus = useMemo(() => {
-        const grouped: Record<TaskStatus, TaskRow[]> = {
-            todo: [],
-            in_progress: [],
-            done: [],
-        };
-        filteredTasks.forEach(task => {
-            grouped[task.status].push(task);
-        });
-        return grouped;
-    }, [filteredTasks]);
-
-    // Stats
-    const stats = useMemo(() => {
-        const total = tasks.length;
-        const todo = tasks.filter(t => t.status === 'todo').length;
-        const inProgress = tasks.filter(t => t.status === 'in_progress').length;
-        const done = tasks.filter(t => t.status === 'done').length;
-        const overdue = tasks.filter(t => isOverdue(t.due_date) && t.status !== 'done').length;
-        return { total, todo, inProgress, done, overdue };
-    }, [tasks]);
+    const {
+        tasks,
+        isLoading,
+        isError,
+        isFetching,
+        refetch,
+        taskLoadErrorMessage,
+        searchQuery,
+        setSearchQuery,
+        tasksByStatus,
+        stats,
+        mobileActiveTab,
+        setMobileActiveTab,
+        updatingTaskId,
+        isModalOpen,
+        setIsModalOpen,
+        editingTask,
+        taskToDeleteId,
+        setTaskToDeleteId,
+        isConfirmingClearAll,
+        setIsConfirmingClearAll,
+        title,
+        setTitle,
+        description,
+        setDescription,
+        dueDate,
+        setDueDate,
+        status,
+        setStatus,
+        errors,
+        isPastDate,
+        resetForm,
+        handleSubmit,
+        handleEdit,
+        handleAddTask,
+        handleStatusChange,
+        createTaskMutation,
+        updateTaskMutation,
+        deleteTaskMutation,
+        clearCompletedTasksMutation,
+    } = useTasksPageState();
 
     if (isLoading) {
         return <TasksPageSkeleton />;
     }
+
     if (isError && tasks.length === 0) {
         return (
             <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 lg:space-y-8 bg-transparent max-w-7xl mx-auto pb-24 lg:pb-8">
@@ -618,137 +101,35 @@ const TasksPage: React.FC = () => {
                     </div>
                 </div>
             )}
+
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight font-serif mb-2 text-slate-900 dark:text-white bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-800 dark:from-white dark:to-slate-300">
-                        Manajemen Tugas
-                    </h1>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium flex items-center gap-2">
-                        <CheckSquareIcon className="w-4 h-4" />
-                        Kelola tugas Anda dengan mudah
-                    </p>
-                </div>
-                <div className="flex items-center gap-3">
-                    {/* Search */}
-                    <div className="relative flex-1 md:w-72">
-                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Cari tugas..."
-                            className="w-full pl-10 pr-4 py-2.5 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all shadow-sm"
-                        />
-                    </div>
+            <TasksHeader
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                hasDoneTasks={stats.done > 0}
+                onClearCompletedClick={() => setIsConfirmingClearAll(true)}
+                onAddTaskClick={() => handleAddTask('todo')}
+            />
 
-                    {/* Clear Completed Tasks Button */}
-                    {stats.done > 0 && (
-                        <Button
-                            variant="ghost"
-                            onClick={() => setIsConfirmingClearAll(true)}
-                            className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl border border-red-200 dark:border-red-900/50 transition-all font-medium cursor-pointer active:scale-95 duration-150"
-                        >
-                            <TrashIcon className="w-4 h-4 mr-2" />
-                            <span className="hidden sm:inline">Bersihkan Selesai</span>
-                        </Button>
-                    )}
+            {/* Stats Cards */}
+            <TasksStatsCards stats={stats} />
 
-                    {/* Add Task Button */}
-                    <Button
-                        onClick={() => handleAddTask('todo')}
-                        className="bg-brand-600 hover:bg-brand-700 text-white rounded-xl shadow-lg shadow-brand-600/20 cursor-pointer active:scale-95 duration-150"
-                    >
-                        <PlusIcon className="w-4 h-4 mr-2" />
-                        <span className="hidden sm:inline">Tugas Baru</span>
-                    </Button>
-                </div>
-            </div>
+            {/* Mobile Tab Navigation & List */}
+            <TasksMobileTabs
+                mobileActiveTab={mobileActiveTab}
+                onSelectTab={setMobileActiveTab}
+                tasksByStatus={tasksByStatus}
+                onEdit={handleEdit}
+                onDelete={setTaskToDeleteId}
+                onStatusChange={handleStatusChange}
+                onAddTask={handleAddTask}
+                updatingTaskId={updatingTaskId}
+            />
 
-            {/* Stats Cards - Aligned with header */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-                <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg p-3 sm:p-6 text-center">
-                    <div className="text-xl sm:text-4xl font-bold text-slate-800 dark:text-white mb-0.5 sm:mb-1">{stats.total}</div>
-                    <div className="text-xxs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total</div>
-                </div>
-                <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg p-3 sm:p-6 text-center">
-                    <div className="text-xl sm:text-4xl font-bold text-slate-400 mb-0.5 sm:mb-1">{stats.todo}</div>
-                    <div className="text-xxs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Belum Mulai</div>
-                </div>
-                <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg p-3 sm:p-6 text-center">
-                    <div className="text-xl sm:text-4xl font-bold text-blue-500 mb-0.5 sm:mb-1">{stats.inProgress}</div>
-                    <div className="text-xxs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Dikerjakan</div>
-                </div>
-                <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700/50 shadow-lg p-3 sm:p-6 text-center">
-                    <div className="text-xl sm:text-4xl font-bold text-emerald-600 dark:text-emerald-400 mb-0.5 sm:mb-1">{stats.done}</div>
-                    <div className="text-xxs sm:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Selesai</div>
-                </div>
-            </div>
-
-            {/* Mobile Tab Navigation - Only visible on small screens */}
-            <div className="lg:hidden">
-                <div className="flex rounded-xl bg-slate-200/50 dark:bg-slate-800/50 p-1 mb-4">
-                    {statusOrder.map(statusKey => {
-                        const config = statusConfig[statusKey];
-                        const count = tasksByStatus[statusKey].length;
-                        return (
-                            <button type="button"
-                                key={statusKey}
-                                onClick={() => setMobileActiveTab(statusKey)}
-                                className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-lg text-sm font-medium transition-all cursor-pointer active:scale-95 duration-150 ${mobileActiveTab === statusKey
-                                    ? `${config.bgColor} ${config.color} shadow-sm border ${statusKey === 'todo' ? 'border-slate-200' : statusKey === 'in_progress' ? 'border-blue-200' : 'border-emerald-200'} dark:border-slate-600`
-                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                                    }`}
-                            >
-                                <span className="flex items-center justify-center">
-                                    {React.cloneElement(config.icon as React.ReactElement, { className: 'w-5 h-5 sm:w-4 sm:h-4' })}
-                                </span>
-                                <span className={`text-xxs sm:text-xs leading-none text-center ${mobileActiveTab === statusKey ? 'font-bold' : ''}`}>
-                                    {config.title}
-                                </span>
-                                <span className={`text-xxs mt-0.5 ${mobileActiveTab === statusKey ? config.color : 'text-slate-400 dark:text-slate-500'}`}>
-                                    {count} tugas
-                                </span>
-                            </button>
-                        );
-                    })}
-                </div>
-
-                {/* Mobile Task List */}
-                <div className="space-y-3">
-                    {tasksByStatus[mobileActiveTab].length === 0 ? (
-                        <div className="text-center py-12 bg-slate-100/50 dark:bg-slate-800/30 rounded-2xl border border-dashed border-slate-300/50 dark:border-slate-700/50">
-                            <div className={`w-12 h-12 mx-auto rounded-xl ${statusConfig[mobileActiveTab].bgColor} flex items-center justify-center ${statusConfig[mobileActiveTab].color} mb-3`}>
-                                {statusConfig[mobileActiveTab].icon}
-                            </div>
-                            <p className="text-slate-500 dark:text-slate-500 mb-3">Tidak ada tugas {statusConfig[mobileActiveTab].title}</p>
-                            <button type="button"
-                                onClick={() => handleAddTask(mobileActiveTab)}
-                                className="text-sm text-brand-600 dark:text-brand-400 hover:text-brand-500 dark:hover:text-brand-300 font-medium cursor-pointer active:scale-95 duration-150"
-                            >
-                                + Tambah tugas
-                            </button>
-                        </div>
-                    ) : (
-                        tasksByStatus[mobileActiveTab].map(task => (
-                            <TaskCard
-                                key={task.id}
-                                task={task}
-                                onEdit={handleEdit}
-                                onDelete={setTaskToDeleteId}
-                                onStatusChange={handleStatusChange}
-                                isUpdating={updatingTaskId === task.id}
-                            />
-                        ))
-                    )}
-                </div>
-            </div>
-
-
-            {/* Desktop Kanban Board - Hidden on mobile */}
+            {/* Desktop Kanban Board */}
             <div className="hidden lg:grid lg:grid-cols-3 gap-4">
                 {statusOrder.map((statusKey) => (
-                    <Column
+                    <TaskColumn
                         key={statusKey}
                         status={statusKey}
                         tasks={tasksByStatus[statusKey]}
@@ -779,164 +160,34 @@ const TasksPage: React.FC = () => {
                 </div>
             )}
 
-            {/* Add/Edit Modal */}
-            <Modal
-                isOpen={isModalOpen}
-                onClose={() => { setIsModalOpen(false); resetForm(); }}
-                title={editingTask ? 'Edit Tugas' : 'Tambah Tugas Baru'}
-                icon={<CheckSquareIcon className="w-5 h-5" />}
-            >
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                            Judul Tugas
-                        </label>
-                        <Input
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder="Masukkan judul tugas..."
-                            error={errors.title}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                            Deskripsi (opsional)
-                        </label>
-                        <textarea
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Tambahkan deskripsi..."
-                            rows={3}
-                            className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all resize-none"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                                Tenggat Waktu
-                            </label>
-                            <Input
-                                type="date"
-                                value={dueDate}
-                                onChange={(e) => setDueDate(e.target.value)}
-                            />
-                            {isPastDate && (
-                                <div className="mt-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/20 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/30">
-                                    <AlertTriangleIcon className="w-3.5 h-3.5" />
-                                    Tenggat waktu berada di masa lalu.
-                                </div>
-                            )}
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                                Status
-                            </label>
-                            <CustomDropdown
-                                value={status}
-                                onChange={(val) => setStatus(val as TaskStatus)}
-                                options={[
-                                    { value: 'todo', label: 'Belum Mulai' },
-                                    { value: 'in_progress', label: 'Sedang Dikerjakan' },
-                                    { value: 'done', label: 'Selesai' },
-                                ]}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex justify-end gap-3 pt-4">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={() => { setIsModalOpen(false); resetForm(); }}
-                            className="rounded-xl cursor-pointer active:scale-95 duration-150"
-                        >
-                            Batal
-                        </Button>
-                        <Button
-                            type="submit"
-                            disabled={createTaskMutation.isPending || updateTaskMutation.isPending}
-                            className="bg-brand-600 hover:bg-brand-700 rounded-xl cursor-pointer active:scale-95 duration-150 text-white shadow-sm"
-                        >
-                            {(createTaskMutation.isPending || updateTaskMutation.isPending) && (
-                                <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />
-                            )}
-                            {editingTask ? 'Simpan Perubahan' : 'Tambah Tugas'}
-                        </Button>
-                    </div>
-                </form>
-            </Modal>
-
-            {/* Delete Confirmation Modal */}
-            <Modal
-                isOpen={!!taskToDeleteId}
-                onClose={() => setTaskToDeleteId(null)}
-                title="Konfirmasi Hapus Tugas"
-                icon={<AlertTriangleIcon className="w-5 h-5 text-red-500" />}
-            >
-                <div className="space-y-4">
-                    <p className="text-slate-600 dark:text-slate-300 text-sm">
-                        Apakah Anda yakin ingin menghapus tugas ini? Tindakan ini akan memindahkan tugas ke tempat sampah dan tidak dapat diurungkan secara instan dari papan ini.
-                    </p>
-                    <div className="flex justify-end gap-3 pt-4">
-                        <Button
-                            variant="ghost"
-                            onClick={() => setTaskToDeleteId(null)}
-                            className="rounded-xl cursor-pointer active:scale-95 duration-150"
-                        >
-                            Batal
-                        </Button>
-                        <Button
-                            onClick={() => {
-                                if (taskToDeleteId) {
-                                    deleteTaskMutation.mutate(taskToDeleteId);
-                                    setTaskToDeleteId(null);
-                                }
-                            }}
-                            className="bg-red-600 hover:bg-red-700 text-white rounded-xl cursor-pointer active:scale-95 duration-150"
-                        >
-                            Ya, Hapus
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
-
-            {/* Clear Completed Tasks Confirmation Modal */}
-            <Modal
-                isOpen={isConfirmingClearAll}
-                onClose={() => setIsConfirmingClearAll(false)}
-                title="Bersihkan Tugas Selesai"
-                icon={<AlertTriangleIcon className="w-5 h-5 text-red-500" />}
-            >
-                <div className="space-y-4">
-                    <p className="text-slate-600 dark:text-slate-300 text-sm">
-                        Apakah Anda yakin ingin membersihkan semua tugas yang telah selesai? Tindakan ini akan menghapus secara massal seluruh tugas di kolom "Selesai".
-                    </p>
-                    <div className="flex justify-end gap-3 pt-4">
-                        <Button
-                            variant="ghost"
-                            onClick={() => setIsConfirmingClearAll(false)}
-                            className="rounded-xl cursor-pointer active:scale-95 duration-150"
-                        >
-                            Batal
-                        </Button>
-                        <Button
-                            onClick={() => {
-                                clearCompletedTasksMutation.mutate();
-                                setIsConfirmingClearAll(false);
-                            }}
-                            className="bg-red-600 hover:bg-red-700 text-white rounded-xl cursor-pointer active:scale-95 duration-150"
-                            disabled={clearCompletedTasksMutation.isPending}
-                        >
-                            {clearCompletedTasksMutation.isPending && (
-                                <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />
-                            )}
-                            Ya, Bersihkan
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
+            {/* Modals & Dialogs */}
+            <TasksModals
+                isModalOpen={isModalOpen}
+                onCloseModal={() => {
+                    setIsModalOpen(false);
+                    resetForm();
+                }}
+                editingTask={editingTask}
+                title={title}
+                onTitleChange={setTitle}
+                description={description}
+                onDescriptionChange={setDescription}
+                dueDate={dueDate}
+                onDueDateChange={setDueDate}
+                status={status}
+                onStatusChange={setStatus}
+                errors={errors}
+                isPastDate={isPastDate}
+                isSavePending={createTaskMutation.isPending || updateTaskMutation.isPending}
+                onSubmitForm={handleSubmit}
+                taskToDeleteId={taskToDeleteId}
+                onCloseDeleteModal={() => setTaskToDeleteId(null)}
+                onConfirmDelete={(id) => deleteTaskMutation.mutate(id)}
+                isConfirmingClearAll={isConfirmingClearAll}
+                onCloseClearAllModal={() => setIsConfirmingClearAll(false)}
+                onConfirmClearAll={() => clearCompletedTasksMutation.mutate()}
+                isClearAllPending={clearCompletedTasksMutation.isPending}
+            />
         </div>
     );
 };

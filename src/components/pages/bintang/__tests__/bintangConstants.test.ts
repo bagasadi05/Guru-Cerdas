@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
     classifyViolationCluster,
+    normalizeViolationPhrase,
+    formatViolationsSummary,
     generateContextualHomeroomNote,
     generateHomeroomNote,
     isAutoHomeroomNote,
@@ -311,5 +313,95 @@ describe('gender-aware homeroom note wording', () => {
     it('keeps the neutral wording when gender is unknown', () => {
         const notes = Array.from({ length: 6 }, (_, seed) => generateContextualHomeroomNote({ ...kerapianViolation, studentName: 'Rizki', seed }));
         expect(notes.some(n => n.includes('sholeh/sholehah') || n.includes('peci/jilbab'))).toBe(true);
+    });
+});
+
+describe('explicit violation discussion in homeroom note', () => {
+    it('normalizes common violation descriptions into natural polite phrases', () => {
+        expect(normalizeViolationPhrase('Terlambat masuk sekolah')).toBe('terlambat hadir di madrasah');
+        expect(normalizeViolationPhrase('Bermain di jam pelajaran')).toBe('bermain saat jam pelajaran');
+        expect(normalizeViolationPhrase('Tidak membawa buku pelajaran / alat tulis / perlengkapan belajar')).toBe('kelengkapan buku pelajaran atau alat tulis');
+        expect(normalizeViolationPhrase('Tanpa bedge lokasi / Atribut sekolah (Topi, dasi, Rompi Dll.)')).toBe('kelengkapan atribut seragam (peci/topi/dasi/sabuk)');
+        expect(normalizeViolationPhrase('Berkata kotor')).toBe('tutur kata yang kurang santun');
+    });
+
+    it('summarizes single violation properly', () => {
+        const vios: StudentViolationSummaryItem[] = [
+            { description: 'Terlambat masuk sekolah' },
+        ];
+        const res = formatViolationsSummary(vios);
+        expect(res.totalViolations).toBe(1);
+        expect(res.summaryPhrase).toBe('terlambat hadir di madrasah');
+    });
+
+    it('summarizes repeated violations with frequency count', () => {
+        const vios: StudentViolationSummaryItem[] = [
+            { description: 'Bermain di jam pelajaran' },
+            { description: 'Bermain di jam pelajaran' },
+        ];
+        const res = formatViolationsSummary(vios);
+        expect(res.totalViolations).toBe(2);
+        expect(res.summaryPhrase).toBe('bermain saat jam pelajaran (2 kali)');
+    });
+
+    it('summarizes multiple distinct violations with conjunction', () => {
+        const vios: StudentViolationSummaryItem[] = [
+            { description: 'Tidak membawa buku pelajaran / alat tulis / perlengkapan belajar' },
+            { description: 'Tanpa bedge lokasi / Atribut sekolah (Topi, dasi, Rompi Dll.)' },
+        ];
+        const res = formatViolationsSummary(vios);
+        expect(res.totalViolations).toBe(2);
+        expect(res.summaryPhrase).toContain('serta');
+        expect(res.summaryPhrase).toContain('kelengkapan buku pelajaran atau alat tulis');
+        expect(res.summaryPhrase).toContain('kelengkapan atribut seragam');
+    });
+
+    it('explicitly mentions the student violations in generateHomeroomNote', () => {
+        const note = generateHomeroomNote({
+            studentName: 'Bening Embun',
+            adabGrade: 'A',
+            kedisGrade: 'B',
+            kerapianGrade: 'A',
+            violations: [
+                { description: 'Bermain di jam pelajaran' },
+                { description: 'Bermain di jam pelajaran' },
+            ],
+            month: '2026-10',
+        });
+        expect(note).toContain('Ananda Bening');
+        expect(note).toMatch(/bermain saat jam pelajaran \(2 kali\)/i);
+        expect(note).toMatch(/(menyimak penjelasan|jam pelajaran berlangsung|tholabul 'ilmi|KBM)/i);
+        expect(isAutoHomeroomNote(note)).toBe(true);
+    });
+
+    it('explicitly mentions punctuality violation for late students', () => {
+        const note = generateHomeroomNote({
+            studentName: 'Fathiya Zareen',
+            adabGrade: 'A',
+            kedisGrade: 'B',
+            kerapianGrade: 'A',
+            violations: [
+                { description: 'Terlambat masuk sekolah' },
+            ],
+            month: '2026-10',
+        });
+        expect(note).toContain('Ananda Fathiya');
+        expect(note).toMatch(/terlambat hadir di madrasah/i);
+        expect(note).toMatch(/(bangun lebih awal|tepat waktu|hadir di madrasah)/i);
+        expect(isAutoHomeroomNote(note)).toBe(true);
+    });
+
+    it('explicitly praises students without any violation records', () => {
+        const note = generateHomeroomNote({
+            studentName: 'Adzkiyah Haura',
+            adabGrade: 'A',
+            kedisGrade: 'A',
+            kerapianGrade: 'A',
+            violations: [],
+            month: '2026-10',
+        });
+        expect(note).toContain('Ananda Adzkiyah');
+        expect(note).toMatch(/(tanpa catatan pelanggaran|tidak memiliki catatan pelanggaran|keteladanan|tata tertib madrasah)/i);
+        expect(isAutoHomeroomNote(note)).toBe(true);
     });
 });

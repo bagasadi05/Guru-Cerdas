@@ -119,7 +119,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
     if (lines.length <= 1) {
       return sanitize(text);
     }
-    return lines.map(line => `<div style="margin-bottom: 4px;">• ${sanitize(line.replace(/^[-*•]\s*/, ''))}</div>`).join('');
+    return `<ul style="margin: 2px 0; padding-left: 18px; line-height: 1.45; text-align: left; list-style-type: disc;">${lines.map(line => `<li style="margin-bottom: 4px;">${sanitize(line.replace(/^[-*•]\s*/, ''))}</li>`).join('')}</ul>`;
   };
 
   const intiToHtml = (steps: any): string => {
@@ -150,12 +150,12 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
       const siswaContent = s.kegiatanSiswa || s.siswa || s.studentActivity || s.kegiatan_siswa || '';
 
       return `
-        <div style="margin-bottom: 14px; border: 1px solid #cfd8dc; border-radius: 6px; padding: 10px; background-color: #fafbfc; page-break-inside: avoid;">
-          <div style="background-color: #e8f5e9; color: #0d6b3e; font-weight: bold; font-size: 10.5pt; padding: 6px 10px; border-left: 4px solid #0d6b3e; border-radius: 3px; margin-bottom: 6px;">
+        <div style="margin-bottom: 14px; page-break-inside: avoid; break-inside: avoid;"><table style="width: 100%; border-collapse: collapse; border: 1px solid #cfd8dc; font-size: 10pt; font-family: 'Times New Roman'; table-layout: fixed; page-break-inside: avoid; break-inside: avoid;"><thead><tr style="background-color: #e8f5e9; page-break-inside: avoid; break-inside: avoid;"><th colspan="2" style="border: 1px solid #cfd8dc; border-left: 4px solid #0d6b3e; padding: 6px 10px; background-color: #e8f5e9; text-align: left;">
+          <div style="font-weight: bold; color: #0d6b3e; font-size: 10.5pt;">
             ${displayTitle}
           </div>
           ${descriptionHtml}
-          <table style="width: 100%; border-collapse: collapse; border: none; font-size: 10pt; font-family: 'Times New Roman'; table-layout: fixed;">
+          </th></tr></thead>
             <tr style="border: none;">
               <td style="width: 50%; vertical-align: top; padding: 8px; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 4px;">
                 <div style="font-weight: bold; color: #1b5e20; margin-bottom: 4px; border-bottom: 1px solid #c8e6c9; padding-bottom: 2px;">
@@ -332,7 +332,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
   };
 
   const formatKompetensiAwal = (value: string): string => {
-    const fallback = 'Peserta didik sebaiknya sudah memiliki pemahaman awal terkait topik pembelajaran ini.';
+    const fallback = `Peserta didik telah mengenal konsep dasar yang berkaitan dengan ${sanitize(formState.topik || formState.mataPelajaran || 'materi pembelajaran')} pada pembelajaran sebelumnya serta mampu mengamati contoh sederhana di lingkungan sekitar.`;
     const items = expandInlineLkpdLines(String(value || '')).filter(Boolean);
     if (items.length === 0) return fallback;
     if (items.length === 1) return sanitize(items[0]);
@@ -395,8 +395,8 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
         <div style="margin: 20px 0; font-size: 12pt; font-family: 'Times New Roman';">
           <p style="margin-bottom: 15px; font-weight: bold;">Disusun Oleh :</p>
           <table style="margin: 0 auto; text-align: left; font-size: 11pt; font-family: 'Times New Roman'; border: none;">
-            <tr style="border: none;"><td style="padding: 4px 15px; border: none;">Nama Guru</td><td style="padding: 4px; border: none;">: <strong>${formState.guru || 'Guru Mata Pelajaran'}</strong></td></tr>
-            <tr style="border: none;"><td style="padding: 4px 15px; border: none;">NIP/NIM</td><td style="padding: 4px; border: none;">: .......................................</td></tr>
+            <tr style="border: none;"><td style="width: 36%; padding: 4px 10px; border: none;">Nama Guru</td><td style="width: 64%; padding: 4px; border: none;">: <strong>${formState.guru || 'Guru Mata Pelajaran'}</strong></td></tr>
+            <tr style="border: none;"><td style="width: 36%; padding: 4px 10px; border: none;">NIP/NIM</td><td style="width: 64%; padding: 4px; border: none;">: .......................................</td></tr>
           </table>
         </div>
 
@@ -441,7 +441,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
           B. CAPAIAN PEMBELAJARAN (CP)
         </div>
         <div style="padding: 10px; text-align: justify; line-height: 1.5; font-size: 10.5pt;">
-          ${sanitize(formState.capaianPembelajaran) || '<em>Capaian pembelajaran belum terisi.</em>'}
+          ${sanitize(data.capaianPembelajaran || formState.capaianPembelajaran) || '<em>Capaian pembelajaran belum terisi.</em>'}
         </div>
 
         <div style="background-color: #f5f0d0; color: #000000; padding: 6px 12px; font-weight: bold; border-top: 1px solid #000000; border-bottom: 1px solid #000000; font-size: 10.5pt;">
@@ -451,7 +451,7 @@ export const buildHtmlTemplate = (formState: FormState, data: any, totalJP: numb
           <div style="margin-bottom: 10px; page-break-inside: avoid; break-inside: avoid;">
             <p style="margin: 0 0 4px 0; page-break-after: avoid; break-after: avoid;"><strong>1. Kompetensi Awal (Prasyarat):</strong></p>
             <div style="margin: 0 0 0 12px; text-align: justify; line-height: 1.5;">
-              ${formatKompetensiAwal(formState.kompetensiAwal)}
+              ${formatKompetensiAwal(data.kompetensiAwal || formState.kompetensiAwal)}
             </div>
           </div>
 
@@ -1022,9 +1022,9 @@ export const buildStudentHtmlTemplate = (formState: FormState, data: any, logoBa
 
         <div style="margin: 30px 0; font-size: 12pt; font-family: 'Times New Roman';">
           <table style="margin: 0 auto; text-align: left; font-size: 11pt; font-family: 'Times New Roman'; border: none;">
-            <tr style="border: none;"><td style="padding: 5px 15px; border: none; font-weight: bold;">Materi Pokok</td><td style="padding: 5px; border: none;">: ${formState.topik}</td></tr>
-            <tr style="border: none;"><td style="padding: 5px 15px; border: none; font-weight: bold;">Satuan Pendidikan</td><td style="padding: 5px; border: none;">: ${formState.satuanPendidikan}</td></tr>
-            <tr style="border: none;"><td style="padding: 5px 15px; border: none; font-weight: bold;">Tahun Ajaran</td><td style="padding: 5px; border: none;">: ${formState.tahunAjaran}</td></tr>
+            <tr style="border: none;"><td style="width: 36%; padding: 5px 10px; border: none; font-weight: bold;">Materi Pokok</td><td style="width: 64%; padding: 5px; border: none;">: ${formState.topik}</td></tr>
+            <tr style="border: none;"><td style="width: 36%; padding: 5px 10px; border: none; font-weight: bold;">Satuan Pendidikan</td><td style="width: 64%; padding: 5px; border: none;">: ${formState.satuanPendidikan}</td></tr>
+            <tr style="border: none;"><td style="width: 36%; padding: 5px 10px; border: none; font-weight: bold;">Tahun Ajaran</td><td style="width: 64%; padding: 5px; border: none;">: ${formState.tahunAjaran}</td></tr>
           </table>
         </div>
 

@@ -95,6 +95,7 @@ export const useStudentsPageActions = ({
   const invalidateStudentQueries = () => {
     queryClient.invalidateQueries({ queryKey: ['students'] });
     queryClient.invalidateQueries({ queryKey: ['classes'] });
+    queryClient.invalidateQueries({ queryKey: ['classStudentCounts'] });
     queryClient.invalidateQueries({ queryKey: ['studentsPageData'] });
     queryClient.invalidateQueries({ queryKey: ['deleted-items'] });
     queryClient.invalidateQueries({ queryKey: ['deleted-items-all'] });

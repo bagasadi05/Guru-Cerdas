@@ -4,7 +4,7 @@ import { Button } from '../../../ui/Button';
 import { Input } from '../../../ui/Input';
 import { Card } from '../../../ui/Card';
 
-interface MentoringLog {
+export interface MentoringLog {
     id: string;
     date: string;
     notes: string;

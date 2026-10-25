@@ -24,8 +24,12 @@ export function PhScheduleToolbar({ domain, onPrint }: Props) {
         { value: 'table', label: 'Tabel', icon: List },
     ] as const;
 
-    const showClearFilters = (domain.searchQuery !== '' || domain.statusFilter !== 'all' || domain.selectedMonth !== 'all')
-        && domain.filteredSchedules.length > 0;
+    const showClearFilters =
+        (domain.searchQuery !== '' ||
+            domain.statusFilter !== 'all' ||
+            domain.selectedMonth !== 'all' ||
+            domain.selectedSubject !== 'all') &&
+        domain.filteredSchedules.length > 0;
 
     return (
         <section aria-label="Pengaturan jadwal ASH" className="space-y-2.5 sm:space-y-3.5 border-y border-slate-200 py-3 dark:border-slate-800">
@@ -140,7 +144,7 @@ export function PhScheduleToolbar({ domain, onPrint }: Props) {
                     ))}
                 </div>
 
-                {/* Right: Search + View Mode on the SAME row on mobile */}
+                {/* Right: Search + Subject Filter + View Mode */}
                 <div className="flex flex-1 flex-wrap items-center gap-2 lg:justify-end">
                     {/* Search & View Mode paired row */}
                     <div className="flex w-full sm:w-auto flex-1 items-center gap-2">
@@ -178,6 +182,22 @@ export function PhScheduleToolbar({ domain, onPrint }: Props) {
                         </div>
                     </div>
 
+                    {/* Subject Filter Dropdown (available across Weekly, Cards, and Table views when >1 subject) */}
+                    {domain.availableSubjects.length > 1 && (
+                        <div className="min-w-0 w-full sm:w-44">
+                            <CustomDropdown
+                                aria-label="Filter mata pelajaran ASH"
+                                value={domain.selectedSubject}
+                                onChange={domain.setSelectedSubject}
+                                options={[
+                                    { value: 'all', label: 'Semua Mapel' },
+                                    ...domain.availableSubjects.map((sub) => ({ value: sub, label: sub })),
+                                ]}
+                                placeholder="Pilih mapel"
+                            />
+                        </div>
+                    )}
+
                     {/* Month Dropdown & Sort (only when in Cards/Table view or when Month filter is active) */}
                     {(domain.viewMode !== 'weekly' || domain.selectedMonth !== 'all') && domain.availableMonths.length > 0 && (
                         <div className="flex w-full sm:w-auto items-center gap-2">
@@ -211,7 +231,12 @@ export function PhScheduleToolbar({ domain, onPrint }: Props) {
                             type="button"
                             variant="ghost"
                             className="min-h-10 sm:min-h-11 text-xs sm:text-sm text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-xl"
-                            onClick={() => { domain.setSearchQuery(''); domain.setStatusFilter('all'); domain.setSelectedMonth('all'); }}
+                            onClick={() => {
+                                domain.setSearchQuery('');
+                                domain.setStatusFilter('all');
+                                domain.setSelectedMonth('all');
+                                domain.setSelectedSubject('all');
+                            }}
                         >
                             Hapus filter
                         </Button>

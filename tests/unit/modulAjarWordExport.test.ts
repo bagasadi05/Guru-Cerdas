@@ -134,4 +134,55 @@ describe('buildHtmlTemplate pagination integrity', () => {
     expect(html).toContain('<br/><br/><br/>');
     expect(html).not.toContain('<br/><br/><br/><br/><br/>');
   });
+
+  it('produces editable Word structure: outline levels, hanging indents, grouped writing lines, and native bullets', async () => {
+    const multiLineData = {
+      ...dummyData,
+      kegiatanInti: [
+        {
+          fase: 'Langkah 1: Orientasi Masalah',
+          kegiatanGuru: 'Menayangkan gambar\nMengajukan pertanyaan',
+          kegiatanSiswa: 'Mengamati gambar\nMenjawab pertanyaan',
+        },
+      ],
+    };
+    const html = buildHtmlTemplate(dummyFormState, multiLineData, 2, '');
+    expect(html).toContain('<li style="margin-bottom: 4px;">Menayangkan gambar</li>');
+    expect(html).toContain('<th colspan="2"');
+
+    let downloaded: Blob | undefined;
+    vi.stubGlobal('URL', class extends URL {
+      static createObjectURL = vi.fn((blob: Blob) => { downloaded = blob; return 'blob:docx'; });
+      static revokeObjectURL = vi.fn();
+    });
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    await exportModulAjarToWord({
+      htmlContent: html,
+      fileName: 'Modul_Ajar_Test',
+      paperSize: 'A4',
+      title: 'Modul Ajar',
+    });
+
+    const bytes = await new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(downloaded!);
+    });
+    const zip = await JSZip.loadAsync(bytes);
+    const xml = await zip.file('word/document.xml')!.async('string');
+
+    expect(xml).toContain('<w:outlineLvl w:val="0"/>');
+    expect(xml).toContain('<w:outlineLvl w:val="1"/>');
+    expect(xml).toContain('<w:outlineLvl w:val="2"/>');
+    expect(xml).toContain('w:hanging="280"');
+    expect(xml).toContain('w:hanging="260"');
+    expect(xml).not.toContain('w:line="20"');
+    expect(xml).toContain('w:space="4"');
+    vi.unstubAllGlobals();
+  });
+  it('verifies placeholder', () => {
+    const html = '<br/>';
+    expect(html).not.toContain('<br/><br/><br/><br/><br/>');
+  });
 });

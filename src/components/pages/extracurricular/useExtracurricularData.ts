@@ -11,8 +11,11 @@ import {
     Student,
     ExtracurricularStudent,
     EnrollmentView,
+    ParticipantOption,
     Class,
+    Gender,
 } from './types';
+import { compareEnrollmentsByClassAndName, compareClassNames } from './extracurricularUtils';
 
 export interface UseExtracurricularDataOptions {
     selectedExtracurricular: string;
@@ -67,49 +70,26 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
 
     const normalizedClassName = useMemo(() => {
         if (!selectedClassName) return '';
-        return selectedClassName.trim().replace(/\s+/g, ' ').toUpperCase();
+        return normalizeClassName(selectedClassName);
     }, [selectedClassName]);
 
-    // Fetch students based on selected class
-    const { data: students = [] } = useQuery({
-        queryKey: ['students', 'all_active', user?.id, selectedClassId],
+    // Fetch all active regular students (cached once, filtered client-side for instant class switching)
+    const { data: allRegularStudents = [] } = useQuery({
+        queryKey: ['students', 'all_active', user?.id],
         queryFn: async () => {
             const { data, error } = await supabase.rpc('get_student_directory');
             if (error) throw error;
-            
-            const allStudents = (data || []) as unknown as Student[];
-            
-            if (selectedClassId) {
-                return allStudents.filter(s => s.class_id === selectedClassId);
-            }
-            return allStudents;
+            return (data || []) as unknown as Student[];
         },
         enabled: !!user,
     });
 
-    // Fetch extracurricular-only students
-    const { data: extracurricularStudents = [] } = useQuery({
-        queryKey: ['extracurricular_students', user?.id, normalizedClassName],
-        queryFn: async () => {
-            let query = supabase
-                .from('extracurricular_students')
-                .select('*')
-                .eq('user_id', user!.id)
-                .is('deleted_at', null)
-                .order('name');
+    const students = useMemo(() => {
+        if (!selectedClassId) return allRegularStudents;
+        return allRegularStudents.filter((s) => s.class_id === selectedClassId);
+    }, [allRegularStudents, selectedClassId]);
 
-            if (normalizedClassName) {
-                query = query.eq('class_name', normalizedClassName);
-            }
-
-            const { data, error } = await query;
-            if (error) throw error;
-            return (data || []) as ExtracurricularStudent[];
-        },
-        enabled: !!user,
-    });
-
-    // Fetch ALL extracurricular students (for student list tab)
+    // Fetch ALL extracurricular students
     const { data: allExtracurricularStudents = [], isLoading: loadingAllExtraStudents } = useQuery({
         queryKey: ['all_extracurricular_students', user?.id],
         queryFn: async () => {
@@ -125,21 +105,53 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
         enabled: !!user,
     });
 
+    const extracurricularStudents = useMemo(() => {
+        if (!normalizedClassName) return allExtracurricularStudents;
+        return allExtracurricularStudents.filter(
+            (s) => s.class_name && normalizeClassName(s.class_name) === normalizedClassName
+        );
+    }, [allExtracurricularStudents, normalizedClassName]);
+
+    // Fetch enrollment counts across all extracurriculars for the active semester
+    const { data: allSemesterEnrollmentRows = [] } = useQuery({
+        queryKey: ['student_extracurriculars_counts', user?.id, activeSemester?.id],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('student_extracurriculars')
+                .select('id, extracurricular_id')
+                .eq('semester_id', activeSemester!.id)
+                .is('deleted_at', null);
+            if (error) throw error;
+            return (data || []) as Array<{ id: string; extracurricular_id: string | null }>;
+        },
+        enabled: !!user && !!activeSemester?.id,
+    });
+
+    const enrollmentCountsByEkskul = useMemo(() => {
+        const counts: Record<string, number> = {};
+        allSemesterEnrollmentRows.forEach((row) => {
+            if (row.extracurricular_id) {
+                counts[row.extracurricular_id] = (counts[row.extracurricular_id] || 0) + 1;
+            }
+        });
+        return counts;
+    }, [allSemesterEnrollmentRows]);
+
     // Fetch enrollments for selected extracurricular
-    const { data: enrollments = [] } = useQuery({
+    const { data: enrollments = [], isLoading: loadingEnrollments } = useQuery({
         queryKey: ['student_extracurriculars', selectedExtracurricular, activeSemester?.id],
         queryFn: async () => {
             const [studentRes, extraRes] = await Promise.all([
                 supabase
                     .from('student_extracurriculars')
-                    .select('id, student_id, extracurricular_id, semester_id, students(id, name, class_id, classes(name))')
+                    .select('id, student_id, extracurricular_id, semester_id, students(id, name, gender, class_id, classes(name))')
                     .eq('extracurricular_id', selectedExtracurricular)
                     .eq('semester_id', activeSemester!.id)
                     .is('deleted_at', null)
                     .not('student_id', 'is', null),
                 supabase
                     .from('student_extracurriculars')
-                    .select('id, extracurricular_student_id, extracurricular_id, semester_id, extracurricular_students(id, name, class_name)')
+                    .select('id, extracurricular_student_id, extracurricular_id, semester_id, extracurricular_students(id, name, gender, class_name)')
                     .eq('extracurricular_id', selectedExtracurricular)
                     .eq('semester_id', activeSemester!.id)
                     .is('deleted_at', null)
@@ -149,51 +161,75 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
             if (studentRes.error) throw studentRes.error;
             if (extraRes.error) throw extraRes.error;
 
-            const studentEnrollments = (studentRes.data || []).map((row: any): EnrollmentView => ({
+            type RawStudentRow = {
+                id: string;
+                student_id: string;
+                students: {
+                    name?: string | null;
+                    gender?: Gender | null;
+                    classes?: { name?: string | null } | null;
+                } | null;
+            };
+
+            type RawExtraRow = {
+                id: string;
+                extracurricular_student_id: string;
+                extracurricular_students: {
+                    name?: string | null;
+                    gender?: Gender | null;
+                    class_name?: string | null;
+                } | null;
+            };
+
+            const studentEnrollments = ((studentRes.data as unknown as RawStudentRow[]) || []).map((row): EnrollmentView => ({
                 id: row.id,
                 participantId: row.student_id,
                 participantType: 'student',
                 name: row.students?.name || 'Siswa',
                 className: row.students?.classes?.name || null,
+                gender: row.students?.gender || null,
             }));
 
-            const extraEnrollments = (extraRes.data || []).map((row: any): EnrollmentView => ({
+            const extraEnrollments = ((extraRes.data as unknown as RawExtraRow[]) || []).map((row): EnrollmentView => ({
                 id: row.id,
                 participantId: row.extracurricular_student_id,
                 participantType: 'extracurricular_student',
                 name: row.extracurricular_students?.name || 'Siswa Ekskul',
                 className: row.extracurricular_students?.class_name || null,
+                gender: row.extracurricular_students?.gender || null,
             }));
 
-            return [...studentEnrollments, ...extraEnrollments];
+            return [...studentEnrollments, ...extraEnrollments].sort(compareEnrollmentsByClassAndName);
         },
         enabled: !!selectedExtracurricular && !!activeSemester,
     });
 
     // Fetch attendance for selected extracurricular and date
-    const { data: attendanceRecords = [] } = useQuery({
+    const { data: attendanceRecords = [], isLoading: loadingAttendance } = useQuery({
         queryKey: ['extracurricular_attendance', selectedExtracurricular, selectedDate],
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('extracurricular_attendance')
                 .select('*')
                 .eq('extracurricular_id', selectedExtracurricular)
-                .eq('date', selectedDate);
+                .eq('date', selectedDate)
+                .is('deleted_at', null);
             if (error) throw error;
-            return data as ExtracurricularAttendance[];
+            return (data || []) as ExtracurricularAttendance[];
         },
         enabled: !!selectedExtracurricular && !!selectedDate,
     });
 
     // Fetch grades for selected extracurricular
-    const { data: grades = [] } = useQuery({
+    const { data: grades = [], isLoading: loadingGrades } = useQuery({
         queryKey: ['extracurricular_grades', selectedExtracurricular, activeSemester?.id],
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('extracurricular_grades')
                 .select('*')
                 .eq('extracurricular_id', selectedExtracurricular)
-                .eq('semester_id', activeSemester!.id);
+                .eq('semester_id', activeSemester!.id)
+                .is('deleted_at', null);
             if (error) throw error;
             return (data || []) as ExtracurricularGrade[];
         },
@@ -212,24 +248,26 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
         return new Set(enrollments.map((e) => `${e.participantType}:${e.participantId}`));
     }, [enrollments]);
 
-    const participants = useMemo(() => {
-        const baseStudents = students
+    const participants = useMemo((): ParticipantOption[] => {
+        const baseStudents: ParticipantOption[] = students
             .filter((s) => (s.class_id && classNameById.has(s.class_id)) || enrolledParticipantIds.has(`student:${s.id}`))
             .map((s) => ({
                 id: s.id,
                 type: 'student' as const,
                 name: s.name,
                 className: s.class_id ? classNameById.get(s.class_id) || null : null,
+                gender: s.gender || null,
             }));
 
-        const extra = extracurricularStudents.map((s) => ({
+        const extra: ParticipantOption[] = extracurricularStudents.map((s) => ({
             id: s.id,
             type: 'extracurricular_student' as const,
             name: s.name,
             className: s.class_name || null,
+            gender: s.gender || null,
         }));
 
-        return [...baseStudents, ...extra];
+        return [...baseStudents, ...extra].sort(compareEnrollmentsByClassAndName);
     }, [students, extracurricularStudents, classNameById, enrolledParticipantIds]);
 
     const attendanceMap = useMemo(() => {
@@ -263,22 +301,27 @@ export function useExtracurricularData(options: UseExtracurricularDataOptions) {
         allExtracurricularStudents.forEach((s) => {
             if (s.class_name) classSet.add(s.class_name);
         });
-        return Array.from(classSet).sort();
+        return Array.from(classSet).sort(compareClassNames);
     }, [allExtracurricularStudents]);
 
     return {
         // Loading states
         loadingExtracurriculars,
         loadingAllExtraStudents,
+        loadingEnrollments,
+        loadingAttendance,
+        loadingGrades,
 
         // Core data
         extracurriculars,
         selectedExtracurricularData,
         classes,
         students,
+        allRegularStudents,
         extracurricularStudents,
         allExtracurricularStudents,
         enrollments,
+        enrollmentCountsByEkskul,
         attendanceRecords,
         grades,
         activeSemester,

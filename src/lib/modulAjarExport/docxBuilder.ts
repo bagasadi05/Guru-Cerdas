@@ -307,13 +307,29 @@ function blockBorders(element: ExportElement | null): IBordersOptions | undefine
   return visible ? borders : undefined;
 }
 
+function paragraphBorders(element: ExportElement | null): IBordersOptions | undefined {
+  const borders = blockBorders(element);
+  if (!borders) return undefined;
+  const withSpace = (b: IBorderOptions | undefined, space: number) =>
+    b && b.style !== BorderStyle.NONE ? { ...b, space } : b;
+  return {
+    top: withSpace(borders.top, 4),
+    bottom: withSpace(borders.bottom, 4),
+    left: withSpace(borders.left, 6),
+    right: withSpace(borders.right, 6),
+  };
+}
+
 interface ParagraphExtras {
   heading?: boolean;
   bullet?: boolean;
   numberingInstance?: number;
   borderSource?: ExportElement | null;
   keepNext?: boolean;
+  spacingBefore?: number;
   spacingAfter?: number;
+  outlineLevel?: number;
+  hangingIndent?: number;
 }
 
 function makeParagraph(
@@ -332,24 +348,82 @@ function makeParagraph(
     keepNext: extras.heading || extras.keepNext || ctx.keepNext,
     widowControl: true,
     shading: ctx.shading ? { type: ShadingType.CLEAR, fill: ctx.shading, color: 'auto' } : undefined,
-    border: blockBorders(extras.borderSource ?? null),
-    indent: ctx.indentLeft > 0 && !extras.bullet && extras.numberingInstance === undefined
-      ? { left: ctx.indentLeft }
+    outlineLevel: extras.outlineLevel,
+    border: paragraphBorders(extras.borderSource ?? null),
+    indent: (ctx.indentLeft > 0 || extras.hangingIndent) && !extras.bullet && extras.numberingInstance === undefined
+      ? { left: ctx.indentLeft + (extras.hangingIndent ?? 0), ...(extras.hangingIndent ? { hanging: extras.hangingIndent } : {}) }
       : undefined,
     numbering: extras.bullet
       ? { reference: BULLET_LIST, level }
       : extras.numberingInstance !== undefined
         ? { reference: NUMBERED_LIST, level, instance: extras.numberingInstance }
         : undefined,
-    spacing: { after: extras.spacingAfter ?? (extras.heading ? 100 : 40), line: 276 },
+    spacing: { ...(extras.spacingBefore !== undefined ? { before: extras.spacingBefore } : {}), after: extras.spacingAfter ?? (extras.heading ? 100 : 40), line: 276 },
   });
+}
+
+function isWritingLine(element: ExportElement): boolean {
+  const height = Math.max(toTwips(element.style.height), toTwips(element.style['min-height']));
+  return (
+    element.tag === 'div' &&
+    height > 0 &&
+    height <= 600 &&
+    textContent(element).trim() === '' &&
+    Boolean(element.style['border-bottom']) &&
+    !element.style.border &&
+    !element.style['border-top']
+  );
+}
+
+function buildWritingLinesTable(lines: ExportElement[], ctx: BlockContext, state: BuildState): DocxBlock[] {
+  const first = lines[0];
+  const width = Math.round((ctx.availableWidth - ctx.indentLeft) * (toPercent(first.style.width) ?? 100) / 100);
+  const rows = lines.map((line) => {
+    const lineCtx = deriveContext(ctx, line);
+    const height = Math.max(toTwips(line.style.height), toTwips(line.style['min-height']));
+    return new TableRow({
+      height: { value: height, rule: HeightRule.ATLEAST },
+      cantSplit: true,
+      children: [
+        new TableCell({
+          children: [makeParagraph([], lineCtx, state, { spacingAfter: 0 })],
+          borders: blockBorders(line) ?? {},
+          margins: { top: 0, bottom: 0, left: 0, right: 0 },
+          verticalAlign: VerticalAlign.BOTTOM,
+        }),
+      ],
+    });
+  });
+  return [
+    new Table({
+      width: { size: width, type: WidthType.DXA },
+      columnWidths: [width],
+      layout: TableLayoutType.FIXED,
+      borders: {
+        top: { style: BorderStyle.NONE, size: 0 }, bottom: { style: BorderStyle.NONE, size: 0 },
+        left: { style: BorderStyle.NONE, size: 0 }, right: { style: BorderStyle.NONE, size: 0 },
+        insideHorizontal: { style: BorderStyle.NONE, size: 0 }, insideVertical: { style: BorderStyle.NONE, size: 0 },
+      },
+      rows,
+    }),
+    new Paragraph({ children: [], spacing: { before: 0, after: 60, line: 240 } }),
+  ];
 }
 
 function convertBlocks(nodes: ExportNode[], ctx: BlockContext, state: BuildState): DocxBlock[] {
   const blocks: DocxBlock[] = [];
   let inlineBuffer: ExportNode[] = [];
+  let writingLineBuffer: ExportElement[] = [];
+
+  const flushWritingLines = () => {
+    if (writingLineBuffer.length === 0) return;
+    const lines = writingLineBuffer;
+    writingLineBuffer = [];
+    blocks.push(...buildWritingLinesTable(lines, ctx, state));
+  };
 
   const flush = () => {
+    flushWritingLines();
     const content = trimInline(inlineBuffer);
     inlineBuffer = [];
     if (content.length === 0) return;
@@ -368,6 +442,11 @@ function convertBlocks(nodes: ExportNode[], ctx: BlockContext, state: BuildState
       continue;
     }
     if (hasPageBreakBefore(element)) state.pendingPageBreak = true;
+    if (isWritingLine(element) && !state.pendingPageBreak) {
+      writingLineBuffer.push(element);
+      continue;
+    }
+    flushWritingLines();
     blocks.push(...convertBlock(element, ctx, state));
     if (hasPageBreakAfter(element)) state.pendingPageBreak = true;
   }
@@ -379,15 +458,18 @@ function convertBlock(element: ExportElement, parentCtx: BlockContext, state: Bu
   const ctx = deriveContext(parentCtx, element);
 
   if (element.sheet) {
+    return convertBlocks(element.children, { ...ctx, inCell: false }, state);
+  }
+  if (false as boolean) {
     const blocks: DocxBlock[] = [];
     if (state.pendingPageBreak) blocks.push(makeParagraph([], ctx, state, { spacingAfter: 0 }));
     const padding = toTwips(element.style.padding) || 180;
     const width = ctx.availableWidth - ctx.indentLeft;
-    const children = convertBlocks(element.children, { ...ctx, availableWidth: width - padding * 2, inCell: true }, state);
+    const children = convertBlocks(element.children, { ...ctx, availableWidth: width - padding * 2, inCell: false }, state);
     if (children.length === 0 || children[children.length - 1] instanceof Table) children.push(new Paragraph({ children: [] }));
     blocks.push(new Table({
       width: { size: width, type: WidthType.DXA }, columnWidths: [width], layout: TableLayoutType.FIXED,
-      rows: [new TableRow({ cantSplit: textContent(element).length < 3000, children: [new TableCell({
+      rows: [new TableRow({ cantSplit: false, children: [new TableCell({
         children, borders: blockBorders(element), margins: { top: padding, bottom: padding, left: padding, right: padding },
       })] })],
       borders: {
@@ -395,7 +477,7 @@ function convertBlock(element: ExportElement, parentCtx: BlockContext, state: Bu
         left: { style: BorderStyle.NONE, size: 0 }, right: { style: BorderStyle.NONE, size: 0 },
         insideHorizontal: { style: BorderStyle.NONE, size: 0 }, insideVertical: { style: BorderStyle.NONE, size: 0 },
       },
-    }), new Paragraph({ children: [], spacing: { after: 0, line: 20 } }));
+    }), new Paragraph({ children: [], spacing: { before: 0, after: 60, line: 240 } }));
     return blocks;
   }
 
@@ -424,6 +506,23 @@ function convertBlock(element: ExportElement, parentCtx: BlockContext, state: Bu
     const minimumHeight = Math.max(toTwips(element.style.height), toTwips(element.style['min-height']));
     const hasHeight = minimumHeight > 0;
     if (content.length === 0 && !borders && !hasHeight) return [];
+    const plainText = textContent(element).trim();
+    const isMajorSection = /^(INFORMASI UMUM|KOMPONEN INTI|LAMPIRAN PERANGKAT AJAR)$/.test(plainText);
+    const isSubSection = (!isMajorSection && isHeadingBar(element)) || /^KUNCI JAWABAN & PEDOMAN PENSKORAN/.test(plainText) || element.tag === 'h3';
+    const isActivityStepHeading = /^[1-3]\.\s+Kegiatan\s+(Pendahuluan|Inti|Penutup)/i.test(plainText);
+    const outlineLevel = isMajorSection ? 0 : isSubSection ? 1 : isActivityStepHeading ? 2 : undefined;
+    const isOptionLine = /^[A-Da-d]\.\s+\S/.test(plainText);
+    const isQuestionOrStepLine =
+      /^\d+\.\s+\S/.test(plainText) &&
+      !borders &&
+      !isActivityStepHeading &&
+      !/^\d+\.\s+(?:Kompetensi Awal|Profil Pelajar|Sarana dan Prasarana|Target Peserta|Penilaian|Program|Diferensiasi|Refleksi)/i.test(plainText);
+    const isNumberedSubLabel = /^\d+\.\s+(?:Kompetensi Awal|Profil Pelajar|Sarana dan Prasarana|Target Peserta|Penilaian|Rubrik Penilaian|Program|Diferensiasi|Refleksi)/i.test(plainText);
+    const isLegacyBullet = !ctx.shading && !borders && /^[•❖]\s+\S/.test(plainText) && content[0]?.type === 'text';
+    const normalizedContent = isLegacyBullet && content[0]?.type === 'text'
+      ? [{ type: 'text' as const, text: content[0].text.replace(/^[•❖]\s+/, '') }, ...content.slice(1)]
+      : content;
+    const paragraphCtx = isOptionLine && ctx.indentLeft === 0 ? { ...ctx, indentLeft: 225 } : ctx;
     if (hasHeight) {
       const padding = toTwips(element.style.padding?.split(/\s+/)[0]);
       const top = toTwips(element.style['padding-top']) || padding;
@@ -454,10 +553,15 @@ function convertBlock(element: ExportElement, parentCtx: BlockContext, state: Bu
             verticalAlign: VerticalAlign.TOP,
           })],
         })],
-      }), new Paragraph({ children: [], spacing: { before: 0, after: 0, line: 20 } })];
+      }), new Paragraph({ children: [], spacing: { before: 0, after: 60, line: 240 } })];
     }
     return [
-      makeParagraph(inlineRuns(content, ctx.format), ctx, state, {
+      makeParagraph(inlineRuns(normalizedContent, paragraphCtx.format), paragraphCtx, state, {
+        bullet: isLegacyBullet || undefined,
+        outlineLevel,
+        hangingIndent: isOptionLine ? 260 : isQuestionOrStepLine ? 280 : undefined,
+        spacingBefore: isMajorSection ? 160 : isSubSection ? 120 : isActivityStepHeading ? 100 : isQuestionOrStepLine || isNumberedSubLabel ? 80 : undefined,
+        spacingAfter: isMajorSection || isHeading ? 100 : isSubSection ? 80 : isActivityStepHeading ? 60 : undefined,
         heading: isHeading,
         keepNext:
           element.classes.includes('keep-with-next') ||
@@ -555,6 +659,10 @@ function computeColumnWidths(rows: ExportElement[], tableWidth: number): number[
     const resolved = percents.map((p) => p ?? fallback);
     const total = resolved.reduce((sum, p) => sum + p, 0) || 100;
     return resolved.map((p) => Math.round((p / total) * tableWidth));
+  }
+  if (columnCount === 2 && rows.some((row) => { const c = rowCells(row); return c.length === 2 && textContent(c[1]).trim().startsWith(':'); })) {
+    const firstCol = Math.round(tableWidth * 0.36);
+    return [firstCol, tableWidth - firstCol];
   }
   return Array.from({ length: columnCount }, () => Math.round(tableWidth / columnCount));
 }

@@ -315,6 +315,8 @@ export const ModulAjarForm: React.FC<ModulAjarFormProps> = ({
 
             {activeStep === 3 && (
               <Step3TargetProfil
+                onProfilToggle={onProfilToggle}
+                PROFIL_OPTIONS={PROFIL_OPTIONS}
                 formState={formState}
                 onChange={onChange}
                 t={t}

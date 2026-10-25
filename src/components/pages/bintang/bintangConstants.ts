@@ -115,7 +115,10 @@ export function isAutoHomeroomNote(note?: string | null): boolean {
         clean.includes('tidak memiliki catatan pelanggaran') ||
         clean.includes('tata tertib madrasah') ||
         clean.includes('pembiasaan islami') ||
-        clean.includes('generasi qur\'ani')
+        clean.includes('generasi qur\'ani') ||
+        clean.includes('catatan evaluasi terkait') ||
+        clean.includes('catatan ketertiban berupa') ||
+        clean.includes('evaluasi pembiasaan madrasah')
     );
 }
 
@@ -172,58 +175,185 @@ export interface HomeroomNoteContext {
 export type ViolationCluster = 'WAKTU' | 'KERAPIAN' | 'KBM_FOKUS' | 'ADAB_ETIKA' | 'UMUM';
 
 /** Mengklasifikasikan daftar pelanggaran menjadi klaster tematik dominan */
-export function classifyViolationCluster(violations: StudentViolationSummaryItem[] = []): {
-    primaryCluster: ViolationCluster;
-    timeCount: number;
-    appearanceCount: number;
-    kbmCount: number;
-    adabCount: number;
-} {
-    let timeCount = 0;
-    let appearanceCount = 0;
-    let kbmCount = 0;
-    let adabCount = 0;
+export function classifyViolationCluster(violations: StudentViolationSummaryItem[] = []): {
+    primaryCluster: ViolationCluster;
+    timeCount: number;
+    appearanceCount: number;
+    kbmCount: number;
+    adabCount: number;
+} {
+    let timeCount = 0;
+    let appearanceCount = 0;
+    let kbmCount = 0;
+    let adabCount = 0;
+
+    for (const v of violations) {
+        const text = (v.description || '').toLowerCase();
+        const aspect = v.bintangAspect;
+        if (text.includes('terlambat') || text.includes('waktu') || text.includes('masuk sekolah') || text.includes('istirahat')) {
+            timeCount++;
+        } else if (
+            aspect === 'KERAPIAN' ||
+            text.includes('atribut') || text.includes('bedge') || text.includes('dasi') ||
+            text.includes('rompi') || text.includes('topi') || text.includes('sepatu') ||
+            text.includes('kaos kaki') || text.includes('kuku') || text.includes('seragam') ||
+            text.includes('rambut') || text.includes('tali pinggang')
+        ) {
+            appearanceCount++;
+        } else if (
+            text.includes('kbm') || text.includes('tidak memperhatikan') ||
+            text.includes('bermain di jam') || text.includes('keluar masuk') || text.includes('bermain')
+        ) {
+            kbmCount++;
+        } else if (
+            aspect === 'ADAB' ||
+            text.includes('berkata kotor') || text.includes('sopan') || text.includes('sampah') ||
+            text.includes('mencoret') || text.includes('tidak patuh') || text.includes('makan')
+        ) {
+            adabCount++;
+        } else if (aspect === 'KEDISIPLINAN') {
+            timeCount++;
+        }
+    }
+
+    const counts = [
+        { cluster: 'WAKTU' as ViolationCluster, count: timeCount },
+        { cluster: 'KERAPIAN' as ViolationCluster, count: appearanceCount },
+        { cluster: 'KBM_FOKUS' as ViolationCluster, count: kbmCount },
+        { cluster: 'ADAB_ETIKA' as ViolationCluster, count: adabCount },
+    ];
+
+    counts.sort((a, b) => b.count - a.count);
+    const primaryCluster = counts[0].count > 0 ? counts[0].cluster : 'UMUM';
+
+    return { primaryCluster, timeCount, appearanceCount, kbmCount, adabCount };
+}
 
+/**
+ * Menormalkan frasa pelanggaran agar mengalir natural dan santun dalam narasi catatan rapor.
+ */
+export function normalizeViolationPhrase(description: string): string {
+    const raw = (description || '').trim();
+    if (!raw) return '';
+    const lower = raw.toLowerCase();
+
+    // Waktu & Kehadiran
+    if (lower.includes('terlambat masuk sekolah') || lower.includes('terlambat hadir') || lower.includes('datang terlambat')) {
+        return 'terlambat hadir di madrasah';
+    }
+    if (lower.includes('terlambat') && lower.includes('istirahat')) {
+        return 'terlambat masuk kelas setelah istirahat';
+    }
+
+    // Kerapian, Atribut & Kebersihan Diri
+    if (lower.includes('bedge') || (lower.includes('atribut') && (lower.includes('sekolah') || lower.includes('lengkap')))) {
+        return 'kelengkapan atribut seragam (peci/topi/dasi/sabuk)';
+    }
+    if (lower.includes('tali pinggang') || lower.includes('ikat pinggang')) {
+        return 'kelengkapan sabuk seragam';
+    }
+    if (lower.includes('kuku')) {
+        return 'kebersihan dan kerapian kuku';
+    }
+    if (lower.includes('kaos kaki') || lower.includes('sepatu')) {
+        return 'kerapian kaos kaki dan sepatu';
+    }
+    if (lower.includes('rambut')) {
+        return 'kerapian potongan rambut';
+    }
+
+    // KBM & Fokus di Kelas
+    if (lower.includes('bermain di jam pelajaran') || lower.includes('bermain saat jam') || lower.includes('bermain di kelas')) {
+        return 'bermain saat jam pelajaran';
+    }
+    if (lower.includes('tidak memperhatikan saat kbm') || lower.includes('kurang memperhatikan') || lower.includes('tidak fokus')) {
+        return 'kurang fokus/memperhatikan saat pelajaran';
+    }
+    if (lower.includes('tidak membawa buku') || lower.includes('perlengkapan belajar') || lower.includes('alat tulis')) {
+        return 'kelengkapan buku pelajaran atau alat tulis';
+    }
+    if (lower.includes('makan') && (lower.includes('kbm') || lower.includes('permen') || lower.includes('mengunyah'))) {
+        return 'makan/mengunyah saat kegiatan belajar';
+    }
+    if (lower.includes('pekerjaan rumah') || lower.includes('pr') || lower.includes('tugas mandiri')) {
+        return 'ketertiban mengerjakan tugas/PR';
+    }
+    if (lower.includes('keluar masuk') || lower.includes('tanpa izin')) {
+        return 'keluar masuk kelas tanpa izin';
+    }
+    if (lower.includes('bermain kertas') || lower.includes('pesawat')) {
+        return 'bermain kertas di dalam kelas';
+    }
+
+    // Adab, Etika & Hubungan Sosial
+    if (lower.includes('berkata kotor') || lower.includes('kata kasar')) {
+        return 'tutur kata yang kurang santun';
+    }
+    if (lower.includes('mengolok') || lower.includes('mengejek') || lower.includes('jahil') || lower.includes('mendorong') || lower.includes('mencubit')) {
+        return 'sikap bercanda/mengejek teman';
+    }
+    if (lower.includes('tidak patuh') || lower.includes('melawan') || lower.includes('menghina')) {
+        return 'kepatuhan terhadap instruksi guru/ustadzah';
+    }
+    if (lower.includes('makan sambil berdiri') || lower.includes('minum sambil berdiri')) {
+        return 'adab makan dan minum (sunnah duduk)';
+    }
+    if (lower.includes('sampah')) {
+        return 'kebiasaan membuang sampah pada tempatnya';
+    }
+    if (lower.includes('mencoret')) {
+        return 'menjaga kebersihan meja/fasilitas madrasah';
+    }
+
+    // Fallback pembersihan umum
+    const cleaned = raw.replace(/\s+/g, ' ').replace(/\s*\/\s*/g, ' / ');
+    return cleaned.charAt(0).toLowerCase() + cleaned.slice(1);
+}
+
+/**
+ * Menyusun ringkasan nama dan frekuensi pelanggaran siswa menjadi frasa gabungan yang santun.
+ */
+export function formatViolationsSummary(violations: StudentViolationSummaryItem[] = []): {
+    summaryPhrase: string;
+    totalViolations: number;
+    distinctTypes: number;
+} {
+    if (!violations || violations.length === 0) {
+        return { summaryPhrase: '', totalViolations: 0, distinctTypes: 0 };
+    }
+
+    const countMap = new Map<string, number>();
     for (const v of violations) {
-        const text = (v.description || '').toLowerCase();
-        const aspect = v.bintangAspect;
-        if (text.includes('terlambat') || text.includes('waktu') || text.includes('masuk sekolah') || text.includes('istirahat')) {
-            timeCount++;
-        } else if (
-            aspect === 'KERAPIAN' ||
-            text.includes('atribut') || text.includes('bedge') || text.includes('dasi') ||
-            text.includes('rompi') || text.includes('topi') || text.includes('sepatu') ||
-            text.includes('kaos kaki') || text.includes('kuku') || text.includes('seragam') ||
-            text.includes('rambut') || text.includes('tali pinggang')
-        ) {
-            appearanceCount++;
-        } else if (
-            text.includes('kbm') || text.includes('tidak memperhatikan') ||
-            text.includes('bermain di jam') || text.includes('keluar masuk') || text.includes('bermain')
-        ) {
-            kbmCount++;
-        } else if (
-            aspect === 'ADAB' ||
-            text.includes('berkata kotor') || text.includes('sopan') || text.includes('sampah') ||
-            text.includes('mencoret') || text.includes('tidak patuh') || text.includes('makan')
-        ) {
-            adabCount++;
-        } else if (aspect === 'KEDISIPLINAN') {
-            timeCount++;
+        if (!v.description) continue;
+        const phrase = normalizeViolationPhrase(v.description);
+        if (phrase) {
+            countMap.set(phrase, (countMap.get(phrase) || 0) + 1);
         }
     }
 
-    const counts = [
-        { cluster: 'WAKTU' as ViolationCluster, count: timeCount },
-        { cluster: 'KERAPIAN' as ViolationCluster, count: appearanceCount },
-        { cluster: 'KBM_FOKUS' as ViolationCluster, count: kbmCount },
-        { cluster: 'ADAB_ETIKA' as ViolationCluster, count: adabCount },
-    ];
+    const sorted = Array.from(countMap.entries()).sort((a, b) => b[1] - a[1]);
+    const totalViolations = violations.length;
+    const distinctTypes = sorted.length;
 
-    counts.sort((a, b) => b.count - a.count);
-    const primaryCluster = counts[0].count > 0 ? counts[0].cluster : 'UMUM';
+    if (sorted.length === 0) {
+        return { summaryPhrase: '', totalViolations: 0, distinctTypes: 0 };
+    }
 
-    return { primaryCluster, timeCount, appearanceCount, kbmCount, adabCount };
+    const topItems = sorted.slice(0, 3).map(([phrase, count]) => {
+        return count > 1 ? `${phrase} (${count} kali)` : phrase;
+    });
+
+    let summaryPhrase = '';
+    if (topItems.length === 1) {
+        summaryPhrase = topItems[0];
+    } else if (topItems.length === 2) {
+        summaryPhrase = `${topItems[0]} serta ${topItems[1]}`;
+    } else {
+        const last = topItems.pop();
+        summaryPhrase = `${topItems.join(', ')}, dan ${last}`;
+    }
+
+    return { summaryPhrase, totalViolations, distinctTypes };
 }
 
 function getStudentGreeting(studentName?: string): string {
@@ -334,37 +464,52 @@ export function generateContextualHomeroomNote(context: HomeroomNoteContext): st
         part2 = selectVariant(variants, seed + 1);
     } else {
         const clusterInfo = classifyViolationCluster(violations);
+        const { summaryPhrase } = formatViolationsSummary(violations);
+
+        let violationIntro = '';
+        if (summaryPhrase) {
+            const introVariants = [
+                `Pada bulan ini terdapat catatan evaluasi terkait ${summaryPhrase}.`,
+                `Sebagai bahan evaluasi bersama, Ananda memiliki catatan ketertiban berupa ${summaryPhrase}.`,
+                `Tercatat adanya evaluasi pembiasaan madrasah bulan ini terkait ${summaryPhrase}.`,
+            ];
+            violationIntro = selectVariant(introVariants, seed + 1);
+        }
+
+        let guidanceSentence = '';
         if (clusterInfo.primaryCluster === 'WAKTU') {
             const variants = [
                 'Sebagai catatan evaluasi bersama, Ananda perlu dibiasakan bangun lebih awal dan manajemen waktu di rumah agar tiba di madrasah tepat waktu sebelum bel masuk dan pembiasaan pagi dimulai.',
                 'Mohon bimbingan Ayah/Bunda di rumah agar Ananda dapat hadir di madrasah lebih awal, sehingga dapat mengikuti kegiatan pembiasaan pagi dan doa bersama dengan tenang.',
             ];
-            part2 = selectVariant(variants, seed + 2);
+            guidanceSentence = selectVariant(variants, seed + 2);
         } else if (clusterInfo.primaryCluster === 'KERAPIAN') {
             const variants = [
                 `Sebagai catatan pembiasaan, mohon dibiasakan untuk memeriksa kelengkapan atribut seragam madrasah (${g.headwear}, dasi, ikat pinggang, dan sepatu) pada malam sebelumnya agar penampilannya senantiasa rapi dan syar'i.`,
                 'Perlu perhatian lebih pada kerapian diri dan kelengkapan atribut seragam madrasah sesuai jadwal hari yang telah ditentukan.',
             ];
-            part2 = selectVariant(variants, seed + 2);
+            guidanceSentence = selectVariant(variants, seed + 2);
         } else if (clusterInfo.primaryCluster === 'KBM_FOKUS') {
             const variants = [
                 'Di dalam kelas, Ananda perlu terus dimotivasi agar lebih khusyuk dan tertib menyimak penjelasan ustadz/ustadzah serta membatasi bermain saat jam pelajaran berlangsung.',
                 'Konsentrasi dan ketenangan saat tholabul \'ilmi (menuntut ilmu) perlu ditingkatkan agar Ananda dapat menyerap materi pelajaran dengan optimal.',
             ];
-            part2 = selectVariant(variants, seed + 2);
+            guidanceSentence = selectVariant(variants, seed + 2);
         } else if (clusterInfo.primaryCluster === 'ADAB_ETIKA') {
             const variants = [
                 'Dalam pergaulan sehari-hari, Ananda perlu terus diarahkan untuk membiasakan kalimat thayyibah (berkata santun), menjaga adab makan/minum, serta saling menyayangi teman.',
                 'Penanaman adab islami dan tutur kata santun perlu terus dibiasakan di rumah dan madrasah agar Ananda senantiasa mencerminkan pribadi berakhlakul karimah.',
             ];
-            part2 = selectVariant(variants, seed + 2);
+            guidanceSentence = selectVariant(variants, seed + 2);
         } else if (hasD) {
-            part2 = 'Terdapat catatan kedisiplinan dan adab yang memerlukan perhatian khusus serta bimbingan intensif agar Ananda dapat memperbaiki sikap dan lebih menghormati tata tertib madrasah.';
+            guidanceSentence = 'Terdapat catatan kedisiplinan dan adab yang memerlukan perhatian khusus serta bimbingan intensif agar Ananda dapat memperbaiki sikap dan lebih menghormati tata tertib madrasah.';
         } else if (hasC) {
-            part2 = 'Terdapat beberapa catatan kedisiplinan ringan yang perlu dievaluasi bersama agar pembiasaan tertib Ananda di madrasah semakin meningkat ke depannya.';
+            guidanceSentence = 'Terdapat beberapa catatan kedisiplinan ringan yang perlu dievaluasi bersama agar pembiasaan tertib Ananda di madrasah semakin meningkat ke depannya.';
         } else {
-            part2 = 'Terdapat sedikit catatan ketertiban yang perlu diperbaiki agar pembiasaan disiplin Ananda di madrasah semakin sempurna.';
+            guidanceSentence = 'Terdapat sedikit catatan ketertiban yang perlu diperbaiki agar pembiasaan disiplin Ananda di madrasah semakin sempurna.';
         }
+
+        part2 = [violationIntro, guidanceSentence].filter(Boolean).join(' ');
     }
 
     // ── BAGIAN 3: Harapan, Doa & Kemitraan Orang Tua (Khas Madrasah) ───────────

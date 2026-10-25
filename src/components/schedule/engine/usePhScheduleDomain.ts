@@ -6,7 +6,12 @@ import { useToast } from '../../../hooks/useToast';
 import { useSemester } from '../../../contexts/SemesterContext';
 import { softDelete } from '../../../services/SoftDeleteService';
 import { exportPhScheduleIcs } from '../../../services/scheduleExportService';
-import { PhScheduleEngine, ExamStatus } from './PhScheduleEngine';
+import {
+    PhScheduleEngine,
+    ExamStatus,
+    type AcademicRecordSnapshot,
+    type GradeStatusInfo,
+} from './PhScheduleEngine';
 import {
     MAX_ASH_PER_DAY,
     findNextAvailableAshDate,
@@ -16,6 +21,8 @@ import {
 } from './phScheduleValidation';
 import type { PhScheduleRow, ClassRow } from '../../../types';
 import { choosePhClass } from './phSchedulePresentation';
+
+export type { GradeStatusInfo };
 
 export const COMMON_SUBJECT_SUGGESTIONS = [
     'Matematika',
@@ -30,6 +37,8 @@ export const COMMON_SUBJECT_SUGGESTIONS = [
     'Seni Budaya',
     'Bahasa Arab',
 ];
+
+const NEW_SCHEDULE_WINDOW_MS = 72 * 60 * 60 * 1000; // 72 hours
 
 /**
  * Normalizes subject names to official school title formats.
@@ -94,6 +103,7 @@ export function usePhScheduleDomain({
     const handleSelectClass = useCallback(
         (id: string) => {
             setInternalSelection({ userId: user?.id, classId: id });
+            setSelectedSubject('all');
             try { if (classStorageKey) localStorage.setItem(classStorageKey, id); }
             catch { /* The current selection still works when browser storage is unavailable. */ }
             onSelectClassId?.(id);
@@ -105,6 +115,7 @@ export function usePhScheduleDomain({
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [statusFilter, setStatusFilterValue] = useState<ExamStatus | 'all'>('all');
     const [selectedMonth, setSelectedMonth] = useState<string>('all');
+    const [selectedSubject, setSelectedSubject] = useState<string>('all');
     const [viewMode, setViewMode] = useState<PhViewMode>('weekly');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const setStatusFilter = useCallback((status: ExamStatus | 'all') => {
@@ -169,10 +180,27 @@ export function usePhScheduleDomain({
         },
         enabled: !!user && !!selectedSemesterId,
     });
-    const effectiveClassId = choosePhClass(classes,
+
+    const homeroomClassIds = useMemo(() => {
+        const set = new Set<string>();
+        assignments
+            .filter((item) => item.assignment_role === 'homeroom')
+            .forEach((item) => set.add(item.class_id));
+        classes
+            .filter((item) => item.wali_kelas_id === user?.id && selectedSemesterId === activeSemester?.id)
+            .forEach((item) => set.add(item.id));
+        return Array.from(set);
+    }, [assignments, classes, user?.id, selectedSemesterId, activeSemester?.id]);
+
+    const effectiveClassId = choosePhClass(
+        classes,
         [externalSelectedClassId, internalSelection.userId === user?.id ? internalSelection.classId : '', rememberedClassId],
-        [...assignments.filter(item => item.assignment_role === 'homeroom').map(item => item.class_id),
-            ...classes.filter(item => item.wali_kelas_id === user?.id && selectedSemesterId === activeSemester?.id).map(item => item.id)]);
+        homeroomClassIds
+    );
+    const isHomeroomForSelectedClass = useMemo(
+        () => Boolean(effectiveClassId && homeroomClassIds.includes(effectiveClassId)),
+        [effectiveClassId, homeroomClassIds]
+    );
     const selectedSemester = semesters.find((s) => s.id === selectedSemesterId);
 
     // Homeroom teachers and admins manage every PH in the class.
@@ -255,6 +283,133 @@ export function usePhScheduleDomain({
         enabled: !!user && !!effectiveClassId && !!selectedSemesterId,
     });
 
+    // Track "seen" state for newly added schedules by other teachers
+    const seenStorageKey = user?.id && effectiveClassId ? `portal-guru:ph-seen:${user.id}:${effectiveClassId}` : '';
+    const [seenTimestamp, setSeenTimestamp] = useState<number>(0);
+
+    useEffect(() => {
+        if (!seenStorageKey) {
+            setSeenTimestamp(0);
+            return;
+        }
+        try {
+            const raw = localStorage.getItem(seenStorageKey);
+            setSeenTimestamp(raw ? Number(raw) || 0 : 0);
+        } catch {
+            setSeenTimestamp(0);
+        }
+    }, [seenStorageKey]);
+
+    const newExternalSchedules = useMemo(() => {
+        if (!user?.id) return [];
+        const now = Date.now();
+        return rawSchedules.filter((item) => {
+            if (!item.created_by || item.created_by === user.id) return false;
+            const createdMs = item.created_at ? Date.parse(item.created_at) : 0;
+            if (!createdMs || Number.isNaN(createdMs)) return false;
+            const isRecent = now - createdMs <= NEW_SCHEDULE_WINDOW_MS;
+            const isAfterLastSeen = createdMs > seenTimestamp;
+            return isRecent && isAfterLastSeen;
+        });
+    }, [rawSchedules, user?.id, seenTimestamp]);
+
+    const newExternalScheduleIdSet = useMemo(
+        () => new Set(newExternalSchedules.map((s) => s.id)),
+        [newExternalSchedules]
+    );
+
+    const acknowledgeNewSchedules = useCallback(() => {
+        const now = Date.now();
+        setSeenTimestamp(now);
+        if (seenStorageKey) {
+            try {
+                localStorage.setItem(seenStorageKey, String(now));
+            } catch {
+                // Ignore storage write errors
+            }
+        }
+    }, [seenStorageKey]);
+
+    const isCreatedByOtherTeacher = useCallback(
+        (schedule: Pick<PhScheduleRow, 'created_by'>) => Boolean(user?.id && schedule.created_by && schedule.created_by !== user.id),
+        [user?.id]
+    );
+
+    const isNewlyAddedByOtherTeacher = useCallback(
+        (schedule: Pick<PhScheduleRow, 'id'>) => newExternalScheduleIdSet.has(schedule.id),
+        [newExternalScheduleIdSet]
+    );
+
+    // Realtime subscription: notify Wali Kelas / teachers when another teacher adds an ASH
+    useEffect(() => {
+        if (!user?.id || !effectiveClassId) return;
+
+        const channel = supabase
+            .channel(`ph-schedules-live-${effectiveClassId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'ph_schedules',
+                    filter: `class_id=eq.${effectiveClassId}`,
+                },
+                (payload) => {
+                    const inserted = payload.new as Partial<PhScheduleRow> | undefined;
+                    if (!inserted) return;
+                    void queryClient.invalidateQueries({ queryKey: ['ph-schedules'] });
+                    void queryClient.invalidateQueries({ queryKey: ['dashboard-ph-schedules'] });
+
+                    if (inserted.created_by && inserted.created_by !== user.id) {
+                        const clsName = classes.find((c) => c.id === inserted.class_id)?.name || 'Kelas Anda';
+                        toast.info(
+                            `🔔 Guru mata pelajaran baru saja menambahkan jadwal ASH ${inserted.subject || ''} di ${clsName} (${inserted.date || ''}, Jam ke-${inserted.period_label || ''}).`
+                        );
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            void supabase.removeChannel(channel);
+        };
+    }, [user?.id, effectiveClassId, classes, queryClient, toast]);
+
+    // Active students in the selected class (for grade completion tracking)
+    const { data: classStudentIds = [] } = useQuery<string[]>({
+        queryKey: ['ph-class-students', effectiveClassId],
+        queryFn: async () => {
+            if (!effectiveClassId) return [];
+            const { data, error } = await supabase
+                .from('students')
+                .select('id')
+                .eq('class_id', effectiveClassId)
+                .is('deleted_at', null);
+            if (error) return [];
+            return (data || []).map((s: { id: string }) => s.id);
+        },
+        enabled: !!user && !!effectiveClassId,
+        staleTime: 1000 * 60 * 5,
+    });
+
+    // Academic records for the class and semester (for grade completion tracking)
+    const { data: classAcademicRecords = [] } = useQuery<AcademicRecordSnapshot[]>({
+        queryKey: ['ph-academic-records', effectiveClassId, selectedSemesterId, classStudentIds.length],
+        queryFn: async () => {
+            if (!effectiveClassId || !selectedSemesterId || classStudentIds.length === 0) return [];
+            const { data, error } = await supabase
+                .from('academic_records')
+                .select('student_id, subject, assessment_name, score, notes')
+                .in('student_id', classStudentIds)
+                .eq('semester_id', selectedSemesterId)
+                .is('deleted_at', null);
+            if (error) return [];
+            return (data || []) as AcademicRecordSnapshot[];
+        },
+        enabled: !!user && !!effectiveClassId && !!selectedSemesterId && classStudentIds.length > 0 && rawSchedules.length > 0,
+        staleTime: 1000 * 60 * 2,
+    });
+
     const [todayStr, setTodayStr] = useState(() => new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' }));
     useEffect(() => {
         const timer = window.setInterval(() => setTodayStr(new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' })), 60000);
@@ -273,14 +428,20 @@ export function usePhScheduleDomain({
 
     // Engine Projections
     const availableMonths = useMemo(() => PhScheduleEngine.getAvailableMonths(rawSchedules), [rawSchedules]);
+    const availableSubjects = useMemo(() => PhScheduleEngine.getAvailableSubjects(rawSchedules), [rawSchedules]);
+
+    const gradeStatusById = useMemo(
+        () => PhScheduleEngine.evaluateAllGradeStatuses(rawSchedules, classAcademicRecords, classStudentIds.length, todayStr),
+        [rawSchedules, classAcademicRecords, classStudentIds.length, todayStr]
+    );
 
     const filteredSchedules = useMemo(() => {
         return PhScheduleEngine.filterAndSort(
             rawSchedules,
-            { searchQuery, statusFilter, selectedMonth, sortOrder },
+            { searchQuery, statusFilter, selectedMonth, selectedSubject, sortOrder },
             todayStr
         );
-    }, [rawSchedules, searchQuery, statusFilter, selectedMonth, sortOrder, todayStr]);
+    }, [rawSchedules, searchQuery, statusFilter, selectedMonth, selectedSubject, sortOrder, todayStr]);
 
     const groupedByDate = useMemo(() => PhScheduleEngine.groupByDate(filteredSchedules), [filteredSchedules]);
 
@@ -297,6 +458,13 @@ export function usePhScheduleDomain({
     const currentSemesterName = useMemo(() => {
         return semesterOptions.find((s) => s.value === selectedSemesterId)?.label || 'Semester';
     }, [semesterOptions, selectedSemesterId]);
+
+    const teacherFullName = useMemo(() => {
+        const u = user as unknown as { user_metadata?: { full_name?: string; name?: string }; name?: string };
+        const metaName = u?.user_metadata?.full_name || u?.user_metadata?.name || u?.name;
+        if (typeof metaName === 'string' && metaName.trim()) return metaName.trim();
+        return '';
+    }, [user]);
 
     // Mutations
     const createMutation = useMutation({
@@ -446,7 +614,7 @@ export function usePhScheduleDomain({
     );
 
     const handleCopyWhatsApp = useCallback(
-        (filterMode: 'all' | 'upcoming' = 'all') => {
+        (filterMode: 'all' | 'upcoming' | 'this_week' = 'all') => {
             const text = PhScheduleEngine.generateWhatsAppText(
                 rawSchedules,
                 { className: currentClassName, semesterName: currentSemesterName },
@@ -456,9 +624,11 @@ export function usePhScheduleDomain({
 
             if (!text) {
                 toast.warning(
-                    filterMode === 'upcoming'
-                        ? 'Tidak ada jadwal ASH mendatang.'
-                        : 'Tidak ada jadwal ASH untuk dibagikan.'
+                    filterMode === 'this_week'
+                        ? 'Tidak ada jadwal ASH pada pekan ini.'
+                        : filterMode === 'upcoming'
+                            ? 'Tidak ada jadwal ASH mendatang.'
+                            : 'Tidak ada jadwal ASH untuk dibagikan.'
                 );
                 return;
             }
@@ -492,6 +662,8 @@ export function usePhScheduleDomain({
         setSelectedSemesterId,
         semesterOptions,
         classes,
+        homeroomClassIds,
+        isHomeroomForSelectedClass,
         isLoadingClasses,
         isLoadingSchedules,
         rawSchedules,
@@ -502,9 +674,16 @@ export function usePhScheduleDomain({
         scheduleAnomalies,
         currentClassName,
         currentSemesterName,
+        teacherFullName,
         subjectSuggestions,
         todayStr,
         availableMonths,
+        availableSubjects,
+        gradeStatusById,
+        newExternalSchedules,
+        acknowledgeNewSchedules,
+        isCreatedByOtherTeacher,
+        isNewlyAddedByOtherTeacher,
         canAdd,
         canManageAll,
         canModify,
@@ -521,6 +700,8 @@ export function usePhScheduleDomain({
         setStatusFilter,
         selectedMonth,
         setSelectedMonth,
+        selectedSubject,
+        setSelectedSubject,
         viewMode,
         setViewMode,
         sortOrder,

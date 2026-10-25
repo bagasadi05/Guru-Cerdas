@@ -42,12 +42,34 @@ export const useStudentsPageInteractions = ({
   setIsImportModalOpen,
   setIsClassManageModalOpen,
 }: UseStudentsPageInteractionsOptions) => {
+  const handleBulkCopyCodes = (selectedIds: string[]) => {
+    const selected = studentsForActiveClass.filter((s) => selectedIds.includes(s.id));
+    if (selected.length === 0) return;
+
+    const lines = [
+      `*Daftar Kode Akses Siswa*`,
+      `Total: ${selected.length} siswa`,
+      ``,
+      ...selected.map((s, idx) => {
+        const codeText = s.access_code ? s.access_code : '(Belum ada kode)';
+        const nisText = s.nis ? ` [NIS: ${s.nis}]` : '';
+        return `${idx + 1}. ${s.name}${nisText}: ${codeText}`;
+      }),
+      ``,
+      `Gunakan kode di atas untuk login ke Portal Orang Tua & Siswa Guru Cerdas.`,
+    ];
+
+    void navigator.clipboard.writeText(lines.join('\n'));
+    toast.success(`Rekap kode akses untuk ${selected.length} siswa berhasil disalin!`);
+  };
+
   const bulkActions = createStudentsBulkActions({
     onBulkExport: handleBulkExport,
     onBulkGenerateCodes: handleBulkGenerateCodes,
     onOpenIDCard: () => setIsIDCardModalOpen(true),
     onOpenBulkMove: () => setIsBulkMoveModalOpen(true),
     onBulkDelete: handleBulkDelete,
+    onBulkCopyCodes: handleBulkCopyCodes,
   });
 
   const handleStudentAction = (student: StudentRow, action: 'view' | 'edit' | 'delete' | 'menu') => {

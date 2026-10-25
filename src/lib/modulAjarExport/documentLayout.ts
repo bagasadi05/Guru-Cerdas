@@ -99,6 +99,13 @@ export function prepareDocumentLayout(nodes: ExportNode[]): ExportNode[] {
     node.children = source.children.flatMap(child => visit(child, sheet));
     const firstBlock = node.children.find(isElement);
     const firstText = firstBlock ? textContent(firstBlock).trim() : '';
+    const elChildren = node.children.filter(isElement);
+    if (!sheet && source.tag === 'div' && elChildren.length === 2 && elChildren[0].tag === 'div' && elChildren[1].tag === 'table' && /^(?:Pertemuan\s+\d+\s*-\s*)?Langkah\s+\d+\s*:/i.test(firstText)) {
+      const [headerDiv, stepTable] = elChildren;
+      const th: ExportElement = { type: 'element', tag: 'th', colSpan: 2, classes: [], style: { border: '1px solid #cfd8dc', 'border-left': '4px solid #0d6b3e', padding: '6px 10px', 'background-color': '#e8f5e9', 'text-align': 'left' }, children: headerDiv.children };
+      const thead: ExportElement = { type: 'element', tag: 'thead', classes: [], style: {}, children: [{ type: 'element', tag: 'tr', classes: [], style: { 'background-color': '#e8f5e9', 'page-break-inside': 'avoid', 'break-inside': 'avoid' }, children: [th] }] };
+      node.children = [{ ...stepTable, style: { ...stepTable.style, border: '1px solid #cfd8dc' }, children: [thead, ...stepTable.children] }];
+    }
     if (!sheet && source.tag === 'div' && node.children.filter(isElement).length <= 2 && /^\d+\.\s(?:Penilaian|Program|Diferensiasi)/i.test(firstText) && textContent(node).length < 1800) {
       node.style['break-inside'] = 'avoid';
       node.style['page-break-inside'] = 'avoid';
@@ -114,7 +121,7 @@ export function prepareDocumentLayout(nodes: ExportNode[]): ExportNode[] {
       if (following && textContent(following).length < 1800) {
         following.style['break-inside'] = 'avoid';
         following.style['page-break-inside'] = 'avoid';
-        keepGroupTogether(following);
+        if (following.children.filter(isElement).length <= 2) keepGroupTogether(following);
       }
     }
     const question = source.tag === 'div' && source.children.some(child => isElement(child) && child.tag === 'p' && /^\d+\.\s/.test(textContent(child).trim()));

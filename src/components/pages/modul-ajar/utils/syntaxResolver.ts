@@ -316,15 +316,18 @@ function contextualizeSteps(
   if (!topik && !mapel) return steps;
   const topicLabel = topik || mapel || 'pembelajaran';
 
+  const lowerTopic = topicLabel.toLowerCase();
+  const hasTopic = (value: string) => value.toLowerCase().includes(lowerTopic);
   return steps.map(step => {
-    const tAct = step.teacherActivity
+    if (hasTopic(step.teacherActivity) && hasTopic(step.studentActivity)) return step;
+    const tAct = hasTopic(step.teacherActivity) ? step.teacherActivity : step.teacherActivity
       .replace(/terkait materi\b/gi, `terkait materi ${topicLabel}`)
       .replace(/konsep materi\b/gi, `konsep materi ${topicLabel}`)
       .replace(/materi pendukung\b/gi, `materi ${topicLabel}`)
       .replace(/bahan ajar pendukung materi\b/gi, `bahan ajar pendukung materi ${topicLabel}`)
       .replace(/alat peraga materi\b/gi, `alat peraga materi ${topicLabel}`);
 
-    const sAct = step.studentActivity
+    const sAct = hasTopic(step.studentActivity) ? step.studentActivity : step.studentActivity
       .replace(/terkait materi\b/gi, `terkait materi ${topicLabel}`)
       .replace(/materi yang disajikan\b/gi, `materi ${topicLabel} yang disajikan`)
       .replace(/pemecahan masalah materi\b/gi, `pemecahan masalah materi ${topicLabel}`);

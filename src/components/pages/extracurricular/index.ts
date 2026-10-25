@@ -11,6 +11,7 @@
 
 // Types
 export * from './types';
+export * from './extracurricularUtils';
 
 // Hooks
 export { useExtracurricularData, normalizeClassName } from './useExtracurricularData';

@@ -855,7 +855,55 @@ describe('bintangPdfGenerator', () => {
         expect(bodyRows[1][3]).toBe('Catatan kustom disiplin: selalu datang awal waktu.');
         expect(bodyRows[2][3]).toBe('Catatan kustom kerapian: seragam rapi dan wangi.');
     });
+    it('provides ample vertical signature clearance (at least 20mm for teacher, 16mm for parent)', async () => {
+        const doc = new jsPDF();
+        const textSpy = vi.spyOn(doc, 'text');
+
+        const reports = [{
+            student: {
+                id: 'student-sig-test',
+                name: 'Bening Embun',
+                classes: { name: 'Kelas 3A' },
+            },
+            evaluation: {
+                adab_score: 'A',
+                kedisiplinan_score: 'A',
+                kerapian_score: 'A',
+                catatan_wali: 'Ananda sangat baik.',
+            },
+            aspects: {
+                ADAB: { grade: 'A' },
+                KEDISIPLINAN: { grade: 'A' },
+                KERAPIAN: { grade: 'A' },
+            },
+            violations: [],
+            quizPoints: [],
+        }];
+
+        await generateBintangReportPdf(
+            doc,
+            reports,
+            'Oktober 2026',
+            '25 Oktober 2026',
+            { id: 'u1', name: 'Bagas Riyadi, S.Pd', avatarUrl: '' }
+        );
+
+        const dateCall = textSpy.mock.calls.find(call => String(call[0]).startsWith('Madiun, 25 Oktober 2026'));
+        const teacherCall = textSpy.mock.calls.find(call => call[0] === 'Bagas Riyadi, S.Pd');
+        const mengetahuiCall = textSpy.mock.calls.find(call => call[0] === 'Mengetahui,');
+        const parentRoleCall = textSpy.mock.calls.find(call => call[0] === 'Orang Tua / Wali Murid');
+
+        expect(dateCall).toBeDefined();
+        expect(teacherCall).toBeDefined();
+        expect(mengetahuiCall).toBeDefined();
+        expect(parentRoleCall).toBeDefined();
+
+        const teacherClearance = Number(teacherCall[2]) - Number(dateCall[2]);
+        const parentClearance = Number(parentRoleCall[2]) - Number(mengetahuiCall[2]);
+
+        // At least 20mm clearance between date and teacher name
+        expect(teacherClearance).toBeGreaterThanOrEqual(20);
+        // At least 16mm clearance between Mengetahui and parent role
+        expect(parentClearance).toBeGreaterThanOrEqual(16);
+    });
 });
-
-
-

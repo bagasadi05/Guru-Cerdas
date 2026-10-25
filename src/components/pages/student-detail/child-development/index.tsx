@@ -1,19 +1,11 @@
 import React from 'react';
-import { ChildDevelopmentData } from '../../../../services/childDevelopmentAnalysis';
 import { ChildDevelopmentAnalysisView } from './views/ChildDevelopmentAnalysisView';
+import type { ChildDevelopmentAnalysisTabProps } from './types/childDevelopmentTypes';
 
-interface ChildDevelopmentAnalysisTabProps {
-  studentData: ChildDevelopmentData;
-  allAcademicRecords?: any[];
-  allAttendanceRecords?: any[];
-  allViolations?: any[];
-  allQuizPoints?: any[];
-  selectedSemesterId?: string | null;
-  selectedAcademicYearId?: string | null;
-}
+export type { ChildDevelopmentAnalysisTabProps };
 
-export const ChildDevelopmentAnalysisTab: React.FC<ChildDevelopmentAnalysisTabProps> = (props) => {
-  return (
-    <ChildDevelopmentAnalysisView {...props} defaultMode="single" />
-  );
+export const ChildDevelopmentAnalysisTab: React.FC<
+  Omit<ChildDevelopmentAnalysisTabProps, 'defaultMode'>
+> = (props) => {
+  return <ChildDevelopmentAnalysisView {...props} defaultMode="single" />;
 };

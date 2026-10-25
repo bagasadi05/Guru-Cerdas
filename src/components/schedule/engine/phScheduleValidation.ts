@@ -1,3 +1,7 @@
+import { NATIONAL_HOLIDAYS, type NationalHoliday } from '../../../data/indonesianHolidays';
+
+export type { NationalHoliday };
+
 export const MAX_ASH_PER_DAY = 2;
 
 export interface PhDraft {
@@ -5,6 +9,18 @@ export interface PhDraft {
     date: string;
     period_label: string;
     id?: string;
+}
+
+/**
+ * Checks whether a YYYY-MM-DD date string falls on an official Indonesian
+ * National Holiday or Cuti Bersama from SKB 3 Menteri.
+ */
+export function getHolidayForDate(dateStr: string): NationalHoliday | null {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return null;
+    const year = Number(dateStr.slice(0, 4));
+    const holidays = NATIONAL_HOLIDAYS[year];
+    if (!holidays) return null;
+    return holidays.find((h) => h.date === dateStr) ?? null;
 }
 
 export function parsePhPeriod(value: string): [number, number] | null {
@@ -37,7 +53,8 @@ export function getSameDaySchedules<T extends PhDraft>(
 }
 
 /**
- * Finds the nearest upcoming school day (Mon–Fri) from `fromDateStr` that has fewer than MAX_ASH_PER_DAY schedules.
+ * Finds the nearest upcoming school day (Mon–Fri, skipping national holidays)
+ * from `fromDateStr` that has fewer than MAX_ASH_PER_DAY schedules.
  */
 export function findNextAvailableAshDate(
     fromDateStr: string,
@@ -57,6 +74,9 @@ export function findNextAvailableAshDate(
 
         const candidate = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`;
         if (maxDateStr && candidate > maxDateStr) return null;
+
+        // Skip national holidays / cuti bersama
+        if (getHolidayForDate(candidate)) continue;
 
         const count = getSameDaySchedules(candidate, existing, excludeId).length;
         if (count < MAX_ASH_PER_DAY) {

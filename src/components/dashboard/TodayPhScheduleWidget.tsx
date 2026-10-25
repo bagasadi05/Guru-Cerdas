@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -12,14 +12,14 @@ import {
     CheckCircle2,
     CalendarDays,
     ArrowUpRight,
+    BellRing,
 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useSemester } from '../../contexts/SemesterContext';
 import { formatLocalDate } from '../../hooks/dashboard/dashboardHelpers';
 import { PhScheduleEngine } from '../schedule/engine/PhScheduleEngine';
-import { normalizeSubjectDisplay } from '../schedule/engine/usePhScheduleDomain';
-import { parseSubjectString } from '../schedule/PhScheduleFormModal';
+import { normalizeSubjectDisplay, parseSubjectString } from '../schedule/engine/phSchedulePresentation';
 import { Button } from '../ui/Button';
 import type { PhScheduleRow } from '../../types';
 
@@ -36,6 +36,7 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
     const navigate = useNavigate();
     const { user } = useAuth();
     const { activeSemester } = useSemester();
+    const [scopeFilter, setScopeFilter] = useState<'all' | 'homeroom'>('all');
 
     const todayStr = useMemo(() => formatLocalDate(new Date()), []);
     const sevenDaysLaterStr = useMemo(() => {
@@ -55,6 +56,43 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
         (classId: string) => classNameMap.get(classId) || 'Kelas',
         [classNameMap]
     );
+
+    // Fetch homeroom classes for the current teacher
+    const { data: homeroomClassIds = [] } = useQuery<string[]>({
+        queryKey: ['dashboard-ph-homeroom-classes', user?.id],
+        queryFn: async () => {
+            if (!user?.id) return [];
+            const ids = new Set<string>();
+            try {
+                const { data: wkData } = await supabase
+                    .from('classes')
+                    .select('id')
+                    .is('deleted_at', null)
+                    .eq('wali_kelas_id', user.id);
+                (wkData || []).forEach((row) => ids.add(row.id));
+            } catch {
+                /* ignore if column missing */
+            }
+            try {
+                const { data: assignData } = await supabase
+                    .from('teacher_class_assignments')
+                    .select('class_id')
+                    .eq('teacher_user_id', user.id)
+                    .eq('assignment_role', 'homeroom');
+                (assignData || []).forEach((row: { class_id: string }) => {
+                    if (row.class_id) ids.add(row.class_id);
+                });
+            } catch {
+                /* ignore if table missing */
+            }
+            return Array.from(ids);
+        },
+        enabled: !!user?.id,
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const homeroomSet = useMemo(() => new Set(homeroomClassIds), [homeroomClassIds]);
+    const hasHomeroom = homeroomClassIds.length > 0;
 
     // Query PH schedules across all classes for the active semester
     const { data: rawSchedules = [], isLoading } = useQuery<PhScheduleRow[]>({
@@ -85,12 +123,31 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
         staleTime: 2 * 60 * 1000,
     });
 
+    // Newly added schedules in homeroom class by other teachers (within last 72h)
+    const newExternalHomeroomSchedules = useMemo(() => {
+        if (!user?.id || !hasHomeroom) return [];
+        const cutoffMs = Date.now() - 72 * 60 * 60 * 1000;
+        return rawSchedules.filter((s) => {
+            if (!homeroomSet.has(s.class_id)) return false;
+            if (!s.created_by || s.created_by === user.id) return false;
+            const createdMs = s.created_at ? new Date(s.created_at).getTime() : 0;
+            return createdMs >= cutoffMs;
+        });
+    }, [rawSchedules, user?.id, hasHomeroom, homeroomSet]);
+
+    const visibleSchedules = useMemo(() => {
+        if (scopeFilter === 'homeroom' && hasHomeroom) {
+            return rawSchedules.filter((s) => homeroomSet.has(s.class_id));
+        }
+        return rawSchedules;
+    }, [rawSchedules, scopeFilter, hasHomeroom, homeroomSet]);
+
     // Partition schedules into Today and Upcoming (within 7 days)
     const { todaySchedules, upcomingSchedules } = useMemo(() => {
         const todayItems: PhScheduleRow[] = [];
         const upcomingItems: PhScheduleRow[] = [];
 
-        rawSchedules.forEach((s) => {
+        visibleSchedules.forEach((s) => {
             if (s.date === todayStr) {
                 todayItems.push(s);
             } else if (s.date > todayStr && s.date <= sevenDaysLaterStr) {
@@ -99,7 +156,7 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
         });
 
         return { todaySchedules: todayItems, upcomingSchedules: upcomingItems };
-    }, [rawSchedules, todayStr, sevenDaysLaterStr]);
+    }, [visibleSchedules, todayStr, sevenDaysLaterStr]);
 
     const totalAgendaCount = todaySchedules.length + upcomingSchedules.length;
 
@@ -137,7 +194,7 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
                         <CalendarCheck className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.2]" />
                     </div>
                     <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                             <h3 className="font-bold text-base sm:text-lg text-slate-900 dark:text-white tracking-tight">
                                 Agenda Asesmen Sumatif Harian (ASH)
                             </h3>
@@ -153,7 +210,33 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto shrink-0">
+                    {hasHomeroom && (
+                        <div className="inline-flex rounded-xl border border-slate-200 bg-slate-100/80 p-0.5 text-xs dark:border-slate-700 dark:bg-slate-800">
+                            <button
+                                type="button"
+                                onClick={() => setScopeFilter('all')}
+                                className={`rounded-lg px-2.5 py-1 font-semibold transition-colors ${
+                                    scopeFilter === 'all'
+                                        ? 'bg-white text-slate-900 shadow-2xs dark:bg-slate-900 dark:text-white'
+                                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-300'
+                                }`}
+                            >
+                                Semua Kelas
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setScopeFilter('homeroom')}
+                                className={`rounded-lg px-2.5 py-1 font-semibold transition-colors ${
+                                    scopeFilter === 'homeroom'
+                                        ? 'bg-emerald-600 text-white shadow-2xs'
+                                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-300'
+                                }`}
+                            >
+                                Kelas Perwalian
+                            </button>
+                        </div>
+                    )}
                     <Button
                         variant="outline"
                         size="sm"
@@ -165,6 +248,28 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
                     </Button>
                 </div>
             </div>
+
+            {/* Homeroom Alert Banner when Subject Teachers add new ASH */}
+            {newExternalHomeroomSchedules.length > 0 && (
+                <div className="mt-3 rounded-2xl border border-indigo-200 bg-indigo-50/90 px-3.5 py-2.5 text-xs dark:border-indigo-500/30 dark:bg-indigo-950/35 flex flex-wrap items-center justify-between gap-2 relative z-10">
+                    <div className="flex items-center gap-2 text-indigo-950 dark:text-indigo-100">
+                        <BellRing className="h-4 w-4 shrink-0 text-indigo-600 dark:text-indigo-400 animate-pulse" />
+                        <span>
+                            <strong>Info Wali Kelas:</strong> Ada{' '}
+                            <strong>{newExternalHomeroomSchedules.length} jadwal ASH baru</strong> yang diinput Guru Mapel di kelas perwalian Anda.
+                        </span>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() =>
+                            navigate(`/jadwal?tab=ph&kelas=${newExternalHomeroomSchedules[0].class_id}`)
+                        }
+                        className="font-bold text-indigo-700 hover:underline dark:text-indigo-300"
+                    >
+                        Periksa Kelas &rarr;
+                    </button>
+                </div>
+            )}
 
             {/* Widget Body */}
             <div className="pt-4 relative z-10">
@@ -223,6 +328,10 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
                                         const { baseSubject, topic } = parseSubjectString(schedule.subject);
                                         const displaySubject = normalizeSubjectDisplay(baseSubject);
                                         const className = getClassName(schedule.class_id);
+                                        const isHomeroomClass = homeroomSet.has(schedule.class_id);
+                                        const isFromOtherTeacher = Boolean(
+                                            user?.id && schedule.created_by && schedule.created_by !== user.id
+                                        );
 
                                         return (
                                             <div
@@ -241,6 +350,11 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
                                                                 <GraduationCap className="w-3.5 h-3.5" />
                                                                 <span>{className}</span>
                                                             </span>
+                                                            {isHomeroomClass && isFromOtherTeacher && (
+                                                                <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-500/25">
+                                                                    Guru Mapel
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                                                             <Clock className="w-3 h-3 text-slate-400" />
@@ -302,6 +416,10 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
                                             schedule.date,
                                             new Date()
                                         );
+                                        const isHomeroomClass = homeroomSet.has(schedule.class_id);
+                                        const isFromOtherTeacher = Boolean(
+                                            user?.id && schedule.created_by && schedule.created_by !== user.id
+                                        );
 
                                         return (
                                             <div
@@ -312,15 +430,22 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
                                                 <div className="space-y-1.5">
                                                     {/* Top row: countdown badge & class */}
                                                     <div className="flex items-center justify-between gap-1.5">
-                                                        <span
-                                                            className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${
-                                                                relativeLabel === 'Besok'
-                                                                    ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30'
-                                                                    : 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20'
-                                                            }`}
-                                                        >
-                                                            {relativeLabel}
-                                                        </span>
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span
+                                                                className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${
+                                                                    relativeLabel === 'Besok'
+                                                                        ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30'
+                                                                        : 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20'
+                                                                }`}
+                                                            >
+                                                                {relativeLabel}
+                                                            </span>
+                                                            {isHomeroomClass && isFromOtherTeacher && (
+                                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-500/15 text-indigo-700 dark:text-indigo-300">
+                                                                    Guru Mapel
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                                                             {className}
                                                         </span>

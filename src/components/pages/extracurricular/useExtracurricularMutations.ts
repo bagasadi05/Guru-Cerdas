@@ -25,6 +25,120 @@ export interface UseExtracurricularMutationsOptions {
     onAddStudentModalClose: () => void;
 }
 
+async function enrollSingleParticipant(params: {
+    extracurricularId: string;
+    semesterId: string;
+    userId: string;
+    studentId: string;
+    studentType: 'student' | 'extracurricular_student';
+}) {
+    const { extracurricularId, semesterId, userId, studentId, studentType } = params;
+    const colName = studentType === 'student' ? 'student_id' : 'extracurricular_student_id';
+
+    // Check if an enrollment row (active or soft-deleted) already exists to avoid partial unique index conflict
+    const existingQuery = supabase
+        .from('student_extracurriculars')
+        .select('id, deleted_at')
+        .eq('extracurricular_id', extracurricularId)
+        .eq('semester_id', semesterId)
+        .eq(colName, studentId)
+        .maybeSingle();
+
+    const { data: existing, error: selectError } = await existingQuery;
+    if (!selectError && existing?.id) {
+        if (existing.deleted_at !== null) {
+            const { error: restoreError } = await supabase
+                .from('student_extracurriculars')
+                .update({ deleted_at: null, status: 'active' } as never)
+                .eq('id', existing.id);
+            if (restoreError) throw restoreError;
+        }
+        return;
+    }
+
+    const payload =
+        studentType === 'student'
+            ? { student_id: studentId }
+            : { extracurricular_student_id: studentId };
+
+    const { error } = await supabase
+        .from('student_extracurriculars')
+        .insert({
+            ...payload,
+            extracurricular_id: extracurricularId,
+            semester_id: semesterId,
+            user_id: userId,
+        });
+    if (error) throw error;
+}
+
+async function upsertSingleGrade(params: {
+    extracurricularId: string;
+    semesterId: string;
+    userId: string;
+    studentId: string;
+    studentType: 'student' | 'extracurricular_student';
+    grade?: string | null;
+    score?: number | null;
+    description?: string | null;
+}) {
+    const {
+        extracurricularId,
+        semesterId,
+        userId,
+        studentId,
+        studentType,
+        grade,
+        score,
+        description,
+    } = params;
+
+    const colName = studentType === 'student' ? 'student_id' : 'extracurricular_student_id';
+
+    // Check if grade row already exists (avoids PostgREST ON CONFLICT failure on partial unique indexes)
+    const { data: existing, error: selectError } = await supabase
+        .from('extracurricular_grades')
+        .select('id')
+        .eq('extracurricular_id', extracurricularId)
+        .eq('semester_id', semesterId)
+        .eq(colName, studentId)
+        .maybeSingle();
+
+    if (!selectError && existing?.id) {
+        const { error: updateError } = await supabase
+            .from('extracurricular_grades')
+            .update({
+                grade: grade ?? null,
+                score: score ?? null,
+                description: description ?? null,
+                deleted_at: null,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', existing.id);
+        if (updateError) throw updateError;
+        return;
+    }
+
+    const payload =
+        studentType === 'student'
+            ? { student_id: studentId }
+            : { extracurricular_student_id: studentId };
+
+    const { error: insertError } = await supabase
+        .from('extracurricular_grades')
+        .insert({
+            ...payload,
+            extracurricular_id: extracurricularId,
+            semester_id: semesterId,
+            grade: grade ?? null,
+            score: score ?? null,
+            description: description ?? null,
+            user_id: userId,
+        });
+
+    if (insertError) throw insertError;
+}
+
 export function useExtracurricularMutations(options: UseExtracurricularMutationsOptions) {
     const {
         selectedExtracurricular,
@@ -76,7 +190,11 @@ export function useExtracurricularMutations(options: UseExtracurricularMutations
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['extracurriculars'] });
+            queryClient.invalidateQueries({ queryKey: ['student_extracurriculars_counts'] });
             toast.success('Ekskul berhasil dihapus');
+        },
+        onError: (error: Error) => {
+            toast.error(error.message);
         },
     });
 
@@ -91,27 +209,25 @@ export function useExtracurricularMutations(options: UseExtracurricularMutations
             studentType: 'student' | 'extracurricular_student';
             action: 'enroll' | 'unenroll';
         }) => {
+            if (!selectedExtracurricular || !activeSemester?.id) {
+                throw new Error('Semester aktif atau ekstrakurikuler belum dipilih');
+            }
+
             if (action === 'enroll') {
-                const payload =
-                    studentType === 'student'
-                        ? { student_id: studentId }
-                        : { extracurricular_student_id: studentId };
-                const { error } = await supabase
-                    .from('student_extracurriculars')
-                    .insert({
-                        ...payload,
-                        extracurricular_id: selectedExtracurricular,
-                        semester_id: activeSemester!.id,
-                        user_id: user!.id,
-                    });
-                if (error) throw error;
+                await enrollSingleParticipant({
+                    extracurricularId: selectedExtracurricular,
+                    semesterId: activeSemester.id,
+                    userId: user!.id,
+                    studentId,
+                    studentType,
+                });
             } else {
                 const now = new Date().toISOString();
                 const deleteQuery = supabase
                     .from('student_extracurriculars')
                     .update({ deleted_at: now } as never)
                     .eq('extracurricular_id', selectedExtracurricular)
-                    .eq('semester_id', activeSemester!.id);
+                    .eq('semester_id', activeSemester.id);
 
                 const { error } =
                     studentType === 'student'
@@ -121,9 +237,44 @@ export function useExtracurricularMutations(options: UseExtracurricularMutations
                 if (error) throw error;
             }
         },
-        onSuccess: () => {
+        onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ['student_extracurriculars'] });
-            toast.success('Status pendaftaran siswa berhasil diperbarui');
+            queryClient.invalidateQueries({ queryKey: ['student_extracurriculars_counts'] });
+            toast.success(
+                variables.action === 'enroll'
+                    ? 'Siswa berhasil didaftarkan ke ekstrakurikuler'
+                    : 'Siswa dikeluarkan dari ekstrakurikuler'
+            );
+        },
+        onError: (error: Error) => {
+            toast.error(`Gagal memperbarui anggota: ${error.message}`);
+        },
+    });
+
+    // Bulk Enroll students
+    const bulkEnrollmentMutation = useMutation({
+        mutationFn: async (items: Array<{ studentId: string; studentType: 'student' | 'extracurricular_student' }>) => {
+            if (!selectedExtracurricular || !activeSemester?.id) {
+                throw new Error('Semester aktif atau ekstrakurikuler belum dipilih');
+            }
+            for (const item of items) {
+                await enrollSingleParticipant({
+                    extracurricularId: selectedExtracurricular,
+                    semesterId: activeSemester.id,
+                    userId: user!.id,
+                    studentId: item.studentId,
+                    studentType: item.studentType,
+                });
+            }
+            return items.length;
+        },
+        onSuccess: (count) => {
+            queryClient.invalidateQueries({ queryKey: ['student_extracurriculars'] });
+            queryClient.invalidateQueries({ queryKey: ['student_extracurriculars_counts'] });
+            toast.success(`${count} siswa berhasil didaftarkan ke ekstrakurikuler`);
+        },
+        onError: (error: Error) => {
+            toast.error(`Gagal mendaftarkan siswa: ${error.message}`);
         },
     });
 
@@ -236,7 +387,7 @@ export function useExtracurricularMutations(options: UseExtracurricularMutations
         }
     });
 
-    // Update grade
+    // Update grade (single)
     const gradeMutation = useMutation({
         mutationFn: async ({
             studentId,
@@ -251,31 +402,19 @@ export function useExtracurricularMutations(options: UseExtracurricularMutations
             score?: number | null;
             description?: string | null;
         }) => {
-            const payload =
-                studentType === 'student'
-                    ? { student_id: studentId }
-                    : { extracurricular_student_id: studentId };
-            const onConflict =
-                studentType === 'student'
-                    ? 'student_id,extracurricular_id,semester_id'
-                    : 'extracurricular_student_id,extracurricular_id,semester_id';
-
             if (!activeSemester?.id) {
                 throw new Error('Semester aktif tidak ditemukan');
             }
-
-            const { error } = await supabase
-                .from('extracurricular_grades')
-                .upsert({
-                    ...payload,
-                    extracurricular_id: selectedExtracurricular,
-                    semester_id: activeSemester.id,
-                    grade: grade ?? null,
-                    score: score ?? null,
-                    description: description ?? null,
-                    user_id: user!.id,
-                }, { onConflict });
-            if (error) throw error;
+            await upsertSingleGrade({
+                extracurricularId: selectedExtracurricular,
+                semesterId: activeSemester.id,
+                userId: user!.id,
+                studentId,
+                studentType,
+                grade,
+                score,
+                description,
+            });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['extracurricular_grades'] });
@@ -286,20 +425,57 @@ export function useExtracurricularMutations(options: UseExtracurricularMutations
         },
     });
 
-    // Create new extracurricular student
+    // Bulk update grades
+    const bulkGradeMutation = useMutation({
+        mutationFn: async (
+            items: Array<{
+                studentId: string;
+                studentType: 'student' | 'extracurricular_student';
+                grade?: string | null;
+                score?: number | null;
+                description?: string | null;
+            }>
+        ) => {
+            if (!activeSemester?.id) {
+                throw new Error('Semester aktif tidak ditemukan');
+            }
+            for (const item of items) {
+                await upsertSingleGrade({
+                    extracurricularId: selectedExtracurricular,
+                    semesterId: activeSemester.id,
+                    userId: user!.id,
+                    studentId: item.studentId,
+                    studentType: item.studentType,
+                    grade: item.grade,
+                    score: item.score,
+                    description: item.description,
+                });
+            }
+            return items.length;
+        },
+        onSuccess: (count) => {
+            queryClient.invalidateQueries({ queryKey: ['extracurricular_grades'] });
+            toast.success(`Nilai & deskripsi untuk ${count} siswa berhasil disimpan`);
+        },
+        onError: (error: Error) => {
+            toast.error(`Gagal menyimpan nilai massal: ${error.message}`);
+        },
+    });
+
+    // Create new extracurricular student (works both globally and inside a selected extracurricular)
     const createStudentsMutation = useMutation({
         mutationFn: async ({ rows, bulkClassName }: {
             rows: Array<{ name: string; gender: Gender; class_name: string }>;
             bulkClassName?: string;
         }) => {
-            if (!selectedExtracurricular || !activeSemester?.id) {
-                throw new Error('Pilih ekstrakurikuler terlebih dahulu.');
-            }
-
             const prepared = rows
                 .map((row) => {
                     const name = row.name.trim();
-                    const className = row.class_name ? normalizeClassName(row.class_name) : (bulkClassName ? normalizeClassName(bulkClassName) : '');
+                    const className = row.class_name.trim()
+                        ? normalizeClassName(row.class_name)
+                        : bulkClassName?.trim()
+                            ? normalizeClassName(bulkClassName)
+                            : '';
                     return {
                         name,
                         gender: row.gender,
@@ -310,7 +486,7 @@ export function useExtracurricularMutations(options: UseExtracurricularMutations
                 .filter((row) => row.name.length > 0);
 
             if (prepared.length === 0) {
-                throw new Error('Tidak ada data siswa yang valid.');
+                throw new Error('Masukkan minimal satu nama siswa yang valid.');
             }
 
             const { data: inserted, error } = await supabase
@@ -320,24 +496,36 @@ export function useExtracurricularMutations(options: UseExtracurricularMutations
 
             if (error) throw error;
 
-            const enrollPayload = (inserted || []).map((student) => ({
-                extracurricular_student_id: student.id,
-                extracurricular_id: selectedExtracurricular,
-                semester_id: activeSemester.id,
-                user_id: user!.id,
-            }));
+            // If currently inside a specific extracurricular and active semester exists, auto-enroll them
+            if (selectedExtracurricular && activeSemester?.id && inserted && inserted.length > 0) {
+                const enrollPayload = inserted.map((student) => ({
+                    extracurricular_student_id: student.id,
+                    extracurricular_id: selectedExtracurricular,
+                    semester_id: activeSemester.id,
+                    user_id: user!.id,
+                }));
 
-            if (enrollPayload.length > 0) {
                 const { error: enrollError } = await supabase
                     .from('student_extracurriculars')
                     .insert(enrollPayload);
                 if (enrollError) throw enrollError;
             }
+
+            return {
+                createdCount: inserted?.length || prepared.length,
+                autoEnrolled: Boolean(selectedExtracurricular && activeSemester?.id),
+            };
         },
-        onSuccess: () => {
+        onSuccess: (result) => {
             queryClient.invalidateQueries({ queryKey: ['extracurricular_students'] });
+            queryClient.invalidateQueries({ queryKey: ['all_extracurricular_students'] });
             queryClient.invalidateQueries({ queryKey: ['student_extracurriculars'] });
-            toast.success('Siswa berhasil ditambahkan dan didaftarkan');
+            queryClient.invalidateQueries({ queryKey: ['student_extracurriculars_counts'] });
+            toast.success(
+                result.autoEnrolled
+                    ? `${result.createdCount} siswa eksternal ditambahkan & didaftarkan ke ekstrakurikuler`
+                    : `${result.createdCount} siswa eksternal berhasil ditambahkan`
+            );
             onAddStudentModalClose();
         },
         onError: (error: Error) => {
@@ -362,7 +550,7 @@ export function useExtracurricularMutations(options: UseExtracurricularMutations
             queryClient.invalidateQueries({ queryKey: ['extracurricular_students'] });
             queryClient.invalidateQueries({ queryKey: ['all_extracurricular_students'] });
             queryClient.invalidateQueries({ queryKey: ['student_extracurriculars'] });
-            toast.success('Siswa ekskul berhasil diperbarui');
+            toast.success('Data siswa eksternal berhasil diperbarui');
         },
         onError: (error: Error) => {
             toast.error(error.message);
@@ -379,7 +567,8 @@ export function useExtracurricularMutations(options: UseExtracurricularMutations
             queryClient.invalidateQueries({ queryKey: ['extracurricular_students'] });
             queryClient.invalidateQueries({ queryKey: ['all_extracurricular_students'] });
             queryClient.invalidateQueries({ queryKey: ['student_extracurriculars'] });
-            toast.success('Siswa ekskul dihapus');
+            queryClient.invalidateQueries({ queryKey: ['student_extracurriculars_counts'] });
+            toast.success('Siswa eksternal berhasil dihapus');
         },
         onError: (error: Error) => {
             toast.error(error.message);
@@ -390,9 +579,11 @@ export function useExtracurricularMutations(options: UseExtracurricularMutations
         extracurricularMutation,
         deleteExtracurricularMutation,
         enrollmentMutation,
+        bulkEnrollmentMutation,
         attendanceMutation,
         bulkAttendanceMutation,
         gradeMutation,
+        bulkGradeMutation,
         createStudentsMutation,
         updateExtraStudentMutation,
         deleteExtraStudentMutation,

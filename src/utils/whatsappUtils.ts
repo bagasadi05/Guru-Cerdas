@@ -170,3 +170,29 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
 };
 
 
+
+export const generateAccessCodeMessage = (
+    studentName: string,
+    accessCode: string,
+    parentName?: string | null,
+    className?: string | null
+) => {
+    const parentGreeting = parentName
+        ? `Bapak/Ibu *${parentName}* (Wali dari ananda *${studentName}*)`
+        : `Ayahanda/Bunda wali murid dari ananda *${studentName}*`;
+
+    return `Assalamu'alaikum Warahmatullahi Wabarakatuh,
+
+Kepada Yth. ${parentGreeting},
+
+Berikut kami sampaikan informasi kode akses akun resmi untuk masuk ke *Portal Orang Tua & Siswa Guru Cerdas*${className ? ` (Kelas ${className})` : ''}:
+
+👤 *Nama Siswa:* ${studentName}
+🔑 *Kode Akses:* *${accessCode}*
+
+Ayahanda/Bunda dapat menggunakan kode akses di atas untuk memantau rekap absensi, perkembangan belajar, nilai rapor, dan pengumuman sekolah ananda secara berkala.
+
+Terima kasih banyak atas perhatian dan kerja sama Ayahanda/Bunda.
+
+Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
+};

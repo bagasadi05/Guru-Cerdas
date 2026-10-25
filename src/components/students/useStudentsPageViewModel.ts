@@ -81,12 +81,20 @@ export const useStudentsPageViewModel = ({ userId, toast, isAdmin = false, canVi
       onGenderFilterChange: data.setGenderFilter,
       accessCodeFilter: data.accessCodeFilter,
       onAccessCodeFilterChange: data.setAccessCodeFilter,
+      onResetFilters: () => {
+        data.setSearchTerm('');
+        data.setGenderFilter('all');
+        data.setAccessCodeFilter('all');
+      },
     },
     classSection: {
       activeClassId: data.activeClassId,
       onActiveClassChange: data.setActiveClassId,
       classes: data.classes,
+      activeClass: data.activeClass,
+      classStudentCounts: data.classStudentCounts,
       studentsForActiveClass: data.studentsForActiveClass,
+      rawStudents: data.students,
       canManageActiveClass: data.canManageActiveClass,
       isSelected,
       toggleItem,

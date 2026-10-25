@@ -733,9 +733,13 @@ export const bintangService = {
 
   async upsertEvaluation(evaluation: BintangEvaluationInsert) {
     // Since we have a UNIQUE constraint on (student_id, month), we can use upsert
+    const payload = {
+      ...evaluation,
+      updated_at: evaluation.updated_at || new Date().toISOString(),
+    };
     const { data, error } = await supabase
       .from('bintang_monthly_evaluations')
-      .upsert(evaluation, { onConflict: 'student_id, month' })
+      .upsert(payload, { onConflict: 'student_id, month' })
       .select()
       .single();
 
@@ -745,9 +749,14 @@ export const bintangService = {
 
   /** Bulk upsert evaluations for all students in a class at once. */
   async bulkUpsertEvaluations(evaluations: BintangEvaluationInsert[]) {
+    const now = new Date().toISOString();
+    const payload = evaluations.map(e => ({
+      ...e,
+      updated_at: e.updated_at || now,
+    }));
     const { data, error } = await supabase
       .from('bintang_monthly_evaluations')
-      .upsert(evaluations, { onConflict: 'student_id, month' })
+      .upsert(payload, { onConflict: 'student_id, month' })
       .select();
 
     if (error) throw error;

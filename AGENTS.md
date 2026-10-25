@@ -20,6 +20,9 @@ Jika tidak auto-load, muat manual sebelum menjawab/menulis kode.
 ## Pointer Cepat
 
 - Arsitektur & konvensi → `references/project-guide.md` (dalam skill portal-guru)
+- Supabase & RLS Security → `.claude/skills/supabase` & `supabase-postgres-best-practices`
+- Clean Architecture & Refactoring → `.claude/skills/clean-architecture` & `kent-beck-style`
+- Offline PWA & Sync Strategy → `.claude/skills/offline-pwa-sync`
 - Perintah → `references/commands.md`
 - Graphify → `references/graphify.md`
 - CI/CD → `references/ci-cd.md`

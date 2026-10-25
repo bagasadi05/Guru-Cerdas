@@ -250,4 +250,55 @@ describe('PreviewTab Component - A4 Landscape & Kemenag Kop Configuration', () =
     expect(screen.getByRole('button', { name: /Unduh Excel/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Cetak$/i })).toBeInTheDocument();
   });
+
+  it('toggles Identity Editor modal and triggers onUpdateIdentity', () => {
+    const onUpdateIdentity = vi.fn();
+    render(
+      <PreviewTab
+        identity={mockIdentity}
+        onUpdateIdentity={onUpdateIdentity}
+        protaItems={mockProtaItems}
+        validation={mockValidation}
+        kaldikWeeks={mockKaldikWeeks}
+        promesCells={mockCells}
+      />
+    );
+
+    const toggleBtn = screen.getByRole('button', { name: /Atur Kop & TTD/i });
+    fireEvent.click(toggleBtn);
+
+    expect(screen.getByText('Pengaturan Kop Surat Sekolah & Tanda Tangan Resmi')).toBeInTheDocument();
+
+    const schoolInput = screen.getByDisplayValue('MI AL IRSYAD KOTA MADIUN');
+    fireEvent.change(schoolInput, { target: { value: 'MIN 1 KOTA MADIUN' } });
+    expect(onUpdateIdentity).toHaveBeenCalledWith({ schoolName: 'MIN 1 KOTA MADIUN' });
+
+    const closeBtn = screen.getByRole('button', { name: /Tutup/i });
+    fireEvent.click(closeBtn);
+    expect(screen.queryByText('Pengaturan Kop Surat Sekolah & Tanda Tangan Resmi')).not.toBeInTheDocument();
+  });
+
+  it('renders Semester 2 months grid when Promes 2 tab is clicked', () => {
+    render(
+      <PreviewTab
+        identity={mockIdentity}
+        onUpdateIdentity={vi.fn()}
+        protaItems={mockProtaItems}
+        validation={mockValidation}
+        kaldikWeeks={mockKaldikWeeks}
+        promesCells={mockCells}
+      />
+    );
+
+    const promes2TabBtn = screen.getByRole('button', { name: /Promes Semester 2/i });
+    fireEvent.click(promes2TabBtn);
+
+    expect(screen.getByText(/PROGRAM SEMESTER \(PROMES\) — SEMESTER 2 \(GENAP\)/i)).toBeInTheDocument();
+    expect(screen.getByText('Januari')).toBeInTheDocument();
+    expect(screen.getByText('Februari')).toBeInTheDocument();
+    expect(screen.getByText('Maret')).toBeInTheDocument();
+    expect(screen.getByText('April')).toBeInTheDocument();
+    expect(screen.getByText('Mei')).toBeInTheDocument();
+    expect(screen.getByText('Juni')).toBeInTheDocument();
+  });
 });

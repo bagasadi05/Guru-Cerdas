@@ -45,6 +45,7 @@ import {
     type PortalQuizPoint,
     type PortalReport,
     type PortalSchedule,
+    type PortalPhSchedule,
     type PortalSchoolInfo,
     type PortalStudentInfo,
     type PortalTask,
@@ -147,6 +148,22 @@ const filterRecordsBySemesterTerm = <T extends PortalFilterableRecord>(
 
 // Portal sessions run as `anon`, which RLS blocks from reading
 // bintang_monthly_evaluations directly; the RPC validates the access code instead.
+const fetchPortalPhSchedules = async (classId: string | undefined | null): Promise<PortalPhSchedule[]> => {
+    if (!classId) return [];
+    try {
+        const { data, error } = await supabase
+            .from('ph_schedules')
+            .select('id, subject, date, period_label, semester_id')
+            .eq('class_id', classId)
+            .is('deleted_at', null)
+            .order('date', { ascending: true });
+        if (error || !data) return [];
+        return toArray<PortalPhSchedule>(data);
+    } catch {
+        return [];
+    }
+};
+
 const fetchPortalBintangEvaluations = async (studentId: string, accessCode: string): Promise<any[]> => {
     const { data, error } = await supabase.rpc('get_student_portal_bintang' as any, {
         student_id_param: studentId,
@@ -267,6 +284,7 @@ const fetchPortalDataFallback = async (studentId: string, accessCode: string): P
         announcements: toArray<PortalAnnouncement>(announcementsRes.data),
         achievements: [],
         bintangEvaluations: bintangEvaluationsRes,
+        phSchedules: await fetchPortalPhSchedules(classId),
         teacher,
         schoolInfo: { school_name: 'Sekolah' },
     };
@@ -323,6 +341,7 @@ const fetchPortalData = async (studentId: string, accessCode: string): Promise<P
             announcements: toArray<PortalAnnouncement>(portalResult.announcements),
             achievements: toArray<PortalStudentAchievement>(portalResult.achievements),
             bintangEvaluations: toArray<any>(bintangData),
+        phSchedules: await fetchPortalPhSchedules(student.class_id),
             teacher: toObject<TeacherInfo>(portalResult.teacher, null),
             schoolInfo: toObject<PortalSchoolInfo>(portalResult.schoolInfo, { school_name: 'Sekolah' }),
         };
@@ -437,6 +456,10 @@ export const ParentPortalPage: React.FC = () => {
 
     const filteredAchievements = useMemo(() => (
         data ? filterRecordsBySemesterTerm(data.achievements || [], selectedSemesterFilter, semesterTermsById) : []
+    ), [data, selectedSemesterFilter, semesterTermsById]);
+
+    const filteredPhSchedules = useMemo(() => (
+        data ? filterRecordsBySemesterTerm(data.phSchedules || [], selectedSemesterFilter, semesterTermsById) : []
     ), [data, selectedSemesterFilter, semesterTermsById]);
 
     const averageScore = useMemo(() => (
@@ -735,6 +758,7 @@ export const ParentPortalPage: React.FC = () => {
                                 onSectionChange={setActiveMoreSection}
                                 tasks={filteredTasks}
                                 schedules={schedules}
+                                phSchedules={filteredPhSchedules}
                                 violations={filteredViolations}
                                 reports={filteredReports}
                                 schoolInfo={data.schoolInfo}

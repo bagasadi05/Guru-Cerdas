@@ -7,10 +7,10 @@ import { AiButton } from '../AiButton';
 interface Step4KomponenIntiProps {
   formState: FormState;
   onChange: (field: keyof FormState, value: any) => void;
-  onProfilToggle: (profil: string) => void;
+  onProfilToggle?: (profil: string) => void;
+  PROFIL_OPTIONS?: string[];
   isGeneratingCP: boolean;
   onGenerateCP: () => void;
-  PROFIL_OPTIONS: string[];
   t: any;
   aiProps: {
     onAiFillField?: (field: string, refresh?: boolean) => void;
@@ -23,10 +23,8 @@ interface Step4KomponenIntiProps {
 export const Step4KomponenInti: React.FC<Step4KomponenIntiProps> = ({
   formState,
   onChange,
-  onProfilToggle,
   isGeneratingCP,
   onGenerateCP,
-  PROFIL_OPTIONS,
   t,
   aiProps,
   appendToField,
@@ -65,25 +63,17 @@ export const Step4KomponenInti: React.FC<Step4KomponenIntiProps> = ({
           />
         </div>
 
-        <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">{t.lessonPlan.profilPancasila}</label>
-          <div className="flex flex-wrap gap-2">
-            {PROFIL_OPTIONS.map(profil => (
-              <button
-                key={profil}
-                type="button"
-                onClick={() => onProfilToggle(profil)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
-                  formState.profilPelajar.includes(profil)
-                    ? 'bg-amber-100 border-amber-300 text-amber-800 dark:bg-amber-900/40 dark:border-amber-700/60 dark:text-amber-200 shadow-xs'
-                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400'
-                }`}
-              >
-                {profil}
-              </button>
-            ))}
+        {formState.generationMethod !== 'Manual' && (
+          <div className="p-3.5 rounded-xl bg-brand-50/70 dark:bg-brand-950/30 border border-brand-200/80 dark:border-brand-800/50 text-xs text-slate-700 dark:text-slate-300 space-y-1">
+            <div className="font-bold text-brand-900 dark:text-brand-200 flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-brand-600 dark:text-brand-400 shrink-0" />
+              <span>Komponen Inti Disusun Otomatis oleh AI</span>
+            </div>
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+              Tujuan Pembelajaran, Pemahaman Bermakna, Pertanyaan Pemantik, Materi Ajar, LKPD, serta Soal Evaluasi akan dibuat secara otomatis oleh AI mengikuti Capaian Pembelajaran di atas. Lanjutkan ke <strong>Langkah 5 (Model & Waktu)</strong> untuk memilih Model Pembelajaran dan menyusun dokumen.
+            </p>
           </div>
-        </div>
+        )}
 
         {formState.generationMethod === 'Manual' && (
           <>

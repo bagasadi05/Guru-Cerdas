@@ -156,6 +156,30 @@ export const useStudentsPageData = ({ userId, isAdmin = false, canViewAll = fals
   });
 
   const students = studentsData || EMPTY_STUDENTS;
+
+  const { data: classStudentCounts = {} } = useQuery({
+    queryKey: ['classStudentCounts', userId, assignedClassIdsKey],
+    queryFn: async () => {
+      if (!userId || classes.length === 0) return {};
+      const classIds = classes.map((c) => c.id);
+      const { data, error } = await supabase
+        .from('students')
+        .select('class_id')
+        .in('class_id', classIds)
+        .is('deleted_at', null);
+
+      if (error) return {};
+      const counts: Record<string, number> = {};
+      data?.forEach((row) => {
+        if (row.class_id) {
+          counts[row.class_id] = (counts[row.class_id] || 0) + 1;
+        }
+      });
+      return counts;
+    },
+    enabled: !!userId && classes.length > 0 && !isClassesError,
+  });
+
   const activeClass = classes.find((classItem) => classItem.id === activeClassId) || null;
   const canManageActiveClass = isAdmin || activeClass?.user_id === userId || hasHomeroomAssignment(userAssignments, activeClassId);
   const isLoading = isLoadingAssignments || isLoadingClasses || (!!activeClassId && isLoadingStudents);
@@ -164,6 +188,7 @@ export const useStudentsPageData = ({ userId, isAdmin = false, canViewAll = fals
     await queryClient.invalidateQueries({ queryKey: ['teacherClassAssignments', userId] });
     await queryClient.invalidateQueries({ queryKey: ['classes', userId] });
     await queryClient.invalidateQueries({ queryKey: ['students', userId] });
+    await queryClient.invalidateQueries({ queryKey: ['classStudentCounts', userId] });
   };
 
   useEffect(() => {
@@ -233,6 +258,7 @@ export const useStudentsPageData = ({ userId, isAdmin = false, canViewAll = fals
     accessCodeFilter,
     setAccessCodeFilter,
     classes,
+    classStudentCounts,
     students,
     userAssignments,
     activeClass,

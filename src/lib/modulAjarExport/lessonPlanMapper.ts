@@ -156,9 +156,9 @@ export function buildStudentBody(body: ExportNode[], identity: LessonPlanIdentit
       <h2 style="font-size: 12pt; margin: 0; font-weight: bold; text-transform: uppercase;">KELAS ${field(identity.kelas)} (FASE ${field(identity.fase)})</h2>
       <div style="margin: 25px auto; text-align: center;"></div>
       <table style="margin: 20px auto; text-align: left; font-size: 11pt; border: none;">
-        <tr><td style="padding: 5px 15px; border: none; font-weight: bold;">Materi Pokok</td><td style="padding: 5px; border: none;">: ${field(identity.topik)}</td></tr>
-        <tr><td style="padding: 5px 15px; border: none; font-weight: bold;">Satuan Pendidikan</td><td style="padding: 5px; border: none;">: ${field(identity.satuanPendidikan)}</td></tr>
-        <tr><td style="padding: 5px 15px; border: none; font-weight: bold;">Tahun Ajaran</td><td style="padding: 5px; border: none;">: ${field(identity.tahunAjaran)}</td></tr>
+        <tr><td style="width: 36%; padding: 5px 10px; border: none; font-weight: bold;">Materi Pokok</td><td style="width: 64%; padding: 5px; border: none;">: ${field(identity.topik)}</td></tr>
+        <tr><td style="width: 36%; padding: 5px 10px; border: none; font-weight: bold;">Satuan Pendidikan</td><td style="width: 64%; padding: 5px; border: none;">: ${field(identity.satuanPendidikan)}</td></tr>
+        <tr><td style="width: 36%; padding: 5px 10px; border: none; font-weight: bold;">Tahun Ajaran</td><td style="width: 64%; padding: 5px; border: none;">: ${field(identity.tahunAjaran)}</td></tr>
       </table>
       <p style="margin-top: 35px; font-style: italic; color: #555555;">"Semangat Belajar! Lakukan yang Terbaik."</p>
     </div>

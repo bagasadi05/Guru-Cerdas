@@ -20,7 +20,18 @@ export type EnrollmentView = {
     participantType: 'student' | 'extracurricular_student';
     name: string;
     className: string | null;
+    gender?: Gender | null;
 };
+
+export type ParticipantOption = {
+    id: string;
+    type: 'student' | 'extracurricular_student';
+    name: string;
+    className: string | null;
+    gender?: Gender | null;
+};
+
+export type GradeSaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 export type TabType = 'list' | 'enrollment' | 'attendance' | 'grades' | 'students';
 
@@ -34,8 +45,8 @@ export const EKSKUL_TABS: { id: TabType; label: string; iconName: string }[] = [
 ];
 
 // Category options
-export const CATEGORIES = ['Olahraga', 'Seni', 'Akademik', 'Keagamaan', 'Lainnya'];
-export const DAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+export const CATEGORIES = ['Olahraga', 'Seni', 'Akademik', 'Keagamaan', 'Teknologi', 'Pramuka & Kepanduan', 'Lainnya'];
+export const DAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 
 // Common props for tab components
 export interface EkskulTabProps {

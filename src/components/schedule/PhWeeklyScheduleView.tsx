@@ -1,8 +1,24 @@
 import React, { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Clock, MoreVertical, Edit3, Copy, Trash2, ClipboardPen, Calendar } from 'lucide-react';
+import {
+    ChevronLeft,
+    ChevronRight,
+    Plus,
+    Clock,
+    MoreVertical,
+    Edit3,
+    Copy,
+    Trash2,
+    ClipboardPen,
+    Calendar,
+    CheckCircle2,
+    AlertCircle,
+    Sparkles,
+    UserCheck,
+    Lock,
+} from 'lucide-react';
 import { Button } from '../ui/Button';
 import { DropdownMenu, DropdownTrigger, DropdownContent, DropdownItem } from '../ui/DropdownMenu';
-import { PhScheduleEngine } from './engine/PhScheduleEngine';
+import { PhScheduleEngine, type GradeStatusInfo } from './engine/PhScheduleEngine';
 import { MAX_ASH_PER_DAY, comparePhPeriods } from './engine/phScheduleValidation';
 import type { PhScheduleRow } from '../../types';
 import { parseSubjectString, phSubjectColor } from './engine/phSchedulePresentation';
@@ -17,6 +33,9 @@ interface PhWeeklyScheduleViewProps {
     onDelete: (item: PhScheduleRow) => void;
     onInputNilai: (item: PhScheduleRow) => void;
     referenceDate?: string;
+    gradeStatusById?: Map<string, GradeStatusInfo>;
+    isCreatedByOtherTeacher?: (item: PhScheduleRow) => boolean;
+    isNewlyAddedByOtherTeacher?: (item: PhScheduleRow) => boolean;
 }
 
 export const PhWeeklyScheduleView: React.FC<PhWeeklyScheduleViewProps> = ({
@@ -29,6 +48,9 @@ export const PhWeeklyScheduleView: React.FC<PhWeeklyScheduleViewProps> = ({
     onDelete,
     onInputNilai,
     referenceDate,
+    gradeStatusById,
+    isCreatedByOtherTeacher,
+    isNewlyAddedByOtherTeacher,
 }) => {
     const [weekOffset, setWeekOffset] = useState(0);
     const [showWeekendManual, setShowWeekendManual] = useState(false);
@@ -181,7 +203,9 @@ export const PhWeeklyScheduleView: React.FC<PhWeeklyScheduleViewProps> = ({
                                     className={`flex min-h-11 min-w-[54px] flex-1 flex-col items-center justify-center rounded-xl border px-1.5 py-1 text-xs font-semibold transition-all ${
                                         isSelected
                                             ? 'border-brand-700 bg-brand-700 text-white shadow-xs dark:border-brand-600 dark:bg-brand-600'
-                                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
+                                            : d.holiday
+                                                ? 'border-rose-300 bg-rose-50/70 text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300'
+                                                : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
                                     }`}
                                 >
                                     <span className="text-[10px] uppercase tracking-wider opacity-80">{d.dayName.slice(0, 3)}</span>
@@ -219,32 +243,43 @@ export const PhWeeklyScheduleView: React.FC<PhWeeklyScheduleViewProps> = ({
                                         isSelectedInMobile ? 'block' : 'hidden md:block'
                                     } ${
                                         day.isToday
-                                            ? 'border-brand-400 bg-white shadow-xs ring-1 ring-brand-400/30 dark:border-brand-500 dark:bg-slate-900'
-                                            : 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900'
+                                            ? 'border-teal-500/60 bg-white shadow-sm ring-1 ring-teal-500/25 dark:border-teal-500/50 dark:bg-slate-900'
+                                            : day.holiday
+                                                ? 'border-rose-200 bg-white dark:border-rose-900/60 dark:bg-slate-900'
+                                                : 'border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900/95'
                                     }`}
                                 >
                                     {/* Day Header */}
                                     <div className={`flex items-center justify-between gap-2 border-b px-3.5 py-2.5 ${
                                         day.isToday
-                                            ? 'border-brand-100 bg-brand-50/80 dark:border-brand-900/50 dark:bg-brand-950/40'
-                                            : 'border-slate-100 bg-slate-50/60 dark:border-slate-800/80 dark:bg-slate-800/30'
+                                            ? 'border-teal-500/20 bg-gradient-to-r from-teal-500/10 via-brand-500/5 to-transparent dark:border-teal-500/20 dark:from-teal-500/15 dark:via-brand-950/30'
+                                            : day.holiday
+                                                ? 'border-rose-100 bg-rose-50/60 dark:border-rose-900/40 dark:bg-rose-950/20'
+                                                : 'border-slate-100 bg-slate-50/60 dark:border-slate-800/80 dark:bg-slate-800/30'
                                     }`}>
                                         <div className="flex items-baseline gap-2 md:block min-w-0">
-                                            <h3 className={`text-sm font-bold ${isPast && !day.isToday ? 'text-slate-600 dark:text-slate-400' : 'text-slate-900 dark:text-white'}`}>
+                                            <h3 className={`text-sm font-bold tracking-tight ${
+                                                day.holiday
+                                                    ? 'text-rose-700 dark:text-rose-300'
+                                                    : isPast && !day.isToday
+                                                        ? 'text-slate-600 dark:text-slate-400'
+                                                        : 'text-slate-900 dark:text-white'
+                                            }`}>
                                                 {day.dayName}
                                             </h3>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400">{day.dateFormatted}</p>
+                                            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{day.dateFormatted}</p>
                                         </div>
                                         {day.isToday ? (
-                                            <span className="shrink-0 rounded-lg bg-brand-700 px-2 py-0.5 text-xs font-bold text-white dark:bg-brand-600">
+                                            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-teal-600 px-2.5 py-0.5 text-[11px] font-bold text-white shadow-2xs dark:bg-teal-500/90">
+                                                <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
                                                 Hari ini ({items.length}/{MAX_ASH_PER_DAY})
                                             </span>
                                         ) : (
                                             <span
-                                                className={`shrink-0 text-xs font-semibold tabular-nums ${
+                                                className={`shrink-0 text-[11px] font-semibold tabular-nums ${
                                                     items.length >= MAX_ASH_PER_DAY
-                                                        ? 'rounded-md bg-amber-100 px-1.5 py-0.5 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
-                                                        : 'text-slate-500 dark:text-slate-400'
+                                                        ? 'rounded-full bg-amber-500/15 border border-amber-500/25 px-2 py-0.5 text-amber-700 dark:text-amber-300'
+                                                        : 'text-slate-400 dark:text-slate-500'
                                                 }`}
                                             >
                                                 {items.length}/{MAX_ASH_PER_DAY} ASH
@@ -252,73 +287,176 @@ export const PhWeeklyScheduleView: React.FC<PhWeeklyScheduleViewProps> = ({
                                         )}
                                     </div>
 
+                                    {/* Holiday Banner if Kaldik Holiday */}
+                                    {day.holiday && (
+                                        <div className="border-b border-rose-100 bg-rose-50/90 px-3 py-1.5 text-[11px] font-medium text-rose-800 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-200">
+                                            <span className="font-bold">
+                                                {day.holiday.kind === 'CUTI' ? 'Cuti Bersama:' : 'Libur Nasional:'}
+                                            </span>{' '}
+                                            {day.holiday.name}
+                                        </div>
+                                    )}
+
                                     {/* Items List */}
-                                    <div className="space-y-2.5 p-3">
-                                        {items.map((item) => (
-                                            <div
-                                                key={item.id}
-                                                className={`rounded-xl border p-3 transition-colors ${
-                                                    isPast && !day.isToday
-                                                        ? 'border-slate-200/80 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-800/40'
-                                                        : 'border-slate-200 bg-slate-50/90 dark:border-slate-700/80 dark:bg-slate-800/70 shadow-2xs'
-                                                }`}
-                                            >
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <div className="min-w-0 flex-1">
-                                                        <div className="mb-1 flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-                                                            <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                                                            <span>Jam {item.period_label}</span>
+                                    <div className="space-y-2.5 p-2.5 sm:p-3">
+                                        {items.map((item) => {
+                                            const gradeStatus = gradeStatusById?.get(item.id);
+                                            const seqLabel = gradeStatus?.assessmentName || 'PH 1';
+                                            const fromOtherTeacher = isCreatedByOtherTeacher?.(item) ?? false;
+                                            const isNewFromOther = isNewlyAddedByOtherTeacher?.(item) ?? false;
+                                            const { baseSubject, topic } = parseSubjectString(item.subject);
+                                            const isComplete = gradeStatus?.state === 'complete';
+
+                                            return (
+                                                <div
+                                                    key={item.id}
+                                                    className={`group relative rounded-xl border p-3 transition-all duration-150 ${
+                                                        isNewFromOther
+                                                            ? 'border-sky-400/80 bg-sky-50/40 ring-1 ring-sky-400/25 dark:border-sky-500/60 dark:bg-sky-950/20'
+                                                            : isComplete
+                                                                ? 'border-slate-200/90 bg-slate-50/70 hover:border-emerald-500/40 dark:border-slate-800 dark:bg-slate-800/45 dark:hover:border-emerald-500/40'
+                                                                : 'border-slate-200 bg-white shadow-2xs hover:border-teal-500/50 dark:border-slate-700/80 dark:bg-slate-800/75 dark:hover:border-teal-500/50'
+                                                    }`}
+                                                >
+                                                    {/* Top Row: Time + Sequence Badge + Action Menu */}
+                                                    <div className="flex items-center justify-between gap-1.5">
+                                                        <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 min-w-0">
+                                                            <span className="inline-flex items-center gap-1 text-slate-600 dark:text-slate-300 font-semibold">
+                                                                <Clock className="h-3 w-3 shrink-0 text-slate-400 dark:text-slate-400" aria-hidden />
+                                                                <span>Jam {item.period_label}</span>
+                                                            </span>
+                                                            <span className="rounded-md bg-teal-500/15 border border-teal-500/25 px-1.5 py-0.5 text-[10px] font-bold leading-none text-teal-700 dark:bg-teal-500/20 dark:text-teal-300">
+                                                                {seqLabel}
+                                                            </span>
+                                                            {isNewFromOther && (
+                                                                <span className="inline-flex items-center gap-0.5 rounded-md bg-sky-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+                                                                    <Sparkles className="h-2.5 w-2.5" />
+                                                                    Baru
+                                                                </span>
+                                                            )}
+                                                            {fromOtherTeacher && (
+                                                                <span className="inline-flex items-center gap-0.5 rounded-md bg-indigo-500/15 border border-indigo-500/25 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-indigo-700 dark:text-indigo-300">
+                                                                    <UserCheck className="h-2.5 w-2.5" />
+                                                                    Mapel
+                                                                </span>
+                                                            )}
                                                         </div>
-                                                        <h4 className="break-words hyphens-none text-sm sm:text-base font-bold leading-snug text-slate-900 dark:text-white">
-                                                            <span aria-hidden className={`mr-2 inline-block h-2.5 w-2.5 rounded-full shrink-0 ${phSubjectColor(item.subject)}`} />
-                                                            {parseSubjectString(item.subject).baseSubject}
+
+                                                        {canAdd && (
+                                                            <DropdownMenu>
+                                                                <DropdownTrigger
+                                                                    aria-label="Menu Aksi Jadwal"
+                                                                    title={`Aksi jadwal ${item.subject}`}
+                                                                    className="-mr-1 -my-1 !h-7 !w-7 !min-h-7 !min-w-7 shrink-0 !p-0 !shadow-none !rounded-lg text-slate-400 hover:bg-slate-200/70 hover:text-slate-700 dark:hover:bg-slate-700/70 dark:hover:text-slate-100"
+                                                                >
+                                                                    <MoreVertical className="h-3.5 w-3.5" />
+                                                                </DropdownTrigger>
+                                                                <DropdownContent align="right" className="w-48 rounded-2xl p-1">
+                                                                    {canModify(item) && (
+                                                                        <DropdownItem className="min-h-10 rounded-xl" onClick={() => onEdit(item)}>
+                                                                            <Edit3 className="mr-2 h-4 w-4 shrink-0" />Edit Jadwal
+                                                                        </DropdownItem>
+                                                                    )}
+                                                                    <DropdownItem className="min-h-10 rounded-xl" onClick={() => onDuplicate(item)}>
+                                                                        <Copy className="mr-2 h-4 w-4 shrink-0" />Duplikasi
+                                                                    </DropdownItem>
+                                                                    {canModify(item) && (
+                                                                        <DropdownItem className="min-h-10 rounded-xl text-rose-600 dark:text-rose-400" onClick={() => onDelete(item)}>
+                                                                            <Trash2 className="mr-2 h-4 w-4 shrink-0" />Hapus
+                                                                        </DropdownItem>
+                                                                    )}
+                                                                </DropdownContent>
+                                                            </DropdownMenu>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Subject Title & Topic */}
+                                                    <div className="mt-2">
+                                                        <h4 className="flex items-center gap-2 break-words hyphens-none text-[15px] font-extrabold leading-snug tracking-tight text-slate-900 dark:text-white">
+                                                            <span
+                                                                aria-hidden
+                                                                className={`inline-block h-2.5 w-2.5 rounded-full shrink-0 ${phSubjectColor(item.subject)}`}
+                                                            />
+                                                            <span className="truncate" title={baseSubject}>{baseSubject}</span>
                                                         </h4>
-                                                        <p className="mt-1 text-xs text-slate-600 dark:text-slate-300 line-clamp-2">
-                                                            {parseSubjectString(item.subject).topic || 'Materi belum diisi'}
+                                                        <p
+                                                            className="mt-1 border-l-2 border-slate-200 dark:border-slate-700 pl-2 text-xs text-slate-600 dark:text-slate-300 line-clamp-2"
+                                                            title={topic || 'Materi belum diisi'}
+                                                        >
+                                                            {topic || 'Materi belum diisi'}
                                                         </p>
                                                     </div>
-                                                    {canAdd && (
-                                                        <DropdownMenu>
-                                                            <DropdownTrigger
-                                                                aria-label="Menu Aksi Jadwal"
-                                                                title={`Aksi jadwal ${item.subject}`}
-                                                                className="!h-9 !w-9 !min-h-9 !min-w-9 !p-0 !shadow-none !rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                                                            >
-                                                                <MoreVertical className="h-4 w-4" />
-                                                            </DropdownTrigger>
-                                                            <DropdownContent align="right" className="w-48 rounded-2xl p-1">
-                                                                {canModify(item) && (
-                                                                    <DropdownItem className="min-h-11 rounded-xl" onClick={() => onEdit(item)}>
-                                                                        <Edit3 className="mr-2 h-4 w-4 shrink-0" />Edit Jadwal
-                                                                    </DropdownItem>
-                                                                )}
-                                                                <DropdownItem className="min-h-11 rounded-xl" onClick={() => onDuplicate(item)}>
-                                                                    <Copy className="mr-2 h-4 w-4 shrink-0" />Duplikasi
-                                                                </DropdownItem>
-                                                                {canModify(item) && (
-                                                                    <DropdownItem className="min-h-11 rounded-xl text-rose-600 dark:text-rose-400" onClick={() => onDelete(item)}>
-                                                                        <Trash2 className="mr-2 h-4 w-4 shrink-0" />Hapus
-                                                                    </DropdownItem>
-                                                                )}
-                                                            </DropdownContent>
-                                                        </DropdownMenu>
+
+                                                    {/* Single-Line Grade Status Bar (No awkward multi-line wrap) */}
+                                                    {gradeStatus && gradeStatus.state !== 'pending' && (
+                                                        <div className="mt-2.5">
+                                                            {gradeStatus.state === 'complete' && (
+                                                                <div className="flex items-center justify-between gap-1.5 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2 py-1 text-[11px] font-semibold text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300">
+                                                                    <span className="inline-flex items-center gap-1 min-w-0 truncate">
+                                                                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                                                                        <span className="truncate">
+                                                                            {gradeStatus.gradedCount}/{gradeStatus.totalStudents} Siswa
+                                                                        </span>
+                                                                    </span>
+                                                                    {gradeStatus.averageScore !== null && (
+                                                                        <span className="shrink-0 rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-emerald-900 dark:text-emerald-200">
+                                                                            Rata² {gradeStatus.averageScore}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            {gradeStatus.state === 'partial' && (
+                                                                <div className="flex items-center justify-between gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] font-semibold text-amber-800 dark:text-amber-300">
+                                                                    <span className="inline-flex items-center gap-1 truncate">
+                                                                        <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                                                                        <span>Terinput {gradeStatus.gradedCount}/{gradeStatus.totalStudents}</span>
+                                                                    </span>
+                                                                    <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider opacity-80">
+                                                                        Sebagian
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                            {gradeStatus.state === 'overdue' && (
+                                                                <div className="flex items-center justify-between gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-[11px] font-semibold text-rose-800 dark:text-rose-300">
+                                                                    <span className="inline-flex items-center gap-1 truncate">
+                                                                        <AlertCircle className="h-3.5 w-3.5 shrink-0 text-rose-500" />
+                                                                        <span>Belum Dinilai</span>
+                                                                    </span>
+                                                                    <span className="shrink-0 text-[10px] tabular-nums opacity-75">
+                                                                        0/{gradeStatus.totalStudents}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     )}
+
+                                                    {/* Action Button: Tonal/Subtle when Complete, Prominent Solid when Action Needed */}
+                                                    <Button
+                                                        type="button"
+                                                        variant={isComplete ? 'outline' : 'primary'}
+                                                        className={`mt-2.5 !min-h-9 !h-9 w-full gap-1.5 text-xs font-bold rounded-lg transition-all ${
+                                                            isComplete
+                                                                ? '!border-emerald-500/30 !bg-emerald-500/10 hover:!bg-emerald-500/20 !text-emerald-700 dark:!text-emerald-300 shadow-none'
+                                                                : '!bg-teal-600 hover:!bg-teal-500 text-white shadow-xs'
+                                                        }`}
+                                                        aria-label={`Input nilai untuk ${item.subject}`}
+                                                        onClick={() => onInputNilai(item)}
+                                                    >
+                                                        <ClipboardPen className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                                        <span className="truncate">
+                                                            {isComplete
+                                                                ? 'Lihat / Edit Nilai'
+                                                                : gradeStatus?.state === 'partial'
+                                                                    ? `Lengkapi Nilai (${gradeStatus.gradedCount}/${gradeStatus.totalStudents})`
+                                                                    : `Input Nilai (${seqLabel})`}
+                                                        </span>
+                                                    </Button>
                                                 </div>
-                                                <Button
-                                                    type="button"
-                                                    variant="primary"
-                                                    className="mt-2.5 min-h-11 w-full gap-2 !bg-teal-700 hover:!bg-teal-800 text-sm font-semibold text-white rounded-xl shadow-xs"
-                                                    aria-label={`Input nilai untuk ${item.subject}`}
-                                                    onClick={() => onInputNilai(item)}
-                                                >
-                                                    <ClipboardPen className="h-4 w-4" aria-hidden />
-                                                    <span>Input Nilai</span>
-                                                </Button>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
 
                                         {!items.length && (
-                                            <p className="py-3 text-center text-xs text-slate-400 dark:text-slate-500">
+                                            <p className="py-4 text-center text-xs text-slate-400 dark:text-slate-500">
                                                 Tidak ada ASH
                                             </p>
                                         )}
@@ -327,18 +465,19 @@ export const PhWeeklyScheduleView: React.FC<PhWeeklyScheduleViewProps> = ({
                                             items.length >= MAX_ASH_PER_DAY ? (
                                                 <div
                                                     aria-label={`Kuota penuh untuk ${day.dayName}`}
-                                                    className="flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/40 px-3 text-xs font-semibold text-slate-400 dark:text-slate-500 select-none"
+                                                    className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200/70 dark:border-slate-800/80 bg-slate-100/50 dark:bg-slate-800/30 py-2 px-3 text-[11px] font-medium text-slate-400 dark:text-slate-500 select-none"
                                                 >
-                                                    Kuota Penuh ({MAX_ASH_PER_DAY}/{MAX_ASH_PER_DAY} ASH)
+                                                    <Lock className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
+                                                    <span>Kuota Penuh ({MAX_ASH_PER_DAY}/{MAX_ASH_PER_DAY} ASH)</span>
                                                 </div>
                                             ) : (
                                                 <button
                                                     type="button"
                                                     onClick={() => onAdd(day.dateStr)}
                                                     title={`Tambah Jadwal ASH untuk ${day.dayName}, ${day.dateFormatted}`}
-                                                    className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 px-3 text-xs sm:text-sm font-semibold text-brand-700 dark:text-brand-300 hover:border-brand-400 hover:bg-brand-50/50 dark:hover:border-brand-700 dark:hover:bg-brand-950/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                                                    className="flex min-h-9 w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 py-2 px-3 text-xs font-semibold text-brand-700 dark:text-brand-300 hover:border-brand-400 hover:bg-brand-50/50 dark:hover:border-brand-600 dark:hover:bg-brand-950/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                                                 >
-                                                    <Plus className="h-4 w-4" aria-hidden />
+                                                    <Plus className="h-3.5 w-3.5" aria-hidden />
                                                     <span>Tambah ASH</span>
                                                 </button>
                                             )

@@ -270,4 +270,18 @@ describe('ModulAjarForm wizard', () => {
     expect(screen.getByRole('button', { name: 'Sebelumnya' })).toBeInTheDocument();
     expect(screen.queryByText('Kembali')).not.toBeInTheDocument();
   });
+
+  it('renders Profil Pelajar Pancasila in Step 3 and Model Pembelajaran at the top of Step 5', () => {
+    const { props } = renderForm(3, { profilPelajar: ['Mandiri'] });
+    const kritisBtn = screen.getByRole('button', { name: 'Bernalar Kritis' });
+    const mandiriBtn = screen.getByRole('button', { name: 'Mandiri' });
+    expect(mandiriBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(kritisBtn).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(kritisBtn);
+    expect(props.onProfilToggle).toHaveBeenCalledWith('Bernalar Kritis');
+
+    renderForm(5, { modelPembelajaran: 'Problem Based Learning (PBL)', selectedModelId: 'pbl' });
+    expect(screen.getByText(/Terpilih: Problem Based Learning/)).toBeInTheDocument();
+    expect(screen.getByText(/Model Pembelajaran & Sintaks/)).toBeInTheDocument();
+  });
 });

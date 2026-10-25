@@ -226,7 +226,7 @@ export const generateBintangReportPdf = async (
                 : Math.max(46.0, notesBasePadding + (notesLinesCount * notesLineH)))
             : Math.max(12.0, notesBasePadding + (notesLinesCount * notesLineH) + (expansionFactor * 3.5));
 
-        const signatureBoxHeight = isTwoPageReport ? 55.0 : (25.0 + (expansionFactor * 6.0));
+        const signatureBoxHeight = isTwoPageReport ? 55.0 : (35.0 + (expansionFactor * 5.0));
         const p2SectionGap = isTwoPageReport ? (hasQuiz ? 10.0 : 16.0) : sectionGap;
 
         // Helper: Section header bar
@@ -644,8 +644,8 @@ export const generateBintangReportPdf = async (
         targetDoc.text(`Madiun, ${printDate}`, rightCenterX, subtitleY, { align: 'center' });
 
         // Signer names & lines
-        const signerLineY = currentY + signatureBoxHeight - (isTwoPageReport ? 7.5 : (3.5 + (expansionFactor * 1.0)));
-        const parentRoleY = signerLineY - (isTwoPageReport ? 5.5 : (3.5 + (expansionFactor * 0.5)));
+        const signerLineY = currentY + signatureBoxHeight - (isTwoPageReport ? 7.5 : (4.5 + (expansionFactor * 1.0)));
+        const parentRoleY = signerLineY - (isTwoPageReport ? 5.5 : (4.0 + (expansionFactor * 0.5)));
 
         targetDoc.setFont('helvetica', 'normal');
         targetDoc.setFontSize(isTwoPageReport ? 8.0 : (7.5 + (expansionFactor * 0.5)));
@@ -716,12 +716,12 @@ export const generateBintangReportPdf = async (
         let expansionFactor = 0;
         let p1Expansion = 0;
 
-        if (probe1.pageCount === 1 && probe1.finalY <= 268) {
+        if (probe1.pageCount === 1 && probe1.finalY <= 270) {
             // Fits cleanly on 1 page!
             isTwoPageReport = false;
-            const remainingSpace = Math.max(0, 258 - probe1.finalY);
-            // Dynamic scaling: allows expansionFactor up to 2.2 for low-content students
-            let targetExpansion = Math.min(2.2, Math.max(0, remainingSpace / 22));
+            const remainingSpace = Math.max(0, 260 - probe1.finalY);
+            // Dynamic scaling: allows expansionFactor up to 2.0 for low-content students
+            let targetExpansion = Math.min(2.0, Math.max(0, remainingSpace / 22));
 
             // Verify with an in-memory probe that targetExpansion does not cause overflow
             if (targetExpansion > 0.2) {
@@ -732,9 +732,9 @@ export const generateBintangReportPdf = async (
                     { isTwoPageReport: false, expansionFactor: targetExpansion, p1Expansion: 0 },
                     renderCtx
                 );
-                if (testProbe.pageCount > 1 || testProbe.finalY > 268) {
+                if (testProbe.pageCount > 1 || testProbe.finalY > 270) {
                     // Back off to guaranteed safe expansion
-                    targetExpansion = Math.max(0, Math.min(1.0, (258 - probe1.finalY) / 50));
+                    targetExpansion = Math.max(0, Math.min(1.0, (260 - probe1.finalY) / 50));
                 }
             }
             expansionFactor = targetExpansion;

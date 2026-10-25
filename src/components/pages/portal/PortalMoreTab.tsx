@@ -4,6 +4,7 @@ import {
     BookOpenIcon,
     CalendarIcon,
     CheckCircleIcon,
+    ClipboardPenIcon,
     ClockIcon,
     DownloadIcon,
     FileTextIcon,
@@ -11,8 +12,11 @@ import {
     SettingsIcon,
     ShieldAlertIcon,
 } from '../../Icons';
+import { PhScheduleEngine } from '../../schedule/engine/PhScheduleEngine';
+import { parseSubjectString } from '../../schedule/engine/phSchedulePresentation';
 import type {
     PortalMoreSection,
+    PortalPhSchedule,
     PortalReport,
     PortalSchedule,
     PortalSchoolInfo,
@@ -25,6 +29,7 @@ interface PortalMoreTabProps {
     onSectionChange: (section: PortalMoreSection) => void;
     tasks: PortalTask[];
     schedules: PortalSchedule[];
+    phSchedules?: PortalPhSchedule[];
     violations: PortalViolation[];
     reports: PortalReport[];
     schoolInfo: PortalSchoolInfo;
@@ -39,7 +44,7 @@ const weekdays = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
 const sectionLabels: Record<PortalMoreSection, string> = {
     tugas: 'Tugas',
-    jadwal: 'Jadwal',
+    jadwal: 'Jadwal & ASH',
     perilaku: 'Perilaku',
     dokumen: 'Dokumen',
     pengaturan: 'Pengaturan',
@@ -47,7 +52,7 @@ const sectionLabels: Record<PortalMoreSection, string> = {
 
 const sectionDescriptions: Record<PortalMoreSection, string> = {
     tugas: 'Pantau tugas yang perlu dikerjakan dan deadline terdekat.',
-    jadwal: 'Lihat susunan pelajaran per hari dengan format ringkas.',
+    jadwal: 'Lihat susunan pelajaran harian dan jadwal Asesmen Sumatif Harian (ASH).',
     perilaku: 'Baca catatan pembinaan dan area yang perlu didampingi.',
     dokumen: 'Temukan laporan dan dokumen sekolah dalam satu tempat.',
     pengaturan: 'Lengkapi data wali dan akses ringkasan portal.',
@@ -116,6 +121,7 @@ export const PortalMoreTab: React.FC<PortalMoreTabProps> = ({
     onSectionChange,
     tasks,
     schedules,
+    phSchedules = [],
     violations,
     reports,
     schoolInfo,
@@ -136,6 +142,14 @@ export const PortalMoreTab: React.FC<PortalMoreTabProps> = ({
         dokumen: FileTextIcon,
         pengaturan: SettingsIcon,
     };
+
+    const todayStr = useMemo(() => new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' }), []);
+
+    const upcomingPhSchedules = useMemo(() => {
+        return [...phSchedules]
+            .filter((item) => item.date >= todayStr)
+            .sort((a, b) => a.date.localeCompare(b.date) || a.period_label.localeCompare(b.period_label, 'id', { numeric: true }));
+    }, [phSchedules, todayStr]);
 
     const activeTasks = useMemo(() => tasks.filter((task) => task.status !== 'done'), [tasks]);
     const overdueTasks = useMemo(() => tasks.filter(isOverdueTask), [tasks]);
@@ -179,7 +193,7 @@ export const PortalMoreTab: React.FC<PortalMoreTabProps> = ({
     const selectedReport = reports.find((report) => report.id === selectedReportId) ?? reports[0] ?? null;
     const sectionCounts: Record<PortalMoreSection, number | string> = {
         tugas: activeTasks.length,
-        jadwal: schedules.length,
+        jadwal: upcomingPhSchedules.length > 0 ? `${upcomingPhSchedules.length} ASH` : schedules.length,
         perilaku: totalViolationPoints,
         dokumen: reports.length,
         pengaturan: 'Akun',
@@ -338,66 +352,139 @@ export const PortalMoreTab: React.FC<PortalMoreTabProps> = ({
             )}
 
             {activeSection === 'jadwal' && (
-                <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <CalendarIcon className="h-5 w-5 text-emerald-500" />
-                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Jadwal Pelajaran</h3>
+                <div className="space-y-6">
+                    {/* Agenda Asesmen Sumatif Harian (ASH) Mendatang */}
+                    <section className="rounded-[28px] border border-teal-200/80 bg-white p-5 shadow-sm dark:border-teal-900/40 dark:bg-slate-900 sm:p-6">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <ClipboardPenIcon className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                                        Agenda Asesmen Sumatif Harian (ASH) Mendatang
+                                    </h3>
+                                </div>
+                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                    Jadwal penilaian harian di kelas untuk bahan pendampingan belajar siswa di rumah.
+                                </p>
                             </div>
-                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Pilih hari untuk melihat urutan pelajaran yang perlu disiapkan.</p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {schedulesByDay.map(({ day, items }) => (
-                                <button
-                                    key={day}
-                                    type="button"
-                                    onClick={() => setSelectedDay(day)}
-                                    className={`rounded-2xl px-3 py-2 text-sm font-semibold transition ${selectedDay === day
-                                        ? 'bg-emerald-600 text-white shadow-sm'
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-                                        }`}
-                                >
-                                    {day}
-                                    <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 text-xs">{items.length}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="mt-6 grid gap-6 xl:grid-cols-[0.75fr_1.25fr]">
-                        <div className="rounded-[28px] border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-900/30 dark:bg-emerald-950/30">
-                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300">Hari Dipilih</p>
-                            <p className="mt-2 text-3xl font-bold text-emerald-800 dark:text-emerald-100">{selectedDay}</p>
-                            <p className="mt-3 text-sm leading-6 text-emerald-700 dark:text-emerald-200">
-                                {selectedDaySchedules.length > 0
-                                    ? `${selectedDaySchedules.length} pelajaran tercatat. Siapkan buku sesuai urutan jam pelajaran.`
-                                    : 'Belum ada jadwal pelajaran pada hari ini.'}
-                            </p>
+                            <span className="inline-flex w-fit items-center rounded-full bg-teal-50 px-3 py-1 text-xs font-bold text-teal-700 dark:bg-teal-950/60 dark:text-teal-300">
+                                {upcomingPhSchedules.length} Agenda Mendatang
+                            </span>
                         </div>
 
-                        <div className="space-y-3">
-                            {selectedDaySchedules.length === 0 ? (
-                                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
-                                    Belum ada jadwal untuk {selectedDay}.
+                        {upcomingPhSchedules.length === 0 ? (
+                            <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+                                Belum ada jadwal Asesmen Sumatif Harian (ASH) mendatang untuk kelas ini.
+                            </div>
+                        ) : (
+                            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                {upcomingPhSchedules.slice(0, 6).map((ash) => {
+                                    const { baseSubject, topic } = parseSubjectString(ash.subject);
+                                    const rel = PhScheduleEngine.getRelativeDateLabel(ash.date);
+                                    const isToday = ash.date === todayStr;
+                                    return (
+                                        <div
+                                            key={ash.id}
+                                            className={`flex flex-col justify-between gap-3 rounded-2xl border p-4 transition ${
+                                                isToday
+                                                    ? 'border-teal-400 bg-teal-50/60 dark:border-teal-600 dark:bg-teal-950/30'
+                                                    : 'border-slate-200 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-800/70'
+                                            }`}
+                                        >
+                                            <div>
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                                                        {PhScheduleEngine.formatDateHeading(ash.date)}
+                                                    </span>
+                                                    {rel && (
+                                                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                                                            isToday
+                                                                ? 'bg-teal-600 text-white'
+                                                                : 'bg-teal-100 text-teal-800 dark:bg-teal-900/60 dark:text-teal-200'
+                                                        }`}>
+                                                            {rel}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <h4 className="mt-2 text-base font-bold text-slate-900 dark:text-white">
+                                                    {baseSubject}
+                                                </h4>
+                                                <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                                                    {topic ? `Materi: ${topic}` : 'Materi sesuai pokok bahasan berjalan'}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 border-t border-slate-200/70 pt-2 text-xs font-medium text-slate-500 dark:border-slate-700/70 dark:text-slate-400">
+                                                <ClockIcon className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
+                                                <span>Pelaksanaan: Jam pelajaran ke-{ash.period_label}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </section>
+
+                    <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <CalendarIcon className="h-5 w-5 text-emerald-500" />
+                                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Jadwal Pelajaran Rutin</h3>
                                 </div>
-                            ) : selectedDaySchedules.map((schedule, index) => (
-                                <div key={schedule.id} className="flex gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70">
-                                    <div className="flex flex-col items-center">
-                                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-600 text-sm font-bold text-white">{index + 1}</div>
-                                        {index < selectedDaySchedules.length - 1 && <div className="mt-2 h-full w-px bg-slate-200 dark:bg-slate-700" />}
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="font-semibold text-slate-900 dark:text-white">{schedule.subject}</p>
-                                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                            {schedule.start_time.substring(0, 5)} - {schedule.end_time.substring(0, 5)}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
+                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Pilih hari untuk melihat urutan pelajaran yang perlu disiapkan.</p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {schedulesByDay.map(({ day, items }) => (
+                                    <button
+                                        key={day}
+                                        type="button"
+                                        onClick={() => setSelectedDay(day)}
+                                        className={`rounded-2xl px-3 py-2 text-sm font-semibold transition ${selectedDay === day
+                                            ? 'bg-emerald-600 text-white shadow-sm'
+                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+                                            }`}
+                                    >
+                                        {day}
+                                        <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 text-xs">{items.length}</span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                </section>
+
+                        <div className="mt-6 grid gap-6 xl:grid-cols-[0.75fr_1.25fr]">
+                            <div className="rounded-[28px] border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-900/30 dark:bg-emerald-950/30">
+                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300">Hari Dipilih</p>
+                                <p className="mt-2 text-3xl font-bold text-emerald-800 dark:text-emerald-100">{selectedDay}</p>
+                                <p className="mt-3 text-sm leading-6 text-emerald-700 dark:text-emerald-200">
+                                    {selectedDaySchedules.length > 0
+                                        ? `${selectedDaySchedules.length} pelajaran tercatat. Siapkan buku sesuai urutan jam pelajaran.`
+                                        : 'Belum ada jadwal pelajaran pada hari ini.'}
+                                </p>
+                            </div>
+
+                            <div className="space-y-3">
+                                {selectedDaySchedules.length === 0 ? (
+                                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+                                        Belum ada jadwal untuk {selectedDay}.
+                                    </div>
+                                ) : selectedDaySchedules.map((schedule, index) => (
+                                    <div key={schedule.id} className="flex gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70">
+                                        <div className="flex flex-col items-center">
+                                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-600 text-sm font-bold text-white">{index + 1}</div>
+                                            {index < selectedDaySchedules.length - 1 && <div className="mt-2 h-full w-px bg-slate-200 dark:bg-slate-700" />}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="font-semibold text-slate-900 dark:text-white">{schedule.subject}</p>
+                                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                                {schedule.start_time.substring(0, 5)} - {schedule.end_time.substring(0, 5)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                </div>
             )}
 
             {activeSection === 'perilaku' && (

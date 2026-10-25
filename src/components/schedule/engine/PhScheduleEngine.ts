@@ -5,11 +5,30 @@
  */
 
 import type { PhScheduleRow } from '../../../types';
-import { comparePhPeriods, phPeriodsOverlap } from './phScheduleValidation';
+import { comparePhPeriods, getHolidayForDate, phPeriodsOverlap, type NationalHoliday } from './phScheduleValidation';
+import { parseSubjectString } from './phSchedulePresentation';
 
 export type PhScheduleItem = PhScheduleRow;
 
 export type ExamStatus = 'upcoming' | 'today' | 'past';
+
+export type GradeCompletionState = 'complete' | 'partial' | 'overdue' | 'pending';
+
+export interface AcademicRecordSnapshot {
+    student_id: string;
+    subject: string;
+    assessment_name: string | null;
+    score: number | null;
+    notes?: string | null;
+}
+
+export interface GradeStatusInfo {
+    state: GradeCompletionState;
+    gradedCount: number;
+    totalStudents: number;
+    assessmentName: string;
+    averageScore: number | null;
+}
 
 export interface ScheduleConflict {
     date: string;
@@ -22,16 +41,26 @@ export interface HeavyDayWarning {
     count: number;
 }
 
+export interface HolidayConflictWarning {
+    id: string;
+    date: string;
+    subject: string;
+    holidayName: string;
+    kind: 'LIBUR' | 'CUTI';
+}
+
 export interface ScheduleAnomalies {
     hasConflicts: boolean;
     conflicts: ScheduleConflict[];
     heavyDays: HeavyDayWarning[];
+    holidaySchedules: HolidayConflictWarning[];
 }
 
 export interface ScheduleFilterOptions {
     searchQuery?: string;
     statusFilter?: ExamStatus | 'all';
     selectedMonth?: string;
+    selectedSubject?: string;
     sortOrder?: 'asc' | 'desc';
 }
 
@@ -40,6 +69,13 @@ export interface StatusCounts {
     upcoming: number;
     today: number;
     past: number;
+}
+
+function canonicalSubjectKey(raw: string): string {
+    return parseSubjectString(raw)
+        .baseSubject.replace(/^Ass\.?\s+/i, '')
+        .toLowerCase()
+        .trim();
 }
 
 export class PhScheduleEngine {
@@ -51,6 +87,115 @@ export class PhScheduleEngine {
         if (dateStr === todayStr) return 'today';
         if (dateStr > todayStr) return 'upcoming';
         return 'past';
+    }
+
+    /**
+     * Determines the chronological assessment name (e.g. "PH 1", "PH 2", "PH 3")
+     * for a scheduled ASH within the same subject in the semester.
+     */
+    public static getAssessmentSequenceName(
+        target: PhScheduleItem,
+        allSchedules: readonly PhScheduleItem[]
+    ): string {
+        const { topic } = parseSubjectString(target.subject);
+        const explicitMatch = topic.match(/^(?:PH|ASH|UH|Sumatif)\s*(\d+)/i);
+        if (explicitMatch) {
+            return `PH ${explicitMatch[1]}`;
+        }
+
+        const targetSubKey = canonicalSubjectKey(target.subject);
+        if (!targetSubKey) return 'PH 1';
+
+        const sameSubjectItems = allSchedules
+            .filter((item) => canonicalSubjectKey(item.subject) === targetSubKey)
+            .sort((a, b) => {
+                const cmp = a.date.localeCompare(b.date);
+                if (cmp !== 0) return cmp;
+                const periodCmp = comparePhPeriods(a.period_label, b.period_label);
+                if (periodCmp !== 0) return periodCmp;
+                return a.id.localeCompare(b.id);
+            });
+
+        const idx = sameSubjectItems.findIndex((item) => item.id === target.id);
+        return `PH ${idx >= 0 ? idx + 1 : 1}`;
+    }
+
+    /**
+     * Evaluates grade completion status for every scheduled ASH in the class/semester.
+     */
+    public static evaluateAllGradeStatuses(
+        schedules: readonly PhScheduleItem[],
+        academicRecords: readonly AcademicRecordSnapshot[],
+        totalStudents: number,
+        referenceToday?: string
+    ): Map<string, GradeStatusInfo> {
+        const result = new Map<string, GradeStatusInfo>();
+
+        schedules.forEach((item) => {
+            const assessmentName = this.getAssessmentSequenceName(item, schedules);
+            const seqNumber = assessmentName.replace(/\D+/g, '') || '1';
+            const subKey = canonicalSubjectKey(item.subject);
+            const { topic } = parseSubjectString(item.subject);
+            const cleanTopic = topic.trim().toLowerCase();
+
+            const validNames = new Set([
+                `ph ${seqNumber}`,
+                `ph${seqNumber}`,
+                `ash ${seqNumber}`,
+                `ash${seqNumber}`,
+                `uh ${seqNumber}`,
+                `sumatif ${seqNumber}`,
+            ]);
+
+            const studentScores = new Map<string, number>();
+
+            academicRecords.forEach((rec) => {
+                if (rec.score === null || rec.score === undefined || Number.isNaN(Number(rec.score))) return;
+                if (canonicalSubjectKey(rec.subject) !== subKey) return;
+
+                const recAssessment = (rec.assessment_name || '').trim().toLowerCase();
+                const recNotes = (rec.notes || '').trim().toLowerCase();
+
+                const matchesByAssessmentName = validNames.has(recAssessment);
+                const matchesByTopic =
+                    cleanTopic.length >= 3 &&
+                    (recAssessment.includes(cleanTopic) || recNotes.includes(cleanTopic));
+
+                if (matchesByAssessmentName || matchesByTopic) {
+                    studentScores.set(rec.student_id, Number(rec.score));
+                }
+            });
+
+            const gradedCount = studentScores.size;
+            const scoresArray = Array.from(studentScores.values());
+            const averageScore =
+                scoresArray.length > 0
+                    ? Math.round((scoresArray.reduce((sum, val) => sum + val, 0) / scoresArray.length) * 10) / 10
+                    : null;
+
+            const itemStatus = this.getItemStatus(item.date, referenceToday);
+            let state: GradeCompletionState = 'pending';
+
+            if (totalStudents > 0 && gradedCount >= totalStudents) {
+                state = 'complete';
+            } else if (gradedCount > 0) {
+                state = 'partial';
+            } else if (itemStatus === 'past') {
+                state = 'overdue';
+            } else {
+                state = 'pending';
+            }
+
+            result.set(item.id, {
+                state,
+                gradedCount,
+                totalStudents,
+                assessmentName,
+                averageScore,
+            });
+        });
+
+        return result;
     }
 
     /**
@@ -96,11 +241,13 @@ export class PhScheduleEngine {
     }
 
     /**
-     * Audits schedules for period collisions and heavy assessment days (>= 3 per day).
+     * Audits schedules for period collisions, heavy assessment days (>= 3 per day),
+     * and national holiday collisions.
      */
     public static auditAnomalies(schedules: readonly PhScheduleItem[]): ScheduleAnomalies {
         const periodMap = new Map<string, PhScheduleItem[]>();
         const dayCountMap = new Map<string, number>();
+        const holidaySchedules: HolidayConflictWarning[] = [];
 
         schedules.forEach((s) => {
             const key = s.date;
@@ -109,6 +256,17 @@ export class PhScheduleEngine {
             periodMap.set(key, existing);
 
             dayCountMap.set(s.date, (dayCountMap.get(s.date) || 0) + 1);
+
+            const holiday = getHolidayForDate(s.date);
+            if (holiday) {
+                holidaySchedules.push({
+                    id: s.id,
+                    date: s.date,
+                    subject: s.subject,
+                    holidayName: holiday.name,
+                    kind: holiday.kind,
+                });
+            }
         });
 
         const conflicts: ScheduleConflict[] = [];
@@ -117,7 +275,11 @@ export class PhScheduleEngine {
                 items.forEach((left, index) => {
                     items.slice(index + 1).forEach((right) => {
                         if (phPeriodsOverlap(left.period_label, right.period_label)) {
-                            conflicts.push({ date: key, period: left.period_label === right.period_label ? left.period_label : `${left.period_label} / ${right.period_label}`, subjects: [left.subject, right.subject] });
+                            conflicts.push({
+                                date: key,
+                                period: left.period_label === right.period_label ? left.period_label : `${left.period_label} / ${right.period_label}`,
+                                subjects: [left.subject, right.subject],
+                            });
                         }
                     });
                 });
@@ -135,7 +297,24 @@ export class PhScheduleEngine {
             hasConflicts: conflicts.length > 0,
             conflicts,
             heavyDays,
+            holidaySchedules,
         };
+    }
+
+    /**
+     * Extracts distinct base subjects present in the schedules.
+     */
+    public static getAvailableSubjects(schedules: readonly PhScheduleItem[]): string[] {
+        const map = new Map<string, string>();
+        schedules.forEach((s) => {
+            const base = parseSubjectString(s.subject).baseSubject.trim();
+            if (!base) return;
+            const key = base.toLowerCase();
+            if (!map.has(key)) {
+                map.set(key, base);
+            }
+        });
+        return Array.from(map.values()).sort((a, b) => a.localeCompare(b, 'id'));
     }
 
     /**
@@ -146,7 +325,13 @@ export class PhScheduleEngine {
         options: ScheduleFilterOptions,
         referenceToday?: string
     ): PhScheduleItem[] {
-        const { searchQuery = '', statusFilter = 'all', selectedMonth = 'all', sortOrder = 'asc' } = options;
+        const {
+            searchQuery = '',
+            statusFilter = 'all',
+            selectedMonth = 'all',
+            selectedSubject = 'all',
+            sortOrder = 'asc',
+        } = options;
 
         const filtered = schedules.filter((item) => {
             const matchesSearch =
@@ -161,6 +346,13 @@ export class PhScheduleEngine {
             }
 
             if (selectedMonth !== 'all' && !item.date.startsWith(selectedMonth)) {
+                return false;
+            }
+
+            if (
+                selectedSubject !== 'all' &&
+                parseSubjectString(item.subject).baseSubject.toLowerCase() !== selectedSubject.toLowerCase()
+            ) {
                 return false;
             }
 
@@ -250,19 +442,32 @@ export class PhScheduleEngine {
     public static generateWhatsAppText(
         schedules: readonly PhScheduleItem[],
         context: { className: string; semesterName?: string },
-        filterMode: 'all' | 'upcoming' = 'all',
+        filterMode: 'all' | 'upcoming' | 'this_week' = 'all',
         referenceToday?: string
     ): string {
-        const listToShare =
-            filterMode === 'upcoming'
-                ? schedules.filter((s) => this.getItemStatus(s.date, referenceToday) !== 'past')
-                : schedules;
+        let listToShare: PhScheduleItem[] = [];
+
+        if (filterMode === 'this_week') {
+            const refDate = referenceToday ? new Date(`${referenceToday}T12:00:00`) : new Date();
+            const weekDays = this.getSchoolWeekDays(refDate, 0, true);
+            const weekDateSet = new Set(weekDays.map((d) => d.dateStr));
+            listToShare = schedules.filter((s) => weekDateSet.has(s.date));
+        } else if (filterMode === 'upcoming') {
+            listToShare = schedules.filter((s) => this.getItemStatus(s.date, referenceToday) !== 'past');
+        } else {
+            listToShare = [...schedules];
+        }
 
         if (listToShare.length === 0) return '';
 
         const dateMap = this.groupByDate(this.filterAndSort(listToShare, {}, referenceToday));
 
-        let message = `📅 *JADWAL ASESMEN SUMATIF HARIAN (ASH)*\n`;
+        const title =
+            filterMode === 'this_week'
+                ? `📅 *AGENDA ASESMEN SUMATIF HARIAN (ASH) PEKAN INI*\n`
+                : `📅 *JADWAL ASESMEN SUMATIF HARIAN (ASH)*\n`;
+
+        let message = title;
         message += `🏫 *Kelas:* ${context.className}\n`;
         if (context.semesterName) message += `🗓️ *Semester:* ${context.semesterName}\n`;
         message += `─────────────────────────\n\n`;
@@ -273,17 +478,20 @@ export class PhScheduleEngine {
             const relBadge = rel ? ` _(${rel})_` : '';
             message += `📌 *${dateHeading}*${relBadge}\n`;
             items.forEach((it) => {
-                message += `   • *Jam Ke-${it.period_label}*: ${it.subject}\n`;
+                const { baseSubject, topic } = parseSubjectString(it.subject);
+                const seqName = this.getAssessmentSequenceName(it, schedules);
+                const topicLabel = topic ? ` — Materi: ${topic}` : '';
+                message += `   • *Jam Ke-${it.period_label}*: ${baseSubject} [${seqName}]${topicLabel}\n`;
             });
             message += `\n`;
         });
 
-        message += `_Semoga pelaksanaan Asesmen Sumatif Harian (ASH) berjalan lancar dan sukses. Aamiin._ 🤲`;
+        message += `_Mohon pendampingan Bapak/Ibu di rumah agar putra/putrinya dapat mempersiapkan diri dengan baik. Semoga berjalan lancar dan sukses. Aamiin._ 🤲`;
         return message;
     }
 
     /**
-     * Calculates the Monday-to-Friday dates for a given reference date and week offset.
+     * Calculates the Monday-to-Friday (or Sunday) dates for a given reference date and week offset.
      * offset: 0 for reference week, +1 for next week, -1 for previous week, etc.
      */
     public static getSchoolWeekDays(referenceDate: Date = new Date(), weekOffset: number = 0, includeWeekends = false): SchoolWeekDayInfo[] {
@@ -318,6 +526,7 @@ export class PhScheduleEngine {
                 dayNumber,
                 isToday: dateStr === realTodayStr,
                 rawDate: d,
+                holiday: getHolidayForDate(dateStr),
             };
         });
     }
@@ -350,5 +559,5 @@ export interface SchoolWeekDayInfo {
     dayNumber: number;
     isToday: boolean;
     rawDate: Date;
+    holiday?: NationalHoliday | null;
 }
-

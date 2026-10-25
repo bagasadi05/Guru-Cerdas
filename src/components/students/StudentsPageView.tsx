@@ -2,6 +2,7 @@ import React from 'react';
 import { BulkActionBar } from '../advanced-features/BulkActionBar';
 import { StudentActionSheet } from './StudentActionSheet';
 import { StudentFilters } from './StudentFilters';
+import { StudentStats } from './StudentStats';
 import { StudentsClassContent } from './StudentsClassContent';
 import { StudentsClassFormModal } from './StudentsClassFormModal';
 import { StudentsClassManageModal } from './StudentsClassManageModal';
@@ -16,6 +17,7 @@ import { ExportFormat } from '../advanced-features/ExportPreviewModal';
 import { ParsedRow } from '../../services/ImportService';
 import { Button } from '../ui/Button';
 import { PlusIcon, UsersIcon } from '../Icons';
+import { formatClassName } from './studentsActionHelpers';
 
 interface StudentsPageFilterProps {
   searchTerm: string;
@@ -26,13 +28,17 @@ interface StudentsPageFilterProps {
   onGenderFilterChange: (value: 'all' | 'Laki-laki' | 'Perempuan') => void;
   accessCodeFilter: 'all' | 'has_code' | 'no_code';
   onAccessCodeFilterChange: (value: 'all' | 'has_code' | 'no_code') => void;
+  onResetFilters?: () => void;
 }
 
 interface StudentsPageClassSectionProps {
   activeClassId: string;
   onActiveClassChange: (value: string) => void;
   classes: ClassRow[];
+  activeClass?: ClassRow | null;
+  classStudentCounts?: Record<string, number>;
   studentsForActiveClass: StudentRow[];
+  rawStudents?: StudentRow[];
   canManageActiveClass: boolean;
   isSelected: (id: string) => boolean;
   toggleItem: (id: string) => void;
@@ -146,23 +152,45 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
 }) => {
   return (
     <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-24 lg:pb-8">
-      <header className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold font-serif mb-2 text-slate-900 dark:text-white">
-            Manajemen Siswa
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">
-            {classSection.canManageActiveClass
-              ? 'Kelola data siswa, kelas, dan kode akses.'
-              : 'Mode baca untuk kelas yang ditugaskan. Detail siswa tetap bisa dibuka tanpa mengubah data master.'}
-          </p>
-        </div>
-        <StudentsHeaderActions 
-          onAction={actionSheet.onHeaderAction} 
-          canManageActiveClass={classSection.canManageActiveClass || classSection.classes.length === 0} 
-          isAdmin={isAdmin}
-        />
-      </header>
+      {/* Hero Header Card */}
+      <div className="relative rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 md:bg-white/80 md:dark:bg-slate-900/70 md:backdrop-blur-xl border border-slate-200/80 dark:border-white/10 p-4 sm:p-6 shadow-xs overflow-hidden">
+        {/* Top accent gradient bar */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500" />
+        <div className="hidden sm:block absolute -top-12 -right-12 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+
+        <header className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 sm:gap-5 relative z-10">
+          <div className="flex items-start sm:items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25 flex items-center justify-center shrink-0">
+              <UsersIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-lg sm:text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                  Manajemen Siswa
+                </h1>
+                {classSection.activeClass && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/50 shadow-2xs">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 sm:animate-pulse motion-reduce:animate-none" />
+                    {formatClassName(classSection.activeClass.name)}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
+                {classSection.canManageActiveClass
+                  ? 'Kelola data identitas siswa, pembagian kelas, kode akses portal wali murid, dan pencetakan kartu pelajar.'
+                  : 'Mode baca untuk kelas yang ditugaskan. Detail siswa tetap bisa dibuka tanpa mengubah data master.'}
+              </p>
+            </div>
+          </div>
+          <div className="w-full xl:w-auto flex justify-end">
+            <StudentsHeaderActions 
+              onAction={actionSheet.onHeaderAction} 
+              canManageActiveClass={classSection.canManageActiveClass || classSection.classes.length === 0} 
+              isAdmin={isAdmin}
+            />
+          </div>
+        </header>
+      </div>
 
       <div className="space-y-6">
         {classSection.classes.length === 0 ? (
@@ -187,6 +215,16 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
           </div>
         ) : (
           <>
+            <StudentStats
+              students={classSection.rawStudents || classSection.studentsForActiveClass}
+              activeClassName={classSection.activeClass?.name}
+              genderFilter={filters.genderFilter}
+              onGenderFilterChange={filters.onGenderFilterChange}
+              accessCodeFilter={filters.accessCodeFilter}
+              onAccessCodeFilterChange={filters.onAccessCodeFilterChange}
+              onResetFilters={filters.onResetFilters}
+            />
+
             <StudentFilters
               searchTerm={filters.searchTerm}
               onSearchChange={filters.onSearchChange}
@@ -199,7 +237,10 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
             />
 
             <Tabs value={classSection.activeClassId} onValueChange={classSection.onActiveClassChange} className="w-full">
-              <StudentsClassTabsHeader classes={classSection.classes} />
+              <StudentsClassTabsHeader
+                classes={classSection.classes}
+                classStudentCounts={classSection.classStudentCounts}
+              />
 
               {classSection.classes.map((classItem) => (
                 <TabsContent key={classItem.id} value={classItem.id} className="mt-0 focus:outline-none">

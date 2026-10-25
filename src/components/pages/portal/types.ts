@@ -89,6 +89,14 @@ export interface PortalCommunication {
 }
 
 // Schedule
+export interface PortalPhSchedule {
+    id: string;
+    subject: string;
+    date: string;
+    period_label: string;
+    semester_id?: string | null;
+}
+
 export interface PortalSchedule {
     id: string;
     day: string;
@@ -157,6 +165,7 @@ export interface PortalData {
     quizPoints: PortalQuizPoint[];
     communications: PortalCommunication[];
     schedules: PortalSchedule[];
+    phSchedules?: PortalPhSchedule[];
     tasks: PortalTask[];
     announcements: PortalAnnouncement[];
     achievements: PortalStudentAchievement[];
