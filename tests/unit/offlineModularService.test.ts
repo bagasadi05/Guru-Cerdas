@@ -22,14 +22,16 @@ describe('Offline Modular Services', () => {
     });
 
     describe('Conflict Resolver Module', () => {
-        const local = {
+        type TestRecord = { id: string; name: string; note: string; _localTimestamp?: string; updated_at?: string };
+
+        const local: TestRecord = {
             id: 'rec-1',
             name: 'Local Name',
             note: 'Local Note',
             _localTimestamp: '2026-10-25T10:00:00Z',
         };
 
-        const server = {
+        const server: TestRecord = {
             id: 'rec-1',
             name: 'Server Name',
             note: 'Server Note',
@@ -42,7 +44,7 @@ describe('Offline Modular Services', () => {
 
         it('does not detect conflict when server is null or older', () => {
             expect(offlineModule.detectConflict(local, null)).toBe(false);
-            const olderServer = { ...server, updated_at: '2026-10-25T09:00:00Z' };
+            const olderServer: TestRecord = { ...server, updated_at: '2026-10-25T09:00:00Z' };
             expect(offlineModule.detectConflict(local, olderServer)).toBe(false);
         });
 
@@ -57,7 +59,7 @@ describe('Offline Modular Services', () => {
         });
 
         it('resolves with merge strategy favoring newer local fields', () => {
-            const localNewer = {
+            const localNewer: TestRecord = {
                 ...local,
                 _localTimestamp: '2026-10-25T12:00:00Z',
                 name: 'Brand New Local Name',
