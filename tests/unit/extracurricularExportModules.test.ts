@@ -80,8 +80,9 @@ describe('Extracurricular Export Modules', () => {
         coach_name: 'Kak Ahmad',
         schedule_day: 'Jumat',
         schedule_time: '15:00',
-        location: 'Lapangan Utama',
         description: 'Ekskul wajib kepramukaan',
+        max_participants: 30,
+        user_id: 'user-1',
         is_active: true,
         created_at: '2026-01-01',
         updated_at: '2026-01-01',
@@ -91,14 +92,11 @@ describe('Extracurricular Export Modules', () => {
     const dummyEnrollments: EnrollmentView[] = [
         {
             id: 'enr-1',
-            extracurricular_id: 'ekskul-1',
-            student_id: 'std-1',
-            class_name: 'Kelas 4A',
-            nisn: '1234567890',
-            status: 'active',
-            joined_date: '2026-01-10',
-            full_name: 'Budi Santoso',
-            is_external: false,
+            participantId: 'std-1',
+            participantType: 'student',
+            name: 'Budi Santoso',
+            className: 'Kelas 4A',
+            gender: 'Laki-laki',
         },
     ];
 
@@ -123,10 +121,8 @@ describe('Extracurricular Export Modules', () => {
                 gradesMap: {},
                 gradeDrafts: {
                     'student:std-1': {
-                        student_id: 'std-1',
-                        extracurricular_student_id: null,
-                        score: 90,
-                        predicate: 'A',
+                        score: '90',
+                        grade: 'A',
                         description: 'Sangat baik dan disiplin',
                     },
                 },
