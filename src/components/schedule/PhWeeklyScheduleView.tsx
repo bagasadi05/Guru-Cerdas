@@ -227,7 +227,7 @@ export const PhWeeklyScheduleView: React.FC<PhWeeklyScheduleViewProps> = ({
                     {/* SCHEDULE GRID / DETAIL CARDS */}
                     <div
                         className={`grid grid-cols-1 items-start gap-3.5 md:grid-cols-2 ${
-                            displayDays.length <= 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4 2xl:grid-cols-7'
+                            displayDays.length <= 5 ? 'lg:grid-cols-3 xl:grid-cols-5' : 'lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7'
                         }`}
                         aria-label="Jadwal Senin sampai Minggu"
                     >
@@ -387,16 +387,14 @@ export const PhWeeklyScheduleView: React.FC<PhWeeklyScheduleViewProps> = ({
                                                         </p>
                                                     </div>
 
-                                                    {/* Single-Line Grade Status Bar (No awkward multi-line wrap) */}
+                                                    {/* Responsive Grade Status Bar */}
                                                     {gradeStatus && gradeStatus.state !== 'pending' && (
                                                         <div className="mt-2.5">
                                                             {gradeStatus.state === 'complete' && (
-                                                                <div className="flex items-center justify-between gap-1.5 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2 py-1 text-[11px] font-semibold text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300">
-                                                                    <span className="inline-flex items-center gap-1 min-w-0 truncate">
+                                                                <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2 py-1.5 text-[11px] font-semibold text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300">
+                                                                    <span className="inline-flex items-center gap-1.5">
                                                                         <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                                                                        <span className="truncate">
-                                                                            {gradeStatus.gradedCount}/{gradeStatus.totalStudents} Siswa
-                                                                        </span>
+                                                                        <span>{gradeStatus.gradedCount}/{gradeStatus.totalStudents} Siswa</span>
                                                                     </span>
                                                                     {gradeStatus.averageScore !== null && (
                                                                         <span className="shrink-0 rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-emerald-900 dark:text-emerald-200">
@@ -406,23 +404,23 @@ export const PhWeeklyScheduleView: React.FC<PhWeeklyScheduleViewProps> = ({
                                                                 </div>
                                                             )}
                                                             {gradeStatus.state === 'partial' && (
-                                                                <div className="flex items-center justify-between gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] font-semibold text-amber-800 dark:text-amber-300">
-                                                                    <span className="inline-flex items-center gap-1 truncate">
+                                                                <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-1.5 text-[11px] font-semibold text-amber-800 dark:text-amber-300">
+                                                                    <span className="inline-flex items-center gap-1.5">
                                                                         <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-500" />
                                                                         <span>Terinput {gradeStatus.gradedCount}/{gradeStatus.totalStudents}</span>
                                                                     </span>
-                                                                    <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider opacity-80">
+                                                                    <span className="shrink-0 rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200">
                                                                         Sebagian
                                                                     </span>
                                                                 </div>
                                                             )}
                                                             {gradeStatus.state === 'overdue' && (
-                                                                <div className="flex items-center justify-between gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-[11px] font-semibold text-rose-800 dark:text-rose-300">
-                                                                    <span className="inline-flex items-center gap-1 truncate">
+                                                                <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1.5 text-[11px] font-semibold text-rose-800 dark:text-rose-300">
+                                                                    <span className="inline-flex items-center gap-1.5">
                                                                         <AlertCircle className="h-3.5 w-3.5 shrink-0 text-rose-500" />
                                                                         <span>Belum Dinilai</span>
                                                                     </span>
-                                                                    <span className="shrink-0 text-[10px] tabular-nums opacity-75">
+                                                                    <span className="shrink-0 rounded bg-rose-500/20 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-rose-900 dark:text-rose-200">
                                                                         0/{gradeStatus.totalStudents}
                                                                     </span>
                                                                 </div>
@@ -434,7 +432,7 @@ export const PhWeeklyScheduleView: React.FC<PhWeeklyScheduleViewProps> = ({
                                                     <Button
                                                         type="button"
                                                         variant={isComplete ? 'outline' : 'primary'}
-                                                        className={`mt-2.5 !min-h-9 !h-9 w-full gap-1.5 text-xs font-bold rounded-lg transition-all ${
+                                                        className={`mt-2.5 !min-h-9 !h-9 w-full !px-2 gap-1.5 text-xs font-bold rounded-lg transition-all ${
                                                             isComplete
                                                                 ? '!border-emerald-500/30 !bg-emerald-500/10 hover:!bg-emerald-500/20 !text-emerald-700 dark:!text-emerald-300 shadow-none'
                                                                 : '!bg-teal-600 hover:!bg-teal-500 text-white shadow-xs'
@@ -443,12 +441,12 @@ export const PhWeeklyScheduleView: React.FC<PhWeeklyScheduleViewProps> = ({
                                                         onClick={() => onInputNilai(item)}
                                                     >
                                                         <ClipboardPen className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                                                        <span className="truncate">
+                                                        <span>
                                                             {isComplete
-                                                                ? 'Lihat / Edit Nilai'
+                                                                ? 'Lihat Nilai'
                                                                 : gradeStatus?.state === 'partial'
-                                                                    ? `Lengkapi Nilai (${gradeStatus.gradedCount}/${gradeStatus.totalStudents})`
-                                                                    : `Input Nilai (${seqLabel})`}
+                                                                    ? 'Lengkapi Nilai'
+                                                                    : 'Input Nilai'}
                                                         </span>
                                                     </Button>
                                                 </div>
