@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useOfflineStatus } from './useOfflineStatus';
-import { supabase } from '../services/supabase';
-import { getQueue, clearQueue, QueuedMutation } from '../services/offlineQueue';
+import { getQueue, removeMutation, processMutation } from '../services/offlineQueue';
 import { useToast } from './useToast';
 import { logger } from '../services/logger';
 
@@ -10,63 +9,14 @@ import { logger } from '../services/logger';
  * Custom hook for managing offline data synchronization queue
  * 
  * Manages a queue of database mutations that were made while offline and automatically
- * synchronizes them with the server when the connection is restored. This enables
- * offline-first functionality where users can continue working without an internet
- * connection, and their changes will be synced when they come back online.
+ * synchronizes them with the server when the connection is restored.
  * 
- * The hook:
- * - Tracks the number of pending mutations in the queue
- * - Automatically processes the queue when the device comes online
- * - Provides manual sync capability via processQueue function
- * - Shows toast notifications for sync status
- * - Invalidates React Query cache after successful sync
- * - Listens to localStorage changes to update count across tabs
- * 
- * @returns Object containing sync queue state and operations
- * @returns pendingCount - Number of mutations waiting to be synced
- * @returns isSyncing - Boolean indicating if sync is currently in progress
- * @returns processQueue - Function to manually trigger queue processing
- * 
- * @example
- * ```typescript
- * import { useSyncQueue } from './hooks/useSyncQueue';
- * 
- * function SyncStatus() {
- *   const { pendingCount, isSyncing, processQueue } = useSyncQueue();
- * 
- *   return (
- *     <div>
- *       {pendingCount > 0 && (
- *         <div>
- *           <p>{pendingCount} changes pending sync</p>
- *           <button type="button" onClick={processQueue} disabled={isSyncing}>
- *             {isSyncing ? 'Syncing...' : 'Sync Now'}
- *           </button>
- *         </div>
- *       )}
- *     </div>
- *   );
- * }
- * ```
- * 
- * @example
- * ```typescript
- * // Display sync indicator in header
- * function Header() {
- *   const { pendingCount, isSyncing } = useSyncQueue();
- * 
- *   return (
- *     <header>
- *       {isSyncing && <Spinner />}
- *       {pendingCount > 0 && !isSyncing && (
- *         <Badge>{pendingCount} pending</Badge>
- *       )}
- *     </header>
- *   );
- * }
- * ```
- * 
- * @since 1.0.0
+ * Features:
+ * - Automatically purges corrupted/legacy entries (e.g. table === 'rpc')
+ * - Tracks the number of valid pending mutations
+ * - Replays mutations using robust processMutation with session renewal & request replay
+ * - Invalidates TanStack Query cache after successful sync
+ * - Provides non-blocking feedback via toasts
  */
 export const useSyncQueue = () => {
     const queryClient = useQueryClient();
@@ -74,14 +24,25 @@ export const useSyncQueue = () => {
     const toast = useToast();
     const [pendingCount, setPendingCount] = useState(0);
     const [isSyncing, setIsSyncing] = useState(false);
-    const getPayloadId = (payload: QueuedMutation['payload']) => {
-        if (Array.isArray(payload)) return undefined;
-        return typeof payload.id === 'string' ? payload.id : undefined;
-    };
 
     const updatePendingCount = useCallback(async () => {
-        const queue = await getQueue();
-        setPendingCount(queue.length);
+        try {
+            const queue = await getQueue();
+            // Automatically purge any corrupted legacy entries (e.g. table === 'rpc' or missing table)
+            const corrupted = queue.filter(m => m.table === 'rpc' || !m.table);
+            if (corrupted.length > 0) {
+                for (const item of corrupted) {
+                    await removeMutation(item.id).catch(() => {});
+                }
+            }
+
+            const validCount = queue.filter(
+                m => m.table !== 'rpc' && !!m.table && (m.status === 'pending' || m.status === 'failed')
+            ).length;
+            setPendingCount(validCount);
+        } catch (err) {
+            logger.warn('Failed to update pending sync count', 'SyncQueue', err);
+        }
     }, []);
 
     // Initialize pending count
@@ -101,73 +62,61 @@ export const useSyncQueue = () => {
     const processQueue = useCallback(async () => {
         if (!isOnline || isSyncing) return;
 
-        const queue = await getQueue();
-        if (queue.length === 0) return;
+        const rawQueue = await getQueue();
+        // Purge corrupted legacy RPC items
+        const corrupted = rawQueue.filter(m => m.table === 'rpc' || !m.table);
+        for (const item of corrupted) {
+            await removeMutation(item.id).catch(() => {});
+        }
+
+        const validQueue = rawQueue.filter(
+            m => m.table !== 'rpc' && !!m.table && (m.status === 'pending' || m.status === 'failed')
+        );
+
+        if (validQueue.length === 0) {
+            setPendingCount(0);
+            return;
+        }
 
         setIsSyncing(true);
-        toast.info(`Menyinkronkan ${queue.length} perubahan offline...`);
+        toast.info(`Menyinkronkan ${validQueue.length} perubahan offline...`);
 
-        const promises = queue.map(async (mutation: QueuedMutation) => {
-            const { table, operation, payload, onConflict } = mutation;
-            // Use type assertion for dynamic table name from queue
-            const query = (supabase.from as any)(table);
+        let succeededCount = 0;
+        const failedErrors: string[] = [];
 
-            switch (operation) {
-                case 'insert':
-                    return query.insert(payload);
-                case 'update':
-                    // Assume payload is an array for multiple updates or an object for single update
-                    {
-                        const updates = Array.isArray(payload) ? payload : [payload];
-                        return Promise.all(updates.map((item: any) => query.update(item).eq('id', item.id)));
-                    }
-                case 'upsert':
-                    return query.upsert(payload, onConflict ? { onConflict } : {});
-                case 'delete':
-                    // Assume payload is an object with an id
-                    {
-                        const recordId = getPayloadId(payload);
-                        if (!recordId) {
-                            return Promise.reject(new Error(`Queued delete for ${table} is missing an id`));
-                        }
-                        return query.delete().eq('id', recordId);
-                    }
-                default:
-                    logger.error(`Unknown operation in queue: ${operation}`, undefined, undefined, 'SyncQueue');
-                    return Promise.reject(new Error(`Unknown operation: ${operation}`));
+        for (const mutation of validQueue) {
+            try {
+                await processMutation(mutation);
+                await removeMutation(mutation.id);
+                succeededCount++;
+            } catch (error: any) {
+                const message = error instanceof Error ? error.message : String(error);
+                logger.error(`Sync mutation failed for ${mutation.table}`, undefined, error, 'SyncQueue');
+                failedErrors.push(message);
             }
-        });
-
-        try {
-            const results = await Promise.all(promises);
-            // Flatten results in case of multiple updates in a single operation
-            const allResults = results.flat();
-            const errors = allResults.filter((res: any) => res && res.error);
-
-            if (errors.length > 0) {
-                throw new Error(errors.map((e: any) => e.error?.message).join(', '));
-            }
-
-            await clearQueue();
-            toast.success("Semua data offline berhasil disinkronkan!");
-            // Invalidate all queries to refetch fresh data from the server
-            await queryClient.invalidateQueries();
-
-        } catch (error: any) {
-            toast.error(`Gagal sinkronisasi: ${error.message}`);
-            logger.error('Sync failed', error as Error, undefined, 'SyncQueue');
-        } finally {
-            setIsSyncing(false);
-            updatePendingCount(); // Should update count to 0
         }
+
+        if (succeededCount > 0) {
+            toast.success(`${succeededCount} data offline berhasil disinkronkan!`);
+            await queryClient.invalidateQueries();
+        }
+
+        if (failedErrors.length > 0 && succeededCount === 0) {
+            toast.error(`Gagal sinkronisasi: ${failedErrors[0]}`);
+        }
+
+        setIsSyncing(false);
+        await updatePendingCount();
     }, [isOnline, isSyncing, queryClient, toast, updatePendingCount]);
 
     useEffect(() => {
-        // When app comes online, process the queue
-        if (isOnline) {
+        // When app comes online, process the queue if there are pending items
+        if (isOnline && pendingCount > 0) {
             processQueue();
         }
-    }, [isOnline, processQueue]);
+    }, [isOnline, pendingCount, processQueue]);
 
     return { pendingCount, isSyncing, processQueue };
 };
+
+export default useSyncQueue;

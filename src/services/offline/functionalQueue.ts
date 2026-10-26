@@ -257,7 +257,7 @@ export const clearQueue = async (): Promise<void> => {
  */
 export const getPendingCount = async (): Promise<number> => {
     const queue = await getQueue();
-    return queue.filter(m => m.status === 'pending' || m.status === 'failed').length;
+    return queue.filter(m => (m.status === 'pending' || m.status === 'failed') && m.table !== 'rpc' && !!m.table).length;
 };
 
 /**
@@ -300,7 +300,7 @@ const getBackoffDelay = (retryCount: number): number => {
 /**
  * Process a single mutation
  */
-const processMutation = async (mutation: QueuedMutation): Promise<boolean> => {
+export const processMutation = async (mutation: QueuedMutation): Promise<boolean> => {
     const { table, operation, payload, onConflict, request } = mutation;
 
     beginSyncBypass();
@@ -394,7 +394,8 @@ const processMutation = async (mutation: QueuedMutation): Promise<boolean> => {
         }
 
         if (table === 'rpc') {
-            throw new Error('RPC offline replaying requires captured request details');
+            logger.warn('Purging invalid RPC mutation without request payload', 'OfflineQueue', { id: mutation.id });
+            return true;
         }
 
         switch (operation) {
@@ -493,7 +494,13 @@ export const processQueue = async (): Promise<SyncProgress> => {
     }
 
     const queue = await getQueue();
-    const pendingMutations = queue.filter(m => m.status === 'pending' || m.status === 'failed');
+    // Auto-purge corrupted legacy RPC entries
+    const corrupted = queue.filter(m => m.table === 'rpc' || !m.table);
+    for (const item of corrupted) {
+        await removeMutation(item.id).catch(() => {});
+    }
+    const cleanQueue = queue.filter(m => m.table !== 'rpc' && !!m.table);
+    const pendingMutations = cleanQueue.filter(m => m.status === 'pending' || m.status === 'failed');
 
     if (pendingMutations.length === 0) {
         const progress: SyncProgress = {

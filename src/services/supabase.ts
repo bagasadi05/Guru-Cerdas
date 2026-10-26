@@ -81,7 +81,10 @@ const queueOfflineRequest = async (url: string, init?: RequestInit): Promise<voi
     const tableIndex = restIndex + 2;
     const tableName = pathParts[tableIndex];
     
-    if (!tableName) return;
+    // Explicitly reject RPC endpoints and empty table names
+    if (!tableName || tableName === 'rpc' || urlObj.pathname.includes('/rpc/')) {
+      return;
+    }
 
     let operation: 'upsert' | 'insert' | 'update' | 'delete' = 'insert';
     const method = init?.method?.toUpperCase() || 'POST';
@@ -211,6 +214,7 @@ const resilientSupabaseFetch = async (input: RequestInfo | URL, init?: RequestIn
   const url = typeof input === 'string' ? input : input.toString();
   logger.debug(`[SupabaseFetch] Request starting: ${url} (${init?.method || 'GET'})`);
   const isAuth = url.includes('/auth/');
+  const isRpc = url.includes('/rest/v1/rpc');
   const isMutation = isMutationRequest(init?.method);
   const isSystemBSync = isSyncBypassActive();
   
@@ -219,7 +223,7 @@ const resilientSupabaseFetch = async (input: RequestInfo | URL, init?: RequestIn
       ...init,
       priority: getRequestPriority(url),
       retries: getRetryCount(url),
-      queueWhenOffline: isMutation && !isAuth && !isSystemBSync
+      queueWhenOffline: isMutation && !isAuth && !isRpc && !isSystemBSync
     });
     if (url.includes('/auth/v1/token') && url.includes('grant_type=refresh_token') && response.status === 400) {
       clearStaleAuthTokens();
@@ -237,7 +241,7 @@ const resilientSupabaseFetch = async (input: RequestInfo | URL, init?: RequestIn
       throw error;
     }
     
-    if (isMutation && !isAuth) {
+    if (isMutation && !isAuth && !isRpc) {
       await queueOfflineRequest(url, init);
       
       if (typeof window !== 'undefined') {
