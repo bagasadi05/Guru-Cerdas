@@ -10,6 +10,7 @@ import { useOnboarding } from '../hooks/useOnboarding';
 import { SearchTrigger } from './SearchTrigger';
 import { SkipLinks } from './AccessibilityComponents';
 import { UploadProgressIndicator } from './ui/PerformanceIndicators';
+import { OfflineBanner } from './OfflineBanner';
 import { InteractiveTutorialProvider } from './ui/InteractiveTutorial';
 import { useParentMessageNotifications } from '../hooks/useParentMessageNotifications';
 import PullToRefresh from './ui/PullToRefresh';
@@ -248,6 +249,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           document.body
         )}
       </div>
+
+      {/* Offline Status & Sync Banner */}
+      <OfflineBanner />
 
       {/* Upload Progress Indicator - Floating */}
       <UploadProgressIndicator />

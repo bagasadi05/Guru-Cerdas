@@ -53,7 +53,7 @@
       "source": "nathankim0/clean-architecture-skills",
       "sourceType": "github",
       "skillPath": "plugins/clean-architecture/skills/clean-architecture/SKILL.md",
-      "computedHash": "2fb4c313b1ecc38d48da9fc7c2705aee3d2d641eba738674fabc84de219f0183"
+      "computedHash": "62dc935389a875e7dba2566a5135fa37e22b096c9628767242062b4bd7b7b203"
     },
     "code-review": {
       "source": "mattpocock/skills",
@@ -72,6 +72,12 @@
       "sourceType": "github",
       "skillPath": "skills/engineering/diagnosing-bugs/SKILL.md",
       "computedHash": "b69bc2ee03ee31200639deed65168ab9e48db43af3ed47889a66c4bd190601eb"
+    },
+    "docx": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/docx/SKILL.md",
+      "computedHash": "8017469ea95fb7d28225c62daf8e2f3492a7b516fc64c18c28977cbf8980b7fe"
     },
     "domain-modeling": {
       "source": "mattpocock/skills",
@@ -125,7 +131,7 @@
       "source": "nathankim0/clean-architecture-skills",
       "sourceType": "github",
       "skillPath": "plugins/kent-beck-style/skills/kent-beck-style/SKILL.md",
-      "computedHash": "546ec88461c2e4acbfe78a49a7a3340740f66d2400ed2f49e2b848c8cf12dcb7"
+      "computedHash": "e9ba6839aebd134c181f24ebe2d0b93cf7f11b7ad1a193df9998af2176a9dc63"
     },
     "loop-me": {
       "source": "mattpocock/skills",
@@ -139,11 +145,35 @@
       "skillPath": "skills/misc/migrate-to-shoehorn/SKILL.md",
       "computedHash": "7d31e494a384d1a5b88d1dec6e1f50e673ef1a60f7b0b6e92babfbb242f79b62"
     },
+    "offline-pwa-sync": {
+      "source": "portal-guru/offline-pwa-sync",
+      "sourceType": "local",
+      "skillPath": "skills/offline-pwa-sync/SKILL.md",
+      "computedHash": "14068cca478025b5c635b421e59d783994fac84dc12b77aaf808e57fcdd7bd11"
+    },
+    "pdf": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/pdf/SKILL.md",
+      "computedHash": "9f78b8359fbd4943ad260a7a1e436e5a96503406d6c34e99f69223d647d85b9c"
+    },
+    "playwright-skill": {
+      "source": "testdino-hq/playwright-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "2a1041c630dc58963aba6a76cd2b9a7533e49124dff39295f584605c4a2ec461"
+    },
     "prototype": {
       "source": "mattpocock/skills",
       "sourceType": "github",
       "skillPath": "skills/engineering/prototype/SKILL.md",
       "computedHash": "08c1a6d45a79180f795368e0bbf9820df9017d9ad2f5e4f858315d57ad357606"
+    },
+    "pwa-expert": {
+      "source": "curiositech/some_claude_skills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/pwa-expert/SKILL.md",
+      "computedHash": "671f3683f4fe33b8dd3af94ddd2c6d4dd0bcb44214aacf4d3891cc8c539016e7"
     },
     "research": {
       "source": "mattpocock/skills",
@@ -185,13 +215,19 @@
       "source": "supabase/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/supabase/SKILL.md",
-      "computedHash": "af1844ade632808fc0c15cf2db87daf3b2431c5262dc8a0c3ea7d70880fadf91"
+      "computedHash": "697e0e949f97621c6fc1784169eb3ccbf673747d6bb8299a52962d3d84d93dc6"
     },
     "supabase-postgres-best-practices": {
       "source": "supabase/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/supabase-postgres-best-practices/SKILL.md",
-      "computedHash": "128fac78002d916c8ca908245d398e634f540d8bcf20915b2b2359aeb18eba59"
+      "computedHash": "ad65e776f45e761bafc609d3f506c77c1032225aa65e0c4c02f241b8071e5855"
+    },
+    "tanstack-query-best-practices": {
+      "source": "DeckardGer/tanstack-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tanstack-query/SKILL.md",
+      "computedHash": "410d81ee0451a56724f76e119cafb5570ac560848b3de6429e23f3f6443e3d44"
     },
     "tdd": {
       "source": "mattpocock/skills",
@@ -253,6 +289,12 @@
       "skillPath": "skills/ui-design-review/SKILL.md",
       "computedHash": "fd408d58d8f3ee6e9691767ee2151ca9a353350bd8b71f5ddd71d3d5763f8ce4"
     },
+    "vercel-react-best-practices": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-best-practices/SKILL.md",
+      "computedHash": "71ed7794962fa6e803ee83030517b5b93a9f70fbfeb431ec4535c5480a8d8355"
+    },
     "wait-what": {
       "source": "mattpocock/skills",
       "sourceType": "github",
@@ -294,6 +336,12 @@
       "sourceType": "github",
       "skillPath": "skills/in-progress/writing-shape/SKILL.md",
       "computedHash": "65d4ec6bc9434bd986666d350b0f0926fea69e335b7de56dbd16be721644dc33"
+    },
+    "xlsx": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/xlsx/SKILL.md",
+      "computedHash": "6712b39718fe815054abca9c3ee72f989613e6f771c8a5c58f30a65a6c905622"
     }
   }
 }

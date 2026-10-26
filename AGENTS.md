@@ -22,7 +22,11 @@ Jika tidak auto-load, muat manual sebelum menjawab/menulis kode.
 - Arsitektur & konvensi → `references/project-guide.md` (dalam skill portal-guru)
 - Supabase & RLS Security → `.claude/skills/supabase` & `supabase-postgres-best-practices`
 - Clean Architecture & Refactoring → `.claude/skills/clean-architecture` & `kent-beck-style`
-- Offline PWA & Sync Strategy → `.claude/skills/offline-pwa-sync`
+- React Performance & Optimization → `.claude/skills/vercel-react-best-practices`
+- TanStack Query Caching & Mutations → `.claude/skills/tanstack-query-best-practices`
+- Playwright E2E Testing → `.claude/skills/playwright-skill`
+- Dokumen Office & Export (DOCX, XLSX, PDF) → `.claude/skills/docx`, `xlsx`, `pdf`
+- Offline PWA & Sync Strategy → `.claude/skills/offline-pwa-sync` & `pwa-expert`
 - Perintah → `references/commands.md`
 - Graphify → `references/graphify.md`
 - CI/CD → `references/ci-cd.md`

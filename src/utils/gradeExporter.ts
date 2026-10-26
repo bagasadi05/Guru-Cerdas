@@ -29,7 +29,7 @@ export const exportGradesToExcel = async (
 ): Promise<void> => {
     const {
         filename = 'data_nilai.xlsx',
-        sheetName = 'Data Nilai',
+        sheetName = 'Rekap Nilai',
         includeStats = true,
         subject = '',
         assessmentName = '',
@@ -38,78 +38,184 @@ export const exportGradesToExcel = async (
         kkm = 75,
     } = options;
 
-    const XLSX = await getXLSX();
-    const wb = XLSX.utils.book_new();
+    const ExcelJS = await getExcelJS();
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'Portal Guru';
+    wb.created = new Date();
 
-    // Prepare main data
-    const rows = data.map((item, index) => ({
-        'No': index + 1,
-        'Nama Siswa': item.studentName,
-        'Nilai': item.score === '' ? '-' : item.score,
-        'Status': typeof item.score === 'number'
-            ? (item.score >= kkm ? 'Tuntas' : 'Belum Tuntas')
-            : (item.score && !isNaN(Number(item.score))
-                ? (Number(item.score) >= kkm ? 'Tuntas' : 'Belum Tuntas')
-                : '-'),
-        'Catatan': item.notes || '',
-    }));
+    const ws = wb.addWorksheet(sheetName, {
+        views: [{ state: 'frozen', ySplit: 8 }],
+    });
 
-    // Calculate stats
-    const validScores = data
-        .map(d => typeof d.score === 'number' ? d.score : parseFloat(String(d.score)))
-        .filter(s => !isNaN(s));
+    const borderThin = {
+        top: { style: 'thin' as const, color: { argb: 'FFCBD5E1' } },
+        bottom: { style: 'thin' as const, color: { argb: 'FFCBD5E1' } },
+        left: { style: 'thin' as const, color: { argb: 'FFCBD5E1' } },
+        right: { style: 'thin' as const, color: { argb: 'FFCBD5E1' } },
+    };
 
-    const stats = validScores.length > 0 ? {
-        total: data.length,
-        filled: validScores.length,
-        average: Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length),
-        min: Math.min(...validScores),
-        max: Math.max(...validScores),
-        aboveKkm: validScores.filter(s => s >= kkm).length,
-        belowKkm: validScores.filter(s => s < kkm).length,
-    } : null;
+    // 1. Title Row
+    ws.mergeCells('A2:E2');
+    const titleCell = ws.getCell('A2');
+    titleCell.value = 'REKAPITULASI PENILAIAN SISWA';
+    titleCell.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FF0F172A' } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.getRow(2).height = 24;
 
-    // Create info sheet
-    if (includeStats) {
-        const infoData = [
-            ['LAPORAN NILAI'],
-            [''],
-            ['Mata Pelajaran', subject],
-            ['Nama Penilaian', assessmentName],
-            ['Kelas', className],
-            ['Tanggal', date],
-            ['KKM', kkm],
-            [''],
-            ['STATISTIK'],
-            ['Jumlah Siswa', data.length],
-            ['Sudah Dinilai', stats?.filled || 0],
-            ['Belum Dinilai', data.length - (stats?.filled || 0)],
-            ['Rata-rata', stats?.average || '-'],
-            ['Nilai Terendah', stats?.min || '-'],
-            ['Nilai Tertinggi', stats?.max || '-'],
-            ['Tuntas', stats?.aboveKkm || 0],
-            ['Belum Tuntas', stats?.belowKkm || 0],
-            ['Persentase Ketuntasan', stats ? `${Math.round((stats.aboveKkm / stats.filled) * 100)}%` : '-'],
+    // 2. Metadata Information Block (Rows 4-6)
+    ws.getCell('A4').value = 'Mata Pelajaran:';
+    ws.getCell('A4').font = { name: 'Calibri', size: 10, bold: true };
+    ws.getCell('B4').value = subject || '-';
+    ws.getCell('B4').font = { name: 'Calibri', size: 10 };
+
+    ws.getCell('D4').value = 'Tanggal:';
+    ws.getCell('D4').font = { name: 'Calibri', size: 10, bold: true };
+    ws.getCell('E4').value = date;
+    ws.getCell('E4').font = { name: 'Calibri', size: 10 };
+
+    ws.getCell('A5').value = 'Nama Penilaian:';
+    ws.getCell('A5').font = { name: 'Calibri', size: 10, bold: true };
+    ws.getCell('B5').value = assessmentName || '-';
+    ws.getCell('B5').font = { name: 'Calibri', size: 10 };
+
+    ws.getCell('D5').value = 'KKM / KKTP:';
+    ws.getCell('D5').font = { name: 'Calibri', size: 10, bold: true };
+    ws.getCell('E5').value = kkm;
+    ws.getCell('E5').font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF059669' } };
+
+    ws.getCell('A6').value = 'Kelas:';
+    ws.getCell('A6').font = { name: 'Calibri', size: 10, bold: true };
+    ws.getCell('B6').value = className || '-';
+    ws.getCell('B6').font = { name: 'Calibri', size: 10 };
+
+    // 3. Table Header Row (Row 8)
+    const headerRow = ws.getRow(8);
+    headerRow.values = ['No', 'Nama Siswa', 'Nilai', 'Status', 'Catatan'];
+    headerRow.height = 22;
+    headerRow.eachCell((cell) => {
+        cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF047857' }, // Emerald 700
+        };
+        cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = borderThin;
+    });
+
+    // 4. Data Rows (Row 9 onwards)
+    const startRow = 9;
+    const endRow = startRow + Math.max(data.length - 1, 0);
+
+    data.forEach((item, idx) => {
+        const rowNum = startRow + idx;
+        const row = ws.getRow(rowNum);
+        const parsedScore = typeof item.score === 'number' ? item.score : (item.score !== '' && !isNaN(Number(item.score)) ? Number(item.score) : null);
+        const hasScore = parsedScore !== null;
+
+        // Dynamic formula for Status: IF(ISNUMBER(C{row}), IF(C{row}>={kkm}, "Tuntas", "Belum Tuntas"), "-")
+        const formulaStatus = `IF(ISNUMBER(C${rowNum}), IF(C${rowNum}>=${kkm}, "Tuntas", "Belum Tuntas"), "-")`;
+        const calculatedStatus = hasScore ? (parsedScore >= kkm ? 'Tuntas' : 'Belum Tuntas') : '-';
+
+        row.values = [
+            idx + 1,
+            item.studentName,
+            hasScore ? parsedScore : '',
+            { formula: formulaStatus, result: calculatedStatus },
+            item.notes || '',
         ];
 
-        const infoWs = XLSX.utils.aoa_to_sheet(infoData);
-        infoWs['!cols'] = [{ wch: 20 }, { wch: 30 }];
-        XLSX.utils.book_append_sheet(wb, infoWs, 'Info');
+        const isEven = idx % 2 === 0;
+        const rowBg = isEven ? 'FFFFFFFF' : 'FFF8FAFC';
+
+        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+            cell.font = { name: 'Calibri', size: 10.5 };
+            cell.border = borderThin;
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowBg } };
+
+            if (colNumber === 1) {
+                cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            } else if (colNumber === 2) {
+                cell.alignment = { horizontal: 'left', vertical: 'middle' };
+            } else if (colNumber === 3) {
+                cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                if (hasScore) cell.numFmt = '0.0';
+            } else if (colNumber === 4) {
+                cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                cell.font = {
+                    name: 'Calibri',
+                    size: 10.5,
+                    bold: true,
+                    color: { argb: calculatedStatus === 'Tuntas' ? 'FF059669' : calculatedStatus === 'Belum Tuntas' ? 'FFE11D48' : 'FF64748B' },
+                };
+            } else if (colNumber === 5) {
+                cell.alignment = { horizontal: 'left', vertical: 'middle' };
+            }
+        });
+    });
+
+    // AutoFilter on Table Header
+    if (data.length > 0) {
+        ws.autoFilter = { from: 'A8', to: `E${Math.max(endRow, 8)}` };
     }
 
-    // Create data sheet
-    const ws = XLSX.utils.json_to_sheet(rows);
-    ws['!cols'] = [
-        { wch: 5 },   // No
-        { wch: 30 },  // Nama
-        { wch: 10 },  // Nilai
-        { wch: 15 },  // Status
-        { wch: 30 },  // Catatan
-    ];
-    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    // 5. Summary Statistics Box (native formulas)
+    if (includeStats && data.length > 0) {
+        const statsStartRow = endRow + 2;
 
-    // Download
-    await XLSX.writeFile(wb, filename);
+        ws.mergeCells(`A${statsStartRow}:E${statsStartRow}`);
+        const statsHeader = ws.getCell(`A${statsStartRow}`);
+        statsHeader.value = 'RINGKASAN STATISTIK KELAS';
+        statsHeader.font = { name: 'Calibri', size: 10.5, bold: true, color: { argb: 'FF065F46' } };
+        statsHeader.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6F4EA' } };
+        statsHeader.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+        statsHeader.border = borderThin;
+
+        const statRows: Array<{ label: string; formula: string }> = [
+            { label: 'Jumlah Siswa', formula: `COUNTA(B${startRow}:B${endRow})` },
+            { label: 'Sudah Dinilai', formula: `COUNT(C${startRow}:C${endRow})` },
+            { label: 'Belum Dinilai', formula: `COUNTA(B${startRow}:B${endRow})-COUNT(C${startRow}:C${endRow})` },
+            { label: 'Rata-rata Nilai', formula: `IF(COUNT(C${startRow}:C${endRow})>0, ROUND(AVERAGE(C${startRow}:C${endRow}), 1), "-")` },
+            { label: 'Nilai Tertinggi', formula: `IF(COUNT(C${startRow}:C${endRow})>0, MAX(C${startRow}:C${endRow}), "-")` },
+            { label: 'Nilai Terendah', formula: `IF(COUNT(C${startRow}:C${endRow})>0, MIN(C${startRow}:C${endRow}), "-")` },
+            { label: 'Siswa Tuntas', formula: `COUNTIF(D${startRow}:D${endRow}, "Tuntas")` },
+            { label: 'Siswa Belum Tuntas', formula: `COUNTIF(D${startRow}:D${endRow}, "Belum Tuntas")` },
+            { label: 'Persentase Ketuntasan', formula: `IF(COUNT(C${startRow}:C${endRow})>0, ROUND((COUNTIF(D${startRow}:D${endRow}, "Tuntas")/COUNT(C${startRow}:C${endRow}))*100, 1) & "%", "-")` },
+        ];
+
+        statRows.forEach((item, idx) => {
+            const r = statsStartRow + 1 + idx;
+            ws.mergeCells(`A${r}:C${r}`);
+            const labelCell = ws.getCell(`A${r}`);
+            labelCell.value = item.label;
+            labelCell.font = { name: 'Calibri', size: 10 };
+            labelCell.border = borderThin;
+            labelCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+
+            ws.mergeCells(`D${r}:E${r}`);
+            const valCell = ws.getCell(`D${r}`);
+            valCell.value = { formula: item.formula };
+            valCell.font = { name: 'Calibri', size: 10, bold: true };
+            valCell.border = borderThin;
+            valCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        });
+    }
+
+    // Set Column Widths
+    ws.getColumn(1).width = 6;
+    ws.getColumn(2).width = 34;
+    ws.getColumn(3).width = 14;
+    ws.getColumn(4).width = 18;
+    ws.getColumn(5).width = 30;
+
+    // Download file
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
 };
 
 /**

@@ -119,7 +119,17 @@ export const exportAllClassReports = async (
                 head: [['Mata Pelajaran', 'Nilai', 'Predikat']],
                 body: tableData,
                 theme: 'striped',
-                styles: { fontSize: 10 },
+                headStyles: {
+                    fillColor: [16, 185, 129],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    halign: 'center',
+                },
+                columnStyles: {
+                    1: { halign: 'center' },
+                    2: { halign: 'center' },
+                },
+                styles: { fontSize: 10, cellPadding: 3 },
             });
 
             y = (doc as any).lastAutoTable.finalY + 10;
@@ -152,7 +162,17 @@ export const exportAllClassReports = async (
                 head: [['Tanggal', 'Deskripsi', 'Poin']],
                 body: violations.map(v => [v.date, v.description, v.points.toString()]),
                 theme: 'striped',
-                styles: { fontSize: 9 },
+                headStyles: {
+                    fillColor: [225, 29, 72],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    halign: 'center',
+                },
+                columnStyles: {
+                    0: { halign: 'center' },
+                    2: { halign: 'center' },
+                },
+                styles: { fontSize: 9, cellPadding: 2.5 },
             });
 
             y = (doc as any).lastAutoTable.finalY + 10;
