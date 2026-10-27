@@ -14,8 +14,8 @@ describe('PH presentation', () => {
         expect(choosePhClass([], ['a'], [])).toBe('');
     });
     it('keeps subject colors stable across capitalization and spacing', () => {
-        expect(phSubjectColor('Matematika')).toBe('bg-blue-600');
-        expect(phSubjectColor(' MATEMATIKA ')).toBe('bg-blue-600');
-        expect(phSubjectColor('Aqidah Akhlak')).toBe('bg-emerald-700');
+        expect(phSubjectColor('Matematika')).toBe('bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.45)]');
+        expect(phSubjectColor(' MATEMATIKA ')).toBe('bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.45)]');
+        expect(phSubjectColor('Aqidah Akhlak')).toBe('bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.45)]');
     });
 });

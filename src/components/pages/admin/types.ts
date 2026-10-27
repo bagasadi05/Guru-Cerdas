@@ -56,7 +56,7 @@ export interface ClassRecord {
     academic_year?: string | null;
 }
 
-export type TabType = 'overview' | 'students' | 'classes' | 'users' | 'assignments' | 'announcements' | 'activity' | 'system' | 'modul-ajar-bank' | 'notifications';
+export type TabType = 'overview' | 'students' | 'classes' | 'academic' | 'users' | 'assignments' | 'announcements' | 'activity' | 'system' | 'modul-ajar-bank' | 'notifications';
 
 export type AnnouncementTemplateIcon =
     | 'calendar'

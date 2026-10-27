@@ -11,6 +11,7 @@ import {
     Activity,
     Settings,
     Bell,
+    CalendarDays,
 } from 'lucide-react';
 import type { TabType } from '../types';
 
@@ -26,6 +27,7 @@ const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Ringkasan', icon: <BarChart3 size={18} /> },
     { id: 'students', label: 'Kelola Siswa', icon: <GraduationCap size={18} /> },
     { id: 'classes', label: 'Kelola Kelas', icon: <Library size={18} /> },
+    { id: 'academic', label: 'Tahun Ajaran & Kenaikan', icon: <CalendarDays size={18} /> },
     { id: 'users', label: 'Pengguna & Guru', icon: <Users size={18} /> },
     { id: 'assignments', label: 'Penugasan Guru', icon: <UserCheck size={18} /> },
     { id: 'announcements', label: 'Pengumuman', icon: <Megaphone size={18} /> },

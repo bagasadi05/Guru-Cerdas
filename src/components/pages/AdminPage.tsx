@@ -1,4 +1,5 @@
 import React from 'react';
+import { SemesterManagement } from '../settings/SemesterManagement';
 import {
     useAdminPageState,
     AdminHeader,
@@ -118,6 +119,9 @@ export const AdminPage: React.FC = () => {
 
                 {activeTab === 'classes' && (
                     <ClassesMasterDataTab onLogAction={logAdminAction} />
+                )}
+                {activeTab === 'academic' && (
+                    <SemesterManagement />
                 )}
 
                 {activeTab === 'users' && (

@@ -184,6 +184,10 @@ class OfflineQueueService {
         logger.info('Starting queue sync', 'OfflineQueue');
 
         const pendingItems = this.queue.filter(i => i.status === 'pending');
+        if (pendingItems.length === 0) {
+            this.syncInProgress = false;
+            return;
+        }
 
         for (const item of pendingItems) {
             try {

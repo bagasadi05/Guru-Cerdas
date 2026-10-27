@@ -26,6 +26,34 @@ import {
     compareClassNames,
 } from './extracurricularUtils';
 
+const ATTENDANCE_STATUS_BUTTONS = [
+    {
+        id: 'Hadir',
+        fullLabel: 'Hadir',
+        icon: CheckCircle2,
+    },
+    {
+        id: 'Sakit',
+        fullLabel: 'Sakit',
+        icon: Activity,
+    },
+    {
+        id: 'Izin',
+        fullLabel: 'Izin',
+        icon: Info,
+    },
+    {
+        id: 'Alpha',
+        fullLabel: 'Alpha',
+        icon: XCircle,
+    },
+    {
+        id: 'Libur',
+        fullLabel: 'Libur',
+        icon: CalendarOff,
+    },
+] as const;
+
 interface AttendanceTabProps {
     extracurricularId: string;
     scheduleDay?: string | null;
@@ -577,35 +605,9 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                                     </div>
 
                                     {/* 2. Attendance Status Buttons */}
-                                    <div className="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-2xl border border-slate-100 dark:border-slate-700/50 lg:w-auto">
-                                        <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
-                                            {[
-                                                {
-                                                    id: 'Hadir',
-                                                    fullLabel: 'Hadir',
-                                                    icon: CheckCircle2,
-                                                },
-                                                {
-                                                    id: 'Sakit',
-                                                    fullLabel: 'Sakit',
-                                                    icon: Activity,
-                                                },
-                                                {
-                                                    id: 'Izin',
-                                                    fullLabel: 'Izin',
-                                                    icon: Info,
-                                                },
-                                                {
-                                                    id: 'Alpha',
-                                                    fullLabel: 'Alpha',
-                                                    icon: XCircle,
-                                                },
-                                                {
-                                                    id: 'Libur',
-                                                    fullLabel: 'Libur',
-                                                    icon: CalendarOff,
-                                                },
-                                            ].map((status) => {
+                                    <div className="bg-slate-50 dark:bg-slate-800/60 p-1.5 sm:p-2 rounded-2xl border border-slate-100 dark:border-slate-700/50 lg:w-auto">
+                                        <div className="grid grid-cols-5 gap-1 sm:gap-2 w-full">
+                                            {ATTENDANCE_STATUS_BUTTONS.map((status) => {
                                                 const isActive = currentStatus === status.id;
                                                 const initial = status.id.charAt(0).toUpperCase();
 
@@ -648,17 +650,17 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                                                                 status.id
                                                             )
                                                         }
-                                                        className="group/btn flex flex-col items-center justify-center gap-1 px-2 py-1 rounded-xl outline-none disabled:opacity-60"
+                                                        className="group/btn flex flex-col items-center justify-start gap-1 py-1 px-0.5 sm:px-1 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 min-h-[44px] cursor-pointer active:scale-95 transition-all duration-150 select-none disabled:opacity-60 disabled:cursor-not-allowed"
                                                         title={status.fullLabel}
                                                         aria-label={`${status.fullLabel} untuk ${enrollment.name}`}
                                                         aria-pressed={isActive}
                                                     >
                                                         <div
-                                                            className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all duration-200 ${circleClass}`}
+                                                            className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full border flex items-center justify-center shrink-0 transition-all duration-150 ${circleClass}`}
                                                         >
                                                             <span className="text-xs font-bold">{initial}</span>
                                                         </div>
-                                                        <span className={`text-[10px] transition-colors ${textClass}`}>
+                                                        <span className={`text-[10px] sm:text-xs transition-colors w-full text-center whitespace-nowrap overflow-hidden text-ellipsis ${textClass}`}>
                                                             {status.fullLabel}
                                                         </span>
                                                     </button>

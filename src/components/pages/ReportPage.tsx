@@ -6,6 +6,7 @@ import { generateGeminiContent, getAssistantContent } from '../../services/gemin
 import { useAuth } from '../../hooks/useAuth';
 import { Database } from '../../services/database.types';
 import { generateStudentReport, ReportData, ensureLogoLoaded } from '../../services/pdfGenerator';
+import { resolveHistoricalClassName } from '../../services/gradePromotionService';
 import { Button } from '../ui/Button';
 import { PrinterIcon, ArrowLeftIcon, SettingsIcon, CalendarIcon, PencilIcon, SparklesIcon, Share2Icon } from '../Icons';
 import { createWhatsAppLink, generateReportMessage } from '../../utils/whatsappUtils';
@@ -249,15 +250,29 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
 
             const { default: jsPDF } = await getJsPDF();
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            const selectedSemObj = semesters.find(s => s.id === selectedSemesterId);
+            const historicalClassName = await resolveHistoricalClassName(
+                data.student.id,
+                selectedSemObj?.academic_year_id || null,
+                data.student.classes?.name || (data.student as any).last_class_name
+            );
+            const studentWithHistoricalClass = {
+                ...data.student,
+                classes: {
+                    id: data.student.classes?.id || data.student.class_id || '',
+                    name: historicalClassName,
+                },
+            };
             await generateStudentReport(doc, {
                 ...data,
+                student: studentWithHistoricalClass as any,
                 academicRecords: filteredAcademicRecords,
                 attendanceRecords: filteredAttendance,
                 quizPoints: filteredQuizPoints,
                 violations: filteredViolations,
                 achievements: filteredAchievements
             }, customNote, reportDate, semesterName, academicYear, user);
-            doc.save(`Rapor_${data.student.name.replace(/\s+/g, '_')}_${(data.student.classes?.name || 'Kelas').replace(/\s+/g, '_')}_${semesterName}_${formatExportDate()}.pdf`);
+            doc.save(`Rapor_${data.student.name.replace(/\s+/g, '_')}_${(historicalClassName || 'Kelas').replace(/\s+/g, '_')}_${semesterName}_${formatExportDate()}.pdf`);
             toast.success("Rapor berhasil diunduh sebagai PDF!");
         } catch (e: unknown) {
             toast.error(`Gagal membuat PDF: ${(e as Error).message}`);

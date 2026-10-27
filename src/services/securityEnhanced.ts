@@ -541,14 +541,25 @@ export function auditLog(
                 }
             }
 
+            // Ensure record_id and user_id are valid UUIDs, and action matches Postgres check constraint
+            const isValidUUID = (str?: string | null): boolean =>
+                Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+
+            const validRecordId = isValidUUID(entry.targetId) ? entry.targetId! : entry.id;
+            const validAction = ['INSERT', 'UPDATE', 'DELETE'].includes(action) ? (action as 'INSERT' | 'UPDATE' | 'DELETE') : 'INSERT';
+
             const payload: Database['public']['Tables']['audit_logs']['Insert'] = {
                 id: entry.id,
-                action,
-                user_id: activeUserId || null,
+                action: validAction,
+                user_id: isValidUUID(activeUserId) ? activeUserId : null,
                 user_email: activeUserEmail,
                 table_name: entry.targetType || 'system',
-                record_id: entry.targetId || 'system',
-                new_data: (entry.details || null) as Database['public']['Tables']['audit_logs']['Insert']['new_data'],
+                record_id: validRecordId,
+                new_data: ({
+                    ...(entry.details || {}),
+                    original_action: action,
+                    target_id: entry.targetId || null,
+                }) as Database['public']['Tables']['audit_logs']['Insert']['new_data'],
                 old_data: null,
                 user_agent: entry.userAgent || null,
                 session_id: entry.sessionId || null

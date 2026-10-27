@@ -9,6 +9,8 @@ import { CardTitle, CardDescription } from '../ui/Card';
 import { PlusIcon, TrashIcon, CheckCircleIcon, LockIcon, CalendarIcon, ChevronDownIcon, ChevronRightIcon, AlertCircleIcon } from 'lucide-react';
 import { AcademicYearRow, SemesterRow } from '../../types';
 import { SettingsCard } from './SettingsCard';
+import { GradePromotionModal } from '../pages/admin/GradePromotionModal';
+import { Shuffle } from 'lucide-react';
 
 interface AcademicYearWithSemesters extends AcademicYearRow {
     semesters: SemesterRow[];
@@ -19,6 +21,7 @@ export const SemesterManagement: React.FC = () => {
     const [years, setYears] = useState<AcademicYearWithSemesters[]>([]);
     const [loading, setLoading] = useState(true);
     const [creatingYear, setCreatingYear] = useState(false);
+    const [isPromotionModalOpen, setIsPromotionModalOpen] = useState(false);
     const [newYearName, setNewYearName] = useState('');
     const [newYearStart, setNewYearStart] = useState('');
     const [newYearEnd, setNewYearEnd] = useState('');
@@ -267,10 +270,20 @@ export const SemesterManagement: React.FC = () => {
                     </CardTitle>
                     <CardDescription>Atur Tahun Ajaran dan Semester Aktif</CardDescription>
                 </div>
-                <Button onClick={() => setCreatingYear(!creatingYear)} className="min-h-[44px] px-4 rounded-xl font-medium cursor-pointer active:scale-95 transition-all duration-150">
-                    <PlusIcon className="w-4 h-4 mr-2" />
-                    Buat Tahun Ajaran
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                        variant="primary"
+                        onClick={() => setIsPromotionModalOpen(true)}
+                        className="min-h-[44px] px-4 rounded-xl font-medium cursor-pointer active:scale-95 transition-all duration-150"
+                    >
+                        <Shuffle className="w-4 h-4 mr-2" />
+                        Kenaikan Kelas & Musyawarah
+                    </Button>
+                    <Button onClick={() => setCreatingYear(!creatingYear)} className="min-h-[44px] px-4 rounded-xl font-medium cursor-pointer active:scale-95 transition-all duration-150">
+                        <PlusIcon className="w-4 h-4 mr-2" />
+                        Buat Tahun Ajaran
+                    </Button>
+                </div>
             </div>
 
             {creatingYear && (
@@ -402,7 +415,7 @@ export const SemesterManagement: React.FC = () => {
                                                              </span>
                                                          ) : (
                                                              <Button
-                                                                 variant="outline"
+                                                                 variant="primary"
                                                                  size="sm"
                                                                  onClick={() => handleActivateSemester(sem.id, year.id)}
                                                                  className="min-h-[38px] px-3.5 rounded-xl font-medium cursor-pointer active:scale-95 transition-all duration-150"
@@ -418,7 +431,7 @@ export const SemesterManagement: React.FC = () => {
                                          <div className="text-center py-4">
                                              <p className="text-gray-500 mb-3 text-sm">Belum ada daftar semester untuk tahun ajaran ini.</p>
                                              <Button 
-                                                 variant="outline" 
+                                                 variant="primary" 
                                                  size="sm" 
                                                  onClick={() => {
                                                      createDefaultSemesters(year.id, year.start_date).then(() => fetchData());
@@ -444,6 +457,13 @@ export const SemesterManagement: React.FC = () => {
                     Mengunci semester akan mencegah perubahan data pada semester tersebut.
                 </p>
             </div>
+
+            <GradePromotionModal
+                isOpen={isPromotionModalOpen}
+                onClose={() => setIsPromotionModalOpen(false)}
+                targetAcademicYearId={years.find(y => y.is_active)?.id || years[0]?.id || null}
+                targetAcademicYearName={years.find(y => y.is_active)?.name || years[0]?.name}
+            />
         </SettingsCard>
     );
 };

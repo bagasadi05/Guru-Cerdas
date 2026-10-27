@@ -211,15 +211,15 @@ export const AttendanceStudentCard = React.memo<AttendanceStudentCardProps>(({
                             <button type="button"
                                 key={opt.value}
                                 onClick={() => onStatusChange(student.id, opt.value)}
-                                className="group/btn flex flex-col items-center justify-center gap-1 py-1 px-0.5 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-800 min-h-[44px] cursor-pointer active:scale-90 transition-colors duration-150 select-none"
+                                className="group/btn flex flex-col items-center justify-start gap-1 py-1 px-0.5 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-800 min-h-[44px] cursor-pointer active:scale-90 transition-colors duration-150 select-none"
                                 title={opt.label}
                                 aria-label={opt.label}
                                 aria-pressed={isActive}
                             >
-                                <div className={`w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-full border flex items-center justify-center transition-colors duration-150 ${circleClass}`}>
+                                <div className={`w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-full border flex items-center justify-center shrink-0 transition-colors duration-150 ${circleClass}`}>
                                     <span className="text-xs lg:text-sm font-bold">{initial}</span>
                                 </div>
-                                <span className={`text-xs transition-colors w-full text-center whitespace-nowrap ${textClass}`}>
+                                <span className={`text-xs transition-colors w-full text-center whitespace-nowrap overflow-hidden text-ellipsis ${textClass}`}>
                                     {opt.label}
                                 </span>
                             </button>

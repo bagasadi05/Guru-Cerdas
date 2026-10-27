@@ -81,8 +81,9 @@ const queueOfflineRequest = async (url: string, init?: RequestInit): Promise<voi
     const tableIndex = restIndex + 2;
     const tableName = pathParts[tableIndex];
     
-    // Explicitly reject RPC endpoints and empty table names
-    if (!tableName || tableName === 'rpc' || urlObj.pathname.includes('/rpc/')) {
+    // Explicitly reject RPC endpoints, non-sync tables (e.g. audit_logs), and empty table names
+    const NON_OFFLINE_SYNC_TABLES = new Set(['rpc', 'audit_logs']);
+    if (!tableName || NON_OFFLINE_SYNC_TABLES.has(tableName) || urlObj.pathname.includes('/rpc/')) {
       return;
     }
 

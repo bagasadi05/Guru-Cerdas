@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { UserCircleIcon, PaletteIcon, BellIcon, ShieldIcon, LinkIcon, DatabaseIcon, GraduationCapIcon } from '../Icons';
+import { UserCircleIcon, PaletteIcon, BellIcon, ShieldIcon, LinkIcon, DatabaseIcon } from '../Icons';
 import ProfileSection from '../settings/ProfileSection';
 import AppearanceSection from '../settings/AppearanceSection';
 import NotificationsSection from '../settings/NotificationsSection';
 import IntegrationsSection from '../settings/IntegrationsSection';
 import AccountSection from '../settings/AccountSection';
 import DataManagementSection from '../settings/DataManagementSection';
-import { SemesterManagement } from '../settings/SemesterManagement';
 import { PwaSection } from '../settings/PwaSection';
 import { SettingsPageSkeleton } from '../skeletons/PageSkeletons';
 
@@ -24,7 +23,6 @@ const SettingsPage: React.FC = () => {
         { id: 'profile', label: 'Profil', icon: UserCircleIcon },
         { id: 'appearance', label: 'Tampilan', icon: PaletteIcon },
         { id: 'pwa', label: 'Aplikasi PWA', icon: Smartphone },
-        { id: 'academic', label: 'Akademik', icon: GraduationCapIcon },
         { id: 'notifications', label: 'Notifikasi', icon: BellIcon },
         { id: 'integrations', label: 'Integrasi', icon: LinkIcon },
         { id: 'database', label: 'Manajemen Data', icon: DatabaseIcon },
@@ -47,11 +45,6 @@ const SettingsPage: React.FC = () => {
                 gradient: 'from-emerald-600 to-teal-600 dark:from-emerald-500 dark:to-teal-500',
                 hover: 'hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/5',
                 text: 'text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-            };
-            case 'academic': return {
-                gradient: 'from-blue-600 to-cyan-600 dark:from-blue-500 dark:to-cyan-500',
-                hover: 'hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/5',
-                text: 'text-blue-600 dark:text-blue-400 border-blue-500/20'
             };
             case 'notifications': return {
                 gradient: 'from-amber-600 to-orange-600 dark:from-amber-500 dark:to-orange-500',
@@ -82,11 +75,6 @@ const SettingsPage: React.FC = () => {
     };
 
     const searchItems = [
-        { query: 'semester', tab: 'academic', title: 'Tahun Ajaran & Semester', desc: 'Ganti atau kelola semester aktif, kurikulum, dan tahun ajaran.' },
-        { query: 'tahun ajaran', tab: 'academic', title: 'Tahun Ajaran & Semester', desc: 'Ganti atau kelola semester aktif, kurikulum, dan tahun ajaran.' },
-        { query: 'kkm', tab: 'academic', title: 'Ketuntasan Minimal (KKM)', desc: 'Pengaturan kriteria ketuntasan minimal nilai siswa.' },
-        { query: 'kurikulum', tab: 'academic', title: 'Kurikulum Sekolah', desc: 'Ubah basis kurikulum kelas (Merdeka / K13).' },
-        
         { query: 'tema', tab: 'appearance', title: 'Tema Aplikasi (Terang/Gelap)', desc: 'Ganti tampilan portal menjadi mode malam atau siang.' },
         { query: 'mode gelap', tab: 'appearance', title: 'Tema Gelap / Dark Mode', desc: 'Aktifkan mode malam untuk kenyamanan mata.' },
         { query: 'mode terang', tab: 'appearance', title: 'Tema Terang / Light Mode', desc: 'Tampilan bersih putih cerah untuk siang hari.' },
@@ -125,14 +113,13 @@ const SettingsPage: React.FC = () => {
             case 'profile': return <ProfileSection />;
             case 'appearance': return <AppearanceSection />;
             case 'pwa': return <PwaSection />;
-            case 'academic': return <SemesterManagement />;
             case 'notifications': return <NotificationsSection />;
             case 'integrations': return <IntegrationsSection />;
             case 'database': return <DataManagementSection />;
             case 'account': return <AccountSection onLogout={logout} />;
             default: return null;
         }
-    }
+    };
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-3 sm:p-4 md:p-8 font-sans pb-24 lg:pb-8 relative overflow-hidden">
@@ -158,7 +145,7 @@ const SettingsPage: React.FC = () => {
                                 Pengaturan Portal
                             </h1>
                             <p className="mt-1.5 text-emerald-100/70 text-xs sm:text-sm md:text-base max-w-2xl leading-relaxed">
-                                Konfigurasikan profil guru, kurikulum akademik, otentikasi akun, preferensi notifikasi, dan tema visual secara dinamis.
+                                Konfigurasikan profil guru, otentikasi akun, preferensi notifikasi, dan tema visual secara dinamis.
                             </p>
                         </div>
 
@@ -171,7 +158,7 @@ const SettingsPage: React.FC = () => {
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Cari KKM, mapel, semester, ganti password, mode gelap..."
+                                placeholder="Cari mapel, ganti password, mode gelap..."
                                 aria-label="Cari opsi pengaturan"
                                 className="block w-full pl-10 pr-12 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md text-white placeholder-emerald-200/40 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent text-xs sm:text-sm transition-all shadow-inner"
                             />
@@ -230,12 +217,6 @@ const SettingsPage: React.FC = () => {
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-brand-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
                         >
                             <span>🌓 Mode Gelap/Terang</span>
-                        </button>
-                        <button type="button"
-                            onClick={() => setActiveTab('academic')}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-blue-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
-                        >
-                            <span>🏫 Kelola Semester / KKM</span>
                         </button>
                         <button type="button"
                             onClick={() => setActiveTab('account')}

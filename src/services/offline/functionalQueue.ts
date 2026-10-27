@@ -1,3 +1,25 @@
+/**
+ * Detect whether an error from mutation replay is non-recoverable (permanent client error).
+ */
+export const isPermanentMutationError = (error: unknown): boolean => {
+    if (!error) return false;
+    const msg = error instanceof Error ? error.message : String(error);
+    const code = (typeof error === 'object' && error !== null && 'code' in error) ? String((error as { code: unknown }).code) : '';
+    const status = (typeof error === 'object' && error !== null && 'status' in error) ? (error as { status: unknown }).status : undefined;
+
+    if (status === 400 || status === 404 || status === 422) return true;
+    if (msg.includes('HTTP 400') || msg.includes('HTTP 404') || msg.includes('HTTP 422')) return true;
+
+    // Postgres permanent schema / syntax error codes:
+    // 22P02: invalid text representation (e.g. invalid UUID)
+    // 23502: not_null_violation
+    // 23503: foreign_key_violation
+    // 42P01: undefined_table
+    // 42703: undefined_column
+    if (['22P02', '23502', '23503', '42P01', '42703'].some(c => code === c || msg.includes(c))) return true;
+
+    return false;
+};
 import { supabase } from '../supabase';
 import { storageGetJSON, storageSetJSON, storageRemove } from '../../utils/storage';
 import { logger } from '../logger';
@@ -387,7 +409,15 @@ export const processMutation = async (mutation: QueuedMutation): Promise<boolean
                     (rlsError as any).code = '42501';
                     throw rlsError;
                 }
-                throw new Error(`HTTP ${response.status}: ${errText || response.statusText}`);
+                const httpError = new Error(`HTTP ${response.status}: ${errText || response.statusText}`);
+                (httpError as any).status = response.status;
+                try {
+                    const parsed = JSON.parse(errText);
+                    if (parsed?.code) (httpError as any).code = parsed.code;
+                } catch {
+                    // Non-JSON response body
+                }
+                throw httpError;
             }
 
             return true;
@@ -494,12 +524,12 @@ export const processQueue = async (): Promise<SyncProgress> => {
     }
 
     const queue = await getQueue();
-    // Auto-purge corrupted legacy RPC entries
-    const corrupted = queue.filter(m => m.table === 'rpc' || !m.table);
+    // Auto-purge corrupted legacy RPC entries and non-sync tables (audit_logs)
+    const corrupted = queue.filter(m => m.table === 'rpc' || !m.table || m.table === 'audit_logs');
     for (const item of corrupted) {
         await removeMutation(item.id).catch(() => {});
     }
-    const cleanQueue = queue.filter(m => m.table !== 'rpc' && !!m.table);
+    const cleanQueue = queue.filter(m => m.table !== 'rpc' && !!m.table && m.table !== 'audit_logs');
     const pendingMutations = cleanQueue.filter(m => m.status === 'pending' || m.status === 'failed');
 
     if (pendingMutations.length === 0) {
@@ -558,8 +588,14 @@ export const processQueue = async (): Promise<SyncProgress> => {
                 break;
             }
 
+            const isPermanent = isPermanentMutationError(error);
             const isRLSError = errCode === '42501' || errorMessage.includes('42501') || errorMessage.includes('403') || errorMessage.includes('RLS_FORBIDDEN') || errorMessage.includes('permission denied');
-            if (isRLSError) {
+
+            if (isPermanent) {
+                logger.error(`Permanent client error for ${mutation.table} (${mutation.id}), discarding: ${errorMessage}`, 'OfflineQueue', error);
+                await removeMutation(mutation.id).catch(() => {});
+                progress.failed++;
+            } else if (isRLSError) {
                 logger.error('RLS Access Denied during replay, marking as failed', 'OfflineQueue', error);
                 await updateMutation(mutation.id, {
                     status: 'failed',
