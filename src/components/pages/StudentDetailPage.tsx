@@ -173,7 +173,7 @@ const StudentDetailPage: React.FC = () => {
     );
     const isLeadership =
         userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum';
-    const canAdd = !isAssistant && !isLeadership;
+    const canAdd = isHomeroomTeacher || (!isAssistant && !isLeadership);
 
     return (
         <div className="pb-8 lg:pb-6">

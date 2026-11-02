@@ -37,6 +37,11 @@ Jika tidak auto-load, muat manual sebelum menjawab/menulis kode.
 
 Code & komentar dalam Bahasa Inggris. Dokumentasi & teks user-facing dalam Bahasa Indonesia.
 
+## Environment & Shell Guardrails (Windows)
+
+- **PowerShell Separator:** Gunakan `;` (titik koma) sebagai pemisah perintah berurutan di PowerShell, bukan `&&` (PowerShell 5.1 tidak mendukung operator `&&`).
+- **Line Endings (CRLF vs LF):** Saat menggunakan `edit_file` pada workspace Windows, pastikan baris target dinormalisasi (`\r\n` -> `\n`) untuk menghindari kegagalan *exact character match*.
+
 <!-- antislop:start -->
 ## antislop
 For UI, copy, people, mobile layout, or code comments work, read `.agents/skills/antislop/SKILL.md` (core) and then the skill for the task:
