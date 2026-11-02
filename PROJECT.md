@@ -24,7 +24,7 @@ The Voice Grade feature in Portal Guru follows a clean Ports & Adapters (Hexagon
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| M1 | Parsing Engine & Lexical Recognition | Decimals/fractions, regional dialects (-likur, tens), conversational ralat regex, and controller grace period ralat fix | none | IN_PROGRESS |
+| M1 | Parsing Engine & Lexical Recognition | Decimals/fractions, regional dialects (-likur, tens), conversational ralat regex, and controller grace period ralat fix | none | COMPLETED |
 | M2 | Microphone Lifecycle & Robustness | Web Speech adapter error handling, crash loop prevention, silence reconnect, and context retention | M1 | PLANNED |
 | M3 | Visual Feedback, Accessibility & Keyboard | Keyboard shortcuts (Space, Arrow keys, Undo), touch targets >= 44px, focus rings, WCAG AA contrast, sound wave indicator | M1, M2 | PLANNED |
 | M4 | Final Acceptance & Quality Gates | Comprehensive test suite execution, 100% Vitest pass, clean TypeScript exit 0, forensic audit verification | M1, M2, M3 | PLANNED |

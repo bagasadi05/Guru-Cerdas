@@ -1,5 +1,10 @@
 import { findStudentMatch, type MinimStudent } from '../studentMatcher';
-import { CORRECTION_KEYWORDS, type VoiceCommand } from './constants';
+import {
+    CORRECTION_KEYWORDS,
+    CORRECTION_PREAMBLE_REGEX,
+    INLINE_CORRECTION_SPLIT_REGEX,
+    type VoiceCommand,
+} from './constants';
 import { normalizeSpeechText } from './normalizer';
 import { parseVoiceCommand } from './commandParser';
 import { parseAttendanceJump, parseAttendanceNumberAndScore } from './attendanceParser';
@@ -33,12 +38,113 @@ export function parseSpokenInput(
         return { type: 'command', command };
     }
 
-    // 2. Check for explicit correction (e.g. "ralat 85", "ganti 90", "salah 80", "bukan 95", "ralat absen 2 85")
+    // 2. Check for explicit correction
+    // 2a. Mid-sentence inline correction (e.g. "75 ralat 80", "80 eh bukan 85", "Ahmad Fauzi 75 ralat 80")
+    if (INLINE_CORRECTION_SPLIT_REGEX.test(text)) {
+        const parts = text.split(INLINE_CORRECTION_SPLIT_REGEX);
+        if (parts.length >= 2) {
+            const beforePart = parts[0].trim();
+            const afterPart = parts.slice(1).join(' ').trim();
+
+            const rollCheckAfter = parseAttendanceNumberAndScore(afterPart, students.length);
+            if (rollCheckAfter) {
+                return {
+                    type: 'correction',
+                    score: rollCheckAfter.score,
+                    studentIndex: rollCheckAfter.studentIndex,
+                    rawText: text,
+                };
+            }
+
+            const afterScore = parseIndonesianNumber(afterPart, { allowSingleDigitWithoutPrefix: true });
+            if (afterScore !== null) {
+                const rollCheckBefore = parseAttendanceNumberAndScore(beforePart, students.length);
+                if (rollCheckBefore) {
+                    return {
+                        type: 'correction',
+                        score: afterScore,
+                        studentIndex: rollCheckBefore.studentIndex,
+                        rawText: text,
+                    };
+                }
+
+                const nameCheckBefore = parseNameAndGradeSpeech(beforePart, students);
+                if (nameCheckBefore.length > 0) {
+                    const studentIndex = students.findIndex((s) => s.id === nameCheckBefore[0].studentId);
+                    if (studentIndex !== -1) {
+                        return {
+                            type: 'correction',
+                            score: afterScore,
+                            studentIndex,
+                            rawText: text,
+                        };
+                    }
+                } else {
+                    const directMatch = findStudentMatch(beforePart, students);
+                    if (directMatch.method !== 'none' && directMatch.confidence >= 70) {
+                        const studentIndex = students.findIndex((s) => s.id === directMatch.studentId);
+                        if (studentIndex !== -1) {
+                            return {
+                                type: 'correction',
+                                score: afterScore,
+                                studentIndex,
+                                rawText: text,
+                            };
+                        }
+                    }
+                }
+
+                return {
+                    type: 'correction',
+                    score: afterScore,
+                    rawText: text,
+                };
+            }
+        }
+    }
+
+    // 2b. Conversational preamble correction (e.g. "eh bukan 90", "ralat 85", "eh salah, 80", "maksudnya 88", "maaf ralat jadi 95")
+    if (CORRECTION_PREAMBLE_REGEX.test(text)) {
+        const remainder = text.replace(CORRECTION_PREAMBLE_REGEX, '').trim();
+
+        const rollCheck = parseAttendanceNumberAndScore(remainder, students.length);
+        if (rollCheck) {
+            return {
+                type: 'correction',
+                score: rollCheck.score,
+                studentIndex: rollCheck.studentIndex,
+                rawText: text,
+            };
+        }
+
+        const nameCheck = parseNameAndGradeSpeech(remainder, students);
+        if (nameCheck.length > 0) {
+            const studentIndex = students.findIndex((s) => s.id === nameCheck[0].studentId);
+            if (studentIndex !== -1) {
+                return {
+                    type: 'correction',
+                    score: nameCheck[0].score,
+                    studentIndex,
+                    rawText: text,
+                };
+            }
+        }
+
+        const score = parseIndonesianNumber(remainder || text, { allowSingleDigitWithoutPrefix: true });
+        if (score !== null) {
+            return {
+                type: 'correction',
+                score,
+                rawText: text,
+            };
+        }
+    }
+
+    // 2c. Fallback for any correction keyword presence
     const words = normalizeSpeechText(text).split(' ');
-    const hasCorrectionWord = words.some(w => CORRECTION_KEYWORDS.has(w));
+    const hasCorrectionWord = words.some((w) => CORRECTION_KEYWORDS.has(w));
     if (hasCorrectionWord) {
-        const remainder = text.replace(/^(?:ralat|ganti|ubah|salah|bukan)\s+/i, '').trim();
-        // Check if remainder has roll number (e.g. "nomor 2 85", "absen 3 90")
+        const remainder = text.replace(/^(?:ralat|ganti|ubah|salah|bukan|keliru|revisi|maksudnya|maksud)\s+/i, '').trim();
         const rollCheck = parseAttendanceNumberAndScore(remainder, students.length);
         if (rollCheck) {
             return {

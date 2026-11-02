@@ -95,6 +95,44 @@ describe('VoiceGradeController (Headless Deep Module)', () => {
         expect(controller.getState().lastOverwrittenRecord).toBeNull();
     });
 
+    it('reliably corrects previously graded student during grace period even after 450ms auto-advance', async () => {
+        await controller.startListening();
+
+        // 1. Teacher grades s1 with 85
+        fakeSpeech.emitTranscript('delapan lima', true);
+        expect(onScoreChange).toHaveBeenCalledWith('s1', '85');
+
+        // 2. 500ms elapses: controller auto-advances to s2
+        vi.advanceTimersByTime(500);
+        expect(controller.getState().currentIndex).toBe(1);
+        expect(controller.getState().activeStudent?.name).toBe('Budi Santoso');
+
+        // 3. Teacher realizes mistake 1 second later and says "eh bukan sembilan puluh"
+        fakeSpeech.emitTranscript('eh bukan sembilan puluh', true);
+
+        // Crucial: Must target s1 (Ahmad Fauzi), NOT s2 (Budi Santoso)!
+        expect(onScoreChange).toHaveBeenCalledWith('s1', '90');
+        expect(controller.getState().currentIndex).toBe(0);
+        expect(controller.getState().activeStudent?.name).toBe('Ahmad Fauzi');
+    });
+
+    it('handles mid-sentence correction "75 ralat 80" in sequential mode', async () => {
+        await controller.startListening();
+
+        // Teacher says mid-sentence ralat
+        fakeSpeech.emitTranscript('tujuh lima ralat delapan puluh', true);
+
+        expect(onScoreChange).toHaveBeenCalledWith('s1', '80');
+    });
+
+    it('handles decimal score dictation (e.g. delapan puluh lima koma lima)', async () => {
+        await controller.startListening();
+
+        fakeSpeech.emitTranscript('delapan puluh lima koma lima', true);
+
+        expect(onScoreChange).toHaveBeenCalledWith('s1', '85.5');
+    });
+
     it('handles Mode Bebas (Name Match) parsing and batch application', async () => {
         controller.setActiveTab('name_match');
         await controller.startListening();

@@ -107,6 +107,8 @@ export class VoiceGradeController {
     private lastBatchAppliedRecords: BatchAppliedSnapshot[] | null = null;
     private recentHistory: RecentHistoryItem[] = [];
     private recentlySavedId: string | null = null;
+    private lastGradedStudentId: string | null = null;
+    private lastGradedTimestamp = 0;
 
     // Freeform mode pairs
     private recognizedPairs: NameAndGradeParsed[] = [];
@@ -431,6 +433,8 @@ export class VoiceGradeController {
             let targetStudentId = 'active';
             if (parseResult.studentIndex !== undefined && this.students[parseResult.studentIndex]) {
                 targetStudentId = this.students[parseResult.studentIndex].id;
+            } else if (this.lastGradedStudentId && Date.now() - this.lastGradedTimestamp < 8000) {
+                targetStudentId = this.lastGradedStudentId;
             } else if (this.recentlySavedId) {
                 targetStudentId = this.recentlySavedId;
             } else if (this.students[currIdx]) {
@@ -458,6 +462,7 @@ export class VoiceGradeController {
         if (parseResult.type === 'command') {
             if (this.advanceTimer) clearTimeout(this.advanceTimer);
             this.recentlySavedId = null;
+            this.lastGradedStudentId = null;
             if (this.soundEnabled) this.audioPort.playCommand();
 
             if (parseResult.command === 'next') {
@@ -506,6 +511,12 @@ export class VoiceGradeController {
             if (parseResult.studentIndex !== undefined && this.students[parseResult.studentIndex]) {
                 correctStudent = this.students[parseResult.studentIndex];
                 studentIdx = parseResult.studentIndex;
+            } else if (this.lastGradedStudentId && Date.now() - this.lastGradedTimestamp < 8000) {
+                const found = this.students.find((s) => s.id === this.lastGradedStudentId);
+                if (found) {
+                    correctStudent = found;
+                    studentIdx = this.students.findIndex((s) => s.id === found.id);
+                }
             } else if (this.recentlySavedId) {
                 const found = this.students.find((s) => s.id === this.recentlySavedId);
                 if (found) {
@@ -540,6 +551,8 @@ export class VoiceGradeController {
                 this.currentIndex = studentIdx;
             }
             this.recentlySavedId = correctStudent.id;
+            this.lastGradedStudentId = correctStudent.id;
+            this.lastGradedTimestamp = Date.now();
             this.recentHistory = [
                 {
                     id: correctStudent.id,
@@ -553,6 +566,17 @@ export class VoiceGradeController {
                 `✓ Ralat: [${(studentIdx !== -1 ? studentIdx : currIdx) + 1}] ${correctStudent.name} diubah ke ${scoreToApply}`,
                 'success'
             );
+
+            // Auto-advance after correction just like standard grade
+            const nextIdx = (studentIdx !== -1 ? studentIdx : currIdx) + 1;
+            if (nextIdx < this.students.length) {
+                this.advanceTimer = setTimeout(() => {
+                    this.currentIndex = nextIdx;
+                    this.recentlySavedId = null;
+                    this.emitChange();
+                }, 450);
+            }
+
             this.emitChange();
             return;
         }
@@ -561,6 +585,7 @@ export class VoiceGradeController {
         if (parseResult.type === 'jump_to_student') {
             if (this.advanceTimer) clearTimeout(this.advanceTimer);
             this.recentlySavedId = null;
+            this.lastGradedStudentId = null;
             const targetIdx = parseResult.studentIndex;
             const target = this.students[targetIdx];
             if (target) {
@@ -606,6 +631,8 @@ export class VoiceGradeController {
 
         this.currentIndex = targetIndex;
         this.recentlySavedId = targetStudent.id;
+        this.lastGradedStudentId = targetStudent.id;
+        this.lastGradedTimestamp = Date.now();
         this.recentHistory = [
             { id: targetStudent.id, name: targetStudent.name, score: scoreToApply, index: targetIndex + 1 },
             ...this.recentHistory.filter((h) => h.id !== targetStudent.id).slice(0, 4),

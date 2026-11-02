@@ -66,7 +66,7 @@ export function splitContinuousSpeech(transcript: string, totalStudents: number)
             let foundScoreAtTail = false;
             let scoreTokenCount = 0;
 
-            for (let tailLen = Math.min(currentChunk.length - 1, 3); tailLen >= 1; tailLen--) {
+            for (let tailLen = Math.min(currentChunk.length - 1, 7); tailLen >= 1; tailLen--) {
                 const tailWords = currentChunk.slice(currentChunk.length - tailLen);
                 const val = evaluateNumberTokens(tailWords);
                 if (val !== null && val >= 0 && val <= 100) {

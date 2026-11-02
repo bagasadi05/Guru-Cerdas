@@ -92,6 +92,24 @@ describe('indonesianSpeechParser', () => {
             expect(parseIndonesianNumber('halo')).toBeNull();
             expect(parseIndonesianNumber('')).toBeNull();
         });
+
+        it('parses spoken decimal numbers with "koma" and decimal comma', () => {
+            expect(parseIndonesianNumber('delapan puluh lima koma lima')).toBe(85.5);
+            expect(parseIndonesianNumber('tujuh puluh lima koma lima')).toBe(75.5);
+            expect(parseIndonesianNumber('delapan puluh koma dua lima')).toBe(80.25);
+            expect(parseIndonesianNumber('tujuh koma lima')).toBe(7.5);
+            expect(parseIndonesianNumber('85,5')).toBe(85.5);
+            expect(parseIndonesianNumber('7,5')).toBe(7.5);
+            expect(parseIndonesianNumber('koma lima')).toBe(0.5);
+        });
+
+        it('parses spoken fractions (setengah, seperempat, tiga per empat)', () => {
+            expect(parseIndonesianNumber('tujuh puluh lima setengah')).toBe(75.5);
+            expect(parseIndonesianNumber('delapan puluh seperempat')).toBe(80.25);
+            expect(parseIndonesianNumber('sembilan puluh tiga per empat')).toBe(90.75);
+            expect(parseIndonesianNumber('delapan puluh lima separuh')).toBe(85.5);
+            expect(parseIndonesianNumber('85 1/2')).toBe(85.5);
+        });
     });
 
     describe('parseAttendanceNumberAndScore', () => {
@@ -258,6 +276,54 @@ describe('indonesianSpeechParser', () => {
                 studentIndex: 1,
                 score: 85,
                 rawText: 'ralat nomor 2 85',
+            });
+        });
+
+        it('detects conversational preamble corrections (eh bukan, eh salah, maksudnya)', () => {
+            expect(parseSpokenInput('eh bukan 90', mockStudents, 0)).toEqual({
+                type: 'correction',
+                score: 90,
+                rawText: 'eh bukan 90',
+            });
+            expect(parseSpokenInput('eh salah, 85', mockStudents, 0)).toEqual({
+                type: 'correction',
+                score: 85,
+                rawText: 'eh salah, 85',
+            });
+            expect(parseSpokenInput('maksudnya 88', mockStudents, 0)).toEqual({
+                type: 'correction',
+                score: 88,
+                rawText: 'maksudnya 88',
+            });
+            expect(parseSpokenInput('maaf ralat jadi 95', mockStudents, 0)).toEqual({
+                type: 'correction',
+                score: 95,
+                rawText: 'maaf ralat jadi 95',
+            });
+        });
+
+        it('detects mid-sentence inline corrections (75 ralat 80, 80 eh bukan 85)', () => {
+            expect(parseSpokenInput('75 ralat 80', mockStudents, 0)).toEqual({
+                type: 'correction',
+                score: 80,
+                rawText: '75 ralat 80',
+            });
+            expect(parseSpokenInput('delapan puluh eh bukan sembilan puluh', mockStudents, 0)).toEqual({
+                type: 'correction',
+                score: 90,
+                rawText: 'delapan puluh eh bukan sembilan puluh',
+            });
+            expect(parseSpokenInput('Ahmad Fauzi 75 ralat 80', mockStudents, 0)).toEqual({
+                type: 'correction',
+                score: 80,
+                studentIndex: 0,
+                rawText: 'Ahmad Fauzi 75 ralat 80',
+            });
+            expect(parseSpokenInput('nomor 2 70 ralat 85', mockStudents, 0)).toEqual({
+                type: 'correction',
+                score: 85,
+                studentIndex: 1,
+                rawText: 'nomor 2 70 ralat 85',
             });
         });
 
