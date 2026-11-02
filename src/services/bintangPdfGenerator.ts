@@ -779,6 +779,7 @@ export const downloadBintangReportAction = async ({
     classId,
     month,
     user,
+    customPrintDate,
     onProgress
 }: {
     studentId?: string;
@@ -786,6 +787,7 @@ export const downloadBintangReportAction = async ({
     classId?: string;
     month: string;
     user: AppUser | null;
+    customPrintDate?: string;
     onProgress?: (current: number, total: number) => void;
 }) => {
     if (!studentId && (!targetStudentIds || targetStudentIds.length === 0) && !classId) return;
@@ -959,7 +961,16 @@ export const downloadBintangReportAction = async ({
     
     const monthDate = new Date(`${month}-01`);
     const monthName = monthDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-    const printDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    let printDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    if (customPrintDate && customPrintDate.trim()) {
+        const rawDate = customPrintDate.trim();
+        const parsed = new Date(rawDate.includes('T') ? rawDate : `${rawDate}T00:00:00`);
+        if (!isNaN(parsed.getTime())) {
+            printDate = parsed.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        } else {
+            printDate = rawDate;
+        }
+    }
 
     // Derive academic year and semester from the selected month
     const monthSemester = monthDate.getMonth() >= 6 ? '1' : '2';

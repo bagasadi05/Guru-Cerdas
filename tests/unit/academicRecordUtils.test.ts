@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../src/utils/academicRecordUtils';
+import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations, compareClassNames } from '../../src/utils/academicRecordUtils';
 import type { AcademicRecordRow, QuizPointRow, ViolationRow } from '../../src/components/pages/student/types';
 
 describe('academicRecordUtils', () => {
@@ -169,5 +169,17 @@ describe('academicRecordUtils', () => {
             'violation-new',
             'violation-other',
         ]);
+    });
+
+    it('sorts classes in natural numeric order ascending and strips prefixes', () => {
+        const classes = ['Kelas 5A', 'Kelas 6A', 'Kelas 6B', 'Kelas 4B', 'Kelas 4C', 'Kelas 4A'];
+        const sorted = [...classes].sort(compareClassNames);
+        expect(sorted).toEqual(['Kelas 4A', 'Kelas 4B', 'Kelas 4C', 'Kelas 5A', 'Kelas 6A', 'Kelas 6B']);
+    });
+
+    it('handles mixed prefixes and multi-digit grade levels naturally', () => {
+        const mixed = ['Kelas 10A', '1B', 'Kelas 2A', 'Kelas 1A', '2B', ''];
+        const sorted = [...mixed].sort(compareClassNames);
+        expect(sorted).toEqual(['Kelas 1A', '1B', 'Kelas 2A', '2B', 'Kelas 10A', '']);
     });
 });

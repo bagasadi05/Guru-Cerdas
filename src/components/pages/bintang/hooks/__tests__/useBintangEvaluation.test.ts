@@ -1008,6 +1008,33 @@ describe('useBintangEvaluation', () => {
             expect(toast.success).toHaveBeenCalledWith('Rapor Bintang berhasil diunduh');
         });
 
+        it('should pass customPrintDate when provided to handleDownloadSinglePdf', async () => {
+            const { useBintangEvaluation } = await import('../useBintangEvaluation');
+            const toast = { success: vi.fn(), error: vi.fn() };
+            const options = createDefaultOptions({ toast });
+
+            mockDownloadBintangReportAction.mockResolvedValue(undefined);
+
+            const { result } = renderHook(() => useBintangEvaluation(options));
+
+            await act(async () => {
+                await result.current.handleDownloadSinglePdf('student-1', '2026-10-31');
+            });
+
+            expect(mockDownloadBintangReportAction).toHaveBeenCalledWith({
+                studentId: 'student-1',
+                month: '2026-01',
+                customPrintDate: '2026-10-31',
+                user: {
+                    id: 'teacher-1',
+                    name: 'Bapak Guru',
+                    avatarUrl: '/avatar.jpg',
+                    email: 'teacher@school.com',
+                },
+            });
+            expect(toast.success).toHaveBeenCalledWith('Rapor Bintang berhasil diunduh');
+        });
+
         it('should handle download PDF error', async () => {
             const { useBintangEvaluation } = await import('../useBintangEvaluation');
             const toast = { success: vi.fn(), error: vi.fn() };

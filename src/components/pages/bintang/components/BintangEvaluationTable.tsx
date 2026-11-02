@@ -31,6 +31,7 @@ interface BintangEvaluationTableProps {
   selectedMonth: string;
   onOpenDetail: (studentId: string) => void;
   onOpenBulkExport: () => void;
+  selectedPrintDate?: string;
   /** Students whose draft was generated before their latest violation/keaktifan entry. */
   staleStudentIds?: Set<string>;
 }
@@ -46,6 +47,7 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
   selectedMonth,
   onOpenDetail,
   onOpenBulkExport,
+  selectedPrintDate,
   staleStudentIds,
 }) => {
   const toast = useToast();
@@ -118,7 +120,7 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
               <div className="flex items-center gap-2">
                 <Button
                   onClick={async () => {
-                    await evalHook.handleDownloadBulkPdf(Array.from(bulkSelection.selectedItems));
+                    await evalHook.handleDownloadBulkPdf(Array.from(bulkSelection.selectedItems), selectedPrintDate);
                   }}
                   disabled={evalHook.isDownloadingBulk}
                   className="flex items-center gap-1.5 text-xs sm:text-sm h-10 px-4 font-medium bg-brand-600 hover:bg-brand-500 text-white rounded-xl shadow-sm cursor-pointer active:scale-95"
@@ -429,7 +431,7 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                               variant="outline"
                               size="sm"
                               className="px-1.5 py-1 sm:px-3 sm:py-1.5 h-auto min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 rounded-xl cursor-pointer active:scale-90 transition-all"
-                              onClick={() => evalHook.handleDownloadSinglePdf(student.id)}
+                              onClick={() => evalHook.handleDownloadSinglePdf(student.id, selectedPrintDate)}
                               disabled={evalHook.downloadingStudentId === student.id}
                               title="Cetak Rapor"
                             >

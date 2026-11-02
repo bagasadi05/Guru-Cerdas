@@ -28,6 +28,7 @@ interface BintangActionBarProps {
     onOpenObservation: () => void;
     onOpenMentoring: () => void;
     onOpenBulkExport: () => void;
+    selectedPrintDate?: string;
 }
 
 export const BintangActionBar: React.FC<BintangActionBarProps> = ({
@@ -42,6 +43,7 @@ export const BintangActionBar: React.FC<BintangActionBarProps> = ({
     onOpenObservation,
     onOpenMentoring,
     onOpenBulkExport,
+    selectedPrintDate,
 }) => {
     const [showMoreActions, setShowMoreActions] = useState(false);
 
@@ -121,7 +123,7 @@ export const BintangActionBar: React.FC<BintangActionBarProps> = ({
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        evalHook.handleDownloadClassPdf();
+                                        evalHook.handleDownloadClassPdf(selectedPrintDate);
                                         setShowMoreActions(false);
                                     }}
                                     disabled={evalHook.isDownloadingClass || evalHook.isDownloadingBulk}

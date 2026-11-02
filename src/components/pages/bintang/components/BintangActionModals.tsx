@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { compareClassNames } from '../../../../utils/academicRecordUtils';
 import { Info } from 'lucide-react';
 import { Modal } from '../../../ui/Modal';
 import { Button } from '../../../ui/Button';
@@ -286,7 +287,7 @@ export const BintangMentoringModal: React.FC<MentoringModalProps> = ({
             value={mentoringClass}
             onChange={onMentoringClassChange}
             placeholder="Pilih Kelas"
-            options={classes.map(c => ({ value: c.id, label: c.name }))}
+            options={[...classes].sort((a, b) => compareClassNames(a.name, b.name)).map(c => ({ value: c.id, label: c.name }))}
           />
         </div>
 

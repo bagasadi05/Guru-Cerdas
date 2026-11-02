@@ -35,6 +35,7 @@ interface BintangModalsContainerProps {
     classes: Array<{ id: string; name: string }>;
     selectedClass: string;
     selectedMonth: string;
+    selectedPrintDate?: string;
     isWalas: boolean;
     userId: string;
     semesterId: string | null;
@@ -66,6 +67,7 @@ export const BintangModalsContainer: React.FC<BintangModalsContainerProps> = ({
     classes,
     selectedClass,
     selectedMonth,
+    selectedPrintDate,
     isWalas,
     userId,
     semesterId,
@@ -259,12 +261,13 @@ export const BintangModalsContainer: React.FC<BintangModalsContainerProps> = ({
                     onClose={onCloseBulkExportModal}
                     classNameTitle={classes.find((c) => c.id === selectedClass)?.name || 'Kelas'}
                     selectedMonth={selectedMonth}
+                    defaultPrintDate={selectedPrintDate}
                     students={students}
                     selectedStudentIds={bulkSelectedStudentIds}
                     evaluations={evaluations}
                     getAspectSummary={getAspectSummary}
-                    onExportPdf={async (ids) => {
-                        await evalHook.handleDownloadBulkPdf(ids);
+                    onExportPdf={async (ids, printDate) => {
+                        await evalHook.handleDownloadBulkPdf(ids, printDate);
                         onCloseBulkExportModal();
                     }}
                     onExportExcel={async (ids) => {

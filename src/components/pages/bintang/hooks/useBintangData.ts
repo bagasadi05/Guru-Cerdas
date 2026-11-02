@@ -7,7 +7,8 @@ import {
     type AspectPointsSummary,
     type BintangGrade,
 } from '../../../../services/bintangService';
-import { dedupeViolations, dedupeQuizPoints } from '../../../../utils/academicRecordUtils';
+import { dedupeViolations, dedupeQuizPoints, compareClassNames } from '../../../../utils/academicRecordUtils';
+import { getMonthEndDate } from '../../../../utils/dateHelpers';
 import {
     getCurrentMonthWib,
     type BintangStudent,
@@ -23,6 +24,46 @@ export function useBintangData() {
     const [selectedClass, setSelectedClass] = useState('');
     const currentMonth = getCurrentMonthWib();
     const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+    const [selectedPrintDate, setSelectedPrintDateState] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem(`bintang_print_date_${currentMonth}`);
+            if (saved) return saved;
+        }
+        return getMonthEndDate(currentMonth);
+    });
+
+    // Synchronize print date whenever the selected month changes
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem(`bintang_print_date_${selectedMonth}`);
+            if (saved) {
+                setSelectedPrintDateState(saved);
+                return;
+            }
+        }
+        setSelectedPrintDateState(getMonthEndDate(selectedMonth));
+    }, [selectedMonth]);
+
+    const setSelectedPrintDate = useCallback((date: string) => {
+        setSelectedPrintDateState(date);
+        if (typeof window !== 'undefined') {
+            const defaultEndDate = getMonthEndDate(selectedMonth);
+            if (!date || date === defaultEndDate) {
+                localStorage.removeItem(`bintang_print_date_${selectedMonth}`);
+            } else {
+                localStorage.setItem(`bintang_print_date_${selectedMonth}`, date);
+            }
+        }
+    }, [selectedMonth]);
+
+    const resetPrintDateToMonthEnd = useCallback(() => {
+        const defaultEndDate = getMonthEndDate(selectedMonth);
+        setSelectedPrintDate(defaultEndDate);
+    }, [selectedMonth, setSelectedPrintDate]);
+
+    const isPrintDateCustom = useMemo(() => {
+        return selectedPrintDate !== getMonthEndDate(selectedMonth);
+    }, [selectedPrintDate, selectedMonth]);
 
     const [students, setStudents] = useState<BintangStudent[]>([]);
     const [violations, setViolations] = useState<BintangViolation[]>([]);
@@ -43,8 +84,12 @@ export function useBintangData() {
                 .from('classes')
                 .select('id, name')
                 .is('deleted_at', null)
-                .eq('is_archived', false);
-            if (data) setClasses(data);
+                .eq('is_archived', false)
+                .order('name');
+            if (data) {
+                const sorted = [...data].sort((a, b) => compareClassNames(a.name, b.name));
+                setClasses(sorted);
+            }
         };
         void fetchClasses();
     }, []);
@@ -233,6 +278,10 @@ export function useBintangData() {
         setSelectedClass,
         selectedMonth,
         setSelectedMonth,
+        selectedPrintDate,
+        setSelectedPrintDate,
+        resetPrintDateToMonthEnd,
+        isPrintDateCustom,
         students,
         violations,
         evaluations,

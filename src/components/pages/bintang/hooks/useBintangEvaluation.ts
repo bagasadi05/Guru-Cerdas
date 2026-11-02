@@ -97,9 +97,9 @@ export interface UseBintangEvaluationReturn {
     handlePublish: () => Promise<void>;
     handleUnpublish: () => Promise<void>;
     handleUnpublishSingle: (studentId: string, studentName?: string) => Promise<void>;
-    handleDownloadSinglePdf: (studentId: string) => Promise<void>;
-    handleDownloadClassPdf: () => Promise<void>;
-    handleDownloadBulkPdf: (studentIds: string[]) => Promise<void>;
+    handleDownloadSinglePdf: (studentId: string, customPrintDate?: string) => Promise<void>;
+    handleDownloadClassPdf: (customPrintDate?: string) => Promise<void>;
+    handleDownloadBulkPdf: (studentIds: string[], customPrintDate?: string) => Promise<void>;
     handleExportExcel: (targetStudentIds?: string[]) => Promise<void>;
     isExportingExcel: boolean;
     isDownloadingBulk: boolean;
@@ -581,12 +581,13 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
     }, [options.confirmUnpublish, confirmPublish, evaluations, students, toast, fetchData]);
 
     const handleDownloadSinglePdf = useCallback(
-        async (studentId: string) => {
+        async (studentId: string, customPrintDate?: string) => {
             setDownloadingStudentId(studentId);
             try {
                 await downloadBintangReportAction({
                     studentId,
                     month: selectedMonth,
+                    ...(customPrintDate ? { customPrintDate } : {}),
                     user: user
                         ? {
                               id: user.id,
@@ -607,7 +608,7 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
         [selectedMonth, user, toast]
     );
 
-    const handleDownloadClassPdf = useCallback(async () => {
+    const handleDownloadClassPdf = useCallback(async (customPrintDate?: string) => {
         if (!selectedClass) return;
         setIsDownloadingClass(true);
         setDownloadProgress({ current: 0, total: 0 });
@@ -615,6 +616,7 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
             await downloadBintangReportAction({
                 classId: selectedClass,
                 month: selectedMonth,
+                ...(customPrintDate ? { customPrintDate } : {}),
                 user: user
                     ? {
                           id: user.id,
@@ -638,7 +640,7 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
         }
     }, [selectedClass, selectedMonth, user, toast]);
 
-    const handleDownloadBulkPdf = useCallback(async (studentIds: string[]) => {
+    const handleDownloadBulkPdf = useCallback(async (studentIds: string[], customPrintDate?: string) => {
         if (!studentIds || studentIds.length === 0) {
             toast.error('Pilih setidaknya satu siswa untuk diunduh');
             return;
@@ -649,6 +651,7 @@ export function useBintangEvaluation(options: UseBintangEvaluationOptions): UseB
             await downloadBintangReportAction({
                 targetStudentIds: studentIds,
                 month: selectedMonth,
+                ...(customPrintDate ? { customPrintDate } : {}),
                 user: user
                     ? {
                           id: user.id,

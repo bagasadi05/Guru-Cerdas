@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Modal } from '../../../ui/Modal';
 import { Button } from '../../../ui/Button';
-import { FileText, FileSpreadsheet, Users, CheckCircle2, AlertTriangle, Download, Loader2 } from 'lucide-react';
+import { FileText, FileSpreadsheet, Users, CheckCircle2, AlertTriangle, Download, Loader2, Calendar, RotateCcw } from 'lucide-react';
 import type { AspectPointsSummary } from '../../../../services/bintangService';
 
 export type BintangExportFormat = 'pdf' | 'excel';
@@ -12,11 +12,12 @@ interface BintangBulkExportModalProps {
     onClose: () => void;
     classNameTitle?: string;
     selectedMonth: string;
+    defaultPrintDate?: string;
     students: Array<{ id: string; name: string }>;
     selectedStudentIds: Set<string>;
     evaluations: any[];
     getAspectSummary: (studentId: string) => AspectPointsSummary;
-    onExportPdf: (studentIds: string[]) => Promise<void>;
+    onExportPdf: (studentIds: string[], customPrintDate?: string) => Promise<void>;
     onExportExcel: (studentIds: string[]) => Promise<void>;
     isExporting: boolean;
     progress: { current: number; total: number } | null;
@@ -27,6 +28,7 @@ export const BintangBulkExportModal: React.FC<BintangBulkExportModalProps> = ({
     onClose,
     classNameTitle = 'Kelas',
     selectedMonth,
+    defaultPrintDate,
     students,
     selectedStudentIds,
     evaluations,
@@ -40,6 +42,7 @@ export const BintangBulkExportModal: React.FC<BintangBulkExportModalProps> = ({
     const [scope, setScope] = useState<BintangExportScope>(
         selectedStudentIds.size > 0 ? 'selected' : 'all'
     );
+    const [printDate, setPrintDate] = useState(() => defaultPrintDate || new Date().toISOString().split('T')[0]);
 
     // Compute month label
     const monthLabel = useMemo(() => {
@@ -78,7 +81,7 @@ export const BintangBulkExportModal: React.FC<BintangBulkExportModalProps> = ({
         if (studentIds.length === 0) return;
 
         if (format === 'pdf') {
-            await onExportPdf(studentIds);
+            await onExportPdf(studentIds, printDate);
         } else {
             await onExportExcel(studentIds);
         }
@@ -299,6 +302,57 @@ export const BintangBulkExportModal: React.FC<BintangBulkExportModalProps> = ({
                         </label>
                     </div>
                 </div>
+
+                {/* 3. Tanggal Cetak Dokumen (Khusus PDF) */}
+                {format === 'pdf' && (
+                    <div className="animate-fade-in">
+                        <div className="flex items-center justify-between max-w-xs mb-2">
+                            <label htmlFor="bulk-export-print-date" className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                3. Tanggal Cetak Dokumen
+                            </label>
+                            {defaultPrintDate && printDate !== defaultPrintDate && (
+                                <button
+                                    type="button"
+                                    onClick={() => setPrintDate(defaultPrintDate)}
+                                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 transition-colors"
+                                    title="Kembalikan ke tanggal cetak awal"
+                                >
+                                    <RotateCcw size={11} />
+                                    <span>Reset</span>
+                                </button>
+                            )}
+                        </div>
+                        <div className="relative max-w-xs">
+                            <Calendar size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                            <input
+                                id="bulk-export-print-date"
+                                type="date"
+                                value={printDate}
+                                onChange={(e) => setPrintDate(e.target.value)}
+                                disabled={isExporting}
+                                className={`w-full min-h-[42px] pl-10 ${defaultPrintDate && printDate !== defaultPrintDate ? 'pr-9' : 'pr-3'} py-2 text-sm font-medium rounded-xl border ${
+                                    defaultPrintDate && printDate !== defaultPrintDate
+                                        ? 'border-brand-500/80 bg-brand-50/20 dark:bg-brand-950/20 ring-1 ring-brand-500/30'
+                                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
+                                } text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer shadow-xs transition-colors`}
+                            />
+                            {defaultPrintDate && printDate !== defaultPrintDate && (
+                                <button
+                                    type="button"
+                                    onClick={() => setPrintDate(defaultPrintDate)}
+                                    title="Kembalikan ke tanggal awal"
+                                    aria-label="Kembalikan ke tanggal awal"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 transition-colors"
+                                >
+                                    <RotateCcw size={14} />
+                                </button>
+                            )}
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+                            Tanggal ini akan dicetak pada kolom tanda tangan wali kelas.
+                        </p>
+                    </div>
+                )}
 
                 {/* Progress bar jika sedang exporting */}
                 {isExporting && progress && progress.total > 0 && (

@@ -120,3 +120,25 @@ export const dedupeViolations = <T extends ViolationIdentity & { created_at?: st
 
     return Array.from(latestByKey.values());
 };
+
+/**
+ * Compares two class name strings using Indonesian natural sorting (e.g. 1A < 1B < 2A < 10A).
+ * Strips common prefixes like "Kelas " or "Class " for uniform comparison.
+ * Null/empty class names are sorted to the end.
+ */
+export function compareClassNames(a?: string | null, b?: string | null): number {
+    const rawA = (a || '').trim();
+    const rawB = (b || '').trim();
+
+    if (!rawA && !rawB) return 0;
+    if (!rawA) return 1;
+    if (!rawB) return -1;
+
+    const normA = rawA.replace(/^(?:kelas|class)\s+/i, '').trim();
+    const normB = rawB.replace(/^(?:kelas|class)\s+/i, '').trim();
+
+    const comp = normA.localeCompare(normB, 'id-ID', { numeric: true, sensitivity: 'base' });
+    if (comp !== 0) return comp;
+
+    return rawA.localeCompare(rawB, 'id-ID', { numeric: true, sensitivity: 'base' });
+}

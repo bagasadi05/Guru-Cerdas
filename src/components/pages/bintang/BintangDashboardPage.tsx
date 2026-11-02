@@ -136,6 +136,10 @@ export const BintangDashboardPage: React.FC = () => {
                 onSelectClass={data.setSelectedClass}
                 selectedMonth={data.selectedMonth}
                 onSelectMonth={data.setSelectedMonth}
+                selectedPrintDate={data.selectedPrintDate}
+                onSelectPrintDate={data.setSelectedPrintDate}
+                onResetPrintDate={data.resetPrintDateToMonthEnd}
+                isPrintDateCustom={data.isPrintDateCustom}
                 studentCount={data.students.length}
                 isLoading={data.isLoading}
             />
@@ -214,6 +218,7 @@ export const BintangDashboardPage: React.FC = () => {
                                 onOpenObservation={() => mutations.setIsObservationModalOpen(true)}
                                 onOpenMentoring={mutations.openMentoringModal}
                                 onOpenBulkExport={() => setIsBulkExportModalOpen(true)}
+                                selectedPrintDate={data.selectedPrintDate}
                             />
 
                             {/* 4. Evaluation Table & Bulk Actions */}
@@ -228,6 +233,7 @@ export const BintangDashboardPage: React.FC = () => {
                                 selectedMonth={data.selectedMonth}
                                 onOpenDetail={(studentId) => setDetailStudentId(studentId)}
                                 onOpenBulkExport={() => setIsBulkExportModalOpen(true)}
+                                selectedPrintDate={data.selectedPrintDate}
                                 staleStudentIds={data.staleStudentIds}
                             />
 
@@ -269,6 +275,7 @@ export const BintangDashboardPage: React.FC = () => {
                 classes={data.classes}
                 selectedClass={data.selectedClass}
                 selectedMonth={data.selectedMonth}
+                selectedPrintDate={data.selectedPrintDate}
                 isWalas={isWalas}
                 userId={user?.id || ''}
                 semesterId={activeSemester?.id || null}

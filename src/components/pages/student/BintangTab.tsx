@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CardTitle, CardDescription } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { PrinterIcon, StarIcon } from '../../Icons';
-import { Heart, Clock, Sparkles } from 'lucide-react';
+import { Heart, Clock, Sparkles, Calendar, RotateCcw } from 'lucide-react';
 import { bintangService, calculateAspectPoints, type BintangGrade } from '../../../services/bintangService';
 import { ViolationRow } from './types';
 import { useToast } from '../../../hooks/useToast';
@@ -10,6 +10,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { supabase } from '../../../services/supabase';
 import { downloadBintangReportAction } from '../../../services/bintangPdfGenerator';
 import { dedupeQuizPoints } from '../../../utils/academicRecordUtils';
+import { getMonthEndDate } from '../../../utils/dateHelpers';
 
 const GRADE_COLORS: Record<BintangGrade, string> = {
     A: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
@@ -33,7 +34,45 @@ function getCurrentMonthWib(): string {
 export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: _studentName, violations }) => {
     const toast = useToast();
     const { user } = useAuth();
-    const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonthWib());
+    const currentMonth = getCurrentMonthWib();
+    const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
+    const [printDate, setPrintDateState] = useState<string>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem(`bintang_print_date_${currentMonth}`);
+            if (saved) return saved;
+        }
+        return getMonthEndDate(currentMonth);
+    });
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem(`bintang_print_date_${selectedMonth}`);
+            if (saved) {
+                setPrintDateState(saved);
+                return;
+            }
+        }
+        setPrintDateState(getMonthEndDate(selectedMonth));
+    }, [selectedMonth]);
+
+    const handleSetPrintDate = (val: string) => {
+        setPrintDateState(val);
+        if (typeof window !== 'undefined') {
+            const monthEnd = getMonthEndDate(selectedMonth);
+            if (!val || val === monthEnd) {
+                localStorage.removeItem(`bintang_print_date_${selectedMonth}`);
+            } else {
+                localStorage.setItem(`bintang_print_date_${selectedMonth}`, val);
+            }
+        }
+    };
+
+    const isPrintDateCustom = printDate !== getMonthEndDate(selectedMonth);
+
+    const handleResetPrintDate = () => {
+        const monthEnd = getMonthEndDate(selectedMonth);
+        handleSetPrintDate(monthEnd);
+    };
     const [evaluations, setEvaluations] = useState<any[]>([]);
     const [quizPoints, setQuizPoints] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(true);
@@ -109,6 +148,7 @@ export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: 
             await downloadBintangReportAction({
                 studentId,
                 month: selectedMonth,
+                customPrintDate: printDate,
                 user: (user as any) ? {
                     id: (user as any).id,
                     name: (user as any).name || (user as any).user_metadata?.full_name || (user as any).user_metadata?.name || '',
@@ -138,7 +178,7 @@ export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: 
                     </CardDescription>
                 </div>
                 
-                <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0 w-full sm:w-auto">
+                <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto shrink-0 w-full sm:w-auto">
                     <select
                         value={selectedMonth}
                         onChange={(e) => setSelectedMonth(e.target.value)}
@@ -148,6 +188,32 @@ export const BintangTab: React.FC<BintangTabProps> = ({ studentId, studentName: 
                             <option key={m.value} value={m.value}>{m.label}</option>
                         ))}
                     </select>
+
+                    <div className="relative flex-1 sm:flex-none flex items-center" title="Tanggal Cetak Rapor (tertera pada tanda tangan)">
+                        <Calendar size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        <input
+                            type="date"
+                            value={printDate}
+                            onChange={(e) => handleSetPrintDate(e.target.value)}
+                            aria-label="Tanggal Cetak Rapor"
+                            className={`min-h-[44px] sm:min-h-[40px] h-11 sm:h-10 pl-9 ${isPrintDateCustom ? 'pr-8' : 'pr-3'} text-sm font-medium rounded-xl border ${
+                                isPrintDateCustom
+                                    ? 'border-emerald-500/80 bg-emerald-50/20 dark:bg-emerald-950/20 text-slate-900 dark:text-slate-100 ring-1 ring-emerald-500/30'
+                                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 text-slate-700 dark:text-slate-200'
+                            } focus:outline-none focus:ring-2 focus:ring-emerald-500/50 cursor-pointer shadow-sm w-full sm:w-auto transition-colors`}
+                        />
+                        {isPrintDateCustom && (
+                            <button
+                                type="button"
+                                onClick={handleResetPrintDate}
+                                title="Kembalikan ke akhir bulan"
+                                aria-label="Kembalikan tanggal cetak ke akhir bulan"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            >
+                                <RotateCcw size={13} />
+                            </button>
+                        )}
+                    </div>
                     
                     <Button 
                         onClick={handleDownloadPdf}
