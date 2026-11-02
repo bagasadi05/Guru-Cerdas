@@ -286,7 +286,7 @@ export const generateBintangReportPdf = async (
         targetDoc.text(":", col2X + colonOffset, lineY);
         targetDoc.setFont('helvetica', 'normal');
         targetDoc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
-        targetDoc.text(resolvedAcademicYear, col2X + valueOffset, lineY);
+        targetDoc.text((resolvedAcademicYear || '').toUpperCase(), col2X + valueOffset, lineY);
 
         lineY += infoLineSpacing;
 
@@ -297,7 +297,7 @@ export const generateBintangReportPdf = async (
         targetDoc.text(":", col1X + colonOffset, lineY);
         targetDoc.setFont('helvetica', 'normal');
         targetDoc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
-        targetDoc.text(report.student.classes?.name || '-', col1X + valueOffset, lineY);
+        targetDoc.text(normalizeTextForPdf(report.student.classes?.name || '-').toUpperCase(), col1X + valueOffset, lineY);
 
         targetDoc.setFont('helvetica', 'bold');
         targetDoc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
@@ -305,7 +305,7 @@ export const generateBintangReportPdf = async (
         targetDoc.text(":", col2X + colonOffset, lineY);
         targetDoc.setFont('helvetica', 'normal');
         targetDoc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
-        targetDoc.text(resolvedSemester, col2X + valueOffset, lineY);
+        targetDoc.text((resolvedSemester || '').toUpperCase(), col2X + valueOffset, lineY);
 
         lineY += infoLineSpacing;
 
@@ -319,7 +319,7 @@ export const generateBintangReportPdf = async (
             targetDoc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
             const nisPart = report.student.nis || '(tidak ada)';
             const nisnPart = report.student.nisn || '(tidak ada)';
-            targetDoc.text(nisPart + " / " + nisnPart, col1X + valueOffset, lineY);
+            targetDoc.text((nisPart + " / " + nisnPart).toUpperCase(), col1X + valueOffset, lineY);
 
             targetDoc.setFont('helvetica', 'bold');
             targetDoc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);

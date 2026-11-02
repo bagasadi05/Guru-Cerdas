@@ -984,5 +984,9 @@ describe('bintangPdfGenerator', () => {
         const printedTexts = textSpy.mock.calls.map(call => String(call[0]));
         expect(printedTexts).toContain('NIS/NISN');
         expect(printedTexts).toContain('10293 / 0019283746');
+        expect(printedTexts).toContain('HASAN AL-BASRI');
+        expect(printedTexts).toContain('KELAS 2B');
+        expect(printedTexts).toContain('GANJIL');
+        expect(printedTexts).toContain('DESEMBER 2026');
     });
 });
