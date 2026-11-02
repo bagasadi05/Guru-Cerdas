@@ -906,4 +906,83 @@ describe('bintangPdfGenerator', () => {
         // At least 16mm clearance between Mengetahui and parent role
         expect(parentClearance).toBeGreaterThanOrEqual(16);
     });
+
+    it('uses report.teacherName for homeroom signature when provided, taking precedence over logged in admin user', async () => {
+        const doc = new jsPDF();
+        const textSpy = vi.spyOn(doc, 'text');
+
+        const reports = [{
+            student: {
+                id: 'student-teacher-override',
+                name: 'Khadijah Al-Kubra',
+                classes: { name: 'Kelas 1A' },
+            },
+            evaluation: {
+                adab_score: 'A',
+                kedisiplinan_score: 'A',
+                kerapian_score: 'A',
+                catatan_wali: 'Ananda Khadijah sangat teladan.',
+            },
+            aspects: {
+                ADAB: { grade: 'A' },
+                KEDISIPLINAN: { grade: 'A' },
+                KERAPIAN: { grade: 'A' },
+            },
+            violations: [],
+            quizPoints: [],
+            teacherName: 'Siti Aminah, S.Pd.',
+        }];
+
+        await generateBintangReportPdf(
+            doc,
+            reports,
+            'November 2026',
+            '30 November 2026',
+            { id: 'admin-id', name: 'Admin Madrasah', avatarUrl: '' }
+        );
+
+        const printedTexts = textSpy.mock.calls.map(call => String(call[0]));
+        expect(printedTexts).toContain('Siti Aminah, S.Pd.');
+        expect(printedTexts).not.toContain('Admin Madrasah');
+    });
+
+    it('renders NIS and NISN in the student info box when student has nis/nisn', async () => {
+        const doc = new jsPDF();
+        const textSpy = vi.spyOn(doc, 'text');
+
+        const reports = [{
+            student: {
+                id: 'student-nis-test',
+                name: 'Hasan Al-Basri',
+                classes: { name: 'Kelas 2B' },
+                nis: '10293',
+                nisn: '0019283746',
+            },
+            evaluation: {
+                adab_score: 'A',
+                kedisiplinan_score: 'A',
+                kerapian_score: 'A',
+                catatan_wali: 'Pertahankan akhlak mulia.',
+            },
+            aspects: {
+                ADAB: { grade: 'A' },
+                KEDISIPLINAN: { grade: 'A' },
+                KERAPIAN: { grade: 'A' },
+            },
+            violations: [],
+            quizPoints: [],
+        }];
+
+        await generateBintangReportPdf(
+            doc,
+            reports,
+            'Desember 2026',
+            '20 Desember 2026',
+            { id: 'u1', name: 'Wali Kelas 2B', avatarUrl: '' }
+        );
+
+        const printedTexts = textSpy.mock.calls.map(call => String(call[0]));
+        expect(printedTexts).toContain('NIS/NISN');
+        expect(printedTexts).toContain('10293 / 0019283746');
+    });
 });

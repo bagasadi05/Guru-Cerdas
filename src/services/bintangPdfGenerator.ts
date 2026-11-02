@@ -53,6 +53,7 @@ export const generateBintangReportPdf = async (
         violations?: { date: string; description: string; points: number; severity?: string }[];
         quizPoints?: { quiz_name?: string | null; category?: string | null; points: number }[];
         attitude?: { spiritual?: string; social?: string };
+        teacherName?: string;
     }>,
     monthName: string,
     printDate: string,
@@ -655,8 +656,9 @@ export const generateBintangReportPdf = async (
         targetDoc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
         targetDoc.text("( ................................... )", leftCenterX, signerLineY, { align: 'center' });
 
-        const hasValidTeacherName = !!(user?.name && user.name.trim() !== '' && user.name.trim().toLowerCase() !== 'wali kelas');
-        const teacherName = hasValidTeacherName ? normalizeTextForPdf(formatDegreeProperly(user.name.trim())) : "...................................";
+        const resolvedTeacherName = report.teacherName || (user?.name && user.name.trim() !== '' && user.name.trim().toLowerCase() !== 'wali kelas' ? user.name.trim() : '');
+        const hasValidTeacherName = Boolean(resolvedTeacherName);
+        const teacherName = hasValidTeacherName ? normalizeTextForPdf(formatDegreeProperly(resolvedTeacherName)) : "...................................";
         targetDoc.setFont('helvetica', 'bold');
         targetDoc.setFontSize(isTwoPageReport ? 8.5 : (8.0 + (expansionFactor * 0.5)));
         targetDoc.setTextColor(PRIMARY_DARK[0], PRIMARY_DARK[1], PRIMARY_DARK[2]);
@@ -793,28 +795,24 @@ export const downloadBintangReportAction = async ({
     if (!studentId && (!targetStudentIds || targetStudentIds.length === 0) && !classId) return;
 
     let studentsToFetch: Array<{ id: string; name?: string | null; access_code?: string | null; class_id?: string | null; nis?: string | null; nisn?: string | null; classes?: { name: string | null } | null }> = [];
-    let classUserId: string | null = null;
+    const classMap = new Map<string, { id: string; name: string; user_id?: string | null; wali_kelas_id?: string | null }>();
     
     if (targetStudentIds && targetStudentIds.length > 0) {
         const { data: sData, error: sError } = await supabase
             .from('students')
-            .select('id, name, access_code, class_id')
+            .select('id, name, access_code, class_id, nis, nisn')
             .in('id', targetStudentIds)
             .is('deleted_at', null)
             .order('name', { ascending: true });
         if (sError) throw sError;
 
         const distinctClassIds = [...new Set((sData || []).map(s => s.class_id).filter(Boolean) as string[])];
-        const classMap = new Map<string, { name: string; user_id?: string | null; wali_kelas_id?: string | null }>();
         if (distinctClassIds.length > 0) {
             const { data: cData } = await supabase
                 .from('classes')
                 .select('id, name, user_id, wali_kelas_id')
                 .in('id', distinctClassIds);
             (cData || []).forEach(c => classMap.set(c.id, c));
-            if (cData && cData.length > 0) {
-                classUserId = cData[0].wali_kelas_id || cData[0].user_id || null;
-            }
         }
 
         studentsToFetch = (sData || []).map(s => ({
@@ -824,7 +822,7 @@ export const downloadBintangReportAction = async ({
     } else if (studentId) {
         const { data: sData, error: sError } = await supabase
             .from('students')
-            .select('id, name, access_code, class_id')
+            .select('id, name, access_code, class_id, nis, nisn')
             .eq('id', studentId)
             .single();
         if (sError) throw sError;
@@ -833,27 +831,29 @@ export const downloadBintangReportAction = async ({
         if (sData.class_id) {
             const { data: cData } = await supabase
                 .from('classes')
-                .select('name, user_id, wali_kelas_id')
+                .select('id, name, user_id, wali_kelas_id')
                 .eq('id', sData.class_id)
                 .maybeSingle();
             if (cData) {
                 className = cData.name;
-                classUserId = cData.wali_kelas_id || cData.user_id || null;
+                classMap.set(cData.id, cData);
             }
         }
         studentsToFetch = [{ ...sData, classes: { name: className } }];
     } else if (classId) {
         const { data: cData } = await supabase
             .from('classes')
-            .select('name, user_id, wali_kelas_id')
+            .select('id, name, user_id, wali_kelas_id')
             .eq('id', classId)
             .maybeSingle();
+        if (cData) {
+            classMap.set(cData.id, cData);
+        }
         const className = cData?.name || '-';
-        classUserId = cData?.wali_kelas_id || cData?.user_id || null;
 
         const { data: sData, error: sError } = await supabase
             .from('students')
-            .select('id, name, access_code, class_id')
+            .select('id, name, access_code, class_id, nis, nisn')
             .eq('class_id', classId)
             .is('deleted_at', null)
             .order('name', { ascending: true });
@@ -865,40 +865,48 @@ export const downloadBintangReportAction = async ({
         throw new Error('Data siswa tidak ditemukan.');
     }
 
-    // Resolve teacher name from user or homeroom teacher profile in user_roles
-    let effectiveTeacherName = (user?.name && user.name.trim() !== '' && user.name.trim().toLowerCase() !== 'wali kelas')
+    // Resolve homeroom teacher names for each class from user_roles
+    const teacherUserIds = Array.from(
+        new Set(
+            Array.from(classMap.values())
+                .flatMap(c => [c.wali_kelas_id, c.user_id])
+                .filter(Boolean) as string[]
+        )
+    );
+
+    const teacherNameByUser = new Map<string, string>();
+    if (teacherUserIds.length > 0) {
+        try {
+            const { data: roleRows } = await supabase
+                .from('user_roles')
+                .select('user_id, full_name')
+                .in('user_id', teacherUserIds);
+            (roleRows || []).forEach(r => {
+                if (r.user_id && r.full_name?.trim()) {
+                    teacherNameByUser.set(r.user_id, r.full_name.trim());
+                }
+            });
+        } catch (e) {
+            console.warn('Failed to fetch homeroom teacher names from user_roles', e);
+        }
+    }
+
+    const getClassTeacherName = (cId?: string | null): string => {
+        if (!cId) return '';
+        const classRow = classMap.get(cId);
+        if (!classRow) return '';
+        const teacherUserId = classRow.wali_kelas_id || classRow.user_id;
+        if (teacherUserId && teacherNameByUser.has(teacherUserId)) {
+            return teacherNameByUser.get(teacherUserId)!;
+        }
+        return '';
+    };
+
+    const fallbackTeacherName = (user?.name && user.name.trim() !== '' && user.name.trim().toLowerCase() !== 'wali kelas')
         ? user.name.trim()
         : '';
 
-    if (!effectiveTeacherName && classUserId) {
-        try {
-            const { data: roleData } = await supabase
-                .from('user_roles')
-                .select('full_name')
-                .eq('user_id', classUserId)
-                .maybeSingle();
-            if (roleData?.full_name?.trim()) {
-                effectiveTeacherName = roleData.full_name.trim();
-            }
-        } catch (e) {
-            console.warn('Failed to fetch homeroom teacher name from user_roles', e);
-        }
-    }
-
-    if (effectiveTeacherName) {
-        effectiveTeacherName = formatDegreeProperly(effectiveTeacherName);
-    }
-
-    const effectiveUser: AppUser | null = user
-        ? {
-            ...user,
-            name: effectiveTeacherName || user.name || '',
-        }
-        : (effectiveTeacherName ? {
-            id: classUserId || '',
-            name: effectiveTeacherName,
-            avatarUrl: '',
-        } : null);
+    const effectiveUser: AppUser | null = user || null;
 
     const reports = [];
 
@@ -946,8 +954,12 @@ export const downloadBintangReportAction = async ({
         const totalQuizPoints = quizByStudent.get(student.id) || 0;
         const aspects = calculateAspectPoints(vios, totalQuizPoints);
 
+        const classTeacher = getClassTeacherName(student.class_id);
+        const resolvedTeacherName = classTeacher || fallbackTeacherName;
+
         reports.push({
             student,
+            teacherName: resolvedTeacherName ? formatDegreeProperly(resolvedTeacherName) : undefined,
             evaluation: currentEval || null,
             aspects,
             violations: vios,
@@ -959,7 +971,10 @@ export const downloadBintangReportAction = async ({
     const { default: jsPDF } = await import('jspdf');
     const doc = new jsPDF();
     
-    const monthDate = new Date(`${month}-01`);
+    const [yearStr, monthStr] = month.split('-');
+    const parsedYear = parseInt(yearStr, 10) || new Date().getFullYear();
+    const parsedMonthNum = parseInt(monthStr, 10) || (new Date().getMonth() + 1);
+    const monthDate = new Date(parsedYear, parsedMonthNum - 1, 1);
     const monthName = monthDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
     let printDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
     if (customPrintDate && customPrintDate.trim()) {
@@ -972,9 +987,9 @@ export const downloadBintangReportAction = async ({
         }
     }
 
-    // Derive academic year and semester from the selected month
-    const monthSemester = monthDate.getMonth() >= 6 ? '1' : '2';
-    const monthAcadYearStart = monthSemester === '1' ? monthDate.getFullYear() : monthDate.getFullYear() - 1;
+    // Derive academic year and semester from the selected month (month >= 7 -> Sem 1, else Sem 2)
+    const monthSemester = parsedMonthNum >= 7 ? '1' : '2';
+    const monthAcadYearStart = monthSemester === '1' ? parsedYear : parsedYear - 1;
     const academicYear = `${monthAcadYearStart}/${monthAcadYearStart + 1}`;
     const semesterName = monthSemester === '1' ? 'Ganjil' : 'Genap';
 

@@ -167,7 +167,9 @@ export function useBintangData() {
             setStudents([]);
             setViolations([]);
             setEvaluations([]);
+            setQuizPoints([]);
             setMentoringLogs([]);
+            setDailyObservations([]);
             setStudentAttitudeMap({});
         }
     }, [selectedClass, selectedMonth, fetchAllData]);
