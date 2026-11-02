@@ -10,6 +10,7 @@ describe('exportProtaToPdf - Guaranteed Single Page A4 Landscape', () => {
   let mockText: ReturnType<typeof vi.fn>;
   let mockLine: ReturnType<typeof vi.fn>;
   let mockAutoTable: ReturnType<typeof vi.fn>;
+  let mockJsPdfInstance: any;
 
   const mockIdentity: DocumentIdentity = {
     ministryName: 'KEMENTERIAN AGAMA REPUBLIK INDONESIA',
@@ -83,7 +84,7 @@ describe('exportProtaToPdf - Guaranteed Single Page A4 Landscape', () => {
     mockLine = vi.fn();
     mockAutoTable = vi.fn();
 
-    const mockJsPdfInstance = {
+    mockJsPdfInstance = {
       internal: {
         pageSize: {
           getWidth: () => 297,
@@ -151,5 +152,28 @@ describe('exportProtaToPdf - Guaranteed Single Page A4 Landscape', () => {
       expect.any(Number)
     );
     expect(mockText).toHaveBeenCalledWith('Bagas Riyadi, S.Pd', expect.any(Number), expect.any(Number));
+  });
+
+  it('renders semester without duplicate colon', async () => {
+    await exportProtaToPdf({
+      identity: mockIdentity,
+      protaItems: mockProtaItems,
+      validation: mockValidation,
+    });
+
+    expect(mockText).toHaveBeenCalledWith('1 (Ganjil) & 2 (Genap)', expect.any(Number), expect.any(Number));
+    expect(mockText).not.toHaveBeenCalledWith(': 1 (Ganjil) & 2 (Genap)', expect.any(Number), expect.any(Number));
+  });
+
+  it('adds a new page for signatures when table extends near page bottom to prevent collision', async () => {
+    mockJsPdfInstance.lastAutoTable = { finalY: 185 };
+
+    await exportProtaToPdf({
+      identity: mockIdentity,
+      protaItems: mockProtaItems,
+      validation: mockValidation,
+    });
+
+    expect(mockAddPage).toHaveBeenCalledTimes(1);
   });
 });

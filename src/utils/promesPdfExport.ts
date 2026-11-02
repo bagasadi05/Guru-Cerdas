@@ -301,11 +301,16 @@ export async function exportPromesToPdf({
     finalTableY + 3.5
   );
 
-  // ── 5. Signature Block (Guaranteed on Page 1) ──
+  // ── 5. Signature Block (Guaranteed Safe Placement) ──
   const sigHeight = 22;
   let sigStartY = finalTableY + 7;
   if (sigStartY + sigHeight > PAGE_HEIGHT - 6) {
-    sigStartY = PAGE_HEIGHT - 6 - sigHeight;
+    if (PAGE_HEIGHT - 6 - sigHeight >= finalTableY + 5) {
+      sigStartY = PAGE_HEIGHT - 6 - sigHeight;
+    } else {
+      doc.addPage();
+      sigStartY = MARGIN + 10;
+    }
   }
   drawSignatures(doc, MARGIN, PAGE_WIDTH, sigStartY, identity);
 

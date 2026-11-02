@@ -86,7 +86,7 @@ export async function exportProtaToPdf({
   const rightCol = [
     ['Kurikulum', identity.curriculum === 'K13' ? 'Kurikulum 2013' : 'Kurikulum Merdeka'],
     ['Tahun Ajaran', identity.academicYear],
-    ['Semester', `: 1 (Ganjil) & 2 (Genap)`],
+    ['Semester', '1 (Ganjil) & 2 (Genap)'],
   ];
 
   doc.setFontSize(8);
@@ -237,11 +237,16 @@ export async function exportProtaToPdf({
 
   const finalTableY = (doc as any).lastAutoTable?.finalY ?? y + 50;
 
-  // ── 5. Signature Block (Guaranteed on Page 1 — Never Separated) ──
+  // ── 5. Signature Block (Guaranteed Safe Placement) ──
   const sigHeight = 22;
   let sigStartY = finalTableY + 4;
   if (sigStartY + sigHeight > PAGE_HEIGHT - 6) {
-    sigStartY = PAGE_HEIGHT - 6 - sigHeight;
+    if (PAGE_HEIGHT - 6 - sigHeight >= finalTableY + 2) {
+      sigStartY = PAGE_HEIGHT - 6 - sigHeight;
+    } else {
+      doc.addPage();
+      sigStartY = MARGIN + 10;
+    }
   }
   drawSignatures(doc, MARGIN, PAGE_WIDTH, sigStartY, identity);
 
