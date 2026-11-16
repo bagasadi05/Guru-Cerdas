@@ -28,7 +28,7 @@ vi.mock('../../src/services/supabase', () => ({
     },
 }));
 
-import { fetchAnalyticsData } from '../../src/components/pages/analytics/fetchAnalyticsData';
+import { fetchAnalyticsData } from '../../src/services/analytics/fetchAnalyticsData';
 
 const params = { userId: 'teacher', classIds: ['c1'], dateRange: '2026-08', semesterId: 'sem-1' };
 

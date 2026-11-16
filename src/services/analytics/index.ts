@@ -4,8 +4,8 @@
  * Semua query Supabase untuk fitur analitik hidup di sini — komponen di
  * `src/components/pages/analytics/**` tidak boleh mengimpor client Supabase
  * langsung (dijaga rule ESLint `no-restricted-imports`, lihat eslint.config.js).
- * `fetchAnalyticsData.ts` masih berada di folder komponen dan merupakan
- * pengecualian yang dijadwalkan direlokasi di langkah F3.1 berikutnya.
+ * `fetchAnalyticsData.ts` direlokasi ke folder ini pada F3.1b (10 query terpusat
+ * di sini; tipe analitik masih pointer ke folder komponen).
  *
  * @module services/analytics
  */
@@ -65,8 +65,7 @@ export async function fetchClassComparisonData(semesterId: string | null): Promi
     };
 }
 
-export async function fetchSmartInsightsData(semesterId: string | null): Promise<SmartInsightsDataset> {
-    const [clsRes, stuRes, vioRes, attRes, acaRes] = await Promise.all([
+export async function fetchSmartInsightsData(semesterId: string | null): Promise<SmartInsightsDataset> {    const [clsRes, stuRes, vioRes, attRes, acaRes] = await Promise.all([
         supabase.from('classes').select('id, name').is('deleted_at', null).eq('is_archived', false),
         supabase.from('students').select('id, name, class_id, parent_phone, parent_name').is('deleted_at', null),
         applySemester(
@@ -94,3 +93,5 @@ export async function fetchSmartInsightsData(semesterId: string | null): Promise
         academics: (acaRes.data || []) as SmartInsightsDataset['academics'],
     };
 }
+
+export * from './fetchAnalyticsData';

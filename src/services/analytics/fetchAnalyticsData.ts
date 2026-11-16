@@ -1,11 +1,13 @@
-import { supabase } from '../../../services/supabase';
-import { fetchAllPages } from '../../../utils/fetchAllPages';
-import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../../utils/academicRecordUtils';
-import { normalizeAcademicRecords } from '../../../services/academicAnalyticsService';
+import { supabase } from '../supabase';
+import { fetchAllPages } from '../../utils/fetchAllPages';
+import { dedupeAcademicRecords, dedupeQuizPoints, dedupeViolations } from '../../utils/academicRecordUtils';
+import { normalizeAcademicRecords } from '../academicAnalyticsService';
+// Pointer import: baris tipe analitik masih tinggal di folder komponen —
+// pemindahan penuh tipe ini menyusul (F3.1 lanjutan).
 import type {
     AnalyticsClass, Student, AnalyticsAttendance, AnalyticsTask,
     AnalyticsAcademicRecord, AnalyticsViolation, AnalyticsQuizPoint, AnalyticsPhSchedule, AnalyticsDataPayload,
-} from './types';
+} from '../../components/pages/analytics/types';
 
 export interface AnalyticsQueryParams {
     userId: string;

@@ -22,10 +22,6 @@ export default tseslint.config(
         },
     },
     {
-        files: ['src/components/pages/analytics/fetchAnalyticsData.ts'],
-        rules: { 'no-restricted-imports': 'off' },
-    },
-    {
         extends: [js.configs.recommended, ...tseslint.configs.recommended],
         files: ['**/*.{ts,tsx}'],
         languageOptions: {
