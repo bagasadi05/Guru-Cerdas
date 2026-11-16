@@ -36,7 +36,6 @@
     "e2e"
   ],
   "exclude": [
-    "supabase",
-    "tests/unit/aiProviderRouter.test.ts"
+    "supabase"
   ]
 }

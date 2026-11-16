@@ -14,6 +14,7 @@ import type {
 class OfflineQueueService {
     private queue: QueueItem<Record<string, unknown>>[] = [];
     private syncInProgress = false;
+    private syncHandler?: (item: QueueItem) => Promise<SyncResult>;
     private listeners: Set<(queue: QueueItem<Record<string, unknown>>[]) => void> = new Set();
 
     constructor() {
@@ -176,8 +177,26 @@ class OfflineQueueService {
         this.processQueue();
     }
 
+    /**
+     * Registers the executor `processQueue()` uses when no explicit one is passed.
+     * Returns a disposer so a hook that unmounts cannot leave a stale closure behind.
+     */
+    setSyncHandler(handler?: (item: QueueItem) => Promise<SyncResult>): () => void {
+        this.syncHandler = handler;
+        return () => {
+            if (this.syncHandler === handler) {
+                this.syncHandler = undefined;
+            }
+        };
+    }
+
     // Process queue
     async processQueue(syncFn?: (item: QueueItem) => Promise<SyncResult>): Promise<void> {
+        const executor = syncFn ?? this.syncHandler;
+        if (!executor) {
+            logger.warn('Skipping queue sync: no sync handler registered', 'OfflineQueue');
+            return;
+        }
         if (this.syncInProgress || !navigator.onLine) return;
 
         this.syncInProgress = true;
@@ -194,14 +213,8 @@ class OfflineQueueService {
                 item.status = 'syncing';
                 await this.saveQueue();
 
-                if (syncFn) {
-                    const result = await syncFn(item);
-                    await this.handleSyncResult(result);
-                } else {
-                    // Default: mark as success (actual sync should be implemented)
-                    item.status = 'success';
-                    await this.saveQueue();
-                }
+                const result = await executor(item);
+                await this.handleSyncResult(result);
             } catch (err) {
                 const error = err instanceof Error ? err : new Error(String(err));
                 try {

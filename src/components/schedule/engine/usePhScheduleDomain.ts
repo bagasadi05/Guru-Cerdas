@@ -99,6 +99,7 @@ export function usePhScheduleDomain({
     }, [classStorageKey]);
 
     const [internalSelection, setInternalSelection] = useState({ userId: user?.id, classId: '' });
+    const [selectedSubject, setSelectedSubject] = useState<string>('all');
 
     const handleSelectClass = useCallback(
         (id: string) => {
@@ -115,7 +116,6 @@ export function usePhScheduleDomain({
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [statusFilter, setStatusFilterValue] = useState<ExamStatus | 'all'>('all');
     const [selectedMonth, setSelectedMonth] = useState<string>('all');
-    const [selectedSubject, setSelectedSubject] = useState<string>('all');
     const [viewMode, setViewMode] = useState<PhViewMode>('weekly');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const setStatusFilter = useCallback((status: ExamStatus | 'all') => {
@@ -285,33 +285,33 @@ export function usePhScheduleDomain({
 
     // Track "seen" state for newly added schedules by other teachers
     const seenStorageKey = user?.id && effectiveClassId ? `portal-guru:ph-seen:${user.id}:${effectiveClassId}` : '';
-    const [seenTimestamp, setSeenTimestamp] = useState<number>(0);
+    const [seenAck, setSeenAck] = useState<{ key: string; timestamp: number } | null>(null);
+    const [referenceNowMs, setReferenceNowMs] = useState<number>(() => Date.now());
 
-    useEffect(() => {
-        if (!seenStorageKey) {
-            setSeenTimestamp(0);
-            return;
+    const seenTimestamp = useMemo(() => {
+        if (seenAck && seenAck.key === seenStorageKey) {
+            return seenAck.timestamp;
         }
+        if (!seenStorageKey) return 0;
         try {
             const raw = localStorage.getItem(seenStorageKey);
-            setSeenTimestamp(raw ? Number(raw) || 0 : 0);
+            return raw ? Number(raw) || 0 : 0;
         } catch {
-            setSeenTimestamp(0);
+            return 0;
         }
-    }, [seenStorageKey]);
+    }, [seenStorageKey, seenAck]);
 
     const newExternalSchedules = useMemo(() => {
         if (!user?.id) return [];
-        const now = Date.now();
         return rawSchedules.filter((item) => {
             if (!item.created_by || item.created_by === user.id) return false;
             const createdMs = item.created_at ? Date.parse(item.created_at) : 0;
             if (!createdMs || Number.isNaN(createdMs)) return false;
-            const isRecent = now - createdMs <= NEW_SCHEDULE_WINDOW_MS;
+            const isRecent = referenceNowMs - createdMs <= NEW_SCHEDULE_WINDOW_MS;
             const isAfterLastSeen = createdMs > seenTimestamp;
             return isRecent && isAfterLastSeen;
         });
-    }, [rawSchedules, user?.id, seenTimestamp]);
+    }, [rawSchedules, user?.id, seenTimestamp, referenceNowMs]);
 
     const newExternalScheduleIdSet = useMemo(
         () => new Set(newExternalSchedules.map((s) => s.id)),
@@ -320,7 +320,8 @@ export function usePhScheduleDomain({
 
     const acknowledgeNewSchedules = useCallback(() => {
         const now = Date.now();
-        setSeenTimestamp(now);
+        setReferenceNowMs(now);
+        setSeenAck({ key: seenStorageKey, timestamp: now });
         if (seenStorageKey) {
             try {
                 localStorage.setItem(seenStorageKey, String(now));

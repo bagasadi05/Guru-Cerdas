@@ -10,250 +10,24 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "12.2.3"
   }
   public: {
     Tables: {
-      modul_ajar_ai_cache: {
-        Row: { user_id: string; operation: string; request_fingerprint: string; prompt_version: number; contract_version: number; content: Json; created_at: string; expires_at: string }
-        Insert: { user_id: string; operation: string; request_fingerprint: string; prompt_version: number; contract_version: number; content: Json; created_at?: string; expires_at?: string }
-        Update: { user_id?: string; operation?: string; request_fingerprint?: string; prompt_version?: number; contract_version?: number; content?: Json; created_at?: string; expires_at?: string }
-        Relationships: []
-      }
-      modul_ajar_ai_usage: {
-        Row: { id: string; user_id: string; operation: string; request_fingerprint: string; cache_hit: boolean; status: string; attempts: Json; input_tokens: number | null; output_tokens: number | null; reasoning_tokens: number | null; total_tokens: number | null; latency_ms: number; created_at: string }
-        Insert: { id?: string; user_id: string; operation: string; request_fingerprint: string; cache_hit: boolean; status: string; attempts: Json; input_tokens?: number | null; output_tokens?: number | null; reasoning_tokens?: number | null; total_tokens?: number | null; latency_ms: number; created_at?: string }
-        Update: { status?: string }
-        Relationships: []
-      }
-      user_notification_preferences: {
-        Row: { user_id: string; task_reminders: boolean; task_reminder_days: number; updated_at: string }
-        Insert: { user_id: string; task_reminders?: boolean; task_reminder_days?: number; updated_at?: string }
-        Update: { user_id?: string; task_reminders?: boolean; task_reminder_days?: number; updated_at?: string }
-        Relationships: []
-      }
-      teacher_reminder_deliveries: {
-        Row: { kind: string; entity_id: string; occurrence_date: string; subscription_id: string; lease_token: string | null; lease_until: string | null; delivered_at: string | null; terminal: boolean; attempts: number; last_error: string | null }
-        Insert: { kind: string; entity_id: string; occurrence_date: string; subscription_id: string; lease_token?: string | null; lease_until?: string | null; delivered_at?: string | null; terminal?: boolean; attempts?: number; last_error?: string | null }
-        Update: { kind?: string; entity_id?: string; occurrence_date?: string; subscription_id?: string; lease_token?: string | null; lease_until?: string | null; delivered_at?: string | null; terminal?: boolean; attempts?: number; last_error?: string | null }
-        Relationships: [{ foreignKeyName: 'teacher_reminder_deliveries_subscription_id_fkey'; columns: ['subscription_id']; isOneToOne: false; referencedRelation: 'push_subscriptions'; referencedColumns: ['id'] }]
-      }
-      kaldik_entries: {
+      _backup_violation_type_20261003: {
         Row: {
-          academic_year: string
-          created_at: string
-          id: string
-          month: number
-          notes: string | null
-          updated_at: string
-          user_id: string
-          week_number: number
-          week_type: string
+          id: string | null
+          type: string | null
         }
         Insert: {
-          academic_year: string
-          created_at?: string
-          id?: string
-          month: number
-          notes?: string | null
-          updated_at?: string
-          user_id: string
-          week_number: number
-          week_type: string
+          id?: string | null
+          type?: string | null
         }
         Update: {
-          academic_year?: string
-          created_at?: string
-          id?: string
-          month?: number
-          notes?: string | null
-          updated_at?: string
-          user_id?: string
-          week_number?: number
-          week_type?: string
+          id?: string | null
+          type?: string | null
         }
         Relationships: []
-      }
-      prota_headers: {
-        Row: {
-          academic_year: string
-          created_at: string
-          curriculum: string
-          grade_level: string
-          id: string
-          phase: string | null
-          reserve_jp_sem1: number
-          reserve_jp_sem2: number
-          subject: string
-          updated_at: string
-          user_id: string
-          weekly_jp_quota: number
-        }
-        Insert: {
-          academic_year: string
-          created_at?: string
-          curriculum?: string
-          grade_level: string
-          id?: string
-          phase?: string | null
-          reserve_jp_sem1?: number
-          reserve_jp_sem2?: number
-          subject: string
-          updated_at?: string
-          user_id: string
-          weekly_jp_quota?: number
-        }
-        Update: {
-          academic_year?: string
-          created_at?: string
-          curriculum?: string
-          grade_level?: string
-          id?: string
-          phase?: string | null
-          reserve_jp_sem1?: number
-          reserve_jp_sem2?: number
-          subject?: string
-          updated_at?: string
-          user_id?: string
-          weekly_jp_quota?: number
-        }
-        Relationships: []
-      }
-      prota_items: {
-        Row: {
-          core_topic: string
-          created_at: string
-          element_or_domain: string
-          id: string
-          learning_objective_code: string
-          learning_objective_text: string
-          order_index: number
-          prota_id: string
-          semester_number: number
-          target_jp: number
-          updated_at: string
-        }
-        Insert: {
-          core_topic?: string
-          created_at?: string
-          element_or_domain?: string
-          id?: string
-          learning_objective_code?: string
-          learning_objective_text?: string
-          order_index?: number
-          prota_id: string
-          semester_number: number
-          target_jp?: number
-          updated_at?: string
-        }
-        Update: {
-          core_topic?: string
-          created_at?: string
-          element_or_domain?: string
-          id?: string
-          learning_objective_code?: string
-          learning_objective_text?: string
-          order_index?: number
-          prota_id?: string
-          semester_number?: number
-          target_jp?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "prota_items_prota_id_fkey"
-            columns: ["prota_id"]
-            isOneToOne: false
-            referencedRelation: "prota_headers"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      promes_headers: {
-        Row: {
-          created_at: string
-          id: string
-          prota_id: string
-          semester_number: number
-          updated_at: string
-          user_id: string
-          weekly_jp_limit: number
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          prota_id: string
-          semester_number: number
-          updated_at?: string
-          user_id: string
-          weekly_jp_limit?: number
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          prota_id?: string
-          semester_number?: number
-          updated_at?: string
-          user_id?: string
-          weekly_jp_limit?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "promes_headers_prota_id_fkey"
-            columns: ["prota_id"]
-            isOneToOne: false
-            referencedRelation: "prota_headers"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      promes_week_allocations: {
-        Row: {
-          allocated_jp: number
-          created_at: string
-          id: string
-          month_index: number
-          promes_id: string
-          prota_item_id: string
-          updated_at: string
-          week_number: number
-        }
-        Insert: {
-          allocated_jp?: number
-          created_at?: string
-          id?: string
-          month_index: number
-          promes_id: string
-          prota_item_id: string
-          updated_at?: string
-          week_number: number
-        }
-        Update: {
-          allocated_jp?: number
-          created_at?: string
-          id?: string
-          month_index?: number
-          promes_id?: string
-          prota_item_id?: string
-          updated_at?: string
-          week_number?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "promes_week_allocations_promes_id_fkey"
-            columns: ["promes_id"]
-            isOneToOne: false
-            referencedRelation: "promes_headers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "promes_week_allocations_prota_item_id_fkey"
-            columns: ["prota_item_id"]
-            isOneToOne: false
-            referencedRelation: "prota_items"
-            referencedColumns: ["id"]
-          }
-        ]
       }
       academic_records: {
         Row: {
@@ -1167,42 +941,6 @@ export type Database = {
           },
         ]
       }
-      deletion_audit: {
-        Row: {
-          created_at: string
-          deleted_at: string
-          deleted_by: string | null
-          deletion_type: string
-          id: string
-          record_id: string
-          restored_at: string | null
-          row_snapshot: Json | null
-          table_name: string
-        }
-        Insert: {
-          created_at?: string
-          deleted_at?: string
-          deleted_by?: string | null
-          deletion_type?: string
-          id?: string
-          record_id: string
-          restored_at?: string | null
-          row_snapshot?: Json | null
-          table_name: string
-        }
-        Update: {
-          created_at?: string
-          deleted_at?: string
-          deleted_by?: string | null
-          deletion_type?: string
-          id?: string
-          record_id?: string
-          restored_at?: string | null
-          row_snapshot?: Json | null
-          table_name?: string
-        }
-        Relationships: []
-      }
       daily_input_log: {
         Row: {
           class_name: string
@@ -1236,6 +974,42 @@ export type Database = {
           student_count?: number
           teacher_id?: string
           teacher_name?: string
+        }
+        Relationships: []
+      }
+      deletion_audit: {
+        Row: {
+          created_at: string
+          deleted_at: string
+          deleted_by: string | null
+          deletion_type: string
+          id: string
+          record_id: string
+          restored_at: string | null
+          row_snapshot: Json | null
+          table_name: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string
+          deleted_by?: string | null
+          deletion_type?: string
+          id?: string
+          record_id: string
+          restored_at?: string | null
+          row_snapshot?: Json | null
+          table_name: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string
+          deleted_by?: string | null
+          deletion_type?: string
+          id?: string
+          record_id?: string
+          restored_at?: string | null
+          row_snapshot?: Json | null
+          table_name?: string
         }
         Relationships: []
       }
@@ -1495,6 +1269,21 @@ export type Database = {
         }
         Relationships: []
       }
+      hermes_probe_1a3f99ad: {
+        Row: {
+          id: string
+          v: string | null
+        }
+        Insert: {
+          id: string
+          v?: string | null
+        }
+        Update: {
+          id?: string
+          v?: string | null
+        }
+        Relationships: []
+      }
       homework: {
         Row: {
           class_id: string | null
@@ -1572,6 +1361,42 @@ export type Database = {
         }
         Relationships: []
       }
+      kaldik_entries: {
+        Row: {
+          academic_year: string
+          created_at: string
+          id: string
+          month: number
+          notes: string | null
+          updated_at: string
+          user_id: string
+          week_number: number
+          week_type: string
+        }
+        Insert: {
+          academic_year: string
+          created_at?: string
+          id?: string
+          month: number
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+          week_number: number
+          week_type: string
+        }
+        Update: {
+          academic_year?: string
+          created_at?: string
+          id?: string
+          month?: number
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+          week_number?: number
+          week_type?: string
+        }
+        Relationships: []
+      }
       lesson_plans: {
         Row: {
           components: Json
@@ -1613,6 +1438,325 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      modul_ajar_ai_cache: {
+        Row: {
+          content: Json
+          contract_version: number
+          created_at: string
+          expires_at: string
+          operation: string
+          prompt_version: number
+          request_fingerprint: string
+          user_id: string
+        }
+        Insert: {
+          content: Json
+          contract_version: number
+          created_at?: string
+          expires_at?: string
+          operation: string
+          prompt_version: number
+          request_fingerprint: string
+          user_id: string
+        }
+        Update: {
+          content?: Json
+          contract_version?: number
+          created_at?: string
+          expires_at?: string
+          operation?: string
+          prompt_version?: number
+          request_fingerprint?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      modul_ajar_ai_usage: {
+        Row: {
+          attempts: Json
+          cache_hit: boolean
+          created_at: string
+          id: string
+          input_tokens: number | null
+          latency_ms: number
+          operation: string
+          output_tokens: number | null
+          reasoning_tokens: number | null
+          request_fingerprint: string
+          status: string
+          total_tokens: number | null
+          user_id: string
+        }
+        Insert: {
+          attempts?: Json
+          cache_hit: boolean
+          created_at?: string
+          id?: string
+          input_tokens?: number | null
+          latency_ms: number
+          operation: string
+          output_tokens?: number | null
+          reasoning_tokens?: number | null
+          request_fingerprint: string
+          status: string
+          total_tokens?: number | null
+          user_id: string
+        }
+        Update: {
+          attempts?: Json
+          cache_hit?: boolean
+          created_at?: string
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number
+          operation?: string
+          output_tokens?: number | null
+          reasoning_tokens?: number | null
+          request_fingerprint?: string
+          status?: string
+          total_tokens?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ph_schedules: {
+        Row: {
+          class_id: string
+          created_at: string
+          created_by: string
+          date: string
+          deleted_at: string | null
+          id: string
+          period_label: string
+          semester_id: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          created_by: string
+          date: string
+          deleted_at?: string | null
+          id?: string
+          period_label: string
+          semester_id: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          created_by?: string
+          date?: string
+          deleted_at?: string | null
+          id?: string
+          period_label?: string
+          semester_id?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_schedules_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ph_schedules_semester_id_fkey"
+            columns: ["semester_id"]
+            isOneToOne: false
+            referencedRelation: "semesters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promes_headers: {
+        Row: {
+          created_at: string
+          id: string
+          prota_id: string
+          semester_number: number
+          updated_at: string
+          user_id: string
+          weekly_jp_limit: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          prota_id: string
+          semester_number: number
+          updated_at?: string
+          user_id: string
+          weekly_jp_limit?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          prota_id?: string
+          semester_number?: number
+          updated_at?: string
+          user_id?: string
+          weekly_jp_limit?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promes_headers_prota_id_fkey"
+            columns: ["prota_id"]
+            isOneToOne: false
+            referencedRelation: "prota_headers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promes_week_allocations: {
+        Row: {
+          allocated_jp: number
+          created_at: string
+          id: string
+          is_manual: boolean
+          month_index: number
+          promes_id: string
+          prota_item_id: string
+          updated_at: string
+          week_number: number
+        }
+        Insert: {
+          allocated_jp?: number
+          created_at?: string
+          id?: string
+          is_manual?: boolean
+          month_index: number
+          promes_id: string
+          prota_item_id: string
+          updated_at?: string
+          week_number: number
+        }
+        Update: {
+          allocated_jp?: number
+          created_at?: string
+          id?: string
+          is_manual?: boolean
+          month_index?: number
+          promes_id?: string
+          prota_item_id?: string
+          updated_at?: string
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promes_week_allocations_promes_id_fkey"
+            columns: ["promes_id"]
+            isOneToOne: false
+            referencedRelation: "promes_headers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promes_week_allocations_prota_item_id_fkey"
+            columns: ["prota_item_id"]
+            isOneToOne: false
+            referencedRelation: "prota_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prota_headers: {
+        Row: {
+          academic_year: string
+          created_at: string
+          curriculum: string
+          grade_level: string
+          id: string
+          phase: string | null
+          reserve_jp_sem1: number
+          reserve_jp_sem2: number
+          subject: string
+          updated_at: string
+          user_id: string
+          weekly_jp_quota: number
+        }
+        Insert: {
+          academic_year: string
+          created_at?: string
+          curriculum?: string
+          grade_level: string
+          id?: string
+          phase?: string | null
+          reserve_jp_sem1?: number
+          reserve_jp_sem2?: number
+          subject: string
+          updated_at?: string
+          user_id: string
+          weekly_jp_quota?: number
+        }
+        Update: {
+          academic_year?: string
+          created_at?: string
+          curriculum?: string
+          grade_level?: string
+          id?: string
+          phase?: string | null
+          reserve_jp_sem1?: number
+          reserve_jp_sem2?: number
+          subject?: string
+          updated_at?: string
+          user_id?: string
+          weekly_jp_quota?: number
+        }
+        Relationships: []
+      }
+      prota_items: {
+        Row: {
+          core_topic: string
+          created_at: string
+          element_or_domain: string
+          id: string
+          learning_objective_code: string
+          learning_objective_text: string
+          order_index: number
+          prota_id: string
+          semester_number: number
+          target_jp: number
+          updated_at: string
+        }
+        Insert: {
+          core_topic?: string
+          created_at?: string
+          element_or_domain?: string
+          id?: string
+          learning_objective_code?: string
+          learning_objective_text?: string
+          order_index?: number
+          prota_id: string
+          semester_number: number
+          target_jp?: number
+          updated_at?: string
+        }
+        Update: {
+          core_topic?: string
+          created_at?: string
+          element_or_domain?: string
+          id?: string
+          learning_objective_code?: string
+          learning_objective_text?: string
+          order_index?: number
+          prota_id?: string
+          semester_number?: number
+          target_jp?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prota_items_prota_id_fkey"
+            columns: ["prota_id"]
+            isOneToOne: false
+            referencedRelation: "prota_headers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       push_subscriptions: {
         Row: {
@@ -1971,8 +2115,8 @@ export type Database = {
           created_at: string | null
           id: string
           kategori: string | null
-          kelebihan: Json | null
           kekurangan: Json | null
+          kelebihan: Json | null
           nama_model: string
           sintaks_inti: Json
           sintaks_pendahuluan: Json
@@ -1984,8 +2128,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           kategori?: string | null
-          kelebihan?: Json | null
           kekurangan?: Json | null
+          kelebihan?: Json | null
           nama_model: string
           sintaks_inti?: Json
           sintaks_pendahuluan?: Json
@@ -1997,8 +2141,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           kategori?: string | null
-          kelebihan?: Json | null
           kekurangan?: Json | null
+          kelebihan?: Json | null
           nama_model?: string
           sintaks_inti?: Json
           sintaks_pendahuluan?: Json
@@ -2114,7 +2258,7 @@ export type Database = {
           deskripsi: string | null
           id: string
           nama_tema: string
-          tujuan: string | null
+          tujuan: string
           updated_at: string | null
           urutan: number
         }
@@ -2123,7 +2267,7 @@ export type Database = {
           deskripsi?: string | null
           id: string
           nama_tema: string
-          tujuan?: string | null
+          tujuan: string
           updated_at?: string | null
           urutan?: number
         }
@@ -2132,7 +2276,7 @@ export type Database = {
           deskripsi?: string | null
           id?: string
           nama_tema?: string
-          tujuan?: string | null
+          tujuan?: string
           updated_at?: string | null
           urutan?: number
         }
@@ -2233,60 +2377,6 @@ export type Database = {
         }
         Relationships: []
       }
-      ph_schedules: {
-        Row: {
-          class_id: string
-          created_at: string
-          created_by: string
-          date: string
-          deleted_at: string | null
-          id: string
-          period_label: string
-          semester_id: string
-          subject: string
-          updated_at: string
-        }
-        Insert: {
-          class_id: string
-          created_at?: string
-          created_by: string
-          date: string
-          deleted_at?: string | null
-          id?: string
-          period_label: string
-          semester_id: string
-          subject: string
-          updated_at?: string
-        }
-        Update: {
-          class_id?: string
-          created_at?: string
-          created_by?: string
-          date?: string
-          deleted_at?: string | null
-          id?: string
-          period_label?: string
-          semester_id?: string
-          subject?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ph_schedules_class_id_fkey"
-            columns: ["class_id"]
-            isOneToOne: false
-            referencedRelation: "classes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ph_schedules_semester_id_fkey"
-            columns: ["semester_id"]
-            isOneToOne: false
-            referencedRelation: "semesters"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
       school_info: {
         Row: {
           academic_year: string
@@ -2335,6 +2425,42 @@ export type Database = {
           semester?: string
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      school_kaldik_entries: {
+        Row: {
+          academic_year: string
+          created_at: string
+          id: string
+          month: number
+          notes: string | null
+          updated_at: string
+          updated_by: string | null
+          week_number: number
+          week_type: string
+        }
+        Insert: {
+          academic_year: string
+          created_at?: string
+          id?: string
+          month: number
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          week_number: number
+          week_type: string
+        }
+        Update: {
+          academic_year?: string
+          created_at?: string
+          id?: string
+          month?: number
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          week_number?: number
+          week_type?: string
         }
         Relationships: []
       }
@@ -2785,6 +2911,53 @@ export type Database = {
           },
         ]
       }
+      teacher_reminder_deliveries: {
+        Row: {
+          attempts: number
+          delivered_at: string | null
+          entity_id: string
+          kind: string
+          last_error: string | null
+          lease_token: string | null
+          lease_until: string | null
+          occurrence_date: string
+          subscription_id: string
+          terminal: boolean
+        }
+        Insert: {
+          attempts?: number
+          delivered_at?: string | null
+          entity_id: string
+          kind: string
+          last_error?: string | null
+          lease_token?: string | null
+          lease_until?: string | null
+          occurrence_date: string
+          subscription_id: string
+          terminal?: boolean
+        }
+        Update: {
+          attempts?: number
+          delivered_at?: string | null
+          entity_id?: string
+          kind?: string
+          last_error?: string | null
+          lease_token?: string | null
+          lease_until?: string | null
+          occurrence_date?: string
+          subscription_id?: string
+          terminal?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teacher_reminder_deliveries_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "push_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teaching_journals: {
         Row: {
           activities: string | null
@@ -2851,6 +3024,27 @@ export type Database = {
           },
         ]
       }
+      user_notification_preferences: {
+        Row: {
+          task_reminder_days: number
+          task_reminders: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          task_reminder_days?: number
+          task_reminders?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          task_reminder_days?: number
+          task_reminders?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -2891,6 +3085,7 @@ export type Database = {
         Row: {
           created_at: string | null
           deleted_at: string | null
+          fonnte_config: Json | null
           school_name: string | null
           semester_1_locked: boolean | null
           updated_at: string | null
@@ -2899,6 +3094,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           deleted_at?: string | null
+          fonnte_config?: Json | null
           school_name?: string | null
           semester_1_locked?: boolean | null
           updated_at?: string | null
@@ -2907,6 +3103,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           deleted_at?: string | null
+          fonnte_config?: Json | null
           school_name?: string | null
           semester_1_locked?: boolean | null
           updated_at?: string | null
@@ -2989,42 +3186,129 @@ export type Database = {
           },
         ]
       }
+      wa_delivery_reconciliation_audit: {
+        Row: {
+          before_state: Json
+          created_at: string
+          delivery_id: string
+          evidence: string
+          id: number
+          outcome: string
+        }
+        Insert: {
+          before_state: Json
+          created_at?: string
+          delivery_id: string
+          evidence: string
+          id?: never
+          outcome: string
+        }
+        Update: {
+          before_state?: Json
+          created_at?: string
+          delivery_id?: string
+          evidence?: string
+          id?: never
+          outcome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wa_delivery_reconciliation_audit_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "wa_outbox"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wa_outbox: {
+        Row: {
+          attempts: number
+          claim_token: string | null
+          claimed_at: string | null
+          created_at: string
+          error: string | null
+          id: string
+          lease_until: string | null
+          message: string
+          phone: string
+          sent_at: string | null
+          status: string
+          wa_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          claim_token?: string | null
+          claimed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id: string
+          lease_until?: string | null
+          message: string
+          phone: string
+          sent_at?: string | null
+          status?: string
+          wa_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          claim_token?: string | null
+          claimed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          lease_until?: string | null
+          message?: string
+          phone?: string
+          sent_at?: string | null
+          status?: string
+          wa_id?: string | null
+        }
+        Relationships: []
+      }
+      wa_report_recipients: {
+        Row: {
+          class_id: string
+          created_at: string
+          enabled: boolean
+          minimum_score: number
+          phone: string
+          salutation: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          enabled?: boolean
+          minimum_score?: number
+          phone: string
+          salutation?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          enabled?: boolean
+          minimum_score?: number
+          phone?: string
+          salutation?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wa_report_recipients_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: true
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      list_ph_schedule_classes: {
-        Args: Record<PropertyKey, never>
-        Returns: { id: string; name: string; wali_kelas_id: string | null }[]
-      }
-      can_add_ph_schedule: {
-        Args: { p_class_id: string; p_semester_id: string }
-        Returns: boolean
-      }
-      can_manage_ph_schedule: {
-        Args: { p_class_id: string; p_semester_id: string }
-        Returns: boolean
-      }
-      preview_wa_ph_schedule: {
-        Args: { p_class_id: string; p_report_date?: string }
-        Returns: string
-      }
-      get_class_analytics_attendance: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
       activate_semester: {
         Args: { p_semester_id: string; p_year_id: string }
         Returns: undefined
-      }
-      auto_fill_weekly_missing_attendance: {
-        Args: {
-          p_class_id?: string | null
-          p_target_date?: string | null
-          p_notes?: string | null
-        }
-        Returns: Json
       }
       apply_quiz_points_to_grade: {
         Args: {
@@ -3033,6 +3317,18 @@ export type Database = {
           user_id_param: string
         }
         Returns: undefined
+      }
+      auto_fill_weekly_missing_attendance: {
+        Args: { p_class_id?: string; p_notes?: string; p_target_date?: string }
+        Returns: Json
+      }
+      build_wa_class_report: {
+        Args: { p_class_id: string; p_date: string }
+        Returns: string
+      }
+      build_wa_ph_section: {
+        Args: { p_class_id: string; p_date: string }
+        Returns: string
       }
       bulk_insert_grades: {
         Args: { p_grades: Json; p_teacher_id: string }
@@ -3055,6 +3351,14 @@ export type Database = {
         Args: { p_class_id: string; p_user_id: string }
         Returns: boolean
       }
+      can_add_ph_schedule: {
+        Args: { p_class_id: string; p_semester_id: string }
+        Returns: boolean
+      }
+      can_manage_ph_schedule: {
+        Args: { p_class_id: string; p_semester_id: string }
+        Returns: boolean
+      }
       check_rate_limit: {
         Args: {
           p_action_type: string
@@ -3064,7 +3368,20 @@ export type Database = {
         }
         Returns: boolean
       }
-      cleanup_daily_input_logs: { Args: { p_retention_days?: number }; Returns: number }
+      claim_teacher_reminder: {
+        Args: {
+          p_entity_id: string
+          p_kind: string
+          p_occurrence_date: string
+          p_subscription_id: string
+        }
+        Returns: string
+      }
+      cleanup_daily_input_logs: {
+        Args: { p_retention_days?: number }
+        Returns: number
+      }
+      cleanup_modul_ajar_ai_data: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: number }
       debug_student_verification: {
         Args: { access_code_param: string; student_id_param: string }
@@ -3114,6 +3431,32 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      enqueue_wa_daily_reports: {
+        Args: { p_dry_run?: boolean; p_report_date?: string }
+        Returns: {
+          delivery_id: string
+          queued: boolean
+          recipient_class_id: string
+          report_message: string
+        }[]
+      }
+      finish_teacher_reminder: {
+        Args: {
+          p_entity_id: string
+          p_error?: string
+          p_kind: string
+          p_lease_token: string
+          p_occurrence_date: string
+          p_subscription_id: string
+          p_success: boolean
+          p_terminal?: boolean
+        }
+        Returns: boolean
+      }
+      format_ph_slot: {
+        Args: { p_date: string; p_period: string }
+        Returns: string
+      }
       get_active_classes: {
         Args: never
         Returns: {
@@ -3122,6 +3465,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_app_config: { Args: { p_key: string }; Returns: string }
       get_attendance_status: {
         Args: { p_date: string; p_student_id: string }
         Returns: Database["public"]["Enums"]["attendance_status"]
@@ -3140,6 +3484,7 @@ export type Database = {
           total_rows: number
         }[]
       }
+      get_class_analytics_attendance: { Args: never; Returns: Json }
       get_daily_attendance_summary: {
         Args: { for_date: string }
         Returns: {
@@ -3148,14 +3493,6 @@ export type Database = {
           present_percentage: number
           sick_percentage: number
         }[]
-      }
-      get_telegram_config: { Args: never; Returns: Json }
-      get_app_config: { Args: { p_key: string }; Returns: string }
-      set_app_config: { Args: { p_key: string; p_value: string }; Returns: undefined }
-      set_daily_report_schedule: { Args: { p_time: string }; Returns: undefined }
-      set_modul_ajar_worker_config: {
-        Args: { p_service_key: string; p_url: string }
-        Returns: undefined
       }
       get_parent_subscription_status: {
         Args: {
@@ -3176,6 +3513,24 @@ export type Database = {
           class_name: string
           id: string
           name: string
+        }[]
+      }
+      get_student_portal_bintang: {
+        Args: { access_code_param: string; student_id_param: string }
+        Returns: {
+          adab_notes: string
+          adab_score: string
+          catatan_wali: string
+          created_at: string
+          id: string
+          is_published: boolean
+          kedisiplinan_notes: string
+          kedisiplinan_score: string
+          kerapian_notes: string
+          kerapian_score: string
+          month: string
+          student_id: string
+          updated_at: string
         }[]
       }
       get_student_portal_data: {
@@ -3258,6 +3613,7 @@ export type Database = {
           violations: Json[]
         }[]
       }
+      get_telegram_config: { Args: never; Returns: Json }
       get_user_role: { Args: { p_user_id: string }; Returns: string }
       get_weekly_attendance_summary:
         | {
@@ -3308,12 +3664,27 @@ export type Database = {
         Returns: undefined
       }
       invoke_scheduled_backup: { Args: never; Returns: undefined }
+      invoke_teacher_reminder_dispatch: { Args: never; Returns: number }
       is_admin_user: { Args: { p_user_id: string }; Returns: boolean }
       is_leadership: { Args: { p_user_id: string }; Returns: boolean }
+      list_ph_schedule_classes: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+          wali_kelas_id: string
+        }[]
+      }
       mark_accessible_communications_read: {
         Args: { p_message_ids: string[] }
         Returns: number
       }
+      ph_actor_name: { Args: { p_user_id: string }; Returns: string }
+      ph_homeroom_recipients: {
+        Args: { p_actor: string; p_class_id: string; p_semester_id: string }
+        Returns: string[]
+      }
+      ph_period_range: { Args: { p_label: string }; Returns: unknown }
       portal_validate_access_code: {
         Args: { p_code: string }
         Returns: {
@@ -3321,6 +3692,11 @@ export type Database = {
           id: string
         }[]
       }
+      preview_wa_ph_schedule: {
+        Args: { p_class_id: string; p_report_date?: string }
+        Returns: string
+      }
+      reschedule_daily_report: { Args: never; Returns: undefined }
       send_parent_message: {
         Args: {
           access_code_param: string
@@ -3328,6 +3704,18 @@ export type Database = {
           student_id_param: string
           teacher_user_id_param: string
         }
+        Returns: undefined
+      }
+      set_app_config: {
+        Args: { p_key: string; p_value: string }
+        Returns: undefined
+      }
+      set_daily_report_schedule: {
+        Args: { p_time: string }
+        Returns: undefined
+      }
+      set_modul_ajar_worker_config: {
+        Args: { p_service_key: string; p_url: string }
         Returns: undefined
       }
       subscribe_parent: {
@@ -3408,6 +3796,56 @@ export type Database = {
         }[]
       }
       verify_parent_portal_setup: { Args: never; Returns: string }
+      wa_report_text: {
+        Args: { p_limit?: number; p_text: string }
+        Returns: string
+      }
+      worker_claim: {
+        Args: {
+          p_batch: number
+          p_lease_minutes?: number
+          p_max_attempts?: number
+        }
+        Returns: {
+          attempts: number
+          claim_token: string | null
+          claimed_at: string | null
+          created_at: string
+          error: string | null
+          id: string
+          lease_until: string | null
+          message: string
+          phone: string
+          sent_at: string | null
+          status: string
+          wa_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "wa_outbox"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      worker_complete: {
+        Args: {
+          p_error?: string
+          p_id: string
+          p_status: string
+          p_token: string
+          p_wa_id?: string
+        }
+        Returns: boolean
+      }
+      worker_delivery_health: { Args: never; Returns: Json }
+      worker_recover: {
+        Args: { p_lease_minutes?: number; p_max_attempts?: number }
+        Returns: number
+      }
+      worker_requeue: {
+        Args: { p_error?: string; p_id: string; p_token: string }
+        Returns: boolean
+      }
     }
     Enums: {
       attendance_status: "Hadir" | "Izin" | "Sakit" | "Alpha" | "Libur"
@@ -3436,12 +3874,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3465,11 +3903,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3490,11 +3928,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3515,11 +3953,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3532,11 +3970,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

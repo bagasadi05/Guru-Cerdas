@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { compareClassNames } from '../../../../utils/academicRecordUtils';
 import { Info } from 'lucide-react';
 import { Modal } from '../../../ui/Modal';

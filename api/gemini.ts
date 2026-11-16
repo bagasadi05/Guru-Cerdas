@@ -1,6 +1,11 @@
 import { validBudget, geminiConfig, upstreamAbort, retryHint, type AiBudgetProfile } from './_aiBudget.js';
-import type { IncomingMessage, ServerResponse } from 'http';
 import { authenticateRequest } from './_auth.js';
+import {
+  createRateLimiter,
+  isOriginAllowed,
+  type ExtendedRequest,
+  type ExtendedResponse,
+} from './_requestGuard.js';
 
 /**
  * Gemini serverless proxy — keeps GEMINI_API_KEY server-side.
@@ -23,25 +28,17 @@ const RATE_LIMIT_MAX = 60;
 const RATE_LIMIT_BURST = 20;
 const MAX_BODY_BYTES = 500_000;
 
-type RateLimitEntry = { count: number; resetAt: number; burstUsed: number };
-const rateLimitStore = new Map<string, RateLimitEntry>();
+const checkRateLimit = createRateLimiter({
+  prefix: 'rl',
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_MAX,
+  burst: RATE_LIMIT_BURST,
+});
 
 // Server-side key pool (comma-separated GEMINI_API_KEY). A key that hit an
 // upstream 429 goes into cooldown so rotation skips it until it resets.
 const keyCooldowns = new Map<string, number>();
 let keyIndex = 0;
-
-interface ExtendedRequest extends IncomingMessage {
-  query: Record<string, string | string[]>;
-  cookies: Record<string, string>;
-  body?: Record<string, unknown>;
-}
-
-interface ExtendedResponse extends ServerResponse {
-  status(statusCode: number): ExtendedResponse;
-  json(jsonBody: unknown): void;
-  send(body: string | Buffer): void;
-}
 
 function getKeys(): string[] {
   return (process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '')
@@ -75,173 +72,6 @@ function parseRetryAfterSeconds(header: string | null | undefined): number {
   const date = Date.parse(header);
   if (Number.isFinite(date)) return Math.max(0, Math.ceil((date - Date.now()) / 1000));
   return RATE_LIMIT_WINDOW_MS / 1000;
-}
-
-function getRequestOrigin(req: ExtendedRequest): string | undefined {
-  const origin = req.headers.origin;
-  if (typeof origin === 'string' && origin.length > 0) return origin;
-  const referer = req.headers.referer;
-  if (typeof referer === 'string') {
-    try {
-      return new URL(referer).origin;
-    } catch {
-      // Fallback
-    }
-  }
-  const host = (req.headers['x-forwarded-host'] || req.headers.host) as string | undefined;
-  if (host) {
-    const proto = (req.headers['x-forwarded-proto'] || 'https') as string;
-    return `${proto}://${host}`;
-  }
-  return undefined;
-}
-
-function isOriginAllowed(req: ExtendedRequest, allowedOriginEnv: string | undefined): boolean {
-  const origin = getRequestOrigin(req);
-  if (!origin) return false;
-
-  // 1. Same-origin request: host header matches request origin hostname
-  const reqHost = ((req.headers['x-forwarded-host'] || req.headers.host) as string | undefined)?.toLowerCase();
-  if (reqHost) {
-    try {
-      const originHost = new URL(origin).hostname.toLowerCase();
-      if (originHost === reqHost) return true;
-    } catch {
-      // Fallback
-    }
-  }
-
-  // 2. Default allowed production & dev origins
-  const defaultPatterns = [
-    'https://guru-cerdas.my.id',
-    'https://*.guru-cerdas.my.id',
-    'https://*.vercel.app',
-    'http://localhost:*',
-    'http://127.0.0.1:*',
-  ];
-
-  const configuredPatterns = allowedOriginEnv
-    ? allowedOriginEnv.split(',').map((item) => item.trim()).filter(Boolean)
-    : [];
-
-  const allPatterns = [...configuredPatterns, ...defaultPatterns];
-
-  return allPatterns.some((pattern) => {
-    if (pattern === origin) return true;
-
-    // Match wildcards (e.g. https://*.guru-cerdas.my.id or http://localhost:*)
-    if (pattern.includes('*')) {
-      const regexStr =
-        '^' +
-        pattern
-          .replace(/[-/\\^$+?.()|[\]{}]/g, '\\$&') // Escape regex special chars
-          .replace(/\*/g, '[a-zA-Z0-9-.:]+') + // Match wildcard
-        '$';
-      const regex = new RegExp(regexStr);
-      return regex.test(origin);
-    }
-
-    // Automatically match subdomains of pattern domain
-    try {
-      const patternUrl = new URL(pattern);
-      const originUrl = new URL(origin);
-      if (patternUrl.protocol === originUrl.protocol) {
-        const pHost = patternUrl.hostname.toLowerCase();
-        const oHost = originUrl.hostname.toLowerCase();
-        return oHost === pHost || oHost.endsWith('.' + pHost);
-      }
-    } catch {
-      // Fallback if URL parsing fails
-    }
-
-    return false;
-  });
-}
-
-function getClientKey(req: ExtendedRequest): string {
-  // Prevent client spoofing by prioritizing Vercel's secure routing headers
-  const xRealIp = req.headers['x-real-ip'];
-  const xForwardedFor = req.headers['x-forwarded-for'];
-  const remoteAddress =
-    typeof xRealIp === 'string'
-      ? xRealIp
-      : typeof xForwardedFor === 'string'
-        ? xForwardedFor.split(',')[0].trim()
-        : req.socket?.remoteAddress;
-  const userAgent = typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : 'unknown';
-  return `${remoteAddress || 'unknown'}:${userAgent}`;
-}
-
-function allowRequestInMemory(key: string): { allowed: boolean; retryAfterMs: number } {
-  const now = Date.now();
-  const existing = rateLimitStore.get(key);
-
-  if (!existing || existing.resetAt <= now) {
-    rateLimitStore.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS, burstUsed: 0 });
-    return { allowed: true, retryAfterMs: 0 };
-  }
-
-  if (existing.count < RATE_LIMIT_MAX) {
-    existing.count += 1;
-    return { allowed: true, retryAfterMs: 0 };
-  }
-
-  if (existing.burstUsed < RATE_LIMIT_BURST) {
-    existing.burstUsed += 1;
-    return { allowed: true, retryAfterMs: 0 };
-  }
-
-  return { allowed: false, retryAfterMs: Math.max(0, existing.resetAt - now) };
-}
-
-async function allowRequestRedis(
-  key: string,
-  redisUrl: string,
-  redisToken: string
-): Promise<{ allowed: boolean; retryAfterMs: number }> {
-  try {
-    const windowSeconds = Math.ceil(RATE_LIMIT_WINDOW_MS / 1000);
-    const limit = RATE_LIMIT_MAX + RATE_LIMIT_BURST;
-
-    // Use Upstash Redis pipeline to INCR and TTL atomically in a single network request
-    const response = await fetch(`${redisUrl}/pipeline`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${redisToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify([
-        ['INCR', key],
-        ['TTL', key],
-      ]),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Upstash Redis HTTP error: ${response.status}`);
-    }
-
-    const results = await response.json();
-    const count = Number(results[0]?.result);
-    const ttl = Number(results[1]?.result);
-
-    // If TTL is -1 (no expiry set), set expiry to RATE_LIMIT_WINDOW_MS
-    if (ttl === -1) {
-      await fetch(`${redisUrl}/expire/${key}/${windowSeconds}`, {
-        headers: { Authorization: `Bearer ${redisToken}` },
-      });
-    }
-
-    if (count > limit) {
-      const retryAfterMs = ttl > 0 ? ttl * 1000 : RATE_LIMIT_WINDOW_MS;
-      return { allowed: false, retryAfterMs };
-    }
-
-    return { allowed: true, retryAfterMs: 0 };
-  } catch (err) {
-    // If Redis fails, gracefully fall back to the in-memory rate limiter so service doesn't go down
-    console.error('Redis Rate Limiter Error (falling back to in-memory):', err);
-    return allowRequestInMemory(key);
-  }
 }
 
 function getRequestId(req: ExtendedRequest): string {
@@ -316,16 +146,7 @@ export default async function handler(req: ExtendedRequest, res: ExtendedRespons
     return;
   }
 
-  const clientKey = `rl:${getClientKey(req)}`;
-  const redisUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const redisToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-
-  let rateLimit;
-  if (redisUrl && redisToken) {
-    rateLimit = await allowRequestRedis(clientKey, redisUrl, redisToken);
-  } else {
-    rateLimit = allowRequestInMemory(clientKey);
-  }
+  const rateLimit = await checkRateLimit(req, auth.userId);
 
   if (!rateLimit.allowed) {
     const retryAfterSeconds = Math.ceil(rateLimit.retryAfterMs / 1000);

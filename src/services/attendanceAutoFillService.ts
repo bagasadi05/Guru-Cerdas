@@ -90,8 +90,8 @@ export const attendanceAutoFillService = {
         notes?: string;
     }): Promise<AutoFillResult> {
         const { data, error } = await supabase.rpc('auto_fill_weekly_missing_attendance', {
-            p_class_id: params?.classId || null,
-            p_target_date: params?.targetDate || null,
+            p_class_id: params?.classId || undefined,
+            p_target_date: params?.targetDate || undefined,
             p_notes: params?.notes || '[Auto-fill Sistem: Hadir]',
         });
 

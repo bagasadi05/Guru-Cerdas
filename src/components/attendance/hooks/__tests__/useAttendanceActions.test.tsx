@@ -11,6 +11,7 @@ const mockAddToQueue = vi.fn();
 vi.mock('../../../../services/supabase', () => ({
     supabase: { from: vi.fn(() => ({ upsert: (...args: unknown[]) => mockUpsert(...args) })) },
     wasLastResponseQueued: () => false,
+    clearStaleAuthTokens: vi.fn(),
 }));
 vi.mock('../../../../services/offlineQueue', () => ({ addToQueue: (...args: unknown[]) => mockAddToQueue(...args) }));
 vi.mock('../../../../utils/confetti', () => ({ triggerPerfectAttendanceConfetti: vi.fn(), triggerSubtleConfetti: vi.fn() }));

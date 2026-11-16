@@ -447,13 +447,22 @@ export const exportBulkViolationsToExcel = async (options: BulkViolationExportOp
         year: 'numeric'
     });
 
+    const usedSheetNames = new Set<string>();
+
     // Create one sheet per student
     sortedStudentIds.forEach((studentId, index) => {
         const studentViolations = groupedByStudent.get(studentId) || [];
         const studentName = studentMap.get(studentId) || 'Tidak Diketahui';
         const totalPoints = studentViolations.reduce((sum, v) => sum + v.points, 0);
 
-        const sheetName = `${index + 1}. ${studentName}`.substring(0, 31);
+        const baseName = `${index + 1}. ${studentName}`.replace(/[:\\/?*[\]]/g, ' ').trim();
+        let sheetName = baseName.substring(0, 31) || `Siswa ${index + 1}`;
+        let suffix = 2;
+        while (usedSheetNames.has(sheetName)) {
+            const suffixStr = ` (${suffix++})`;
+            sheetName = `${baseName.substring(0, 31 - suffixStr.length)}${suffixStr}`;
+        }
+        usedSheetNames.add(sheetName);
         const rows: (string | number)[][] = [
             [schoolName.toUpperCase()],
             ['LAPORAN PELANGGARAN SISWA'],
@@ -489,8 +498,8 @@ export const exportBulkViolationsToExcel = async (options: BulkViolationExportOp
 
         const worksheet = XLSX.utils.aoa_to_sheet(rows);
         worksheet['!merges'] = [
-            { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } },
-            { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } },
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
+            { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },
         ];
         worksheet['!cols'] = [
             { wch: 6 },
@@ -499,6 +508,7 @@ export const exportBulkViolationsToExcel = async (options: BulkViolationExportOp
             { wch: 8 },
             { wch: 12 },
             { wch: 12 },
+            { wch: 30 },
             { wch: 30 },
         ];
 

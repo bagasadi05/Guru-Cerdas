@@ -20,7 +20,7 @@ import {
     ChevronRight
 } from 'lucide-react';
 import { DailyAttendance, AttendanceStats, StudentAttendanceSummary, AutoFillStats } from './types';
-import { MissingWeekday } from '../../../services/attendanceAutoFillService';
+import type { MissingWeekday } from '../../../services/attendanceAutoFillService';
 import { createWhatsAppLink, generateAttendanceSummaryMessage } from '../../../utils/whatsappUtils';
 
 export interface AttendanceTabProps {

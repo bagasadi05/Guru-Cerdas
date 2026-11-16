@@ -1,4 +1,4 @@
-import jsPDF from 'jspdf';
+import type jsPDF from 'jspdf';
 import { getAutoTable } from '../utils/dynamicImports';
 import { addPdfHeader, ensureLogosLoaded } from '../utils/pdfHeaderUtils';
 import { BintangGrade, calculateAspectPoints, bintangService } from './bintangService';
@@ -697,6 +697,9 @@ export const generateBintangReportPdf = async (
     };
 
     const totalReports = reports.length;
+    if (totalReports === 0) return;
+
+    const { default: JsPDF } = await import('jspdf');
     for (let i = 0; i < totalReports; i++) {
         // Report progress before generating each student's page
         onProgress?.(i + 1, totalReports);
@@ -706,7 +709,7 @@ export const generateBintangReportPdf = async (
         // =========================================================================
         // PASS 1: VIRTUAL DRY-RUN MEASUREMENT
         // =========================================================================
-        const probeDoc = new jsPDF();
+        const probeDoc = new JsPDF();
         const probe1 = renderSingleBintangReport(
             probeDoc,
             report,
@@ -727,7 +730,7 @@ export const generateBintangReportPdf = async (
 
             // Verify with an in-memory probe that targetExpansion does not cause overflow
             if (targetExpansion > 0.2) {
-                const testDoc = new jsPDF();
+                const testDoc = new JsPDF();
                 const testProbe = renderSingleBintangReport(
                     testDoc,
                     report,
@@ -746,7 +749,7 @@ export const generateBintangReportPdf = async (
             isTwoPageReport = true;
             expansionFactor = 0;
 
-            const probe2Doc = new jsPDF();
+            const probe2Doc = new JsPDF();
             const probe2 = renderSingleBintangReport(
                 probe2Doc,
                 report,

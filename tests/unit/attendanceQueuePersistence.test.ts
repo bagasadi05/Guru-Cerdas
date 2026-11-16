@@ -2,7 +2,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { waitFor } from '@testing-library/react';
 
 vi.mock('../../src/services/supabase', () => ({ supabase: {} }));
-vi.mock('../../src/utils/storage', () => ({ storageGetJSON: vi.fn(async () => []), storageSetJSON: vi.fn(), storageRemove: vi.fn() }));
+vi.mock('../../src/utils/storage', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../src/utils/storage')>();
+    return {
+        ...actual,
+        storageGetJSON: vi.fn(async () => []),
+        storageSetJSON: vi.fn(),
+        storageRemove: vi.fn(),
+    };
+});
 import { storageSetJSON } from '../../src/utils/storage';
 
 const mutation = { table: 'attendance' as const, operation: 'upsert' as const, payload: [{ student_id: 'student-1', date: '2026-10-10', status: 'Hadir' }] };

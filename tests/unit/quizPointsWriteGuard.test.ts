@@ -21,6 +21,7 @@ vi.mock('../../src/services/supabase', () => {
                 },
             })),
         },
+        clearStaleAuthTokens: vi.fn(),
     };
 });
 vi.mock('../../src/services/UndoManager', () => ({ recordAction: vi.fn() }));

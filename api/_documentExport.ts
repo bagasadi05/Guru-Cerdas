@@ -75,6 +75,9 @@ export interface DocumentExportConfig {
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_BODY_BYTES = 2_048;
 const RATE_LIMIT_WINDOW_MS = 60_000;
+// Separate limiter by design: keyed per user id (not per IP) with a limit that
+// varies per document format, and intentionally in-memory only. The shared
+// origin + per-IP/per-user limiter lives in api/_requestGuard.ts.
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 
 export function checkRateLimit(key: string, limit: number, now = Date.now()): number {

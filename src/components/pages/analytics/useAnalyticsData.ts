@@ -10,7 +10,7 @@ import {
     AttendanceStats, ClassStats, DailyAttendance, AtRiskItem,
     StudentAttendanceSummary, AutoFillStats
 } from './types';
-import { attendanceAutoFillService, MissingWeekday } from '../../../services/attendanceAutoFillService';
+import { attendanceAutoFillService, type MissingWeekday } from '../../../services/attendanceAutoFillService';
 import { EMPTY_ANALYTICS_DATA, fetchAllowedClasses, fetchAnalyticsData, getMonthBounds } from './fetchAnalyticsData';
 
 const EMPTY_CLASSES: AnalyticsClass[] = [];

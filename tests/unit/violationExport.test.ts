@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { exportViolationsToPDF, exportViolationsToExcel } from '../../src/services/violationExport';
+import { exportViolationsToPDF, exportViolationsToExcel, exportBulkViolationsToExcel } from '../../src/services/violationExport';
 import { ViolationRow } from '../../src/components/pages/student/types';
 
 // Track calls for assertions
@@ -107,5 +107,38 @@ describe('violationExport Service', () => {
         expect(mockXLSX.utils.book_new).toHaveBeenCalled();
         expect(mockXLSX.utils.aoa_to_sheet).toHaveBeenCalled();
         expect(mockXLSX.writeFile).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('.xlsx'));
+    });
+
+    it('sanitizes sheet names and aligns 8-column merges/widths in bulk Excel export', async () => {
+        const sheets: Record<string, unknown>[] = [];
+        mockXLSX.utils.aoa_to_sheet.mockImplementation(() => {
+            const ws: Record<string, unknown> = {};
+            sheets.push(ws);
+            return ws;
+        });
+
+        await exportBulkViolationsToExcel({
+            className: 'Kelas 4A',
+            schoolName: 'SDN 1',
+            violations: [
+                { ...mockViolations[0], id: 'v1', student_id: 's1' },
+                { ...mockViolations[0], id: 'v2', student_id: 's2' },
+            ],
+            students: [
+                { id: 's1', name: 'A/B:C?D*E[F]' },
+                { id: 's2', name: 'A/B:C?D*E[F]' },
+            ],
+        });
+
+        expect(mockXLSX.utils.book_append_sheet).toHaveBeenCalledTimes(2);
+        const firstSheetName = mockXLSX.utils.book_append_sheet.mock.calls[0][2] as string;
+        const secondSheetName = mockXLSX.utils.book_append_sheet.mock.calls[1][2] as string;
+        expect(firstSheetName).not.toMatch(/[:\\/?*[\]]/);
+        expect(firstSheetName.length).toBeLessThanOrEqual(31);
+        expect(secondSheetName.length).toBeLessThanOrEqual(31);
+
+        const ws = sheets[0] as { '!merges': { e: { c: number } }[]; '!cols': unknown[] };
+        expect(ws['!cols']).toHaveLength(8);
+        expect(ws['!merges'][0].e.c).toBe(7);
     });
 });

@@ -37,6 +37,7 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
     const { user } = useAuth();
     const { activeSemester } = useSemester();
     const [scopeFilter, setScopeFilter] = useState<'all' | 'homeroom'>('all');
+    const [recentCutoffMs] = useState(() => Date.now() - 72 * 60 * 60 * 1000);
 
     const todayStr = useMemo(() => formatLocalDate(new Date()), []);
     const sevenDaysLaterStr = useMemo(() => {
@@ -123,17 +124,18 @@ export const TodayPhScheduleWidget: React.FC<TodayPhScheduleWidgetProps> = ({ cl
         staleTime: 2 * 60 * 1000,
     });
 
+    const currentUserId = user?.id;
+
     // Newly added schedules in homeroom class by other teachers (within last 72h)
     const newExternalHomeroomSchedules = useMemo(() => {
-        if (!user?.id || !hasHomeroom) return [];
-        const cutoffMs = Date.now() - 72 * 60 * 60 * 1000;
+        if (!currentUserId || !hasHomeroom) return [];
         return rawSchedules.filter((s) => {
             if (!homeroomSet.has(s.class_id)) return false;
-            if (!s.created_by || s.created_by === user.id) return false;
+            if (!s.created_by || s.created_by === currentUserId) return false;
             const createdMs = s.created_at ? new Date(s.created_at).getTime() : 0;
-            return createdMs >= cutoffMs;
+            return createdMs >= recentCutoffMs;
         });
-    }, [rawSchedules, user?.id, hasHomeroom, homeroomSet]);
+    }, [rawSchedules, currentUserId, hasHomeroom, homeroomSet, recentCutoffMs]);
 
     const visibleSchedules = useMemo(() => {
         if (scopeFilter === 'homeroom' && hasHomeroom) {

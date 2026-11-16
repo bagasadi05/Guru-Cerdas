@@ -5,7 +5,6 @@ import { usePushSubscriptionSync } from '../hooks/useScheduleNotifications';
 import { usePushClickNavigation } from '../hooks/usePushClickNavigation';
 import { useAuth } from '../hooks/useAuth';
 import PageTransition from './ui/PageTransition';
-import { supabase } from '../services/supabase';
 import { useOnboarding } from '../hooks/useOnboarding';
 import { SearchTrigger } from './SearchTrigger';
 import { SkipLinks } from './AccessibilityComponents';
@@ -44,28 +43,12 @@ const TutorialPicker = React.lazy(() =>
 
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, userRole } = useAuth();
+  const { user, userRole, isAdmin } = useAuth();
   usePushSubscriptionSync(user?.id);
   useQueuedGradeSync();
   const { showTour, endTour } = useOnboarding();
 
-  const [isAdmin, setIsAdmin] = useState(false);
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
-
-  useEffect(() => {
-    const checkAdmin = async () => {
-      if (!user) return;
-      const { data } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .single();
-      if (data?.role === 'admin') {
-        setIsAdmin(true);
-      }
-    };
-    checkAdmin();
-  }, [user]);
 
   useEffect(() => {
     const handleOpenTutorial = () => setIsTutorialOpen(true);

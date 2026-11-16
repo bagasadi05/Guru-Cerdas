@@ -63,11 +63,17 @@ export function useOfflineSync(options: UseOfflineSyncOptions = {}) {
 
     const syncInProgressRef = useRef(false);
 
-    // Subscribe to queue changes
+    // Subscribe to queue changes and register default sync handler
     useEffect(() => {
+        const disposeHandler = offlineQueue.setSyncHandler(
+            (item) => syncItem(item, conflictStrategy, onConflict)
+        );
         const unsubscribe = offlineQueue.subscribe(setQueue);
-        return unsubscribe;
-    }, []);
+        return () => {
+            unsubscribe();
+            disposeHandler();
+        };
+    }, [conflictStrategy, onConflict]);
 
     // Auto-sync when online
     // Wait for sync definition below
@@ -187,11 +193,11 @@ export function useOfflineSync(options: UseOfflineSyncOptions = {}) {
         if (item) {
             item.data = resolved;
             item.status = 'pending';
-            await offlineQueue.processQueue();
+            await sync();
         }
 
         setConflicts(prev => prev.filter(c => c.itemId !== itemId));
-    }, [conflicts, queue]);
+    }, [conflicts, queue, sync]);
 
     // Get pending count
     const pendingCount = queue.filter(i => i.status === 'pending').length;

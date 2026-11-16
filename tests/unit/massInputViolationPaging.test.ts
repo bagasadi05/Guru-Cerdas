@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 
-vi.mock('../../src/services/supabase', () => ({ supabase: {} }));
+vi.mock('../../src/services/supabase', () => ({ supabase: {}, clearStaleAuthTokens: vi.fn() }));
 
 import { fetchAllViolationPages } from '../../src/components/pages/mass-input/hooks/useMassInputData';
 

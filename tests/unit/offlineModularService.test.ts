@@ -90,6 +90,19 @@ describe('Offline Modular Services', () => {
             expect(typeof offlineModule.offlineQueue.getQueue).toBe('function');
             expect(typeof offlineModule.offlineQueue.clear).toBe('function');
             expect(typeof offlineModule.offlineQueue.subscribe).toBe('function');
+            expect(typeof offlineModule.offlineQueue.setSyncHandler).toBe('function');
+        });
+
+        it('does not mark or delete queued items when processQueue runs without a sync handler', async () => {
+            await offlineModule.offlineQueue.clear();
+            await offlineModule.offlineQueue.add('CREATE', 'students', { name: 'Uji' });
+
+            await offlineModule.offlineQueue.processQueue();
+
+            const queued = offlineModule.offlineQueue.getQueue();
+            expect(queued).toHaveLength(1);
+            expect(queued[0].status).toBe('pending');
+            await offlineModule.offlineQueue.clear();
         });
     });
 });
