@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Sparkles,
     AlertTriangle,
@@ -63,6 +64,7 @@ export const PredictiveAnalyticsTab: React.FC<PredictiveAnalyticsTabProps> = ({
     selectedClassId = 'all',
     kktpThreshold = DEFAULT_KKTP_THRESHOLD,
 }) => {
+    const navigate = useNavigate();
     const toast = useToast();
 
     // Filters & Search
@@ -196,9 +198,9 @@ export const PredictiveAnalyticsTab: React.FC<PredictiveAnalyticsTabProps> = ({
                 <div className="absolute right-0 top-0 w-80 h-80 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="space-y-2">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/20 text-brand-700 text-xs font-bold uppercase tracking-wider border border-brand-400/30">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/25 text-brand-100 text-xs font-bold uppercase tracking-wider border border-brand-400/30">
                             <Sparkles className="w-3.5 h-3.5" />
-                            AI Predictive Intelligence • Roadmap Q3
+                            AI Predictive Intelligence • Deteksi Dini
                         </div>
                         <h2 className="text-2xl font-bold text-white tracking-tight">
                             Prediksi & Sistem Peringatan Dini Siswa
@@ -392,7 +394,7 @@ export const PredictiveAnalyticsTab: React.FC<PredictiveAnalyticsTabProps> = ({
                                                                 : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
                                                         }`}
                                                     >
-                                                        Risiko {assessment.riskLevel}
+                                                        Risiko {assessment.riskLevel === 'high' ? 'Tinggi' : assessment.riskLevel === 'medium' ? 'Sedang' : 'Rendah'}
                                                     </span>
                                                     {assessment.predictedTrend === 'critical' && (
                                                         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-md">
@@ -447,7 +449,7 @@ export const PredictiveAnalyticsTab: React.FC<PredictiveAnalyticsTabProps> = ({
                                             <Button
                                                 size="sm"
                                                 variant="outline"
-                                                onClick={() => (window.location.href = `/siswa/${assessment.student.id}`)}
+                                                onClick={() => navigate(`/siswa/${assessment.student.id}`)}
                                                 className="text-xs min-h-[40px] sm:min-h-0"
                                             >
                                                 Profil Siswa

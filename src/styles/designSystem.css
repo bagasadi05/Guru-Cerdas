@@ -110,12 +110,6 @@
 :root:not(.dark) textarea::placeholder {
   color: #64748b !important;
 }
-:root:not(.dark) input:focus,
-:root:not(.dark) textarea:focus,
-:root:not(.dark) select:focus {
-  border-color: #16a34a !important;
-  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2) !important;
-}
 
 /* Recharts improvements */
 :root:not(.dark) .recharts-cartesian-grid-horizontal line,

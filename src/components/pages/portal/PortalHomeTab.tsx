@@ -1,4 +1,5 @@
 import React from 'react';
+import { AlertTriangle, ShieldAlert } from 'lucide-react';
 import { BellIcon, BookOpenIcon, BrainCircuitIcon, CalendarIcon, CheckCircleIcon, DownloadIcon, SendIcon, SparklesIcon } from '../../Icons';
 import type {
     PortalActivityItem,
@@ -187,7 +188,7 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                                     <div>
                                         <div className="inline-flex items-center gap-2 rounded-full border border-teal-200/60 bg-teal-50/70 px-3 py-1 text-xxs font-bold uppercase tracking-wider text-teal-700 dark:border-teal-400/20 dark:bg-teal-400/10 dark:text-teal-200">
                                             <BrainCircuitIcon className="h-3.5 w-3.5" />
-                                            AI Kesimpulan Wali Murid
+                                            Ringkasan Wali Murid
                                         </div>
                                         <h4 className="mt-3 text-xl font-bold text-slate-900 dark:text-white sm:text-2xl">
                                             {guardianSummary.title}
@@ -196,15 +197,29 @@ export const PortalHomeTab: React.FC<PortalHomeTabProps> = ({
                                             {guardianSummary.message}
                                         </p>
                                     </div>
-                                    <div className={`self-start rounded-2xl border px-3 py-1.5 text-xs font-bold shadow-sm ${
+                                    <div className={`self-start inline-flex items-center gap-1.5 rounded-2xl border px-3 py-1.5 text-xs font-bold shadow-sm ${
                                         guardianSummary.status === 'perhatian'
                                             ? 'border-rose-200 bg-rose-100 text-rose-800 dark:border-rose-900/30 dark:bg-rose-950/30 dark:text-rose-200'
                                             : guardianSummary.status === 'pantau'
                                                 ? 'border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-900/30 dark:bg-amber-950/30 dark:text-amber-200'
                                                 : 'border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-900/30 dark:bg-emerald-950/30 dark:text-emerald-200'
                                     }`}>
-                                        {guardianSummary.status === 'baik' ? '🟢 Kondisi Baik & Stabil' : 
-                                         guardianSummary.status === 'pantau' ? '🟡 Perlu Dipantau Bersama' : '🔴 Butuh Perhatian Khusus'}
+                                        {guardianSummary.status === 'baik' ? (
+                                            <>
+                                                <CheckCircleIcon className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                                <span>Kondisi Baik &amp; Stabil</span>
+                                            </>
+                                        ) : guardianSummary.status === 'pantau' ? (
+                                            <>
+                                                <AlertTriangle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                                                <span>Perlu Dipantau Bersama</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <ShieldAlert className="h-3.5 w-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
+                                                <span>Butuh Perhatian Khusus</span>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
 

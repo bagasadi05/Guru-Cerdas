@@ -286,7 +286,7 @@ const LoginPage: React.FC = () => {
                                         />
                                     </div>
 
-                                    <button type="submit" className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 min-h-[44px] rounded-xl transition-all duration-150 flex items-center justify-center gap-2 mt-4 cursor-pointer active:scale-95 shadow-md shadow-brand-600/20" disabled={loading}>
+                                    <button type="submit" className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 min-h-[44px] rounded-xl transition-all duration-150 flex items-center justify-center gap-2 mt-4 cursor-pointer active:scale-95 shadow-md shadow-brand-600/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400" disabled={loading}>
                                         {loading ? 'Memproses...' : (
                                             <>
                                                 Daftar <ArrowRightIcon className="w-4 h-4" />
@@ -297,17 +297,17 @@ const LoginPage: React.FC = () => {
                             )}
                             
                             <div className="relative flex py-5 sm:py-6 items-center">
-                                <div className="flex-grow border-t border-gray-800"></div>
-                                <span className="flex-shrink-0 mx-4 text-gray-500 text-xs">atau</span>
-                                <div className="flex-grow border-t border-gray-800"></div>
+                                <div className="flex-grow border-t border-slate-800"></div>
+                                <span className="flex-shrink-0 mx-4 text-slate-400 text-xs">atau</span>
+                                <div className="flex-grow border-t border-slate-800"></div>
                             </div>
                             
                             <button 
                                 type="button" 
                                 onClick={toggleMode}
-                                className="w-full bg-transparent border border-gray-700 hover:border-gray-500 text-gray-300 hover:text-white font-medium py-2.5 px-4 min-h-[44px] rounded-xl transition-all duration-150 flex items-center justify-center gap-2 mb-4 sm:mb-6 cursor-pointer active:scale-95"
+                                className="w-full bg-transparent border border-slate-700 hover:border-slate-500 text-slate-300 hover:text-white font-medium py-2.5 px-4 min-h-[44px] rounded-xl transition-all duration-150 flex items-center justify-center gap-2 mb-4 sm:mb-6 cursor-pointer active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
                             >
-                                <UserCircleIcon className="w-4 h-4 text-gray-400" />
+                                <UserCircleIcon className="w-4 h-4 text-slate-400" />
                                 {isLoginMode ? (
                                     <>Belum punya akun? <span className="text-brand-300 font-semibold">Daftar di sini</span></>
                                 ) : (
@@ -315,13 +315,13 @@ const LoginPage: React.FC = () => {
                                 )}
                             </button>
 
-                            <div className="flex items-center justify-center gap-1.5 text-gray-500 text-xs mt-4 sm:mt-6 mb-3 sm:mb-4">
+                            <div className="flex items-center justify-center gap-1.5 text-slate-400 text-xs mt-4 sm:mt-6 mb-3 sm:mb-4">
                                 <ShieldIcon className="w-3.5 h-3.5" />
-                                <span>Aman & terpercaya. Data Anda terlindungi.</span>
+                                <span>Sesi terenkripsi · Gunakan akun guru terdaftar.</span>
                             </div>
 
-                            <div className="text-center border-t border-gray-800/60 pt-4">
-                                <Link to="/" className="inline-flex items-center justify-center min-h-[44px] px-3 py-2 text-sm text-gray-400 hover:text-brand-300 transition-colors font-medium">
+                            <div className="text-center border-t border-slate-800/60 pt-4">
+                                <Link to="/" className="inline-flex items-center justify-center min-h-[44px] px-3 py-2 text-sm text-slate-400 hover:text-brand-300 transition-colors font-medium">
                                     Kembali ke pemilihan peran
                                 </Link>
                             </div>

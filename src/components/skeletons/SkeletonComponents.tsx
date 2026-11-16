@@ -3,7 +3,7 @@ import { Skeleton } from '../ui/Skeleton';
 
 // Generic Card Skeleton
 export const CardSkeleton: React.FC<{ className?: string }> = ({ className = '' }) => (
-    <div className={`glass-card rounded-xl p-5 space-y-4 ${className}`}>
+    <div className={`rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs p-5 space-y-4 ${className}`}>
         <div className="flex items-center gap-3">
             <Skeleton className="w-12 h-12 rounded-xl" />
             <div className="flex-1 space-y-2">
@@ -23,7 +23,7 @@ export const CardSkeleton: React.FC<{ className?: string }> = ({ className = '' 
 export const StatsSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {Array.from({ length: count }).map((_, i) => (
-            <div key={i} className="glass-card rounded-xl p-4 space-y-3">
+            <div key={i} className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs p-4 space-y-3">
                 <div className="flex items-center justify-between">
                     <Skeleton className="h-10 w-10 rounded-xl" />
                     <Skeleton className="h-4 w-16" />
@@ -37,7 +37,7 @@ export const StatsSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => (
 
 // Table Skeleton
 export const TableSkeleton: React.FC<{ rows?: number; cols?: number }> = ({ rows = 5, cols = 4 }) => (
-    <div className="glass-card rounded-xl overflow-hidden">
+    <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden">
         <div className="p-4 border-b border-slate-200 dark:border-slate-800">
             <div className="flex gap-4">
                 {Array.from({ length: cols }).map((_, i) => (
@@ -61,7 +61,7 @@ export const TableSkeleton: React.FC<{ rows?: number; cols?: number }> = ({ rows
 export const ListSkeleton: React.FC<{ count?: number }> = ({ count = 5 }) => (
     <div className="space-y-3">
         {Array.from({ length: count }).map((_, i) => (
-            <div key={i} className="glass-card rounded-xl p-4 flex items-center gap-4">
+            <div key={i} className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs p-4 flex items-center gap-4">
                 <Skeleton className="w-12 h-12 rounded-full" />
                 <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-1/3" />
@@ -75,7 +75,7 @@ export const ListSkeleton: React.FC<{ count?: number }> = ({ count = 5 }) => (
 
 // Chart Skeleton
 export const ChartSkeleton: React.FC<{ className?: string }> = ({ className = '' }) => (
-    <div className={`glass-card rounded-xl p-5 ${className}`}>
+    <div className={`rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs p-5 ${className}`}>
         <div className="flex items-center justify-between mb-4">
             <Skeleton className="h-5 w-32" />
             <Skeleton className="h-8 w-8 rounded-lg" />
@@ -118,7 +118,7 @@ export const FormSkeleton: React.FC<{ fields?: number }> = ({ fields = 4 }) => (
 
 // Calendar Skeleton
 export const CalendarSkeleton: React.FC = () => (
-    <div className="glass-card rounded-xl p-5">
+    <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs p-5">
         <div className="flex items-center justify-between mb-4">
             <Skeleton className="h-8 w-8 rounded-lg" />
             <Skeleton className="h-5 w-32" />

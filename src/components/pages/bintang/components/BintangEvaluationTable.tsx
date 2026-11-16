@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   Users, CheckCircle, Eye, FileText, RotateCcw, Printer,
-  Download, Loader2, X, FileSpreadsheet, MessageCircle, Search
+  Download, Loader2, X, FileSpreadsheet, MessageCircle, Search, Pencil
 } from 'lucide-react';
 import { MotionDiv, AnimatePresence } from '../../../ui/MotionComponents';
 import { Card } from '../../../ui/Card';
@@ -346,7 +346,7 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                             >
                               {score}
                               {isManual && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" title="Penyesuaian manual" />
+                                <Pencil className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" aria-label="Penyesuaian manual" />
                               )}
                             </span>
                           </td>
@@ -355,7 +355,7 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                       <td className="hidden md:table-cell py-2.5 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm text-center">
                         {isPublished ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
-                            <CheckCircle size={12} /> Published
+                            <CheckCircle size={12} /> Terbit
                           </span>
                         ) : isCompleted && staleStudentIds?.has(student.id) ? (
                           <span
@@ -366,11 +366,11 @@ export const BintangEvaluationTable: React.FC<BintangEvaluationTableProps> = ({
                           </span>
                         ) : isCompleted ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                            Draft
+                            Draf
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                            Auto
+                            Otomatis
                           </span>
                         )}
                       </td>

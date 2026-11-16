@@ -13,7 +13,7 @@ export const OfflineBanner: React.FC = () => {
 
   return (
     <div
-      className={`fixed bottom-16 lg:bottom-0 left-0 right-0 p-3 text-center text-xs sm:text-sm font-semibold z-40 flex items-center justify-center gap-3 animate-fade-in shadow-lg backdrop-blur-md transition-all
+      className={`fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px))] lg:bottom-0 left-0 right-0 p-3 text-center text-xs sm:text-sm font-semibold z-40 flex items-center justify-center gap-3 animate-fade-in shadow-lg backdrop-blur-md transition-all
         ${isOnline
           ? 'bg-emerald-600/95 text-white'
           : 'bg-amber-500/95 text-amber-950 dark:bg-amber-600/95 dark:text-amber-50'

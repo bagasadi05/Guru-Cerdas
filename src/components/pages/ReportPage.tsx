@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase, isAiEnabled } from '../../services/supabase';
 import { generateGeminiContent, getAssistantContent } from '../../services/geminiService';
 import { useAuth } from '../../hooks/useAuth';
+import { useUserSettings } from '../../hooks/useUserSettings';
 import { Database } from '../../services/database.types';
 import { generateStudentReport, ReportData, ensureLogoLoaded } from '../../services/pdfGenerator';
 import { resolveHistoricalClassName } from '../../services/gradePromotionService';
@@ -26,26 +27,38 @@ const DEFAULT_ACADEMIC_DESCRIPTION = 'Capaian sesuai dengan nilai yang diperoleh
 const fetchReportData = async (studentId: string): Promise<ReportData> => {
     const studentRes = await supabase
         .from('students')
-        .select('id, name, user_id, class_id, gender, avatar_url, access_code, parent_name, parent_phone, classes(id, name)')
+        .select('id, name, user_id, class_id, gender, avatar_url, access_code, parent_name, parent_phone, nis, nisn, classes(id, name)')
         .eq('id', studentId)
         .is('deleted_at', null)
         .single();
     if (studentRes.error) throw new Error(studentRes.error.message);
-    const [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes, achievementsRes] = await Promise.all([
+    const [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes, achievementsRes, schoolInfoRes] = await Promise.all([
         supabase.from('reports').select('id, user_id, student_id, title, notes, date, category, attachment_url, tags, created_at, deleted_at').eq('student_id', studentId).is('deleted_at', null),
         supabase.from('attendance').select('id, student_id, user_id, date, status, notes, semester_id, created_at, deleted_at, official_at, official_by, official_status, teacher_id, teacher_status').eq('student_id', studentId).is('deleted_at', null),
         supabase.from('academic_records').select('id, student_id, user_id, subject, score, assessment_name, notes, semester_id, created_at, version, deleted_at').eq('student_id', studentId).is('deleted_at', null),
         supabase.from('violations').select('id, student_id, user_id, date, description, context_notes, points, type, severity, semester_id, follow_up_status, follow_up_notes, evidence_url, parent_notified, parent_notified_at, created_at, deleted_at').eq('student_id', studentId).is('deleted_at', null),
         supabase.from('quiz_points').select('id, student_id, user_id, quiz_date, quiz_name, subject, points, max_points, category, is_used, used_at, used_for_subject, semester_id, created_at, deleted_at').eq('student_id', studentId).is('deleted_at', null),
-        supabase.from('student_achievements').select('*').eq('student_id', studentId).is('deleted_at', null)
+        supabase.from('student_achievements').select('*').eq('student_id', studentId).is('deleted_at', null),
+        supabase.from('school_info').select('school_name, school_address, school_phone').is('deleted_at', null).order('updated_at', { ascending: false }).limit(1).maybeSingle()
     ]);
     const errors = [reportsRes, attendanceRes, academicRes, violationsRes, quizPointsRes, achievementsRes].map(r => r.error).filter(Boolean);
     if (errors.length > 0) throw new Error(errors.map(e => e!.message).join(', '));
     return {
         student: studentRes.data as any, reports: reportsRes.data || [], attendanceRecords: attendanceRes.data || [],
         academicRecords: academicRes.data || [], violations: violationsRes.data || [], quizPoints: quizPointsRes.data || [],
-        achievements: (achievementsRes.data || []) as StudentAchievement[]
+        achievements: (achievementsRes.data || []) as StudentAchievement[],
+        schoolInfo: schoolInfoRes.data || null,
     };
+};
+
+const deriveKurikulumFase = (className?: string | null): string => {
+    if (!className) return '-';
+    const digitMatch = className.match(/\b([1-6])\b/) || className.match(/([1-6])/);
+    const grade = digitMatch ? Number(digitMatch[1]) : 0;
+    if (grade === 1 || grade === 2) return 'Fase A';
+    if (grade === 3 || grade === 4) return 'Fase B';
+    if (grade === 5 || grade === 6) return 'Fase C';
+    return '-';
 };
 
 const getAcademicPredicate = (score: number) => {
@@ -123,6 +136,7 @@ const summarizeViolations = (items: Database['public']['Tables']['violations']['
 const ReportPage: React.FC = () => {
     const { studentId } = useParams<{ studentId: string }>();
     const { user } = useAuth();
+    const { schoolName } = useUserSettings();
     const toast = useToast();
     const [showAllSubjects, setShowAllSubjects] = useState(true);
     const [selectedSubjects, setSelectedSubjects] = useState<Set<string>>(new Set());
@@ -546,8 +560,15 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                                         <p className="text-xxs md:text-xs uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">Kementerian Agama Republik Indonesia</p>
                                         <p className="text-xxs md:text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400 mt-1">Madrasah Ibtidaiyah</p>
                                         <h1 className="text-lg md:text-3xl font-bold uppercase tracking-[0.08em] font-serif text-slate-900 dark:text-white mt-2">Laporan Hasil Belajar Siswa</h1>
-                                        <h2 className="text-sm md:text-lg font-bold mt-2 text-emerald-800 dark:text-emerald-300">MI AL IRSYAD AL ISLAMIYYAH KOTA MADIUN</h2>
-                                        <p className="text-[11px] md:text-sm mt-2 text-slate-600 dark:text-slate-400">Jl. Diponegoro No. 123, Madiun, Jawa Timur | Telp. (0351) 123456</p>
+                                        <h2 className="text-sm md:text-lg font-bold mt-2 text-emerald-800 dark:text-emerald-300">{(data.schoolInfo?.school_name || schoolName || 'Portal Guru').toUpperCase()}</h2>
+                                        {(data.schoolInfo?.school_address || data.schoolInfo?.school_phone) && (
+                                            <p className="text-[11px] md:text-sm mt-2 text-slate-600 dark:text-slate-400">
+                                                {[
+                                                    data.schoolInfo?.school_address,
+                                                    data.schoolInfo?.school_phone ? `Telp. ${data.schoolInfo.school_phone}` : null,
+                                                ].filter(Boolean).join(' | ')}
+                                            </p>
+                                        )}
                                     </div>
                                     <div className="w-16 md:w-20 flex justify-center">
                                         <img
@@ -572,10 +593,10 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                                     <span className="font-semibold text-slate-900 dark:text-white">{data.student.name}</span>
                                     <span className="font-semibold text-slate-600 dark:text-slate-400">Kelas</span>
                                     <span className="text-slate-500">:</span>
-                                    <span className="font-semibold text-slate-900 dark:text-white">{data.student.classes?.name || 'N/A'}</span>
+                                    <span className="font-semibold text-slate-900 dark:text-white">{data.student.classes?.name || '-'}</span>
                                     <span className="font-semibold text-slate-600 dark:text-slate-400">NIS/NISN</span>
                                     <span className="text-slate-500">:</span>
-                                    <span className="font-semibold text-slate-900 dark:text-white">- / -</span>
+                                    <span className="font-semibold text-slate-900 dark:text-white">{`${data.student.nis || '-'} / ${data.student.nisn || '-'}`}</span>
                                 </div>
                                 <div className="grid grid-cols-[108px_10px_1fr] gap-y-2">
                                     <span className="font-semibold text-slate-600 dark:text-slate-400">Tahun Ajaran</span>
@@ -586,7 +607,7 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                                     <span className="font-semibold text-slate-900 dark:text-white">{semesterName}</span>
                                     <span className="font-semibold text-slate-600 dark:text-slate-400">Fase</span>
                                     <span className="text-slate-500">:</span>
-                                    <span className="font-semibold text-slate-900 dark:text-white">-</span>
+                                    <span className="font-semibold text-slate-900 dark:text-white">{deriveKurikulumFase(data.student.classes?.name)}</span>
                                 </div>
                             </div>
                         </div>
@@ -809,8 +830,11 @@ Tulis catatan sesuai format di atas (2-3 kalimat saja):`;
                 {/* Mobile FAB */}
                 <FloatingActionButton
                     icon={<PrinterIcon className="w-6 h-6" />}
+                    label="Cetak Rapor"
                     onClick={handlePrint}
-                    className="md:hidden fixed bottom-6 right-6 z-40 bg-emerald-500 hover:bg-emerald-600 shadow-xl shadow-emerald-500/30"
+                    position="bottom-right"
+                    offset={{ bottom: 24, right: 24 }}
+                    className="md:hidden bg-emerald-500 hover:bg-emerald-600 shadow-xl shadow-emerald-500/30"
                 />
             </div>
         </div>

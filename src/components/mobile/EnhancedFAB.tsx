@@ -406,7 +406,7 @@ export const EnhancedFAB: React.FC<EnhancedFABProps> = ({
           aria-label={label}
           aria-expanded={hasActions ? isExpanded : undefined}
           aria-haspopup={hasActions ? 'menu' : undefined}
-          className="bg-sky-600 hover:bg-sky-700 active:bg-sky-800 dark:bg-brand-600 dark:hover:bg-brand-700 dark:active:bg-brand-800 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 dark:focus:ring-brand-500"
+          className="bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-500"
           style={getFABStyle()}
         >
           {icon}

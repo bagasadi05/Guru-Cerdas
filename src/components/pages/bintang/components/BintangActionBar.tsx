@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     Sparkles,
     ShieldAlert,
@@ -46,6 +46,27 @@ export const BintangActionBar: React.FC<BintangActionBarProps> = ({
     selectedPrintDate,
 }) => {
     const [showMoreActions, setShowMoreActions] = useState(false);
+    const moreMenuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!showMoreActions) return;
+        const handleOutside = (event: MouseEvent) => {
+            if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+                setShowMoreActions(false);
+            }
+        };
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setShowMoreActions(false);
+            }
+        };
+        document.addEventListener('mousedown', handleOutside);
+        document.addEventListener('keydown', handleEscape);
+        return () => {
+            document.removeEventListener('mousedown', handleOutside);
+            document.removeEventListener('keydown', handleEscape);
+        };
+    }, [showMoreActions]);
 
     return (
         <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 p-2.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs">
@@ -67,9 +88,11 @@ export const BintangActionBar: React.FC<BintangActionBarProps> = ({
                 </Button>
 
                 {/* Tombol sekunder (toggle) */}
-                <div className="relative">
+                <div className="relative" ref={moreMenuRef}>
                     <Button
                         variant="outline"
+                        aria-expanded={showMoreActions}
+                        aria-haspopup="menu"
                         onClick={() => setShowMoreActions((v) => !v)}
                         className="flex items-center gap-1.5 text-sm h-10 px-3 font-medium rounded-xl border-slate-200 dark:border-slate-700 cursor-pointer active:scale-95 duration-150"
                         title="Aksi lainnya"
@@ -83,25 +106,27 @@ export const BintangActionBar: React.FC<BintangActionBarProps> = ({
                         />
                     </Button>
                     {showMoreActions && (
-                        <div className="absolute left-0 top-full mt-1.5 z-20 min-w-[180px] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg py-1">
+                        <div role="menu" aria-label="Aksi lainnya" className="absolute left-0 top-full mt-1.5 z-20 min-w-[180px] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg py-1">
                             <button
                                 type="button"
+                                role="menuitem"
                                 onClick={() => {
                                     onOpenObservation();
                                     setShowMoreActions(false);
                                 }}
-                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer active:scale-[0.98] transition-transform"
+                                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer active:scale-[0.98] transition-transform focus:outline-none focus-visible:bg-slate-100 dark:focus-visible:bg-slate-800"
                             >
                                 <Eye size={15} className="text-slate-400" /> Observasi Harian
                             </button>
                             {isWalas && (
                                 <button
                                     type="button"
+                                    role="menuitem"
                                     onClick={() => {
                                         onOpenMentoring();
                                         setShowMoreActions(false);
                                     }}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer active:scale-[0.98] transition-transform"
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer active:scale-[0.98] transition-transform focus:outline-none focus-visible:bg-slate-100 dark:focus-visible:bg-slate-800"
                                 >
                                     <PlusCircle size={15} className="text-slate-400" /> Catat Pembinaan
                                 </button>
@@ -110,11 +135,12 @@ export const BintangActionBar: React.FC<BintangActionBarProps> = ({
                             {isWalas && (
                                 <button
                                     type="button"
+                                    role="menuitem"
                                     onClick={() => {
                                         onOpenBulkExport();
                                         setShowMoreActions(false);
                                     }}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-brand-600 dark:text-brand-400 font-medium hover:bg-brand-50 dark:hover:bg-brand-900/20 cursor-pointer active:scale-[0.98] transition-transform"
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-brand-600 dark:text-brand-400 font-medium hover:bg-brand-50 dark:hover:bg-brand-900/20 cursor-pointer active:scale-[0.98] transition-transform focus:outline-none focus-visible:bg-brand-50 dark:focus-visible:bg-brand-900/20"
                                 >
                                     <Download size={15} /> Export Bulk...
                                 </button>
@@ -122,12 +148,13 @@ export const BintangActionBar: React.FC<BintangActionBarProps> = ({
                             {isWalas && (
                                 <button
                                     type="button"
+                                    role="menuitem"
                                     onClick={() => {
                                         evalHook.handleDownloadClassPdf(selectedPrintDate);
                                         setShowMoreActions(false);
                                     }}
                                     disabled={evalHook.isDownloadingClass || evalHook.isDownloadingBulk}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 cursor-pointer active:scale-[0.98] transition-transform"
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 cursor-pointer active:scale-[0.98] transition-transform focus:outline-none focus-visible:bg-slate-100 dark:focus-visible:bg-slate-800"
                                 >
                                     <Printer size={15} className="text-slate-400" />{' '}
                                     {evalHook.isDownloadingClass ? 'Proses...' : 'Cetak Rapor Kelas'}
@@ -136,12 +163,13 @@ export const BintangActionBar: React.FC<BintangActionBarProps> = ({
                             {isWalas && (
                                 <button
                                     type="button"
+                                    role="menuitem"
                                     onClick={() => {
                                         evalHook.handleExportExcel();
                                         setShowMoreActions(false);
                                     }}
                                     disabled={evalHook.isExportingExcel || studentsCount === 0}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 cursor-pointer active:scale-[0.98] transition-transform"
+                                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 cursor-pointer active:scale-[0.98] transition-transform focus:outline-none focus-visible:bg-slate-100 dark:focus-visible:bg-slate-800"
                                 >
                                     <FileSpreadsheet size={15} className="text-slate-400" />{' '}
                                     {evalHook.isExportingExcel ? 'Proses...' : 'Export Rekap Excel'}

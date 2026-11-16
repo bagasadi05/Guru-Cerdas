@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import SmartInsightsPanel from './SmartInsightsPanel';
 
@@ -50,6 +51,7 @@ const StatCard = ({ title, value, subtitle, icon: Icon, color, trend }: any) => 
 export const OverviewTab: React.FC<OverviewTabProps> = ({ 
     students, classes, attendanceStats, taskStats, genderStats, atRiskStudents, topPerformingStudents 
 }) => {
+    const navigate = useNavigate();
     const { userRole } = useAuth();
     const isLeadership = userRole === 'kepala_madrasah' || userRole === 'waka_kesiswaan' || userRole === 'waka_kurikulum' || userRole === 'admin';
     // Generate AI Summary string
@@ -97,7 +99,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 <div>
                     <h3 className="font-bold text-slate-800 dark:text-slate-200 mb-1 flex items-center gap-2">
                         Kesimpulan Cerdas
-                        <span className="text-xxs px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold uppercase">AI Generated</span>
+                        <span className="text-xxs px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold uppercase">Ringkasan Otomatis</span>
                     </h3>
                     <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                         {summary.text}
@@ -159,7 +161,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                                                 <p className="text-xs text-slate-500">{item.details}</p>
                                             </div>
                                         </div>
-                                        <Button size="sm" variant="outline" className="text-xs min-h-[44px] sm:min-h-0 rounded-xl cursor-pointer active:scale-95 duration-150" onClick={() => window.location.href = `/siswa/${item.student.id}`}>Lihat Detail</Button>
+                                        <Button size="sm" variant="outline" className="text-xs min-h-[44px] sm:min-h-0 rounded-xl cursor-pointer active:scale-95 duration-150" onClick={() => navigate(`/siswa/${item.student.id}`)}>Lihat Detail</Button>
                                     </div>
                                 ))}
                             </div>

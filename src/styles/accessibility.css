@@ -410,7 +410,7 @@ textarea:focus-visible {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 68px;
+    min-height: 68px;
     z-index: 30;
     -webkit-user-select: none;
     user-select: none;
@@ -418,7 +418,7 @@ textarea:focus-visible {
 }
 
 .mobile-bottom-nav .safe-area-inset-bottom {
-    height: 68px;
+    min-height: 68px;
 }
 
 /* Animate fade in up for more menu */
@@ -460,10 +460,10 @@ textarea:focus-visible {
 /* Mobile navigation transitions */
 @media (max-width: 1023px) {
 
-    /* Ensure touch targets are at least 48px */
+    /* Ensure touch targets are at least 44px on standalone interactive controls */
     button,
-    a,
-    [role="button"] {
+    [role="button"],
+    a:not(p a):not(span a):not([aria-label="Breadcrumb"] a):not(.inline-link) {
         min-height: 44px;
     }
 

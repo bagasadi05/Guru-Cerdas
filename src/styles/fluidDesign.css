@@ -26,8 +26,8 @@
   --f-text-xl:    clamp(1rem,     1.5vw + 0.4rem, 1.5rem);   /* 16→24px */
   --f-text-lg:    clamp(0.9375rem,1.2vw + 0.35rem,1.25rem);  /* 15→20px */
   --f-text-base:  clamp(0.8125rem,1vw + 0.3rem,   1rem);     /* 13→16px */
-  --f-text-sm:    clamp(0.6875rem,0.8vw + 0.25rem, 0.875rem);/* 11→14px */
-  --f-text-xs:    clamp(0.625rem, 0.6vw + 0.22rem, 0.75rem); /* 10→12px */
+  --f-text-sm:    clamp(0.75rem,  0.8vw + 0.25rem, 0.875rem);/* 12→14px */
+  --f-text-xs:    clamp(0.75rem,  0.5vw + 0.25rem, 0.8125rem);/* 12→13px */
 
   /* ── Spacing / Padding ── */
   --f-space-xs:   clamp(0.25rem,  0.5vw,  0.5rem);    /* 4→8px   */
@@ -39,7 +39,7 @@
   /* ── Component Sizes ── */
   --f-btn-h:      clamp(2rem,     2.5vw + 1rem, 2.5rem);   /* 32→40px */
   --f-btn-px:     clamp(0.5rem,   1vw + 0.2rem, 1rem);     /* 8→16px  */
-  --f-btn-text:   clamp(0.6875rem,0.8vw + 0.25rem, 0.875rem);
+  --f-btn-text:   clamp(0.75rem,  0.8vw + 0.25rem, 0.875rem);
 
   --f-icon-sm:    clamp(0.75rem,  0.9vw + 0.2rem, 1rem);    /* 12→16px */
   --f-icon-md:    clamp(0.875rem, 1vw + 0.25rem,  1.25rem);  /* 14→20px */

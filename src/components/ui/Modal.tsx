@@ -123,8 +123,8 @@ export const Modal: React.FC<ModalProps> = ({
             transition={shouldReduceMotion ? { duration: 0 } : easing.spring}
             className={`relative w-full ${maxWidth} flex flex-col ${
               placement === 'bottom'
-                ? 'mx-0 sm:mx-3 mb-0 max-h-[95vh]'
-                : 'max-h-[94vh] sm:max-h-[90vh] my-auto'
+                ? 'mx-0 sm:mx-3 mb-0 max-h-[92dvh]'
+                : 'max-h-[92dvh] sm:max-h-[90dvh] my-auto'
             }`}
             style={{
               paddingBottom:
@@ -136,11 +136,11 @@ export const Modal: React.FC<ModalProps> = ({
             <div
               className={`relative overflow-hidden bg-white dark:bg-slate-900 shadow-2xl border border-slate-200/70 dark:border-slate-700/60 flex flex-col h-full ${
                 placement === 'bottom'
-                  ? 'rounded-t-2xl sm:rounded-2xl max-h-[95vh]'
-                  : 'rounded-2xl max-h-[94vh] sm:max-h-[90vh]'
+                  ? 'rounded-t-2xl sm:rounded-2xl max-h-[92dvh]'
+                  : 'rounded-2xl max-h-[92dvh] sm:max-h-[90dvh]'
               }`}
             >
-              <div className="relative p-3.5 sm:p-5 sm:p-6 border-b border-slate-200/70 dark:border-slate-700/60">
+              <div className="relative p-3.5 sm:p-6 border-b border-slate-200/70 dark:border-slate-700/60">
                 <div className="flex justify-between items-center gap-3 sm:gap-4">
                   <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                     {icon && (
@@ -171,7 +171,7 @@ export const Modal: React.FC<ModalProps> = ({
                 </div>
               </div>
 
-              <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-5 sm:p-6" role="document">
+              <div className="min-h-0 flex-1 overflow-y-auto p-3.5 sm:p-6" role="document">
                 {children}
               </div>
               {footer && (

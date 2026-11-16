@@ -56,6 +56,11 @@ export type ReportData = {
     violations: ViolationRow[],
     quizPoints: QuizPointRow[],
     achievements: StudentAchievement[],
+    schoolInfo?: {
+        school_name?: string | null;
+        school_address?: string | null;
+        school_phone?: string | null;
+    } | null,
 };
 
 /**

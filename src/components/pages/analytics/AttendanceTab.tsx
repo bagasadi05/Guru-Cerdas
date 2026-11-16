@@ -92,6 +92,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
 
         const labelInterval = data.length > 20 ? 5 : data.length > 10 ? 3 : 2;
         const [animated, setAnimated] = useState(false);
+        const [activeBarIndex, setActiveBarIndex] = useState<number | null>(null);
         useEffect(() => {
             const timer = setTimeout(() => setAnimated(true), 100);
             return () => clearTimeout(timer);
@@ -133,7 +134,15 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                                 const tidakHadirHeight = totalHeight - hadirHeight;
 
                                 return (
-                                    <div key={i} className="flex flex-col items-center group relative" style={{ minWidth: `${barWidth}px` }}>
+                                    <button
+                                        type="button"
+                                        key={i}
+                                        onClick={() => setActiveBarIndex(activeBarIndex === i ? null : i)}
+                                        onBlur={() => setActiveBarIndex(null)}
+                                        aria-label={`${day.date}: Hadir ${day.hadir}, Izin ${day.izin}, Sakit ${day.sakit}, Alpha ${day.alpha}, Total ${day.total}`}
+                                        className="flex flex-col items-center group relative cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-md"
+                                        style={{ minWidth: `${barWidth}px` }}
+                                    >
                                         <div className="relative flex flex-col-reverse overflow-hidden transition-all duration-700 ease-out"
                                             style={{ width: `${barWidth}px`, height: animated ? `${totalHeight}px` : '0px', borderRadius: '6px 6px 2px 2px' }}>
                                             <div className="w-full bg-emerald-500 transition-all duration-300" style={{ height: `${hadirHeight}px` }} />
@@ -141,7 +150,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                                                 <div className="w-full bg-gradient-to-t from-orange-500 to-rose-400 transition-all duration-300" style={{ height: `${tidakHadirHeight}px` }} />
                                             )}
                                         </div>
-                                        <div className="absolute bottom-full mb-3 hidden group-hover:block z-30 pointer-events-none animate-fade-in">
+                                        <div className={`absolute bottom-full mb-3 ${activeBarIndex === i ? 'block' : 'hidden group-hover:block group-focus-visible:block'} z-30 pointer-events-none animate-fade-in text-left`}>
                                             <div className="bg-slate-900/95 backdrop-blur-sm text-white text-xs p-4 rounded-2xl shadow-2xl border border-slate-700/50 min-w-[180px]">
                                                 <p className="font-bold text-sm text-white mb-2">{day.date}</p>
                                                 <div className="space-y-1.5">
@@ -153,7 +162,7 @@ export const AttendanceTab: React.FC<AttendanceTabProps> = ({
                                                 <div className="mt-3 pt-2 border-t border-slate-700/50 flex justify-between"><span className="text-slate-400">Total</span><span>{day.total}</span></div>
                                             </div>
                                         </div>
-                                    </div>
+                                    </button>
                                 );
                             })}
                         </div>

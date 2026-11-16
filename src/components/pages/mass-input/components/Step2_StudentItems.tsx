@@ -338,17 +338,19 @@ export const Step2_StudentMobileCard: React.FC<StudentItemProps> = React.memo(({
                 ${mode !== 'subject_grade' ? 'cursor-pointer active:scale-95' : ''}
             `}
         >
-            <div className="flex items-start gap-3 mb-3">
-                <Checkbox
-                    checked={isSelected}
-                    onChange={(e) => {
-                        e.stopPropagation();
-                        onSelect(s.id);
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    aria-label={`Pilih ${s.name}`}
-                    className="w-5 h-5 mt-1 border-white/30 data-[state=checked]:bg-brand-600 data-[state=checked]:border-brand-500"
-                />
+            <div className="flex items-start gap-2 sm:gap-3 mb-3">
+                <span className="-ml-2 -mt-1.5 inline-flex min-w-[44px] min-h-[44px] items-center justify-center shrink-0">
+                    <Checkbox
+                        checked={isSelected}
+                        onChange={(e) => {
+                            e.stopPropagation();
+                            onSelect(s.id);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label={`Pilih ${s.name}`}
+                        className="w-5 h-5 border-white/30 data-[state=checked]:bg-brand-600 data-[state=checked]:border-brand-500"
+                    />
+                </span>
                 <img
                     src={getStudentAvatar(s.avatar_url, s.gender, s.id, s.name, 'sm')}
                     alt={s.name}

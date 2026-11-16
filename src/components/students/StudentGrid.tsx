@@ -35,30 +35,34 @@ export const StudentGrid: React.FC<StudentViewProps> = ({
               <div className="hidden sm:block absolute -top-8 -right-8 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl pointer-events-none" />
               <div className="hidden sm:block absolute -bottom-8 -left-8 w-24 h-24 bg-teal-500/10 rounded-full blur-xl pointer-events-none" />
 
-              {/* Checkbox */}
-              <label className="absolute top-2 left-2 z-10 flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-white dark:bg-slate-900 sm:bg-white/80 sm:dark:bg-slate-900/80 sm:backdrop-blur-md border border-slate-200/60 dark:border-white/10 shadow-2xs hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isSelected(student.id)}
-                  aria-label={`Pilih siswa ${student.name}`}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    toggleItem(student.id);
-                  }}
-                  className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-slate-300 dark:border-slate-600 accent-emerald-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 cursor-pointer"
-                />
+              {/* Checkbox (44x44 touch wrapper around visual box) */}
+              <label className="absolute top-0.5 left-0.5 sm:top-1 sm:left-1 z-10 flex h-11 w-11 items-center justify-center cursor-pointer group/chk">
+                <span className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-white dark:bg-slate-900 sm:bg-white/80 sm:dark:bg-slate-900/80 sm:backdrop-blur-md border border-slate-200/60 dark:border-white/10 shadow-2xs group-hover/chk:bg-white dark:group-hover/chk:bg-slate-800 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={isSelected(student.id)}
+                    aria-label={`Pilih siswa ${student.name}`}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      toggleItem(student.id);
+                    }}
+                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 accent-emerald-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 cursor-pointer"
+                  />
+                </span>
               </label>
 
-              {/* More options button */}
-              <div className="absolute top-2 right-2 z-10">
+              {/* More options button (44x44 touch hit area) */}
+              <div className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 z-10">
                 <button
                   type="button"
                   onClick={() => onAction(student, 'menu')}
                   aria-label={`Menu aksi siswa ${student.name}`}
                   title={`Menu aksi siswa ${student.name}`}
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white dark:bg-slate-900 sm:bg-white/80 sm:dark:bg-slate-900/80 sm:backdrop-blur-md border border-slate-200/60 dark:border-white/10 shadow-2xs hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  className="w-11 h-11 flex items-center justify-center cursor-pointer group/more focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-xl"
                 >
-                  <MoreVerticalIcon className="w-4 h-4" aria-hidden="true" />
+                  <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white dark:bg-slate-900 sm:bg-white/80 sm:dark:bg-slate-900/80 sm:backdrop-blur-md border border-slate-200/60 dark:border-white/10 shadow-2xs group-hover/more:bg-white dark:group-hover/more:bg-slate-800 text-slate-600 dark:text-slate-300 group-hover/more:text-slate-900 dark:group-hover/more:text-white transition-colors flex items-center justify-center">
+                    <MoreVerticalIcon className="w-4 h-4" aria-hidden="true" />
+                  </span>
                 </button>
               </div>
             </div>

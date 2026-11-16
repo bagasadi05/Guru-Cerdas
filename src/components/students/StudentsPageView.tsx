@@ -151,7 +151,7 @@ export const StudentsPageView: React.FC<StudentsPageViewProps> = ({
   isAdmin = false,
 }) => {
   return (
-    <div className="w-full min-h-full p-3 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-24 lg:pb-8">
+    <div className="w-full min-h-full py-2 sm:p-4 md:p-6 lg:p-8 flex flex-col space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-24 lg:pb-8">
       {/* Hero Header Card */}
       <div className="relative rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 md:bg-white/80 md:dark:bg-slate-900/70 md:backdrop-blur-xl border border-slate-200/80 dark:border-white/10 p-4 sm:p-6 shadow-xs overflow-hidden">
         {/* Top accent gradient bar */}

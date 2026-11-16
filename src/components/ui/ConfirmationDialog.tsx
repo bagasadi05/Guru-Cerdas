@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { AlertTriangleIcon, TrashIcon, XIcon, AlertCircleIcon } from '../Icons';
+import { AlertTriangleIcon, TrashIcon, AlertCircleIcon } from '../Icons';
 import { Button } from './Button';
+import { Modal } from './Modal';
 
 interface ConfirmationDialogProps {
     isOpen: boolean;
@@ -83,67 +83,15 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
         onClose();
     };
 
-    if (!isOpen) return null;
-
-    const isClient = typeof document !== 'undefined';
-    if (!isClient) return null;
-
-    return createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-            <div
-                className={`w-full ${maxWidth} bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border ${config.borderColor} overflow-hidden transition-all`}
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* Header */}
-                <div className="p-6 pb-5">
-                    <div className="flex items-start gap-4">
-                        <div className={`flex-shrink-0 w-12 h-12 rounded-2xl ${config.iconBg} flex items-center justify-center shadow-inner`}>
-                            <Icon className={`w-6 h-6 ${config.iconColor}`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-snug">
-                                {title}
-                            </h3>
-                            {typeof message === 'string' ? (
-                                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                                    {message}
-                                </p>
-                            ) : (
-                                <div className="mt-2 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                                    {message}
-                                </div>
-                            )}
-                        </div>
-                        <button type="button"
-                            onClick={handleClose}
-                            disabled={isConfirming || isPending}
-                            className="p-1.5 -mr-1 -mt-1 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 flex-shrink-0"
-                            aria-label="Tutup dialog"
-                        >
-                            <XIcon className="w-5 h-5" />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Typing Confirmation */}
-                {requireTyping && (
-                    <div className="px-6 pb-4">
-                        <label className="block text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            Ketik <span className="font-mono font-bold text-gray-900 dark:text-white">"{requireTyping}"</span> untuk mengonfirmasi:
-                        </label>
-                        <input
-                            type="text"
-                            value={typedValue}
-                            onChange={(e) => setTypedValue(e.target.value)}
-                            placeholder={requireTyping}
-                            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                            disabled={isConfirming || isPending}
-                        />
-                    </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 p-4 sm:px-6 bg-gray-50/80 dark:bg-gray-800/40 border-t border-gray-100 dark:border-gray-800">
+    return (
+        <Modal
+            isOpen={isOpen}
+            onClose={handleClose}
+            title={title}
+            maxWidth={maxWidth}
+            icon={<Icon className={`w-5 h-5 ${config.iconColor}`} />}
+            footer={
+                <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3">
                     <Button
                         variant="outline"
                         size="sm"
@@ -169,9 +117,36 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
                         )}
                     </button>
                 </div>
+            }
+        >
+            <div className="space-y-4">
+                {typeof message === 'string' ? (
+                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                        {message}
+                    </p>
+                ) : (
+                    <div className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                        {message}
+                    </div>
+                )}
+
+                {requireTyping && (
+                    <div>
+                        <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2">
+                            Ketik <span className="font-mono font-bold text-slate-900 dark:text-white">&quot;{requireTyping}&quot;</span> untuk mengonfirmasi:
+                        </label>
+                        <input
+                            type="text"
+                            value={typedValue}
+                            onChange={(e) => setTypedValue(e.target.value)}
+                            placeholder={requireTyping}
+                            className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                            disabled={isConfirming || isPending}
+                        />
+                    </div>
+                )}
             </div>
-        </div>,
-        document.body
+        </Modal>
     );
 };
 

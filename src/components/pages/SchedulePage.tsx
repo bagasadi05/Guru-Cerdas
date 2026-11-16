@@ -459,7 +459,7 @@ const SchedulePage: React.FC = () => {
 
     return (
         <div className="w-full min-h-full text-slate-800 dark:text-white pb-24">
-            <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6 lg:p-8 space-y-4 sm:space-y-6">
+            <div className="max-w-7xl mx-auto py-2 sm:p-4 md:p-6 lg:p-8 space-y-4 sm:space-y-6">
                         <header className="space-y-3">
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
@@ -635,7 +635,7 @@ const SchedulePage: React.FC = () => {
                             options={daysOfWeek.map(d => ({ value: d, label: d }))}
                         />
                     </FormInputWrapper>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormInputWrapper label="Waktu Mulai" icon={ClockIcon}><Input aria-label="Waktu Mulai" type="time" value={formData.start_time} onChange={e => setFormData({ ...formData, start_time: e.target.value })} className={inputStyles} error={errors.start_time} /></FormInputWrapper>
                         <FormInputWrapper label="Waktu Selesai" icon={ClockIcon}><Input aria-label="Waktu Selesai" type="time" value={formData.end_time} onChange={e => setFormData({ ...formData, end_time: e.target.value })} className={inputStyles} error={errors.end_time} /></FormInputWrapper>
                     </div>

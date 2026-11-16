@@ -17,12 +17,12 @@ const ThemeToggle: React.FC = () => {
 
   const getIcon = () => {
     if (isSystemTheme) {
-      return <Monitor className="w-5 h-5 text-purple-500" />;
+      return <Monitor className="w-5 h-5 text-brand-600 dark:text-brand-400" />;
     }
     if (theme === 'light') {
       return <SunIcon className="w-5 h-5 text-amber-500" />;
     }
-    return <MoonIcon className="w-5 h-5 text-indigo-400" />;
+    return <MoonIcon className="w-5 h-5 text-brand-400" />;
   };
 
   const getTooltip = () => {
@@ -38,7 +38,7 @@ const ThemeToggle: React.FC = () => {
       onClick={toggleTheme}
       aria-label="Toggle theme"
       title={getTooltip()}
-      className="relative flex items-center justify-center w-12 h-12 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all active:scale-95 overflow-hidden"
+      className="relative flex items-center justify-center h-11 w-11 min-h-[44px] min-w-[44px] rounded-xl border border-black/5 bg-white/50 hover:bg-white dark:border-white/10 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-all active:scale-95 overflow-hidden"
     >
       <div key={iconKey} className="animate-icon-spin">
         {getIcon()}
@@ -46,7 +46,7 @@ const ThemeToggle: React.FC = () => {
 
       {/* Indicator dot for system mode */}
       {isSystemTheme && (
-        <span className="absolute bottom-1.5 right-1.5 w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" />
+        <span className="absolute bottom-1.5 right-1.5 w-1.5 h-1.5 bg-brand-500 rounded-full" />
       )}
     </Button>
   );

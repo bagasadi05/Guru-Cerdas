@@ -177,7 +177,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
 
     return (
         <MotionDiv
-            className={`grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6`}
+            className={`grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6`}
             variants={staggerContainerVariants}
             initial="initial"
             animate="animate"
@@ -190,7 +190,7 @@ const StatsGrid: React.FC<StatsGridProps> = ({ data, currentTime }) => {
                     custom={index}
                 >
                     <Link to={stat.link} className="group block h-full cursor-pointer active:scale-[0.98] transition-transform duration-150">
-                        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 h-full flex flex-col justify-between relative overflow-hidden border transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 border-slate-200/80 dark:border-slate-800">
+                        <div className="bg-white dark:bg-slate-900 rounded-2xl p-3.5 sm:p-6 h-full flex flex-col justify-between relative overflow-hidden border transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 border-slate-200/80 dark:border-slate-800">
                             {/* Hover overlay effect */}
                             <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent dark:from-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 

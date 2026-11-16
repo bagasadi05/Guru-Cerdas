@@ -10,7 +10,7 @@ import DataManagementSection from '../settings/DataManagementSection';
 import { PwaSection } from '../settings/PwaSection';
 import { SettingsPageSkeleton } from '../skeletons/PageSkeletons';
 
-import { Search, Sparkles, ArrowRight, Settings, Smartphone } from 'lucide-react';
+import { Search, Sparkles, ArrowRight, Settings, Smartphone, Moon, KeyRound, HardDrive } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
     const { logout, loading } = useAuth();
@@ -52,19 +52,19 @@ const SettingsPage: React.FC = () => {
                 text: 'text-amber-600 dark:text-amber-400 border-amber-500/20'
             };
             case 'integrations': return {
-                gradient: 'from-pink-600 to-rose-600 dark:from-pink-500 dark:to-rose-500',
-                hover: 'hover:text-pink-600 dark:hover:text-pink-400 hover:bg-pink-500/5',
-                text: 'text-pink-600 dark:text-pink-400 border-pink-500/20'
+                gradient: 'from-brand-600 to-brand-700 dark:from-brand-500 dark:to-brand-600',
+                hover: 'hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-500/5',
+                text: 'text-brand-600 dark:text-brand-400 border-brand-500/20'
             };
             case 'database': return {
-                gradient: 'from-slate-700 to-zinc-700 dark:from-slate-600 dark:to-zinc-600',
-                hover: 'hover:text-slate-700 dark:hover:text-slate-400 hover:bg-slate-500/5',
-                text: 'text-slate-700 dark:text-slate-400 border-slate-500/20'
+                gradient: 'from-slate-700 to-slate-800 dark:from-slate-600 dark:to-slate-700',
+                hover: 'hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-500/5',
+                text: 'text-slate-700 dark:text-slate-300 border-slate-500/20'
             };
             case 'account': return {
-                gradient: 'from-red-600 to-rose-600 dark:from-red-500 dark:to-rose-500',
-                hover: 'hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/5',
-                text: 'text-red-600 dark:text-red-400 border-red-500/20'
+                gradient: 'from-rose-600 to-rose-700 dark:from-rose-500 dark:to-rose-600',
+                hover: 'hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-500/5',
+                text: 'text-rose-600 dark:text-rose-400 border-rose-500/20'
             };
             default: return {
                 gradient: 'from-green-600 to-emerald-600 dark:from-green-500 dark:to-emerald-500',
@@ -134,9 +134,9 @@ const SettingsPage: React.FC = () => {
                     <div className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl -z-10"></div>
                     <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/30 to-transparent -z-10"></div>
 
-                    {/* Mechanical Settings Spinning Gear Logo */}
+                    {/* Settings Background Icon */}
                     <div className="absolute top-5 right-5 md:top-8 md:right-8 opacity-20 sm:opacity-30 pointer-events-none">
-                        <Settings className="w-14 h-14 sm:w-24 sm:h-24 text-emerald-300 animate-[spin_20s_linear_infinite]" />
+                        <Settings className="w-14 h-14 sm:w-24 sm:h-24 text-emerald-300" />
                     </div>
 
                     <div className="relative z-10 animate-fade-in-up space-y-4 sm:space-y-6">
@@ -145,7 +145,7 @@ const SettingsPage: React.FC = () => {
                                 Pengaturan Portal
                             </h1>
                             <p className="mt-1.5 text-emerald-100/70 text-xs sm:text-sm md:text-base max-w-2xl leading-relaxed">
-                                Konfigurasikan profil guru, otentikasi akun, preferensi notifikasi, dan tema visual secara dinamis.
+                                Konfigurasikan profil guru, autentikasi akun, preferensi notifikasi, dan tema tampilan.
                             </p>
                         </div>
 
@@ -158,7 +158,7 @@ const SettingsPage: React.FC = () => {
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Cari mapel, ganti password, mode gelap..."
+                                placeholder="Cari profil, ganti sandi, mode gelap..."
                                 aria-label="Cari opsi pengaturan"
                                 className="block w-full pl-10 pr-12 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md text-white placeholder-emerald-200/40 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent text-xs sm:text-sm transition-all shadow-inner"
                             />
@@ -179,7 +179,7 @@ const SettingsPage: React.FC = () => {
                 {filteredSearch.length > 0 && (
                     <div className="bg-white/80 dark:bg-slate-900/60 border border-emerald-500/20 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-xl animate-fade-in space-y-3 relative z-20">
                         <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-                            <Sparkles className="w-5 h-5 animate-pulse" />
+                            <Sparkles className="w-5 h-5" />
                             <h3 className="font-bold text-sm sm:text-base">Navigasi Pintar Ditemukan:</h3>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -211,24 +211,27 @@ const SettingsPage: React.FC = () => {
                 {/* Popular Topics Navigation Helpers (Empty Search State) */}
                 {searchQuery === '' && (
                     <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-3 px-3 scrollbar-hide">
-                        <span className="text-xxs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">Asisten Cerdas:</span>
+                        <span className="text-xxs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest whitespace-nowrap">Pintasan Populer:</span>
                         <button type="button"
                             onClick={() => setActiveTab('appearance')}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-brand-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
+                            className="inline-flex items-center gap-1.5 min-h-[38px] px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-brand-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
                         >
-                            <span>🌓 Mode Gelap/Terang</span>
+                            <Moon className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
+                            <span>Mode Gelap/Terang</span>
                         </button>
                         <button type="button"
                             onClick={() => setActiveTab('account')}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-red-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
+                            className="inline-flex items-center gap-1.5 min-h-[38px] px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-red-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
                         >
-                            <span>🔑 Ganti Sandi Akun</span>
+                            <KeyRound className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+                            <span>Ganti Sandi Akun</span>
                         </button>
                         <button type="button"
                             onClick={() => setActiveTab('database')}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-slate-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
+                            className="inline-flex items-center gap-1.5 min-h-[38px] px-3 py-1.5 rounded-full border border-slate-200/60 dark:border-white/5 bg-white/70 dark:bg-slate-900/40 hover:border-slate-500/30 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-all duration-300 shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
                         >
-                            <span>💾 Backup Data Siswa</span>
+                            <HardDrive className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                            <span>Backup Data Siswa</span>
                         </button>
                     </div>
                 )}

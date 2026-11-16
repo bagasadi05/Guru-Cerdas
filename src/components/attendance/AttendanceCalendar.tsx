@@ -148,7 +148,7 @@ export const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
                         </h3>
                         <button type="button"
                             onClick={goToToday}
-                            className="text-xs text-white/70 hover:text-white transition-colors"
+                            className="inline-flex items-center justify-center min-h-[44px] sm:min-h-0 px-3 py-1 text-xs font-medium text-white/85 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                         >
                             Hari ini
                         </button>
@@ -179,7 +179,7 @@ export const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
             </div>
 
             {/* Calendar Grid */}
-            <div className="p-4">
+            <div className="p-2.5 sm:p-4">
                 {/* Day Headers */}
                 <div className="grid grid-cols-7 gap-1 mb-2">
                     {DAYS_OF_WEEK.map(day => (
@@ -209,7 +209,7 @@ export const AttendanceCalendar: React.FC<AttendanceCalendarProps> = ({
                                 key={day}
                                 onClick={() => onDateClick?.(dateStr)}
                                 className={`
-                                    aspect-square min-h-[44px] min-w-[44px] rounded-lg flex items-center justify-center text-sm font-medium
+                                    w-full aspect-square min-h-[40px] sm:min-h-[44px] rounded-lg flex items-center justify-center text-xs sm:text-sm font-medium
                                     transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2
                                     ${isSelected ? 'ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-slate-900' : ''}
                                     ${!isSelected && today ? 'ring-2 ring-emerald-400 ring-offset-2 dark:ring-offset-slate-900' : ''}

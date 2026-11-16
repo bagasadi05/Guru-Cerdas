@@ -13,7 +13,7 @@ import Layout from './components/Layout';
 import PwaPrompt from './components/PwaPrompt';
 import { queryClient } from './services/queryClient';
 import { AppProviders } from './components/AppProviders';
-import { OfflineBanner, SWUpdateBanner } from './components/StatusIndicators';
+import { SWUpdateBanner } from './components/StatusIndicators';
 import { GlobalSearchProvider } from './components/GlobalSearchContext';
 import { TourProvider } from './components/OnboardingHelp';
 import { useKeyboardShortcuts } from './components/advanced-features/useKeyboardShortcuts';
@@ -277,7 +277,6 @@ function AppContent() {
           </Suspense>
 
           <PwaPrompt />
-          <OfflineBanner />
           <SWUpdateBanner />
           <Suspense fallback={null}>
             <GlobalSearchModal onSelect={handleSearchResult} />

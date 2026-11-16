@@ -31,8 +31,23 @@ export const StudentsStudentFormModal: React.FC<StudentsStudentFormModalProps> =
   isSubmitting,
 }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={mode === 'add' ? 'Tambah Siswa Baru' : 'Edit Siswa'} maxWidth="max-w-xl">
-      <form onSubmit={onSubmit} className="space-y-4 max-h-[75vh] overflow-y-auto px-1 pr-2">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={mode === 'add' ? 'Tambah Siswa Baru' : 'Edit Siswa'}
+      maxWidth="max-w-xl"
+      footer={
+        <div className="flex justify-end gap-2.5">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Batal
+          </Button>
+          <Button type="submit" form="student-form" disabled={isSubmitting} className="min-w-[90px]">
+            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+          </Button>
+        </div>
+      }
+    >
+      <form id="student-form" onSubmit={onSubmit} className="space-y-4 px-1">
         {/* Nama Lengkap */}
         <div>
           <label htmlFor="student-name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
@@ -44,7 +59,6 @@ export const StudentsStudentFormModal: React.FC<StudentsStudentFormModalProps> =
             defaultValue={currentStudent?.name || ''}
             placeholder="Masukkan nama lengkap siswa..."
             required
-            autoFocus
           />
         </div>
 
@@ -212,15 +226,6 @@ export const StudentsStudentFormModal: React.FC<StudentsStudentFormModalProps> =
           </p>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Batal
-          </Button>
-          <Button type="submit" disabled={isSubmitting} className="min-w-[90px]">
-            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
-          </Button>
-        </div>
       </form>
     </Modal>
   );

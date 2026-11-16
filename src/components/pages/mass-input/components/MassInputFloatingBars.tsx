@@ -58,7 +58,7 @@ export const MassInputFloatingBars: React.FC<MassInputFloatingBarsProps> = ({
                     <div
                         role="status"
                         aria-live="polite"
-                        className="fixed bottom-32 lg:bottom-20 inset-x-0 z-50 pointer-events-none flex justify-center lg:pl-72 px-4 animate-in fade-in slide-in-from-bottom-5"
+                        className="fixed bottom-[calc(9.5rem+env(safe-area-inset-bottom,0px))] lg:bottom-24 inset-x-0 z-50 pointer-events-none flex justify-center lg:pl-72 px-4 animate-in fade-in slide-in-from-bottom-5"
                     >
                         <div className="pointer-events-auto shadow-2xl bg-amber-50 dark:bg-amber-950/90 text-amber-900 dark:text-amber-100 px-4 py-2.5 rounded-2xl flex items-center gap-3 border border-amber-300 dark:border-amber-800 backdrop-blur-md max-w-[95vw]">
                             <span className="text-xs sm:text-sm font-semibold whitespace-nowrap">
@@ -71,7 +71,7 @@ export const MassInputFloatingBars: React.FC<MassInputFloatingBarsProps> = ({
                                 variant="outline"
                                 size="sm"
                                 onClick={onUndoClear}
-                                className="rounded-xl border-amber-400 dark:border-amber-700 bg-white dark:bg-amber-900/40 text-amber-800 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-xs font-bold h-8 inline-flex items-center gap-1.5"
+                                className="rounded-xl border-amber-400 dark:border-amber-700 bg-white dark:bg-amber-900/40 text-amber-800 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-xs font-bold min-h-10 sm:h-8 inline-flex items-center gap-1.5"
                             >
                                 <RotateCcw className="w-3.5 h-3.5" />
                                 <span>Urungkan</span>

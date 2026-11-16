@@ -134,12 +134,12 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ className 
             {/* Trigger Button */}
             <button type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 rounded-xl text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="relative flex items-center justify-center h-11 w-11 min-h-[44px] min-w-[44px] rounded-xl border border-black/5 bg-white/50 text-slate-600 hover:text-slate-900 hover:bg-white dark:border-white/10 dark:bg-slate-800/50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
                 aria-label="Notifikasi"
             >
                 <BellIcon className="w-5 h-5" />
                 {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-red-500 text-white text-xxs font-bold flex items-center justify-center animate-pulse">
+                    <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-rose-500 text-white text-xxs font-bold flex items-center justify-center">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}

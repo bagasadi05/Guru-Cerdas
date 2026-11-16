@@ -68,8 +68,8 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClic
   };
 
   return (
-    <aside className="relative w-72 h-full flex-shrink-0 font-sans">
-      <div className="h-full m-4 rounded-3xl bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden relative">
+    <aside className="relative w-72 h-full flex-shrink-0 p-4 font-sans">
+      <div className="h-full rounded-3xl bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden relative">
 
         <div className="relative z-10 flex flex-col h-full p-5">
           <div className="flex items-center gap-4 px-2 mb-8 mt-2">
@@ -93,11 +93,20 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClic
           <div className="mb-6 p-1 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 relative overflow-hidden group">
             <div className="flex items-center gap-3 p-3 relative z-10">
               <div className="relative">
-                <img
-                  className="relative h-10 w-10 rounded-full object-cover border-2 border-white dark:border-white/20 shadow-md"
-                  src={user?.avatarUrl}
-                  alt="User avatar"
-                />
+                {user?.avatarUrl ? (
+                  <img
+                    className="relative h-10 w-10 rounded-full object-cover border-2 border-white dark:border-white/20 shadow-md"
+                    src={user.avatarUrl}
+                    alt={user.name || 'Avatar pengguna'}
+                  />
+                ) : (
+                  <div
+                    className="relative h-10 w-10 rounded-full bg-emerald-600 text-white font-bold text-sm flex items-center justify-center border-2 border-white dark:border-white/20 shadow-md"
+                    aria-hidden="true"
+                  >
+                    {(user?.name?.trim()?.[0] || 'G').toUpperCase()}
+                  </div>
+                )}
               </div>
               <div className="overflow-hidden">
                 <p className="font-semibold text-sm text-slate-800 dark:text-white truncate">
@@ -196,7 +205,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isAdmin, onLinkClic
               className="flex items-center w-full gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 transition-all duration-300 group"
             >
               <LogoutIcon className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-              <span className="text-sm font-medium">Logout</span>
+              <span className="text-sm font-medium">Keluar</span>
             </button>
           </div>
         </div>

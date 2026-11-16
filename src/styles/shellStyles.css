@@ -14,25 +14,12 @@
   -webkit-backdrop-filter: none !important;
 }
 
-/* Ensure mobile bottom navigation and sidebars are 100% solid opaque */
+/* Ensure mobile bottom navigation is 100% solid opaque */
 .mobile-bottom-nav {
   background-color: #ffffff !important;
 }
 
 .dark .mobile-bottom-nav {
-  background-color: #0f172a !important;
-}
-
-:root:not(.dark) .bg-white\/70,
-:root:not(.dark) .bg-white\/80,
-:root:not(.dark) .bg-white\/90,
-:root:not(.dark) .bg-white\/95,
-:root:not(.dark) .bg-white\/98 {
-  background-color: #ffffff !important;
-}
-
-.dark [class*="dark:bg-slate-900"],
-.dark [class*="dark:bg-slate-800"] {
   background-color: #0f172a !important;
 }
 
@@ -365,7 +352,7 @@
   z-index: -1;
   margin: -2px;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(167, 139, 250, 0.3), rgba(37, 99, 235, 0.3));
+  background: linear-gradient(135deg, rgba(13, 126, 158, 0.25), rgba(16, 185, 129, 0.25));
   transition: all 0.3s ease-in-out;
   opacity: 0;
 }
@@ -415,21 +402,21 @@
 .cosmic-bg::before {
   top: -100px;
   left: 20%;
-  background: radial-gradient(circle, rgba(124, 58, 237, 0.2), transparent 70%);
+  background: radial-gradient(circle, rgba(13, 126, 158, 0.18), transparent 70%);
 }
 
 .cosmic-bg::after {
   bottom: -100px;
   right: 20%;
-  background: radial-gradient(circle, rgba(20, 184, 166, 0.2), transparent 70%);
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.18), transparent 70%);
 }
 
 .dark .cosmic-bg::before {
-  background: radial-gradient(circle, rgba(124, 58, 237, 0.25), transparent 70%);
+  background: radial-gradient(circle, rgba(13, 126, 158, 0.22), transparent 70%);
 }
 
 .dark .cosmic-bg::after {
-  background: radial-gradient(circle, rgba(20, 184, 166, 0.2), transparent 70%);
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.18), transparent 70%);
 }
 
 #root {
@@ -541,7 +528,7 @@
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   border-radius: 18px;
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  border: 1px solid rgba(13, 126, 158, 0.28);
   pointer-events: none;
 }
 

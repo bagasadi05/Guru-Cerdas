@@ -13,6 +13,8 @@ interface FloatingActionButtonProps extends React.ButtonHTMLAttributes<HTMLButto
     label?: string;
     position?: 'bottom-right' | 'bottom-left' | 'bottom-center';
     offset?: { bottom?: number; right?: number; left?: number };
+    /** Render inside an existing positioned container instead of forcing `position: fixed`. */
+    inline?: boolean;
     size?: number;
     quickActions?: QuickAction[];
 }
@@ -23,6 +25,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
     label,
     position = 'bottom-right',
     offset,
+    inline = false,
     size,
     quickActions,
     className = '',
@@ -40,15 +43,11 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
         'bottom-center': 'bottom-24 left-1/2 -translate-x-1/2 lg:bottom-8',
     };
 
-    const style: React.CSSProperties = {};
-    if (offset) {
-        if (offset.bottom !== undefined) style.bottom = `${offset.bottom}px`;
-        if (offset.right !== undefined) style.right = `${offset.right}px`;
-        if (offset.left !== undefined) style.left = `${offset.left}px`;
-    }
-    if (size) {
-        style.width = `${size}px`;
-        style.height = `${size}px`;
+    const containerStyle: React.CSSProperties = {};
+    if (!inline && offset) {
+        if (offset.bottom !== undefined) containerStyle.bottom = `${offset.bottom}px`;
+        if (offset.right !== undefined) containerStyle.right = `${offset.right}px`;
+        if (offset.left !== undefined) containerStyle.left = `${offset.left}px`;
     }
 
     // Long press handling for quick actions
@@ -110,8 +109,8 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({
     return (
         <div
             ref={containerRef}
-            className={`fixed z-fixed ${!offset ? positionClasses[position] : ''}`}
-            style={offset ? { position: 'fixed', ...style } : {}}
+            className={inline ? 'relative inline-flex' : `fixed z-fixed ${!offset ? positionClasses[position] : ''}`}
+            style={!inline && offset ? { position: 'fixed', ...containerStyle } : undefined}
         >
             {/* Quick Actions Menu */}
             {isExpanded && quickActions && quickActions.length > 0 && (

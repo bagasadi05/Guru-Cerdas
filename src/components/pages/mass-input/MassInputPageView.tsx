@@ -235,7 +235,7 @@ export const MassInputPageView: React.FC<MassInputPageViewProps> = (props) => {
     }
 
     return (
-        <div className="w-full min-h-screen p-3 sm:p-5 md:p-6 pb-24 flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white overflow-y-auto">
+        <div className="w-full min-h-full py-2 sm:p-5 md:p-6 pb-44 lg:pb-24 flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white">
             <div className="w-full max-w-7xl mx-auto flex flex-col flex-grow">
                 {/* Header */}
                 <MassInputHeader

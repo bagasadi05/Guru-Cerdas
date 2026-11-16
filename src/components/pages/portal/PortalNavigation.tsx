@@ -76,13 +76,13 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ activeTab, u
                             <TabsTrigger
                                 key={tab.value}
                                 value={tab.value}
-                                className="group relative flex flex-col items-center justify-center min-h-[46px] min-w-[62px] px-2 py-1 bg-transparent text-slate-400 border-none rounded-xl transition-all duration-300 focus-visible:ring-0 active:scale-95 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-amber-400 shadow-none"
+                                className="group relative flex flex-col items-center justify-center min-h-[46px] min-w-[62px] px-2 py-1 bg-transparent text-slate-600 dark:text-slate-400 border-none rounded-xl transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 dark:focus-visible:ring-amber-400 active:scale-95 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-amber-400 shadow-none"
                             >
-                                <span className={`inline-flex items-center justify-center rounded-xl p-1.5 transition-transform duration-300 ${isActive ? 'scale-110 text-emerald-600 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-400'}`}>
+                                <span className={`inline-flex items-center justify-center rounded-xl p-1.5 transition-transform duration-300 ${isActive ? 'scale-110 text-emerald-600 dark:text-amber-400' : 'text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'}`}>
                                     <tab.icon className="h-5 w-5" />
                                 </span>
 
-                                <span className={`mt-0.5 text-xxs font-semibold tracking-wide transition-colors ${isActive ? 'text-emerald-600 dark:text-amber-400' : 'text-slate-400'}`}>
+                                <span className={`mt-0.5 text-xxs font-semibold tracking-wide transition-colors ${isActive ? 'text-emerald-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'}`}>
                                     {tab.label}
                                 </span>
 

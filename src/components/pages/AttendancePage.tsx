@@ -325,9 +325,9 @@ const AttendancePage: React.FC = () => {
                     )}
                 </div>
 
-                {/* Save Button */}
+                {/* Save Button (thumb-zone sticky on mobile/tablet) */}
                 {students && students.length > 0 && (
-                    <div className="mt-8 mb-4">
+                    <div className="sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] lg:static z-20 mt-6 mb-4 pt-2">
                         <Button
                             onClick={handleSave}
                             disabled={isSaving}

@@ -555,15 +555,10 @@ export const WelcomeEmptyState: React.FC<WelcomeEmptyStateProps> = ({
 }) => (
     <div className={`flex flex-col items-center justify-center py-16 px-6 text-center ${className}`}>
         {/* Welcome illustration */}
-        <div className="relative mb-8">
-            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center animate-pulse-glow">
-                <span className="text-5xl">👋</span>
+        <div className="relative mb-6">
+            <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <Sparkles className="w-11 h-11 text-white" aria-hidden="true" />
             </div>
-            <FloatingWrapper delay={200}>
-                <div className="absolute -top-2 -right-2 p-2 bg-white dark:bg-slate-800 rounded-xl shadow-lg">
-                    <Sparkles className="w-5 h-5 text-amber-500" />
-                </div>
-            </FloatingWrapper>
         </div>
 
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">

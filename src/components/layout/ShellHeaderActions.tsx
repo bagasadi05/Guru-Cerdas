@@ -8,21 +8,17 @@ import { useAccessibility } from '../ui/AccessibilityFeatures';
 
 interface ShellHeaderActionsProps {
     user: {
+        name?: string | null;
         avatarUrl?: string | null;
     } | null;
     onOpenTutorial?: () => void; // Keep for compatibility if needed, though we won't use it directly here
 }
 
-const ShellIconButton: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <div className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-black/5 bg-white/50 transition-all hover:bg-white dark:border-white/10 dark:bg-slate-800/50 dark:hover:bg-slate-800">
-        {children}
-    </div>
-);
-
 export const ShellHeaderActions: React.FC<ShellHeaderActionsProps> = ({
     user,
 }) => {
     const { isEasyMode, toggleEasyMode } = useAccessibility();
+    const userInitial = (user?.name?.trim()?.[0] || 'G').toUpperCase();
 
     return (
         <div className="ml-auto flex items-center gap-1.5 sm:gap-3">
@@ -57,9 +53,7 @@ export const ShellHeaderActions: React.FC<ShellHeaderActionsProps> = ({
                 <HelpCircle className="w-5 h-5" />
             </button>
 
-            <ShellIconButton>
-                <ThemeToggle />
-            </ShellIconButton>
+            <ThemeToggle />
 
             <div className="hidden xl:block">
                 <NetworkQualityIndicator size="sm" showLabel={true} />
@@ -67,20 +61,22 @@ export const ShellHeaderActions: React.FC<ShellHeaderActionsProps> = ({
 
             <EnhancedSyncStatus showDetails={true} />
 
-            <ShellIconButton>
-                <NotificationPanel />
-            </ShellIconButton>
+            <NotificationPanel />
 
             <Link
                 to="/pengaturan"
-                className="hidden sm:flex lg:hidden ml-1 h-11 w-11 items-center justify-center rounded-full ring-2 ring-white shadow-md transition-transform hover:scale-105 active:scale-95 dark:ring-slate-800 overflow-hidden shrink-0"
-                aria-label="Settings"
+                className="hidden sm:flex lg:hidden ml-1 h-11 w-11 items-center justify-center rounded-full ring-2 ring-white shadow-md transition-transform hover:scale-105 active:scale-95 dark:ring-slate-800 overflow-hidden shrink-0 bg-emerald-600 text-white font-bold text-sm"
+                aria-label="Pengaturan"
             >
-                <img
-                    className="h-full w-full object-cover"
-                    src={user?.avatarUrl || undefined}
-                    alt="User avatar"
-                />
+                {user?.avatarUrl ? (
+                    <img
+                        className="h-full w-full object-cover"
+                        src={user.avatarUrl}
+                        alt={user.name || 'Avatar pengguna'}
+                    />
+                ) : (
+                    <span aria-hidden="true">{userInitial}</span>
+                )}
             </Link>
         </div>
     );

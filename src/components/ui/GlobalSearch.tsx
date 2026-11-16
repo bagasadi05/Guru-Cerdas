@@ -154,11 +154,14 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
 
     return (
         <div
-            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-fade-in"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Pencarian Global"
+            className="fixed inset-0 z-50 p-3 sm:p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
             onClick={() => setIsOpen(false)}
         >
             <div
-                className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl mx-auto mt-[10vh] animate-fade-in-up flex flex-col overflow-hidden"
+                className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85dvh] mx-auto mt-[6dvh] sm:mt-[10dvh] animate-fade-in-up flex flex-col overflow-hidden border border-slate-200/70 dark:border-slate-700/60"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Search Input */}
@@ -209,7 +212,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, setIsOpen }) => {
                 )}
 
                 {/* Results Container */}
-                <div className="p-2 md:p-4 max-h-[50vh] overflow-y-auto" ref={resultsContainerRef}>
+                <div className="p-2 md:p-4 max-h-[50dvh] overflow-y-auto" ref={resultsContainerRef}>
                     {/* Search History */}
                     {showingHistory && (
                         <div className="space-y-2">

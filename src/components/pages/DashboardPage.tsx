@@ -138,7 +138,7 @@ const DashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="w-full min-h-full p-3 md:p-5 lg:p-6 flex flex-col space-y-3 sm:space-y-4 bg-transparent max-w-7xl mx-auto pb-24 lg:pb-8">
+    <div className="w-full min-h-full py-2 sm:p-4 md:p-5 lg:p-6 flex flex-col space-y-3 sm:space-y-4 bg-transparent max-w-7xl mx-auto pb-24 lg:pb-8">
       {/* Error Banner */}
       {isError && (
         <div className="rounded-xl border border-red-200/60 dark:border-red-500/30 bg-red-50/60 dark:bg-red-500/10 px-4 py-3 shadow-sm">
@@ -330,7 +330,7 @@ const DashboardPage: React.FC = () => {
       </DashboardSection>
 
       {/* Speed Dial FAB */}
-      <nav className="fixed bottom-24 right-4 lg:bottom-10 lg:right-10 z-50 flex flex-col items-end gap-4 pointer-events-none" aria-label="Aksi cepat">
+      <nav className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] right-4 lg:bottom-10 lg:right-10 z-50 flex flex-col items-end gap-4 pointer-events-none" aria-label="Aksi cepat">
         <div
           role="menu"
           aria-hidden={!isFabOpen}
@@ -387,8 +387,7 @@ const DashboardPage: React.FC = () => {
             )
           }
           className={`pointer-events-auto transition-all duration-300 ${isFabOpen ? 'bg-red-500 hover:bg-red-600 dark:bg-red-600 shadow-red-500/30 rotate-90' : 'bg-brand-600 hover:bg-brand-700 shadow-brand-600/30'}`}
-          position="bottom-right"
-          offset={{ bottom: 0, right: 0 }}
+          inline
           size={64}
         />
       </nav>

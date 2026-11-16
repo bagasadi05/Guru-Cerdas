@@ -146,10 +146,10 @@ export const Step5ModelWaktu: React.FC<Step5ModelWaktuProps> = ({
                     <span className="font-bold text-xs">{model.nama}</span>
                     {isSelected && <CheckCircle2 className="w-4 h-4 text-white shrink-0" />}
                   </div>
-                  <div className={`text-[10px] font-medium mb-2 ${isSelected ? 'text-brand-100' : 'text-brand-600 dark:text-brand-400'}`}>
+                  <div className={`text-[10px] font-medium mb-2 ${isSelected ? 'text-white/95' : 'text-brand-600 dark:text-brand-400'}`}>
                     {model.fokus}
                   </div>
-                  <div className={`text-[10px] line-clamp-2 ${isSelected ? 'text-brand-200' : 'text-slate-400 dark:text-slate-500'}`}>
+                  <div className={`text-[10px] line-clamp-2 ${isSelected ? 'text-white/90' : 'text-slate-600 dark:text-slate-400'}`}>
                     Sintaks: {model.sintaks.map(s => s.langkah.split(':')[0]).join(' → ')}
                   </div>
                 </button>

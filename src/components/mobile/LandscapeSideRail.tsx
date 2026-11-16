@@ -67,6 +67,7 @@ const LandscapeSideRail: React.FC<LandscapeSideRailProps> = ({
             to={item.href}
             end={item.href === '/dashboard'}
             onClick={handleNavClick}
+            title={item.label}
             className={`w-12 h-12 rounded-xl flex items-center justify-center
                       transition-all duration-300 relative group
                       focus-visible:outline-none focus-visible:ring-2 
@@ -97,17 +98,6 @@ const LandscapeSideRail: React.FC<LandscapeSideRailProps> = ({
                   : 'text-slate-600 dark:text-slate-400 group-hover:scale-110'
               }`}
             />
-
-            {/* Tooltip on hover */}
-            <div
-              className="absolute left-full ml-2 px-3 py-1.5 rounded-lg
-                        bg-slate-900 dark:bg-slate-800 text-white text-sm
-                        opacity-0 group-hover:opacity-100 pointer-events-none
-                        transition-opacity duration-200 whitespace-nowrap
-                        shadow-lg"
-            >
-              {item.label}
-            </div>
           </NavLink>
         );
       })}

@@ -114,28 +114,6 @@
     } catch (e) {
       // localStorage can throw in private mode; defaults are fine.
     }
-
-    // Prevent double-tap zoom (improves tap responsiveness without blocking accessibility zoom)
-    let lastTouchEnd = 0;
-    document.addEventListener('touchend', function (event) {
-      const now = Date.now();
-      if (now - lastTouchEnd <= 300) {
-        event.preventDefault();
-      }
-      lastTouchEnd = now;
-    }, false);
-
-    // Prevent pinch-zoom (multi-touch)
-    document.addEventListener('touchstart', function (event) {
-      if (event.touches.length > 1) {
-        event.preventDefault();
-      }
-    }, { passive: false });
-
-    // Prevent gesture zoom (iOS Safari)
-    document.addEventListener('gesturestart', function (event) {
-      event.preventDefault();
-    });
   </script>
 
 </head>
