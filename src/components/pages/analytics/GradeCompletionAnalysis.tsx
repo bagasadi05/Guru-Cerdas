@@ -10,7 +10,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { Search, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/Card';
 import { Select } from '../../ui/Select';
 import { Button } from '../../ui/Button';
@@ -20,6 +20,9 @@ import {
     type StudentMissingGrades,
 } from '../../../services/academicAnalyticsService';
 import type { AnalyticsPhSchedule } from './types';
+import { useToast } from '../../../hooks/useToast';
+import { useUserSettings } from '../../../hooks/useUserSettings';
+import { exportGradeCompletionSummaryPDF } from './academic/gradeCompletionPdf';
 
 // =============================================================================
 // TYPES
@@ -155,6 +158,10 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
         completionPercentage,
     } = completion;
 
+    const { schoolName } = useUserSettings();
+    const toast = useToast();
+    const [isExportingPdf, setIsExportingPdf] = useState(false);
+
     /** Filter nama siswa secara lokal */
     const searchedMissingStudents = useMemo(() => {
         const q = studentSearch.trim().toLowerCase();
@@ -184,6 +191,31 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
             .map(([className, items]) => ({ className, items }))
             .sort((a, b) => a.className.localeCompare(b.className, 'id', { numeric: true }));
     }, [searchedMissingStudents]);
+
+    const handleDownloadPdf = async () => {
+        setIsExportingPdf(true);
+        try {
+            await exportGradeCompletionSummaryPDF({
+                schoolName,
+                classLabel:
+                    classFilter === 'all'
+                        ? 'Semua Kelas'
+                        : (classes.find((c) => c.id === classFilter)?.name ?? classFilter),
+                scopeLabel: phOnly ? 'Hanya ASH / PH' : 'Semua Penilaian',
+                subjectLabel: effectiveSubject && effectiveSubject !== 'all' ? effectiveSubject : 'Semua Mapel',
+                assessmentLabel: assessmentFilter,
+                completionPercentage,
+                totalStudents: totalConsidered,
+                missingStudents: searchedMissingStudents,
+            });
+            toast.success('Rangkuman PDF berhasil diunduh');
+        } catch (err) {
+            console.error('Failed to export grade completion PDF:', err);
+            toast.error(`Gagal membuat PDF: ${err instanceof Error ? err.message : 'Terjadi kesalahan'}`);
+        } finally {
+            setIsExportingPdf(false);
+        }
+    };
 
     // ==========================================================================
     // HANDLERS
@@ -281,6 +313,15 @@ const GradeCompletionAnalysis: React.FC<GradeCompletionAnalysisProps> = ({
                             />
                         </span>
                     </label>
+
+                    <Button
+                        onClick={handleDownloadPdf}
+                        disabled={searchedMissingStudents.length === 0 || isExportingPdf}
+                        className="shrink-0 self-start sm:self-center inline-flex items-center gap-2 text-sm"
+                    >
+                        <Download className="w-4 h-4" />
+                        {isExportingPdf ? 'Menyiapkan...' : 'Unduh PDF'}
+                    </Button>
                 </div>
             </CardHeader>
 
