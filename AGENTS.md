@@ -19,6 +19,11 @@ Jika tidak auto-load, muat manual sebelum menjawab/menulis kode.
 
 ## Pointer Cepat
 
+> **Catatan (16 Nov 2026):** folder `.claude/skills/` dan `.agents/skills/` berada di
+> `.gitignore` — hanya ada di mesin ini, tidak ada di clone bersih. Pointer di bawah
+> hanya valid lokal; istilah kanonik & peta modul sekarang ada di `docs/CONTEXT.md`
+> (ter-track di repo).
+
 - Arsitektur & konvensi → `references/project-guide.md` (dalam skill portal-guru)
 - Supabase & RLS Security → `.claude/skills/supabase` & `supabase-postgres-best-practices`
 - Clean Architecture & Refactoring → `.claude/skills/clean-architecture` & `kent-beck-style`

@@ -1,6 +1,13 @@
 # PRD: Redesain & Penataan Ulang Tata Letak Dashboard (Section Performa & Widget Kehadiran)
 
-> **Status:** Draft / Proposed  
+> **Bukti penutup (16 Nov 2026):** temuan kritis §1.1 no.5 (`attendanceRecords={[]}`
+> statis → kehadiran selalu 0%) tidak ada lagi di repo — semua call site kini meneruskan
+> data nyata (`AttendancePage.tsx:315/377`, `ParentPortalPage.tsx:729`,
+> `StudentDetailTabPanels.tsx:187`). Status eksekusi usulan redesain tidak
+> terdokumentasi; PRD diarsipkan tanpa klaim selesai. Ide yang masih relevan masuk
+> antrian [ROADMAP.md](ROADMAP.md).
+
+> **Status:** Diarsipkan (16 Nov 2026)  
 > **Tanggal:** 2026-09-05  
 > **Penanggung Jawab:** Tim Pengembang & Desain UI/UX Guru Cerdas  
 > **Target Sprint:** Sprint 11 (Q4 2026)  

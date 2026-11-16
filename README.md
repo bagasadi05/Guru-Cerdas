@@ -4,7 +4,7 @@
 
 ![Portal Guru Logo](public/icons/icon-192x192.png)
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18.x-61DAFB?logo=react)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-6.x-646CFF?logo=vite)](https://vitejs.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?logo=supabase)](https://supabase.com/)
@@ -153,7 +153,8 @@ Aplikasi ini dibangun dengan teknologi web modern dan mendukung fitur **Progress
 portal-guru/
 ├── docs/                    # Dokumentasi proyek
 │   ├── DESIGN_STANDARDS.md  # Standar desain UI/UX
-│   └── TECHNICAL_IMPROVEMENTS.md
+│   ├── ROADMAP.md           # Roadmap gulir (arah aktif)
+│   └── reviews/             # Review & analisis berformat
 ├── public/                  # Static assets
 │   └── icons/               # PWA icons
 ├── src/
@@ -226,7 +227,8 @@ npm run preview
 ## 📚 Dokumentasi
 
 - [🎨 Design Standards](docs/DESIGN_STANDARDS.md) - Panduan desain UI/UX
-- [🔧 Technical Improvements](docs/TECHNICAL_IMPROVEMENTS.md) - Rencana perbaikan teknis
+- [🗺️ Roadmap](docs/ROADMAP.md) - Arah aktif proyek (roadmap gulir)
+- [🔍 Review & Analisis](docs/reviews/) - Review kode dan masukan strategis
 - [📖 VitePress Docs](docs/.vitepress/) - Dokumentasi lengkap (coming soon)
 
 ### API Reference

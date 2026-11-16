@@ -1,6 +1,12 @@
 # PRD: Peningkatan Menu Dashboard
 
-> **Status:** Draft  
+> **Bukti penutup (16 Nov 2026):** temuan kritis §1.2 no.2 ("DashboardSummaryCards
+> menggunakan data palsu — Siswa Prioritas mengambil students[0..2]") tidak ada lagi di
+> kode: `src/components/dashboard/DashboardSummaryCards.tsx:272` kini "Siswa Prioritas
+> (real data)" tanpa pola `students[0]`. Usulan yang belum dieksekusi (onboarding §4.5,
+> cache offline dashboard §4.9) masuk antrian [ROADMAP.md](ROADMAP.md) / plan F4.3.
+
+> **Status:** Ditutup (16 Nov 2026)  
 > **Tanggal:** 2026-09-01  
 > **Penanggung Jawab:** Tim Pengembangan Guru Cerdas  
 > **Sprint Target:** Q4 2026 – Q1 2027

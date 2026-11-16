@@ -1,5 +1,11 @@
 # Laporan Penutupan Proyek & Verifikasi QA (Sprint 9 - Final)
 
+> **ARSIP (16 Nov 2026):** dokumen ini adalah snapshot QA Sprint 9 (± Juni 2026) —
+> bukan status berjalan. Sejak dokumen ini ditulis terjadi hardening DB besar
+> (33 fungsi SECURITY DEFINER), rilis v1.0.0–v1.2.0, dan review keamanan dengan
+> temuan baru. Untuk status saat ini: [CHANGELOG.md](../CHANGELOG.md),
+> [ROADMAP.md](ROADMAP.md), dan [reviews/](reviews/).
+
 Dokumen ini mencatat selesainya pengerjaan **Design System & QA Verification** untuk portal Guru Cerdas. Semua definisi selesai (Definition of Done) telah diverifikasi secara penuh menggunakan data terukur.
 
 ---
