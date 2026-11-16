@@ -77,10 +77,10 @@ registerRoute(
 // ============================================
 // OFFLINE MUTATION ROUTING (NETWORK-ONLY)
 // ============================================
-// The application layer (OfflineQueueService in src/services/offlineQueue.ts and
-// resilientSupabaseFetch in src/services/supabase.ts) manages mutation queueing,
-// retry backoff, conflict resolution, UI sync progress, and undo capability.
-// To avoid double-submission on reconnection, the Service Worker passes mutation
+// The application layer (functional queue in src/services/offline/ driven by
+// useSyncQueue, plus resilientSupabaseFetch in src/services/supabase.ts) manages
+// mutation queueing, retry backoff, conflict resolution, UI sync progress, and
+// undo capability. To avoid double-submission on reconnection, the Service Worker passes mutation
 // requests directly through NetworkOnly so network failures are handled cleanly
 // by the application-layer queue.
 registerRoute(

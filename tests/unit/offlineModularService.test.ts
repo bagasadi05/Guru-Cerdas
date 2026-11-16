@@ -3,22 +3,20 @@ import * as offlineFacade from '../../src/services/offlineQueue';
 import * as offlineModule from '../../src/services/offline';
 
 describe('Offline Modular Services', () => {
-    it('re-exports all functional and class-based queue primitives from facade', () => {
+    it('re-exports the live functional queue primitives from the facade', () => {
         expect(typeof offlineFacade.addToQueue).toBe('function');
         expect(typeof offlineFacade.getQueue).toBe('function');
         expect(typeof offlineFacade.clearQueue).toBe('function');
         expect(typeof offlineFacade.processQueue).toBe('function');
+        expect(typeof offlineFacade.processMutation).toBe('function');
+        expect(typeof offlineFacade.subscribeSyncProgress).toBe('function');
+        expect(typeof offlineFacade.isPermanentMutationError).toBe('function');
         expect(typeof offlineFacade.detectConflict).toBe('function');
         expect(typeof offlineFacade.resolveConflict).toBe('function');
-        expect(typeof offlineFacade.cacheData).toBe('function');
-        expect(typeof offlineFacade.getCachedData).toBe('function');
-        expect(typeof offlineFacade.invalidateCache).toBe('function');
-        expect(typeof offlineFacade.registerBackgroundSync).toBe('function');
 
         expect(offlineFacade.addToQueue).toBe(offlineModule.addToQueue);
         expect(offlineFacade.detectConflict).toBe(offlineModule.detectConflict);
         expect(offlineFacade.resolveConflict).toBe(offlineModule.resolveConflict);
-        expect(offlineFacade.offlineQueue).toBe(offlineModule.offlineQueue);
     });
 
     describe('Conflict Resolver Module', () => {
@@ -80,29 +78,6 @@ describe('Offline Modular Services', () => {
                 server,
                 needsManualResolution: true,
             });
-        });
-    });
-
-    describe('OfflineQueueService Instance', () => {
-        it('provides singleton methods on offlineQueue', () => {
-            expect(offlineModule.offlineQueue).toBeDefined();
-            expect(typeof offlineModule.offlineQueue.add).toBe('function');
-            expect(typeof offlineModule.offlineQueue.getQueue).toBe('function');
-            expect(typeof offlineModule.offlineQueue.clear).toBe('function');
-            expect(typeof offlineModule.offlineQueue.subscribe).toBe('function');
-            expect(typeof offlineModule.offlineQueue.setSyncHandler).toBe('function');
-        });
-
-        it('does not mark or delete queued items when processQueue runs without a sync handler', async () => {
-            await offlineModule.offlineQueue.clear();
-            await offlineModule.offlineQueue.add('CREATE', 'students', { name: 'Uji' });
-
-            await offlineModule.offlineQueue.processQueue();
-
-            const queued = offlineModule.offlineQueue.getQueue();
-            expect(queued).toHaveLength(1);
-            expect(queued[0].status).toBe('pending');
-            await offlineModule.offlineQueue.clear();
         });
     });
 });
