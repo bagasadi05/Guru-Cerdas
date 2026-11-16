@@ -8,13 +8,10 @@ import { useToast } from '../../../../hooks/useToast';
 import { supabase } from '../../../../services/supabase';
 import { sanitizeContent } from '../../../../services/securityEnhanced';
 import { extractStudentHtml } from '../utils/template';
-import { exportModulAjarToPdf } from '../utils/pdfExport';
-import { exportModulAjarToWord } from '../utils/wordExport';
 import { printModulAjarHtml } from '../utils/printDocument';
 import {
   DocumentExportError,
   downloadBlob,
-  isServerDocumentExportEnabled,
   requestDocumentExport,
   type DocumentExportRequest,
 } from '../../../../services/documentExportService';
@@ -30,7 +27,6 @@ interface UseModulAjarExportParams {
   isFullscreen: boolean;
   logoBase64: string;
   updateHistoryItem: (id: string, partial: Partial<LessonPlanListItem>) => void;
-  loadPlanContent: (plan: { id: string; generated_content?: string | null }) => Promise<string | null>;
   copySuccessLabel: string;
 }
 
@@ -40,7 +36,6 @@ export const useModulAjarExport = ({
   isFullscreen,
   logoBase64,
   updateHistoryItem,
-  loadPlanContent,
   copySuccessLabel,
 }: UseModulAjarExportParams) => {
   const toast = useToast();
@@ -52,7 +47,6 @@ export const useModulAjarExport = ({
   const [hasUnsavedEdits, setHasUnsavedEdits] = useState<boolean>(false);
   const [editStatus, setEditStatus] = useState<'unsaved' | 'saving' | 'saved' | 'error' | null>(null);
 
-  const [isExportingPdf, setIsExportingPdf] = useState<boolean>(false);
   const [exportingKey, setExportingKey] = useState<string | null>(null);
   const [exportFailure, setExportFailure] = useState<ExportFailure | null>(null);
   const [pendingExportFormat, setPendingExportFormat] = useState<ExportFormat | null>(null);
@@ -62,12 +56,10 @@ export const useModulAjarExport = ({
   const previewRef = useRef<HTMLDivElement>(null);
   const fullscreenPreviewRef = useRef<HTMLDivElement>(null);
 
-  const useServerExport = isServerDocumentExportEnabled();
-
   const previewBusyFormat: 'pdf' | 'docx' | null =
     exportingKey === 'preview:docx'
       ? 'docx'
-      : exportingKey === 'preview:pdf' || isExportingPdf
+      : exportingKey === 'preview:pdf'
         ? 'pdf'
         : exportingKey !== null
           ? 'pdf'
@@ -229,124 +221,22 @@ export const useModulAjarExport = ({
     });
   };
 
-  const handleExportPdf = async () => {
-    if (useServerExport) {
-      exportPreviewFromServer('pdf');
-      return;
-    }
-    const targetRef = isFullscreen ? fullscreenPreviewRef : previewRef;
-    const documentToExport = getDocumentForOutput(targetRef);
-
-    if (!documentToExport) return;
-
-    setIsExportingPdf(true);
-    toast.info('Menyiapkan file PDF, mohon tunggu sebentar...', { duration: 3000 });
-    try {
-      const typeSuffix = previewMode === 'siswa' ? 'LKPD_Siswa' : formState.documentType;
-      const fileName = `${typeSuffix}_${formState.mataPelajaran}_Kelas${formState.kelas}`
-        .replace(/[/\\?%*:|"<>]/g, '_')
-        .replace(/\s+/g, '_');
-      await exportModulAjarToPdf({
-        htmlContent: documentToExport,
-        fileName,
-        paperSize: formState.paperSize,
-      });
-      toast.info('Pilih Simpan sebagai PDF pada dialog cetak untuk menyimpan dokumen.');
-    } catch (err: any) {
-      console.error('Failed to export PDF:', err);
-      toast.error(`Gagal mengunduh PDF: ${err.message || 'Terjadi kesalahan'}`);
-    } finally {
-      setIsExportingPdf(false);
-    }
+  const handleExportPdf = () => {
+    exportPreviewFromServer('pdf');
   };
 
-  const handleExportWord = async () => {
-    if (useServerExport) {
-      exportPreviewFromServer('docx');
-      return;
-    }
-    const targetRef = isFullscreen ? fullscreenPreviewRef : previewRef;
-    const htmlContent = getDocumentForOutput(targetRef);
-    if (!htmlContent) return;
-
-    if (exportInFlightRef.current) return;
-    exportInFlightRef.current = true;
-    setExportingKey('preview:docx');
-    try {
-      const typeSuffix = previewMode === 'siswa' ? 'LKPD_Siswa' : formState.documentType;
-      await exportModulAjarToWord({
-        htmlContent,
-        fileName: `${typeSuffix}_${formState.mataPelajaran}_Kelas${formState.kelas}`,
-        paperSize: formState.paperSize,
-        title: `${typeSuffix} ${formState.mataPelajaran}`,
-      });
-      toast.success('File Word (.docx) berhasil diunduh');
-    } catch (err: unknown) {
-      console.error('Failed to export Word:', err);
-      toast.error(
-        `Gagal mengunduh Word: ${err instanceof Error ? err.message : 'Terjadi kesalahan'}`
-      );
-    } finally {
-      exportInFlightRef.current = false;
-      setExportingKey(null);
-    }
+  const handleExportWord = () => {
+    exportPreviewFromServer('docx');
   };
 
-  const handleExportHistoryPdf = async (item: any, e: React.MouseEvent) => {
+  const handleExportHistoryPdf = (item: any, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (useServerExport) {
-      exportHistoryFromServer(item, 'pdf');
-      return;
-    }
-    const htmlContent = await loadPlanContent(item);
-    if (!htmlContent) return;
-
-    toast.info('Menyiapkan file PDF, mohon tunggu sebentar...', { duration: 3000 });
-    try {
-      const fileName =
-        `${item.document_type || 'ModulAjar'}_${item.identity?.mapel || 'Mapel'}_Kelas${item.identity?.kelas || ''}`
-          .replace(/[/\\?%*:|"<>]/g, '_')
-          .replace(/\s+/g, '_');
-      await exportModulAjarToPdf({
-        htmlContent,
-        fileName,
-        paperSize: item.components?.paperSize === 'F4' ? 'F4' : 'A4',
-      });
-      toast.info('Pilih Simpan sebagai PDF pada dialog cetak untuk menyimpan dokumen.');
-    } catch (err: any) {
-      console.error('Failed to export history PDF:', err);
-      toast.error(`Gagal mengunduh PDF: ${err.message || 'Terjadi kesalahan'}`);
-    }
+    exportHistoryFromServer(item, 'pdf');
   };
 
-  const handleExportHistoryWord = async (item: any, e: React.MouseEvent) => {
+  const handleExportHistoryWord = (item: any, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (useServerExport) {
-      exportHistoryFromServer(item, 'docx');
-      return;
-    }
-    const htmlContent = await loadPlanContent(item);
-    if (!htmlContent) return;
-    if (exportInFlightRef.current) return;
-    exportInFlightRef.current = true;
-    setExportingKey(`${item.id}:docx`);
-    try {
-      await exportModulAjarToWord({
-        htmlContent,
-        fileName: `${item.document_type || 'ModulAjar'}_${item.identity?.mapel || 'Mapel'}_Kelas${item.identity?.kelas || ''}`,
-        paperSize: item.components?.paperSize === 'F4' ? 'F4' : 'A4',
-        title: item.document_type || 'Modul Ajar',
-      });
-      toast.success('File Word (.docx) berhasil diunduh');
-    } catch (err: unknown) {
-      console.error('Failed to export history Word:', err);
-      toast.error(
-        `Gagal mengunduh Word: ${err instanceof Error ? err.message : 'Terjadi kesalahan'}`
-      );
-    } finally {
-      exportInFlightRef.current = false;
-      setExportingKey(null);
-    }
+    exportHistoryFromServer(item, 'docx');
   };
 
   const clearDocument = () => {
@@ -373,7 +263,6 @@ export const useModulAjarExport = ({
     setEditStatus,
     exportingKey,
     setExportingKey,
-    isExportingPdf,
     exportFailure,
     setExportFailure,
     pendingExportFormat,
@@ -382,7 +271,6 @@ export const useModulAjarExport = ({
     previewRef,
     fullscreenPreviewRef,
     previewBusyFormat,
-    useServerExport,
     persistPreviewEdits,
     markPreviewEdited,
     handleCopy,

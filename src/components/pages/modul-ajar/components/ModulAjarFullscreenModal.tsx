@@ -26,7 +26,6 @@ interface ModulAjarFullscreenModalProps {
   logoBase64: string;
   fullscreenPreviewRef: React.RefObject<HTMLDivElement | null>;
   previewBusyFormat: 'pdf' | 'docx' | null;
-  useServerExport: boolean;
   exportFailure: ExportFailure | null;
   onDismissExportFailure: () => void;
   onExportPdf: () => void;
@@ -57,7 +56,6 @@ export const ModulAjarFullscreenModal: React.FC<ModulAjarFullscreenModalProps> =
   logoBase64,
   fullscreenPreviewRef,
   previewBusyFormat,
-  useServerExport,
   exportFailure,
   onDismissExportFailure,
   onExportPdf,
@@ -155,9 +153,7 @@ export const ModulAjarFullscreenModal: React.FC<ModulAjarFullscreenModalProps> =
                   {
                     id: 'word',
                     label: labels.word,
-                    description: useServerExport
-                      ? 'Berkas .docx, bisa diedit di Word'
-                      : 'Berkas .doc, bisa diedit di Word',
+                    description: 'Berkas .docx, bisa diedit di Word',
                     icon: FileText,
                     onSelect: onExportWord,
                   },

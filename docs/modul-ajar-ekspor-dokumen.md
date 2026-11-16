@@ -1,6 +1,12 @@
 # Ekspor Dokumen Modul Ajar (PDF Server & Word .docx)
 
-Implementasi fase pertama dari [PRD Ekspor Dokumen Modul Ajar](./prd-modul-ajar-ekspor-dokumen.md). Fitur berjalan di balik feature flag `VITE_ENABLE_SERVER_DOCUMENT_EXPORT`. Selama flag mati, Word dibuat sebagai DOCX native di browser; PDF membuka dialog cetak native dengan petunjuk memilih **Simpan sebagai PDF**. Kedua jalur memakai model dan geometri dokumen bersama.
+Implementasi dari [PRD Ekspor Dokumen Modul Ajar](./prd-modul-ajar-ekspor-dokumen.md).
+
+> **Rollout selesai (16 Nov 2026):** ekspor server kini satu-satunya jalur — feature flag
+> `VITE_ENABLE_SERVER_DOCUMENT_EXPORT` dan fallback klien (DOCX native browser + dialog
+> cetak) sudah dihapus. Fallback yang tersisa: dialog cetak untuk PDF preview saat
+> server gagal (banner kegagalan menyediakan tombolnya). Rollout mengikuti langkah §12
+> PRD: pantau kegagalan ekspor di Sentry/log, lalu jalur raster klien dihapus.
 
 ## Tata letak dokumen tersimpan
 

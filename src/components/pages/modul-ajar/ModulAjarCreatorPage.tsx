@@ -117,7 +117,6 @@ const ModulAjarCreatorPage: React.FC = () => {
     isFullscreen,
     logoBase64,
     updateHistoryItem,
-    loadPlanContent,
     copySuccessLabel: t.lessonPlan.copySuccess,
   });
 
@@ -524,7 +523,6 @@ const ModulAjarCreatorPage: React.FC = () => {
           logoBase64={logoBase64}
           fullscreenPreviewRef={exportActions.fullscreenPreviewRef}
           previewBusyFormat={exportActions.previewBusyFormat}
-          useServerExport={exportActions.useServerExport}
           exportFailure={exportActions.exportFailure}
           onDismissExportFailure={() => exportActions.setExportFailure(null)}
           onExportPdf={exportActions.handleExportPdf}

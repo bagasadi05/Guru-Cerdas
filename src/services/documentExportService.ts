@@ -56,10 +56,6 @@ export interface DocumentExportResult {
   fileName: string;
 }
 
-export function isServerDocumentExportEnabled(): boolean {
-  return import.meta.env.VITE_ENABLE_SERVER_DOCUMENT_EXPORT === 'true';
-}
-
 function mapServerCode(status: number, code: unknown): DocumentExportErrorCode {
   switch (code) {
     case 'UNAUTHORIZED':

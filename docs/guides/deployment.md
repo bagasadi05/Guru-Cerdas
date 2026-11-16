@@ -41,7 +41,6 @@ Sebelum deployment, pastikan:
 | `VITE_USE_CUSTOM_PWA_PROMPT` | Enable custom PWA prompt UI (optional) | `false` |
 | `VITE_ENABLE_AI_MODUL_AJAR` | Enable Generative AI option in Modul Ajar Creator | `true` |
 | `VITE_ENABLE_AI_FEATURES` | Feature flag for AI-assisted features (optional) | `true` |
-| `VITE_ENABLE_SERVER_DOCUMENT_EXPORT` | Enable server-side PDF/DOCX export endpoints (optional) | `true` |
 | `VITE_GEMINI_PROXY_URL` | Custom backend proxy URL for Gemini API (optional) | `/api/gemini` |
 | `VITE_GROQ_API_KEY` | Groq API key for dev/local fallback (optional) | `gsk_...` |
 | `VITE_GROQ_PROXY_URL` | Custom backend proxy URL for Groq API (optional) | `/api/groq` |
