@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../../../services/supabase';
+import { fetchClassComparisonData } from '../../../services/analytics';
 import { useAuth } from '../../../hooks/useAuth';
 import { useSemester } from '../../../contexts/SemesterContext';
 import { Card, CardContent } from '../../ui/Card';
@@ -29,23 +29,8 @@ const ClassComparisonTab: React.FC = () => {
         queryKey: ['class_comparison', user?.id, semesterId],
         enabled: !!user && !!semesterId,
         queryFn: async () => {
-            const applySem = (q: any) => semesterId ? q.eq('semester_id', semesterId) : q;
-            const [clsRes, stuRes, rolesRes, vioRes, attRes, acaRes] = await Promise.all([
-                supabase.from('classes').select('id, name, user_id').is('deleted_at', null).eq('is_archived', false),
-                supabase.from('students').select('id, name, class_id').is('deleted_at', null),
-                supabase.from('user_roles').select('user_id, full_name'),
-                applySem(supabase.from('violations').select('student_id, points').is('deleted_at', null)),
-                applySem(supabase.from('attendance').select('student_id, status').is('deleted_at', null)),
-                applySem(supabase.from('academic_records').select('student_id, score').is('deleted_at', null)),
-            ]);
-            const err = clsRes.error || stuRes.error || rolesRes.error || vioRes.error || attRes.error || acaRes.error;
-            if (err) throw err;
-            const classes = clsRes.data || [];
-            const students = stuRes.data || [];
-            const roles = rolesRes.data || [];
-            const violations = vioRes.data || [];
-            const attendance = attRes.data || [];
-            const academics = acaRes.data || [];
+            const { classes, students, roles, violations, attendance, academics } =
+                await fetchClassComparisonData(semesterId);
 
             const roleMap = new Map<string, string>(roles.map((r: any) => [r.user_id, r.full_name]));
             const studentClass = new Map<string, string>(students.map((s: any) => [s.id, s.class_id]));

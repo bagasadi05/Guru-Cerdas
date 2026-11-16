@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../../services/supabase';
+import { fetchSmartInsightsData } from '../../../services/analytics';
 import { useAuth } from '../../../hooks/useAuth';
 import { useSemester } from '../../../contexts/SemesterContext';
 import { createWhatsAppLink, generateStudentConcernMessage } from '../../../utils/whatsappUtils';
@@ -173,27 +173,13 @@ export const SmartInsightsPanel: React.FC = () => {
         queryKey: ['smart_insights', user?.id, semesterId],
         enabled: !!user,
         queryFn: async () => {
-            const [clsRes, stuRes, vioRes, attRes, acaRes] = await Promise.all([
-                supabase.from('classes').select('id, name').is('deleted_at', null).eq('is_archived', false),
-                supabase.from('students').select('id, name, class_id, parent_phone, parent_name').is('deleted_at', null),
-                semesterId
-                    ? supabase.from('violations').select('student_id').is('deleted_at', null).eq('semester_id', semesterId)
-                    : supabase.from('violations').select('student_id').is('deleted_at', null),
-                semesterId
-                    ? supabase.from('attendance').select('student_id, status').is('deleted_at', null).eq('semester_id', semesterId)
-                    : supabase.from('attendance').select('student_id, status').is('deleted_at', null),
-                semesterId
-                    ? supabase.from('academic_records').select('student_id, score').is('deleted_at', null).eq('semester_id', semesterId)
-                    : supabase.from('academic_records').select('student_id, score').is('deleted_at', null),
-            ]);
-            const err = clsRes.error || stuRes.error || vioRes.error || attRes.error || acaRes.error;
-            if (err) throw err;
+            const result = await fetchSmartInsightsData(semesterId);
             return {
-                classes: (clsRes.data || []) as RawClassItem[],
-                students: (stuRes.data || []) as RawStudentItem[],
-                violations: (vioRes.data || []) as RawViolationItem[],
-                attendance: (attRes.data || []) as RawAttendanceItem[],
-                academics: (acaRes.data || []) as RawAcademicItem[],
+                classes: result.classes as RawClassItem[],
+                students: result.students as RawStudentItem[],
+                violations: result.violations as RawViolationItem[],
+                attendance: result.attendance as RawAttendanceItem[],
+                academics: result.academics as RawAcademicItem[],
             };
         },
     });

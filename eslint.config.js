@@ -7,6 +7,24 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
     { ignores: ['dist', 'android/**', 'supabase/**', '.delta/**', '.cache/**', 'src/services/database.types.ts'] },
+    // F3.1: analytics components must read through src/services/analytics —
+    // no direct Supabase client imports. fetchAnalyticsData.ts is the sanctioned
+    // data module pending relocation.
+    {
+        files: ['src/components/pages/analytics/**/*.{ts,tsx}'],
+        rules: {
+            'no-restricted-imports': ['error', {
+                patterns: [{
+                    group: ['**/services/supabase'],
+                    message: 'Gunakan src/services/analytics/* — komponen analitik tidak boleh mengimpor client Supabase langsung.',
+                }],
+            }],
+        },
+    },
+    {
+        files: ['src/components/pages/analytics/fetchAnalyticsData.ts'],
+        rules: { 'no-restricted-imports': 'off' },
+    },
     {
         extends: [js.configs.recommended, ...tseslint.configs.recommended],
         files: ['**/*.{ts,tsx}'],
