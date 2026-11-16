@@ -65,7 +65,8 @@ export async function fetchClassComparisonData(semesterId: string | null): Promi
     };
 }
 
-export async function fetchSmartInsightsData(semesterId: string | null): Promise<SmartInsightsDataset> {    const [clsRes, stuRes, vioRes, attRes, acaRes] = await Promise.all([
+export async function fetchSmartInsightsData(semesterId: string | null): Promise<SmartInsightsDataset> {
+    const [clsRes, stuRes, vioRes, attRes, acaRes] = await Promise.all([
         supabase.from('classes').select('id, name').is('deleted_at', null).eq('is_archived', false),
         supabase.from('students').select('id, name, class_id, parent_phone, parent_name').is('deleted_at', null),
         applySemester(
