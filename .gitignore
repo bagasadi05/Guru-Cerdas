@@ -176,3 +176,10 @@ scratch/
 
 # Tech-debt scan artifacts
 debt_*.json
+
+# Python cache from one-off migration scripts
+__pycache__/
+scripts/*_parsed.json
+scripts/parsed_*.json
+scripts/final_students.json
+scripts/backup_breakdown.json
