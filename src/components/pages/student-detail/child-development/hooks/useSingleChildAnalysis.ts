@@ -10,6 +10,7 @@ import {
 } from '../../../../../services/childDevelopmentAnalysis';
 import { stripMarkdown, sanitizeAnalysisData } from '../../../../../utils/textSanitizer';
 import { exportSingleChildDevelopmentPDF } from '../utils/childDevelopmentPdfExport';
+import * as childStats from '../../../../../services/childDevelopmentStats';
 import type { SemesterRow, AcademicYearRow } from '../../../../../types';
 import type { SemesterWithYear } from '../../../../../contexts/SemesterContext';
 import type {
@@ -64,57 +65,38 @@ export const useSingleChildAnalysis = ({
     }));
   }, [studentData.academicRecords]);
 
-  // Calculate period comparison (simulate based on record order)
+  // Calculate period comparison — time-based (median date), honest: no delta
+  // when the data cannot support one (CD3).
   const periodStats = useMemo<PeriodStats>(() => {
     const records = studentData.academicRecords;
-    const totalRecords = records.length;
-
-    if (totalRecords < 4) {
-      const avg =
-        totalRecords > 0
-          ? Math.round(records.reduce((a, b) => a + b.score, 0) / totalRecords)
-          : 0;
-      return { currentAvg: avg, previousAvg: 0 };
+    const avg = childStats.averageScore(records);
+    const trend = childStats.computeTrendFromRecords(records);
+    if (trend.trend === null || trend.delta === null) {
+      return { currentAvg: avg, previousAvg: avg };
     }
-
-    const midPoint = Math.floor(totalRecords / 2);
-    const recentRecords = records.slice(midPoint);
-    const olderRecords = records.slice(0, midPoint);
-
-    const currentAvg = Math.round(
-      recentRecords.reduce((a, b) => a + b.score, 0) / recentRecords.length
-    );
-    const previousAvg = Math.round(
-      olderRecords.reduce((a, b) => a + b.score, 0) / olderRecords.length
-    );
-
-    return { currentAvg, previousAvg };
+    return {
+      currentAvg: Math.round(avg + trend.delta / 2),
+      previousAvg: Math.round(avg - trend.delta / 2),
+    };
   }, [studentData.academicRecords]);
 
   const subjects = useMemo(() => subjectAverages.map((s) => s.subject), [subjectAverages]);
   const studentScores = useMemo(() => subjectAverages.map((s) => s.average), [subjectAverages]);
+  // CD2: canonical mean of ALL records — same method as the AI prompt.
   const overallAverage = useMemo(
-    () =>
-      studentScores.length > 0
-        ? Math.round(studentScores.reduce((a, b) => a + b, 0) / studentScores.length)
-        : 0,
-    [studentScores]
+    () => childStats.averageScore(studentData.academicRecords),
+    [studentData.academicRecords]
   );
 
-  const attendanceRate = useMemo(() => {
-    const attendanceRecords = studentData.attendanceRecords || [];
-    return attendanceRecords.length > 0
-      ? Math.round(
-          (attendanceRecords.filter((a) => a.status === 'Hadir').length / attendanceRecords.length) * 100
-        )
-      : 100;
-  }, [studentData.attendanceRecords]);
+  const attendanceRate = useMemo(
+    () => childStats.attendanceRate(studentData.attendanceRecords || []),
+    [studentData.attendanceRecords]
+  );
 
-  const keaktifan = useMemo(() => {
-    const quizTotal = studentData.quizPoints.reduce((sum, q) => sum + (q.points || 0), 0);
-    const quizCount = studentData.quizPoints.length;
-    return quizTotal > 0 ? Math.min(quizTotal * 5, 100) : Math.min(quizCount * 15, 100);
-  }, [studentData.quizPoints]);
+  const keaktifan = useMemo(
+    () => childStats.engagementScore(studentData.quizPoints),
+    [studentData.quizPoints]
+  );
 
   const isRadarChartValid = subjects.length >= 3;
 
@@ -212,17 +194,17 @@ export const useSingleChildAnalysis = ({
     let cognitiveColor =
       'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50';
     let cognitiveDot = 'bg-amber-500';
-    if (overallAverage >= 85) {
+    if (overallAverage >= childStats.ACADEMIC_TONE_THRESHOLDS.sangatBaik) {
       cognitiveLabel = 'Sangat Baik';
       cognitiveColor =
         'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50';
       cognitiveDot = 'bg-emerald-500';
-    } else if (overallAverage >= 75) {
+    } else if (overallAverage >= childStats.ACADEMIC_TONE_THRESHOLDS.baik) {
       cognitiveLabel = 'Baik';
       cognitiveColor =
         'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50';
       cognitiveDot = 'bg-blue-500';
-    } else if (overallAverage < 60) {
+    } else if (overallAverage < childStats.ACADEMIC_TONE_THRESHOLDS.cukup) {
       cognitiveLabel = 'Perlu Pendampingan';
       cognitiveColor =
         'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50';
@@ -241,17 +223,17 @@ export const useSingleChildAnalysis = ({
     let affectiveColor =
       'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50';
     let affectiveDot = 'bg-amber-500';
-    if (attRate >= 95 && totalViolations === 0) {
+    if (attRate >= childStats.ATTENDANCE_TONE_THRESHOLDS.sangatBaik && totalViolations === 0) {
       affectiveLabel = 'Sangat Disiplin';
       affectiveColor =
         'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50';
       affectiveDot = 'bg-emerald-500';
-    } else if (attRate >= 85 && totalViolations <= 1) {
+    } else if (attRate >= childStats.ATTENDANCE_TONE_THRESHOLDS.baik && totalViolations <= 1) {
       affectiveLabel = 'Disiplin';
       affectiveColor =
         'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50';
       affectiveDot = 'bg-blue-500';
-    } else if (attRate < 75 || totalViolations > 3) {
+    } else if (attRate < childStats.ATTENDANCE_TONE_THRESHOLDS.cukup || totalViolations > 3) {
       affectiveLabel = 'Perlu Perhatian';
       affectiveColor =
         'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50';

@@ -2,6 +2,7 @@ import { isAiEnabled, supabase } from './supabase';
 import { generateGeminiJson } from './geminiService';
 import { logger } from './logger';
 import { sanitizeAnalysisData } from '../utils/textSanitizer';
+import * as childStats from './childDevelopmentStats';
 
 export interface ChildDevelopmentData {
   student: {
@@ -15,6 +16,7 @@ export interface ChildDevelopmentData {
     score: number;
     assessment_name?: string;
     notes?: string;
+    created_at?: string | null;
   }>;
   attendanceRecords: Array<{
     status: string;
@@ -133,9 +135,7 @@ function generateFallbackAnalysis(
     },
     psychomotor: (() => {
       // Data-aware psychomotor analysis
-      const quizTotal = data.quizPoints.reduce((sum, q) => sum + (q.points || 0), 0);
-      const quizCount = data.quizPoints.length;
-      const keaktifan = quizTotal > 0 ? Math.min(quizTotal * 5, 100) : Math.min(quizCount * 15, 100);
+      const keaktifan = childStats.engagementScore(data.quizPoints);
 
       // Find practical/arts subjects
       const practicalSubjects = ['pjok', 'seni', 'sbdp', 'prakarya', 'keterampilan', 'seni budaya'];
@@ -168,6 +168,8 @@ function generateFallbackAnalysis(
       if (practicalAvg !== null && practicalAvg >= 75) {
         outstandingSkills.push(`🎨 Nilai praktik/seni bagus (rata-rata ${practicalAvg})`);
       }
+      const quizTotal = data.quizPoints.reduce((sum, q) => sum + (q.points || 0), 0);
+      const quizCount = data.quizPoints.length;
       if (keaktifan >= 50) {
         outstandingSkills.push(`🏆 Aktif dalam kuis dan kegiatan kelas (${quizCount} aktivitas, ${quizTotal} poin)`);
       }
@@ -274,9 +276,7 @@ export async function generateComprehensiveChildAnalysis(
     const validQuizPoints = (data.quizPoints || []).filter(q => q && q.activity);
 
     // Calculate statistics
-    const averageScore = validAcademicRecords.length > 0
-      ? Math.round(validAcademicRecords.reduce((sum, r) => sum + r.score, 0) / validAcademicRecords.length)
-      : 0;
+    const averageScore = childStats.averageScore(validAcademicRecords);
 
     const subjectScores = validAcademicRecords.reduce((acc, record) => {
       const subject = record.subject || 'Lainnya';
@@ -298,9 +298,7 @@ export async function generateComprehensiveChildAnalysis(
       alpha: validAttendanceRecords.filter(r => r.status === 'Alpha').length
     };
 
-    const attendanceRate = attendanceSummary.total > 0
-      ? Math.round((attendanceSummary.hadir / attendanceSummary.total) * 100)
-      : 100;
+    const attendanceRate = childStats.attendanceRate(validAttendanceRecords);
 
     const violationSummary = {
       total: validViolations.length,
@@ -364,13 +362,8 @@ Berikan analisis dalam format JSON dengan struktur:
     const validAttendanceRecords = (data.attendanceRecords || []).filter(r => r && r.status);
     const validViolations = (data.violations || []).filter(v => v && v.description);
 
-    const averageScore = validAcademicRecords.length > 0
-      ? Math.round(validAcademicRecords.reduce((sum, r) => sum + r.score, 0) / validAcademicRecords.length)
-      : 0;
-
-    const attendanceRate = validAttendanceRecords.length > 0
-      ? Math.round((validAttendanceRecords.filter(r => r.status === 'Hadir').length / validAttendanceRecords.length) * 100)
-      : 100;
+    const averageScore = childStats.averageScore(validAcademicRecords);
+    const attendanceRate = childStats.attendanceRate(validAttendanceRecords);
 
     return sanitizeAnalysisData(generateFallbackAnalysis(data, averageScore, attendanceRate, validViolations.length));
   }
@@ -388,9 +381,7 @@ export async function generateQuickInsights(
     const validAttendanceRecords = (data.attendanceRecords || []).filter(r => r && r.status);
     const validViolations = (data.violations || []).filter(v => v && v.description);
 
-    const averageScore = validAcademicRecords.length > 0
-      ? Math.round(validAcademicRecords.reduce((sum, r) => sum + r.score, 0) / validAcademicRecords.length)
-      : 0;
+    const averageScore = childStats.averageScore(validAcademicRecords);
 
     const _attendanceRate = validAttendanceRecords.length > 0
       ? Math.round((validAttendanceRecords.filter(r => r.status === 'Hadir').length / validAttendanceRecords.length) * 100)

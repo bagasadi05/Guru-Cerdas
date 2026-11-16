@@ -15,12 +15,15 @@ import {
     TrendingUpIcon,
 } from '../Icons';
 
+import * as childStats from '../../services/childDevelopmentStats';
+
 interface AcademicRecord {
     id: string;
     subject: string;
     score: number;
     assessment_name?: string | null;
     notes?: string;
+    created_at?: string | null;
 }
 
 interface AttendanceRecord {
@@ -88,33 +91,13 @@ const toneStyles: Record<Tone, {
 
 const normalizeStatus = (status: string): string => status.trim().toLowerCase();
 
-const getAcademicTone = (value: number): Tone => {
-    if (value >= 85) return 'success';
-    if (value >= 75) return 'info';
-    if (value >= 65) return 'warning';
-    return 'danger';
-};
+const getAcademicTone = (value: number): Tone => childStats.getAcademicTone(value);
 
-const getAttendanceTone = (value: number): Tone => {
-    if (value >= 95) return 'success';
-    if (value >= 85) return 'info';
-    if (value >= 75) return 'warning';
-    return 'danger';
-};
+const getAttendanceTone = (value: number): Tone => childStats.getAttendanceTone(value);
 
-const getBehaviorTone = (points: number): Tone => {
-    if (points === 0) return 'success';
-    if (points <= 10) return 'info';
-    if (points <= 25) return 'warning';
-    return 'danger';
-};
+const getBehaviorTone = (points: number): Tone => childStats.getBehaviorTone(points);
 
-const getSubjectTone = (value: number): Tone => {
-    if (value >= 80) return 'success';
-    if (value >= 75) return 'info';
-    if (value >= 65) return 'warning';
-    return 'danger';
-};
+const getSubjectTone = (value: number): Tone => childStats.getAcademicTone(value);
 
 const getTrendLabel = (trend: Trend): string => {
     if (trend === 'up') return 'Naik';
@@ -206,16 +189,11 @@ export const ChildDevelopmentAnalytics: React.FC<ChildAnalyticsProps> = ({
         }
 
         const scores = academicRecords.map((record) => record.score);
-        const average = Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
+        const average = childStats.averageScore(academicRecords);
         const highest = Math.max(...scores);
         const lowest = Math.min(...scores);
         const passRate = Math.round((scores.filter((score) => score >= 75).length / scores.length) * 100);
-        const splitIndex = Math.floor(scores.length / 2);
-        const recentScores = scores.slice(splitIndex);
-        const olderScores = scores.slice(0, splitIndex);
-        const recentAverage = recentScores.length > 0 ? recentScores.reduce((sum, score) => sum + score, 0) / recentScores.length : average;
-        const olderAverage = olderScores.length > 0 ? olderScores.reduce((sum, score) => sum + score, 0) / olderScores.length : average;
-        const trend: Trend = recentAverage > olderAverage + 5 ? 'up' : recentAverage < olderAverage - 5 ? 'down' : 'stable';
+        const trend: Trend = childStats.computeTrendFromRecords(academicRecords).trend ?? 'stable';
         const subjectCount = new Set(academicRecords.map((record) => record.subject)).size;
 
         return {

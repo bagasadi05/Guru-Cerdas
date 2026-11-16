@@ -244,6 +244,7 @@ export const StudentDetailTabPanels: React.FC<StudentDetailTabPanelsProps> = ({
                                     score: r.score,
                                     assessment_name: r.assessment_name || undefined,
                                     notes: r.notes || undefined,
+                                    created_at: r.created_at || undefined,
                                 })),
                                 attendanceRecords: filteredAttendance.map((a) => ({
                                     status: a.status,
