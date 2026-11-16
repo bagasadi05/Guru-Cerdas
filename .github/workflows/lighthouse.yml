@@ -1,0 +1,36 @@
+name: Lighthouse CI
+
+# Weekly performance/a11y gate. lighthouserc.cjs holds the budgets:
+#   accessibility >= 0.95 (error), best-practices >= 0.90 (error),
+#   seo >= 0.90 (error), performance >= 0.80 (warn).
+# Trigger it manually via workflow_dispatch when touching bundle/fonts/PWA.
+
+on:
+  schedule:
+    # Every Monday 02:00 UTC (09:00 WIB).
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx vite build
+      # ubuntu-latest ships Google Chrome; without CHROME_PATH LHCI tries
+      # ChromeLauncher and fails headless.
+      - run: npx lhci autorun --config=lighthouserc.cjs
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+      - name: Upload Lighthouse results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-results
+          path: .lighthouseci/
+          retention-days: 14
