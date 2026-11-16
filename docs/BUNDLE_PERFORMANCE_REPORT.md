@@ -5,6 +5,40 @@ Metode: `ANALYZE=true vite build` (rollup-plugin-visualizer → `dist/stats.html
 
 ---
 
+## Pengukuran Pasca-fix (16 November 2026)
+
+Verifikasi rekomendasi #1 laporan Agustus (exclude `vendor-pdf/excel/canvas/charts` dari
+`modulePreload` di `vite.config.ts`) — fix sudah ada di config sejak Agustus, kali ini
+baru diukur ulang: `npx vite build` (exit 0) + baca modulepreload `dist/index.html`.
+
+**Initial load login kini 5 chunk JS + 1 CSS ≈ 268 KiB gzip (JS 214,3 + CSS 53,77) —
+turun dari 322,9 KiB gzip; `vendor-pdf` (133,8 KB gzip, 40,5%) SUDAH TIDAK ADA di
+initial load.**
+
+| # | Chunk | Gzip |
+|---|-------|------|
+| 1 | `index-yovFd-Lp` (app shell) | 81,65 KB |
+| 2 | `vendor-react` | 54,06 KB |
+| 3 | `vendor-supabase` | 51,68 KB |
+| 4 | `vendor-icons` | 14,20 KB |
+| 5 | `vendor-query` | 12,71 KB |
+| — | `index-*.css` | 53,77 KB |
+| | **TOTAL ≈** | **268 KiB** |
+
+- `vendor-pdf` 133,21 KB gzip, `vendor-excel` 256,56 KB gzip, `vendor-canvas` 46,38 KB gzip,
+  `vendor-charts` 109,27 KB gzip — semua **lazy**, tidak di-preload.
+- JS initial naik ~25 KB gzip vs Agustus (fitur Prota/Promes & modul ajar masuk shell) —
+  wajar; kompensasinya justru karena pdf 133,8 KB keluar.
+- **PWA precache: 28 entri / 2.057,60 KiB** (Agustus: 30 entri / 2.002,79 KiB). Naik sedikit
+  akibat fitur baru; masih di atas target < 1 MB — perampingan precache masuk Fase 2/3
+  (lihat [reviews/2026-11-16-masukan-strategis.md](reviews/2026-11-16-masukan-strategis.md)).
+- **Lighthouse perf score belum diukur ulang** (butuh preview server + LHCI — dijadwalkan
+  menjadi gate mingguan di F2.2, plan perbaikan 16 Nov). LCP login terukur terakhir 5,27 s
+  (Agustus); skor 62–64 kemungkinan membaik karena 133 KB gzip hilang dari initial load,
+  tapi angka resmi menunggu LHCI.
+
+---
+
 ## Ringkasan Eksekutif
 
 **Initial load halaman login = 1.084 KiB raw / 322,9 KiB gzip (6 chunk).** Lima chunk terbesar menguasai ~96% payload gzip. **Temuan tunggal terbesar: `vendor-pdf` (jsPDF + autotable, 133,8 KB gzip = 40,5% dari total) ikut terunduh saat login padahal jsPDF tidak dipakai sama sekali di halaman login** — ini artifact modulepreload Vite, bukan bug import di kode.
