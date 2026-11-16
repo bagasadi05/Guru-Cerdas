@@ -33,6 +33,8 @@ interface UseComparativeChildAnalysisParams {
   semesters: (SemesterRow | SemesterWithYear)[];
   schoolName: string;
   principalName?: string;
+  /** Skip the DB/localStorage load when the comparative tab is not active. */
+  enabled?: boolean;
 }
 
 export const useComparativeChildAnalysis = ({
@@ -45,6 +47,7 @@ export const useComparativeChildAnalysis = ({
   semesters,
   schoolName,
   principalName = 'H. Masturi, S.Pd.I.',
+  enabled = true,
 }: UseComparativeChildAnalysisParams) => {
   const [comparativeAnalysis, setComparativeAnalysis] = useState<ComparativeChildAnalysis | null>(null);
   const [isCompLoading, setIsCompLoading] = useState(false);
@@ -304,6 +307,7 @@ export const useComparativeChildAnalysis = ({
 
   // Load comparative analysis on mount or year change
   useEffect(() => {
+    if (!enabled) return;
     const loadCompAnalysis = async () => {
       if (!activeAcademicYear) return;
 
@@ -340,7 +344,7 @@ export const useComparativeChildAnalysis = ({
     };
 
     loadCompAnalysis();
-  }, [studentData.student.id, activeAcademicYear]);
+  }, [studentData.student.id, activeAcademicYear, enabled]);
 
   const doGenerateComparativeAnalysis = async () => {
     setShowCompRegenerateConfirm(false);
@@ -358,7 +362,7 @@ export const useComparativeChildAnalysis = ({
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
           if (attempt > 0) setRetryCount(attempt);
-          result = await generateComparativeChildAnalysis(childData1, childData2);
+          result = await generateComparativeChildAnalysis(childData1, childData2, { bypassCache: true });
           if (result && (!('error' in result) || result.summary)) break;
         } catch (retryError) {
           if (attempt === maxRetries) throw retryError;

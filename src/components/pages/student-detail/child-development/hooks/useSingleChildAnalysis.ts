@@ -387,7 +387,7 @@ export const useSingleChildAnalysis = ({
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
           if (attempt > 0) setRetryCount(attempt);
-          result = await generateComprehensiveChildAnalysis(studentData);
+          result = await generateComprehensiveChildAnalysis(studentData, { bypassCache: true });
           if (result && (!('error' in result) || result.summary)) break;
         } catch (retryError) {
           if (attempt === maxRetries) throw retryError;

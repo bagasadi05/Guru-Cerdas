@@ -258,7 +258,8 @@ function generateFallbackAnalysis(
 }
 
 export async function generateComprehensiveChildAnalysis(
-  data: ChildDevelopmentData
+  data: ChildDevelopmentData,
+  options?: { bypassCache?: boolean }
 ): Promise<ComprehensiveChildAnalysis> {
   try {
     // Validate data
@@ -349,7 +350,7 @@ Berikan analisis dalam format JSON dengan struktur:
 {"summary":{"name":"","age":0,"class":"","overallAssessment":""},"cognitive":{"strengths":[],"areasForDevelopment":[],"learningStyle":"","criticalThinking":"","academicComparison":""},"affective":{"positiveCharacters":[],"socialSkills":"","characterDevelopmentAreas":[],"emotionalIntelligence":"","discipline":""},"psychomotor":{"motorSkills":"","outstandingSkills":[],"areasNeedingStimulation":[],"coordination":""},"recommendations":{"homeSupport":[],"neededStimulation":{"cognitive":[],"affective":[],"psychomotor":[]},"developmentPlan":{"threeMonths":[],"sixMonths":[]},"warningsSigns":[]}}`;
 
     // Call AI via OpenRouter
-    const analysis = await generateGeminiJson<ComprehensiveChildAnalysis>(prompt, systemInstruction, 'child-analysis');
+    const analysis = await generateGeminiJson<ComprehensiveChildAnalysis>(prompt, systemInstruction, 'child-analysis', options);
 
     return sanitizeAnalysisData(analysis);
 
@@ -426,12 +427,16 @@ export async function getLatestAnalysisFromDb(
       .from('student_development_analyses')
       .select('analysis_data, generated_by')
       .eq('student_id', studentId)
+      .or('analysis_data->>isComparative.is.null,analysis_data->>isComparative.neq.true')
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
 
     if (error) throw error;
     if (!data) return null;
+    // Comparative analyses share this table with a different JSON shape; never
+    // return one as a single analysis.
+    if ((data.analysis_data as Record<string, unknown> | null)?.isComparative === true) return null;
 
     const analysis = sanitizeAnalysisData(data.analysis_data as unknown as ComprehensiveChildAnalysis);
     return {
@@ -575,6 +580,7 @@ export async function getComparativeAnalysisFromDb(
       .select('analysis_data, generated_by')
       .eq('student_id', studentId)
       .eq('academic_year_id', academicYearId)
+      .eq('analysis_data->>isComparative', 'true')
       .is('semester_id', null)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -582,6 +588,7 @@ export async function getComparativeAnalysisFromDb(
 
     if (error) throw error;
     if (!data) return null;
+    if ((data.analysis_data as Record<string, unknown> | null)?.isComparative !== true) return null;
 
     const analysis = sanitizeAnalysisData(data.analysis_data as unknown as ComparativeChildAnalysis);
     return {
@@ -745,7 +752,8 @@ export function generateComparativeFallbackAnalysis(
 
 export async function generateComparativeChildAnalysis(
   data1: ChildDevelopmentData,
-  data2: ChildDevelopmentData
+  data2: ChildDevelopmentData,
+  options?: { bypassCache?: boolean }
 ): Promise<ComparativeChildAnalysis> {
   try {
     // Validate data
@@ -856,7 +864,7 @@ export async function generateComparativeChildAnalysis(
       }
     }`;
 
-    const rawAnalysis = await generateGeminiJson<ComparativeChildAnalysis>(prompt, systemInstruction, 'child-analysis');
+    const rawAnalysis = await generateGeminiJson<ComparativeChildAnalysis>(prompt, systemInstruction, 'child-analysis', options);
     const analysis = sanitizeAnalysisData(rawAnalysis);
     return {
       ...analysis,

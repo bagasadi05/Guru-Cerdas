@@ -575,7 +575,7 @@ export async function exportComparativeChildDevelopmentPDF({
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(79, 70, 229);
-  doc.text('4. ANALISIS NARATIF PERKEMBANGAN ANANDA (AI COMPLETED)', margin, y);
+  doc.text(`3. ANALISIS NARATIF PERKEMBANGAN ANANDA (${comparativeAnalysis.generatedBy === 'Offline Fallback' ? 'OFFLINE FALLBACK' : 'AI COMPLETED'})`, margin, y);
   y += 6;
 
   // General comparative overview
@@ -691,7 +691,7 @@ export async function exportComparativeChildDevelopmentPDF({
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(79, 70, 229);
-  doc.text('5. REKOMENDASI DAN RENCANA STIMULASI LANJUTAN', margin, y);
+  doc.text('4. REKOMENDASI DAN RENCANA STIMULASI LANJUTAN', margin, y);
   y += 6;
 
   // Home Support Table
@@ -746,7 +746,7 @@ export async function exportComparativeChildDevelopmentPDF({
   // Check height for signature
   if (y > pageHeight - 50) {
     doc.addPage();
-    y = addPdfHeader(doc, { schoolName: 'MI AL IRSYAD KOTA MADIUN', orientation: 'portrait' }) + 8;
+    y = addPdfHeader(doc, { schoolName: schoolName, orientation: 'portrait' }) + 8;
   }
 
   // Formal signature blocks

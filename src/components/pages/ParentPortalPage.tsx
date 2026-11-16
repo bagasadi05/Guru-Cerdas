@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
+import { logger } from '../../services/logger';
 import { useToast } from '../../hooks/useToast';
 import { Tabs, TabsContent } from '../ui/Tabs';
 import { Select } from '../ui/Select';
@@ -12,7 +13,6 @@ import { useSemester } from '../../contexts/SemesterContext';
 import { getSemesterTerm } from '../../utils/semesterUtils';
 import { CalendarIcon } from '../Icons';
 import { AlertCircle } from 'lucide-react';
-import { isAchievementsBackendMissing } from '../../utils/achievementBackend';
 import {
     GlassCard,
     getAttentionItems,
@@ -182,114 +182,6 @@ const fetchPortalBintangEvaluations = async (studentId: string, accessCode: stri
     return toArray<any>(directData);
 };
 
-const fetchPortalDataFallback = async (studentId: string, accessCode: string): Promise<PortalData> => {
-    const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .select('*')
-        .eq('id', studentId)
-        .eq('access_code', accessCode)
-        .maybeSingle();
-
-    if (studentError || !studentData) {
-        console.error('Portal access fallback student check failed:', studentError);
-        throw new Error('Akses ditolak. Kode akses mungkin tidak valid untuk siswa ini atau telah kedaluwarsa.');
-    }
-
-    const studentRecord = studentData as any;
-    const teacherUserId = studentRecord.user_id;
-    const classId = studentRecord.class_id;
-
-    let className = '-';
-    if (classId) {
-        const { data: classData } = await supabase
-            .from('classes')
-            .select('name')
-            .eq('id', classId)
-            .maybeSingle();
-        if (classData) {
-            className = classData.name;
-        }
-    }
-
-    const [
-        reportsRes,
-        attendanceRes,
-        academicRes,
-        violationsRes,
-        quizPointsRes,
-        communicationsRes,
-        schedulesRes,
-        tasksRes,
-        announcementsRes,
-        bintangEvaluationsRes,
-    ] = await Promise.all([
-        supabase.from('reports').select('*').eq('student_id', studentId).is('deleted_at', null),
-        supabase.from('attendance').select('*').eq('student_id', studentId).is('deleted_at', null),
-        supabase.from('academic_records').select('*').eq('student_id', studentId).is('deleted_at', null),
-        supabase.from('violations').select('*').eq('student_id', studentId).is('deleted_at', null),
-        supabase.from('quiz_points').select('*').eq('student_id', studentId).is('deleted_at', null),
-        supabase.from('communications').select('*').eq('student_id', studentId).is('deleted_at', null).order('created_at', { ascending: true }),
-        supabase.from('schedules').select('*').eq('class_id', className).is('deleted_at', null),
-        supabase.from('tasks').select('*').eq('class_id', classId),
-        supabase.from('announcements').select('*').in('audience_type', ['all', 'parent']).is('deleted_at', null).order('date', { ascending: false }).order('created_at', { ascending: false }).limit(5),
-        fetchPortalBintangEvaluations(studentId, accessCode),
-    ]);
-
-    const teacher = {
-        user_id: teacherUserId,
-        full_name: 'Wali Kelas',
-        avatar_url: `https://i.pravatar.cc/150?u=${teacherUserId}`,
-    };
-
-    const dayOrder: Record<string, number> = {
-        'Senin': 1,
-        'Selasa': 2,
-        'Rabu': 3,
-        'Kamis': 4,
-        'Jumat': 5,
-        'Sabtu': 6,
-        'Minggu': 7
-    };
-    const sortedSchedules = (schedulesRes.data || []).sort((a: any, b: any) => {
-        const orderA = dayOrder[a.day] || 8;
-        const orderB = dayOrder[b.day] || 8;
-        if (orderA !== orderB) return orderA - orderB;
-        return (a.start_time || '').localeCompare(b.start_time || '');
-    });
-
-    const sortedTasks = (tasksRes.data || []).sort((a: any, b: any) => {
-        return new Date(b.due_date || 0).getTime() - new Date(a.due_date || 0).getTime();
-    });
-
-    return {
-        student: {
-            id: studentRecord.id,
-            name: studentRecord.name,
-            gender: studentRecord.gender,
-            class_id: studentRecord.class_id,
-            avatar_url: studentRecord.avatar_url,
-            access_code: accessCode || null,
-            parent_name: studentRecord.parent_name,
-            parent_phone: studentRecord.parent_phone,
-            classes: { name: className },
-        },
-        reports: toArray<PortalReport>(reportsRes.data),
-        attendanceRecords: toArray<PortalAttendance>(attendanceRes.data),
-        academicRecords: toArray<PortalAcademicRecord>(academicRes.data),
-        violations: toArray<PortalViolation>(violationsRes.data),
-        quizPoints: normalizePortalQuizPoints(quizPointsRes.data),
-        communications: normalizePortalCommunications(communicationsRes.data),
-        schedules: toArray<PortalSchedule>(sortedSchedules),
-        tasks: toArray<PortalTask>(sortedTasks),
-        announcements: toArray<PortalAnnouncement>(announcementsRes.data),
-        achievements: [],
-        bintangEvaluations: bintangEvaluationsRes,
-        phSchedules: await fetchPortalPhSchedules(classId),
-        teacher,
-        schoolInfo: { school_name: 'Sekolah' },
-    };
-};
-
 const fetchPortalData = async (studentId: string, accessCode: string): Promise<PortalData> => {
     try {
         const { data, error } = await supabase.rpc('get_student_portal_data', {
@@ -298,10 +190,6 @@ const fetchPortalData = async (studentId: string, accessCode: string): Promise<P
         });
 
         if (error) {
-            if (isAchievementsBackendMissing(error)) {
-                console.warn('Portal access RPC failed due to missing achievements, falling back...');
-                return fetchPortalDataFallback(studentId, accessCode);
-            }
             console.error('Portal access RPC failed:', error);
             throw new Error(`Gagal memuat data portal: ${error.message}.`);
         }
@@ -345,11 +233,8 @@ const fetchPortalData = async (studentId: string, accessCode: string): Promise<P
             teacher: toObject<TeacherInfo>(portalResult.teacher, null),
             schoolInfo: toObject<PortalSchoolInfo>(portalResult.schoolInfo, { school_name: 'Sekolah' }),
         };
-    } catch (err: any) {
-        if (isAchievementsBackendMissing(err)) {
-            console.warn('Portal access RPC caught error due to missing achievements, falling back...');
-            return fetchPortalDataFallback(studentId, accessCode);
-        }
+    } catch (err) {
+        logger.error('Gagal membangun data portal', undefined, err);
         throw err;
     }
 };

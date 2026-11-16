@@ -44,6 +44,7 @@ export const ChildDevelopmentAnalysisView: React.FC<ChildDevelopmentAnalysisTabP
     activeAcademicYear,
     semesters,
     schoolName,
+    enabled: activeTabMode === 'comparative',
   });
 
   if (singleAnalysis.isLoading) {
